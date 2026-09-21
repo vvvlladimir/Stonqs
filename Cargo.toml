@@ -7,6 +7,8 @@ members = ["core", "cli", "app/src-tauri"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+# Edition 2024 needs 1.85; the pin in rust-toolchain.toml is what CI and a clone actually use.
+rust-version = "1.85"
 license = "AGPL-3.0-only"
 
 [workspace.dependencies]

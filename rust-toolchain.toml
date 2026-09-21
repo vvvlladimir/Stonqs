@@ -1,0 +1,6 @@
+# Pinned to an exact version rather than `stable`: clippy gains lints with every release, so a
+# floating channel turns `-D warnings` in CI into a build that breaks on a day nobody touched the
+# code. Bump this deliberately, with the clippy fallout in the same commit.
+[toolchain]
+channel = "1.98"
+components = ["rustfmt", "clippy"]
