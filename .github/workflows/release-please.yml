@@ -32,7 +32,7 @@ jobs:
     if: needs.release-please.outputs.pr != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
       - name: Install the pinned toolchain
