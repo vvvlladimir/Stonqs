@@ -82,7 +82,7 @@ jobs:
 
       # The action runs from the repository root, where there is no package.json: the pin it
       # reads has to be pointed at.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           package_json_file: app/package.json
       - uses: actions/setup-node@v5
