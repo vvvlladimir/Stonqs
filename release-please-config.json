@@ -5,7 +5,6 @@
     ".": {
       "release-type": "simple",
       "draft": true,
-      "package-name": "stonqs",
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
         { "type": "toml", "path": "Cargo.toml", "jsonpath": "$.workspace.package.version" },
