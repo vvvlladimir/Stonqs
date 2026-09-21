@@ -84,11 +84,15 @@ impl Profiles {
             registry.last = Some(ADOPTED_ID.into());
             self.write(&registry)?;
         }
+        // The block above leaves the list non-empty, so the fallback always finds something. It is
+        // written as one rather than indexed because this runs before a window exists: were that
+        // invariant ever to move, an index would take the whole app down with no way to say why.
         let chosen = registry
             .last
             .as_ref()
             .and_then(|last| registry.profiles.iter().find(|p| &p.id == last))
-            .unwrap_or(&registry.profiles[0]);
+            .or_else(|| registry.profiles.first())
+            .ok_or_else(|| UiError::internal("the profile registry is empty"))?;
         Ok(chosen.clone())
     }
 
