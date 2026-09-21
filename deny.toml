@@ -1,0 +1,41 @@
+# cargo-deny: what may end up in a build of this app. Checked in CI and once a week, because an
+# advisory is published against code that has not changed.
+
+[advisories]
+# Anything with a known vulnerability fails; a crate nobody maintains any more is worth knowing
+# about but is not a reason to refuse a build on the day it is announced.
+yanked = "deny"
+unmaintained = "workspace"
+
+[licenses]
+# The app is AGPL-3.0-only, so it may use permissive and weak-copyleft code but must not take in
+# anything demanding terms of its own that AGPL cannot satisfy.
+allow = [
+  # The app's own crates.
+  "AGPL-3.0-only",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BSL-1.0",
+  "CC0-1.0",
+  "CDLA-Permissive-2.0",
+  "ISC",
+  "MIT",
+  "MPL-2.0",
+  "Unicode-3.0",
+  "Zlib",
+]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "warn"
+# A path dependency has no version requirement, which is a wildcard by any other name; the three
+# crates of this workspace are not what the rule is for.
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

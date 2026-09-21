@@ -1,0 +1,31 @@
+version: 2
+
+# Weekly rather than daily, and grouped: a separate pull request per patch bump is a queue nobody
+# reads, and what matters — an advisory — is watched by the audit workflow anyway.
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      cargo-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /app
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  # Actions are pinned by major tag, so this only catches the ones that move a major.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
