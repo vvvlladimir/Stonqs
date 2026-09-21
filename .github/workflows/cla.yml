@@ -10,8 +10,6 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened, closed]
 
-# `contents: write` is what lets the action create and update the storage branch with the
-# workflow's own token; a personal access token is only needed when signatures live elsewhere.
 permissions:
   actions: write
   contents: write
@@ -19,31 +17,18 @@ permissions:
   statuses: write
 
 jobs:
-  # The job itself is unconditional because `cla` is a required check: a job that never starts
-  # leaves the check pending forever and the pull request cannot be merged. The work is skipped
-  # instead, which costs a few seconds of a runner and reports success.
   cla:
+    if: >-
+      github.event.pull_request.head.repo.full_name != github.repository
+      && github.actor != 'dependabot[bot]'
+      && github.event.pull_request.user.type != 'Bot'
     runs-on: ubuntu-latest
     steps:
-      # Only a pull request from a fork can carry an external contribution, so a branch of this
-      # repository asks nobody to sign. `head.repo` is absent on an `issue_comment` event, which
-      # is how signing by comment still reaches the action.
-      #
-      # A run triggered by a bot gets a read-only token and no secrets, so the action cannot
-      # write the signature file even to say the author is allowlisted — and a bot has nothing
-      # to agree to: its pull requests are this repository's own dependency bumps.
       - name: Check or record the contributor's signature
-        if: >-
-          github.event.pull_request.head.repo.full_name != github.repository
-          && github.actor != 'dependabot[bot]'
-          && github.event.pull_request.user.type != 'Bot'
-          && ((github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA')
-            || github.event_name == 'pull_request_target')
+        if: (github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target'
         uses: contributor-assistant/github-action@v2.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # The action writes the signature file through this one; the storage branch is in this
-          # repository, so the workflow's own token is enough and no secret has to be kept.
           PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           path-to-signatures: signatures/version1/cla.json
