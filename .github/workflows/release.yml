@@ -1,0 +1,100 @@
+name: Release
+
+# Builds the installers for a tag and leaves them in a draft release. Nothing reaches a user until
+# that draft is published by hand: publishing is also what makes `latest.json` visible, so the
+# updater offers a version only after somebody has looked at it.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  # A tag naming a version the binaries do not carry would be offered forever: the updater compares
+  # the running version with the one in the feed, and installing it would not change the answer.
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Tag matches the workspace version
+        run: |
+          crate=$(grep -m1 '^version = ' Cargo.toml | cut -d'"' -f2)
+          tag="${GITHUB_REF_NAME#v}"
+          test "$crate" = "$tag" || {
+            echo "tag $GITHUB_REF_NAME does not match Cargo.toml version $crate" >&2
+            exit 1
+          }
+
+  build:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          # The oldest supported runner, because a Linux binary cannot run against a glibc older
+          # than the one it was built on.
+          - os: ubuntu-22.04
+            target: ""
+          - os: windows-latest
+            target: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Linux system libraries
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            libdbus-1-dev \
+            libssl-dev \
+            patchelf
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - name: Install frontend dependencies
+        working-directory: app
+        run: pnpm install --frozen-lockfile
+
+      # rust-toolchain.toml decides the version; the target is what this matrix entry adds.
+      - name: Install the pinned toolchain
+        shell: bash
+        run: |
+          rustup show
+          if [ -n "${{ matrix.target }}" ]; then rustup target add ${{ matrix.target }}; fi
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the update artifacts with the project's key; the public half is in
+          # tauri.conf.json, so an installed copy refuses anything signed by anybody else.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: app
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          # Written by hand — or by whatever generates the changelog — before publishing.
+          releaseBody: ${{ github.event.head_commit.message }}
+          releaseDraft: true
+          prerelease: false
+          # `latest.json`, the feed the updater reads. One per run, merged across the matrix.
+          includeUpdaterJson: true
+          args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
