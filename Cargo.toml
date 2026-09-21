@@ -58,4 +58,4 @@ keyring = { version = "3", features = ["apple-native", "windows-native", "sync-s
 argon2 = "0.5"
 chacha20poly1305 = "0.10"
 zeroize = "1"
-base64 = "0.22"
+base64 = "0.23"
