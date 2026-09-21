@@ -1,0 +1,88 @@
+/* Prose written by a model or typed by the user. Sized off the surrounding text rather than
+   with a heading scale of its own: this is a paragraph in a chat bubble, not a document.
+
+   The spacing is owned by one rule — the gap *between* siblings — rather than by a bottom
+   margin per element. A model writes loose lists (a blank line between items), which makes
+   every `<li>` wrap its text in a `<p>`; with per-element margins that paragraph then adds its
+   own gap inside the bullet and the list falls apart down the panel. */
+.md > * + * {
+  margin-top: var(--sp-3);
+}
+.md > :first-child {
+  margin-top: 0;
+}
+.md p,
+.md ul,
+.md ol,
+.md pre,
+.md blockquote,
+.md table {
+  margin: 0;
+}
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  margin: 0;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  line-height: 1.3;
+}
+.md > h1 + *,
+.md > h2 + *,
+.md > h3 + *,
+.md > h4 + * {
+  margin-top: var(--sp-2);
+}
+.md ul,
+.md ol {
+  padding-inline-start: var(--sp-5);
+}
+.md li + li {
+  margin-top: var(--sp-2);
+}
+/* A loose list item holds paragraphs; they are the item's own lines, not blocks of the page. */
+.md li > * + * {
+  margin-top: var(--sp-1);
+}
+.md li > ul,
+.md li > ol {
+  margin-top: var(--sp-2);
+}
+.md code {
+  padding: 0 var(--sp-1);
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.md pre {
+  padding: var(--sp-3);
+  border-radius: var(--r-input);
+  background: var(--surface-2);
+  overflow-x: auto;
+}
+.md pre code {
+  padding: 0;
+  background: none;
+}
+.md blockquote {
+  padding-inline-start: var(--sp-4);
+  border-inline-start: 2px solid var(--border);
+  color: var(--ink-2);
+}
+.md table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.md th,
+.md td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+}
+.md hr {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}

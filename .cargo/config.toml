@@ -1,0 +1,5 @@
+# macOS ties keychain access to the binary's code signature. The linker's ad-hoc signature changes
+# with every build, so "Always Allow" was forgotten at every rebuild. The runner re-signs `sq-app`
+# with a stable local identity when one exists and runs everything else untouched (ADR-0046).
+[target.'cfg(target_os = "macos")']
+runner = "app/scripts/dev-run.sh"

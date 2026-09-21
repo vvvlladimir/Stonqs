@@ -1,0 +1,16 @@
+[package]
+name = "sq-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "sqcli"
+path = "src/main.rs"
+
+[dependencies]
+sq-core = { path = "../core" }
+rust_decimal.workspace = true
+rust_decimal_macros.workspace = true
+chrono.workspace = true

@@ -1,0 +1,330 @@
+/* Every table sits in this box. While the columns fit it is a plain block, so the sticky
+   header still sticks to the page; `--over` is set by `DataTable` once they do not. */
+.tbl-wrap {
+  min-width: 0;
+}
+.tbl-wrap--over {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.tbl-wrap--over::-webkit-scrollbar {
+  height: 8px;
+}
+.tbl-wrap--over::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--r-sm);
+  border: 2px solid var(--surface);
+}
+.tbl-wrap--over > .tbl {
+  min-width: 100%;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+  --cell-x: 0;
+  /* Sticky tiers need explicit heights because CSS cannot stack offsets automatically. */
+  --th-h: 32px;
+  --grp-h: 30px;
+}
+.tbl th {
+  font-weight: var(--fw-med);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  text-align: left;
+  padding: var(--sp-3) var(--cell-x) var(--sp-4);
+  white-space: nowrap;
+}
+.tbl thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: var(--th-h);
+  background: var(--surface);
+  /* Opaque background and inset shadow keep sticky headers readable. */
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+/* A sortable heading is a button covering the whole heading, so the hit area is the column
+   name itself. The caret shows the direction, and stays hidden until hover on a column the
+   table is not sorted by — eight carets at rest would read as noise, not as an offer. */
+.sortth {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.sortth:hover,
+.sortth--on {
+  color: var(--text);
+}
+.sortth__mark {
+  flex: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.sortth:hover .sortth__mark,
+.sortth:focus-visible .sortth__mark,
+.sortth--on .sortth__mark {
+  opacity: 1;
+}
+/* In a right-aligned column the caret leads, so the heading's last letter ends where the
+   figures do instead of a hidden caret's width short of them. */
+.tbl th.r .sortth {
+  flex-direction: row-reverse;
+}
+/* A heading that wraps (a fixed table) keeps its caret on the last line, not in a column of its own. */
+.tbl--fixed .sortth {
+  display: inline;
+}
+.tbl--fixed .sortth__mark {
+  vertical-align: -2px;
+}
+
+@media (hover: none) {
+  .sortth__mark {
+    opacity: 1;
+  }
+}
+
+.tbl td {
+  padding: var(--sp-4) var(--cell-x);
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+.tbl tbody tr:hover {
+  background: var(--surface-2);
+}
+.tbl .r {
+  text-align: right;
+}
+/* A figure is one token: a squeezed column may cut it, never fold "3,5 %" onto two lines. */
+.tbl .num {
+  white-space: nowrap;
+}
+
+.tbl tbody tr:first-child td {
+  border-top: 0;
+  box-shadow: none;
+}
+.tbl--rows tbody tr {
+  cursor: pointer;
+}
+/* A table inside another surface: denser than a table that owns its panel. */
+.tbl--nested {
+  font-size: var(--fs-sm);
+}
+.tbl--nested th,
+.tbl--nested td {
+  padding: var(--sp-3) var(--sp-4);
+}
+/* Column widths are declared on the column, which only holds with a fixed layout. */
+.tbl--fixed {
+  table-layout: fixed;
+}
+/* A fixed table can never outgrow its panel, so a heading gives way by wrapping and an
+   over-narrow figure by being cut — the alternative is a column the user cannot reach. */
+.tbl--fixed th {
+  white-space: normal;
+}
+.tbl--fixed td.num {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Columns sized by their data rather than sharing out the width: a wide preview stops
+   cramming 23 columns into the panel and scrolls sideways instead. */
+.tbl--content {
+  /* max-content, not auto: `auto` shrinks the table back to its container and crams every
+     column to its minimum. The table is meant to be wider than the panel and scroll. */
+  width: max-content;
+  min-width: 100%;
+}
+.tbl--content th,
+.tbl--content td {
+  vertical-align: top;
+}
+/* The cap: text wraps to two lines and is then cut, so one verbose cell cannot own the row. */
+.tbl--content .cell {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  max-width: 28ch;
+  /* An unbroken token — an ISO timestamp — is broken rather than widening the column. */
+  overflow-wrap: anywhere;
+}
+/* The clamp box is a block: without the margin it sits left in a column wider than 16ch and
+   the figure no longer ends under its right-aligned heading. */
+.tbl--content .num .cell {
+  max-width: 16ch;
+  margin-left: auto;
+  white-space: normal;
+}
+/* The column a step is actually asking about; the rest of the row is context around it. */
+.tbl td.ask {
+  background: var(--accent-softer);
+}
+/* A sticky header is opaque, so the tint is painted over its background rather than replacing it. */
+.tbl thead th.ask {
+  background-image: linear-gradient(var(--accent-softer), var(--accent-softer));
+}
+.tbl .money {
+  white-space: nowrap;
+}
+/* The line of prose under a figure wraps like prose; the figure inside it stays whole. */
+.tbl .sub {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: normal;
+}
+
+.tbl .nm {
+  font-weight: var(--fw-med);
+}
+
+/* A subtotal of the lines above it, not another of them. The rule is where the components end;
+   the tint is what keeps the sum readable once the axis scrolls sideways. */
+.tbl tbody tr.sum td,
+.tbl tbody tr.sum:hover td {
+  font-weight: var(--fw-med);
+  background: var(--surface-2);
+}
+.tbl tbody tr.sum--first td {
+  border-top: 1px solid var(--border-strong);
+}
+.cur {
+  margin-left: var(--sp-2);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.tbl .grp td {
+  background: var(--surface-2);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  box-shadow: inset 0 1px 0 var(--border);
+  padding: var(--sp-3) var(--cell-x);
+}
+.tbl tbody tr.grp:hover {
+  background: var(--surface-2);
+}
+.tbl tbody tr.grp td {
+  position: sticky;
+  height: var(--grp-h);
+}
+.tbl tbody tr.grp--year td {
+  top: calc(var(--th-h) - 1px);
+  z-index: 2;
+}
+.tbl tbody tr.grp--month td {
+  top: calc(var(--th-h) + var(--grp-h) - 2px);
+  z-index: 1;
+}
+.acts {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.tbl td.acts {
+  display: table-cell;
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+.tbl td.acts > * {
+  vertical-align: middle;
+}
+.tbl td.acts > * + * {
+  margin-left: var(--sp-2);
+}
+tr:hover .acts,
+.row:hover .acts,
+.acts--shown,
+.acts:focus-within {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .acts {
+    opacity: 1;
+  }
+}
+
+.table-wide {
+  display: none;
+}
+
+.pills {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.assign tbody tr.is-off {
+  opacity: 0.55;
+}
+.assign tbody tr.is-off .pill--empty {
+  color: var(--text-2);
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.tbl th.pick,
+.tbl td.pick {
+  width: 1%;
+  padding-right: var(--sp-3);
+}
+
+/* Income tables sit in a plain panel: the fixed layout comes from `tbl--fixed`, so a
+   long payer name is cut by ellipsis instead of pushing the money columns off the edge. */
+.paytab {
+  --cell-x: var(--sp-3);
+}
+.paytab th:first-child,
+.paytab td:first-child {
+  padding-left: 0;
+}
+.paytab th:last-child,
+.paytab td:last-child {
+  padding-right: 0;
+}
+.paytab .share__pct {
+  font-size: var(--fs-meta);
+  margin-top: var(--sp-1);
+}
+.paytab .instr .nm {
+  max-width: 100%;
+}
+.paytab .pill {
+  max-width: 100%;
+}
+.paytab .pill > span {
+  min-width: 0;
+}
+.paytab .pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1000px) {
+  .table-wide {
+    display: block;
+  }
+  td.table-wide,
+  th.table-wide {
+    display: table-cell;
+  }
+}

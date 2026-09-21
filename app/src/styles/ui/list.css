@@ -1,0 +1,526 @@
+.instr .sub {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.instr .nm {
+  max-width: 44ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.instr {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.instr > div {
+  min-width: 0;
+}
+/* One list row for every list in the product. Slots that are absent are not
+   rendered, so the row needs no per-shape column variants — only looks. */
+.rows {
+  display: grid;
+  padding: 0;
+  list-style-type: none;
+}
+.rows--cards {
+  gap: var(--sp-4);
+}
+.rows--grid {
+  gap: var(--sp-5);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  min-width: 0;
+  padding: var(--sp-5) var(--sp-1);
+  border-top: 1px solid var(--border);
+}
+/* The separator above the first line is the list's own edge, so it goes; a box draws its
+   own border on all four sides and must keep it. */
+.rows > .row:not(.row--box):first-child {
+  border-top: 0;
+}
+.row:hover {
+  background: var(--surface-2);
+}
+.row--top {
+  align-items: flex-start;
+}
+/* A foot is a full-width line under the row, which only happens if the row may wrap. */
+.row--foot {
+  flex-wrap: wrap;
+}
+
+/* A box is a row that stands on its own: it keeps its background on hover. */
+.row--box {
+  flex-wrap: wrap;
+  align-content: space-between;
+  padding: var(--sp-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.row--box,
+.row--box:hover {
+  background: var(--surface);
+}
+
+/* A tappable row is a button: no border, its own radius and hover. */
+.row--tap {
+  width: 100%;
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-input);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.row--tap:hover {
+  background: var(--surface-2);
+}
+.row--tap .row__lead {
+  font-size: var(--fs-lg);
+}
+.row--on,
+.row--on:hover {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.row--on .row__lead {
+  color: var(--accent);
+}
+/* A box you can tap sits on the raised surface and answers with the accent. */
+.row--box.row--tap {
+  padding: var(--sp-5);
+  border-color: var(--border);
+  border-radius: var(--r-input);
+}
+.row--box.row--tap,
+.row--box.row--tap:hover {
+  background: var(--surface-2);
+}
+.row--box.row--tap:hover {
+  border-color: var(--accent);
+  background: var(--accent-softer);
+}
+.row--box.row--tap .row__lead {
+  font-size: var(--fs-xl);
+  color: var(--text-2);
+}
+
+.row__lead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+}
+/* `flex-basis: 0`, not `auto`: a wrapping row breaks lines by the *content* width, so a
+   long name would push the value onto a line of its own before it ever shrank. */
+.row__main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.row__name {
+  display: block;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-med);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row__sub {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+.row__sub > * {
+  flex: none;
+}
+.row__sub .inline {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+/* Descriptions read as prose, so they wrap instead of being cut. */
+.row--wrap .row__name,
+.row--wrap .row__sub {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+}
+.row--wrap .row__sub {
+  font-size: var(--fs-sm);
+}
+.row__side {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+/* A switch standing at the end of a settings line is sized like the one in a form. */
+.row__side > input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.row__vals {
+  display: grid;
+  gap: var(--sp-1);
+  justify-items: end;
+  text-align: right;
+}
+.row__val {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-med);
+}
+.row--big .row__val {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.022em;
+}
+.row__pct {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+.row__foot {
+  flex-basis: 100%;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+.row__foot .num:not(.pos, .neg, .dim) {
+  color: var(--text-2);
+}
+/* A control standing beside the value — a button that acts on the row rather than describing it —
+   is a separate thing to reach for, so it stands off further than the gap that merely separates
+   the row's own slots. Row actions are excluded: they are already a cluster of their own. */
+.row__vals + :not(.acts) {
+  margin-left: var(--sp-3);
+}
+/* A foot holding a block rather than a line of facts — a bar and the legend that reads it —
+   takes the whole line and stacks, instead of competing for width with what sits beside it. */
+.row__foot > .stack {
+  flex: 1;
+  min-width: 0;
+  gap: var(--sp-4);
+}
+/* A description row's foot is prose: its lines stack instead of flowing side by side. */
+.row--wrap .row__foot {
+  display: grid;
+  gap: var(--sp-2);
+}
+.logo {
+  width: var(--logo);
+  height: var(--logo);
+  border-radius: var(--r);
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  font-size: var(--fs-meta);
+  font-weight: var(--fw-bold);
+  color: var(--text-2);
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 559px) {
+  .row {
+    gap: var(--sp-4);
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
+  }
+  .row__side {
+    gap: var(--sp-3);
+  }
+}
+
+.tree {
+  display: grid;
+  gap: 1px;
+}
+.tnode {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto auto;
+  min-height: calc(26px + 2 * var(--sp-4));
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-4);
+  border-radius: var(--r-input);
+  cursor: pointer;
+}
+.tnode:hover {
+  background: var(--surface-2);
+}
+.tnode--active {
+  background: var(--accent-soft);
+}
+.tnode--child {
+  padding-left: 26px;
+}
+.tnode--unassigned {
+  color: var(--warn);
+}
+.tnode__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--r-sm);
+  background: var(--slot);
+}
+.tnode__name {
+  font-size: var(--fs-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  gap: var(--sp-3);
+}
+.tnode__w {
+  font-size: var(--fs-sm);
+  color: var(--text);
+  min-width: 56px;
+  text-align: right;
+}
+.tnode--unassigned .tnode__w {
+  color: var(--warn);
+}
+.tnode__tools {
+  display: none;
+  gap: var(--sp-1);
+}
+
+.bd {
+  display: grid;
+  gap: var(--sp-6);
+  grid-template-columns: minmax(0, 1fr);
+}
+.bd__side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.bd__side .panel__head {
+  min-height: 26px;
+}
+.bd__side .panel__note {
+  min-height: calc(3 * 1.45em);
+}
+.bd__side .tree {
+  flex: 1 1 0;
+  min-height: 120px;
+  overflow-y: auto;
+  align-content: start;
+}
+.bd__total {
+  border-top: 1px solid var(--border);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+}
+
+@media (min-width: 1000px) {
+  .bd {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .bd {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+.colpick label > span {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.linkrow {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.linkrow:hover .nm,
+.linkrow:focus-visible .nm {
+  text-decoration: underline;
+}
+/* An instrument cell is a button now, and a button must not flatten the row it wraps. */
+.linkrow.instr {
+  display: flex;
+}
+
+.group-label {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: var(--sp-5) 0 var(--sp-2);
+}
+.group-label:first-child {
+  margin-top: 0;
+}
+
+.colpick {
+  display: grid;
+  gap: var(--sp-1);
+}
+.colpick label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-input);
+  cursor: pointer;
+  font-size: var(--fs-base);
+}
+.acc {
+  margin-top: var(--sp-4);
+  display: grid;
+  gap: var(--sp-2);
+  align-content: start;
+}
+.acc__group {
+  border: 1px solid var(--border);
+  border-radius: var(--r-input);
+  overflow: hidden;
+}
+.acc__head {
+  display: grid;
+  grid-template-columns: 14px var(--dot) minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+  align-items: center;
+  width: 100%;
+  padding: var(--sp-4);
+  background: var(--surface-2);
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  font-size: var(--fs-base);
+  text-align: left;
+}
+.acc__head:hover {
+  background: var(--surface-3);
+}
+.acc__caret {
+  color: var(--text-3);
+  transition: transform var(--dur) var(--ease);
+}
+.acc__caret--on {
+  transform: rotate(90deg);
+}
+.acc__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.acc__meta {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+.acc__group .colpick {
+  padding: var(--sp-3);
+}
+.acc__head--field {
+  grid-template-columns: 14px var(--dot) minmax(0, 1fr) auto auto;
+}
+.acc__head--field:hover {
+  background: var(--surface-2);
+}
+.acc__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.colpick--nest {
+  margin-left: var(--sp-6);
+  padding-left: var(--sp-4);
+  border-left: 1px solid var(--border);
+}
+.acc__leaf,
+.colpick label > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.colpick label:hover {
+  background: var(--surface-2);
+}
+
+/* The chosen columns, in the order they are shown: a handle to drag, and the row it moves. */
+.colpick--order label {
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+}
+.colpick--order label.is-dragging {
+  background: var(--surface-3);
+}
+.colpick__grab {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  cursor: grab;
+  touch-action: none;
+}
+.colpick__grab:active {
+  cursor: grabbing;
+}
+.colpick__reset {
+  margin-top: var(--sp-5);
+  justify-self: start;
+}
+/* A date stacked as day over month over year: the same height at any column width, so a
+   table cell never wraps it into three lines. Also the lead of the payment list. */
+.daymark {
+  display: inline-block;
+  width: 40px;
+  text-align: center;
+}
+.daymark b {
+  display: block;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: 1.1;
+}
+.daymark span {
+  display: block;
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+}

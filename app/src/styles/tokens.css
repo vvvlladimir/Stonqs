@@ -1,0 +1,126 @@
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f5f7;
+  --surface: #fff;
+  --surface-2: #fafafb;
+  --surface-3: #f0f0f3;
+  --border: #e5e5ea;
+  --border-strong: #d2d2d9;
+  --text: #101116;
+  --text-2: #55565f;
+  --text-3: #767783;
+  --ink: #101116;
+  --ink-on: #fff;
+  --accent: #1f68c2;
+  --accent-line: #2a78d6;
+  --accent-soft: rgba(42, 120, 214, 0.1);
+  --accent-softer: rgba(42, 120, 214, 0.05);
+  --pos: #0f7a52;
+  --neg: #c0392e;
+  --warn: #8a6100;
+  --pos-soft: rgba(15, 122, 82, 0.1);
+  --neg-soft: rgba(192, 57, 46, 0.1);
+  --warn-soft: rgba(138, 97, 0, 0.1);
+  --grid: #ededf1;
+  --shadow: 0 1px 2px rgba(16, 17, 22, 0.04), 0 8px 24px rgba(16, 17, 22, 0.06);
+  --shadow-pop: 0 4px 12px rgba(16, 17, 22, 0.08), 0 24px 48px rgba(16, 17, 22, 0.14);
+  /* Keep category slots in this order for CVD-safe charts. */
+  --slot-1: #2a78d6;
+  --slot-2: #eb6834;
+  --slot-3: #1baf7a;
+  --slot-4: #eda100;
+  --slot-5: #e87ba4;
+  --slot-6: #008300;
+  --slot-7: #4a3aa7;
+  --slot-8: #e34948;
+  --cal-icon: none;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e0f12;
+  --surface: #16171b;
+  --surface-2: #1b1c21;
+  --surface-3: #212228;
+  --border: #26272e;
+  --border-strong: #34353d;
+  --text: #f1f1f4;
+  --text-2: #a3a4ae;
+  --text-3: #8b8c96;
+  --ink: #f1f1f4;
+  --ink-on: #0e0f12;
+  --accent: #4a92ea;
+  --accent-line: #3987e5;
+  --accent-soft: rgba(57, 135, 229, 0.16);
+  --accent-softer: rgba(57, 135, 229, 0.07);
+  --pos: #3fbd86;
+  --neg: #ef7a72;
+  --warn: #d8a33a;
+  --pos-soft: rgba(63, 189, 134, 0.14);
+  --neg-soft: rgba(239, 122, 114, 0.14);
+  --warn-soft: rgba(216, 163, 58, 0.14);
+  --grid: #24252b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.55);
+  --slot-1: #3987e5;
+  --slot-2: #d95926;
+  --slot-3: #199e70;
+  --slot-4: #c98500;
+  --slot-5: #d55181;
+  --slot-6: #008300;
+  --slot-7: #9085e9;
+  --slot-8: #e66767;
+  --cal-icon: invert(1);
+}
+:root {
+  --fs-micro: 10.5px;
+  --fs-meta: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-base: 13.5px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --fs-3xl: 26px;
+
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 6px;
+  --sp-4: 8px;
+  --sp-5: 12px;
+  --sp-6: 16px;
+  --sp-7: 20px;
+  --sp-8: 24px;
+  --sp-9: 32px;
+
+  --r-sm: 4px;
+  --r-input: 8px;
+  --r: 10px;
+  --r-lg: 16px;
+  --r-chip: 999px;
+
+  --h-ctl: 34px;
+  --h-ctl-sm: 28px;
+  --h-ctl-xs: 26px;
+  --bar-h: 12px;
+  --bar-h-sm: 6px;
+  --bar-h-xs: 4px;
+  --stroke: 1px;
+  --stroke-thin: 1.4px;
+  --stroke-series: 1.8px;
+
+  --chart-sm: 180px;
+  --chart-md: 240px;
+  --chart-lg: 320px;
+
+  --fw-reg: 400;
+  --fw-med: 520;
+  --fw-bold: 560;
+
+  --dot-sm: 7px;
+  --dot: 10px;
+  --dot-lg: 14px;
+  --logo: 32px;
+  --logo-lg: 42px;
+
+  --dur: 0.18s;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}

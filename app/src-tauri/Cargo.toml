@@ -1,0 +1,33 @@
+[package]
+name = "sq-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Tauri host for sq-core: desktop today, iOS/Android from the same code"
+
+[lib]
+name = "sq_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+sq-core = { path = "../../core" }
+tauri.workspace = true
+tauri-plugin-dialog.workspace = true
+tauri-plugin-notification.workspace = true
+sys-locale.workspace = true
+keyring.workspace = true
+argon2.workspace = true
+chacha20poly1305.workspace = true
+zeroize.workspace = true
+base64.workspace = true
+ureq.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+rust_decimal.workspace = true
+rust_decimal_macros.workspace = true

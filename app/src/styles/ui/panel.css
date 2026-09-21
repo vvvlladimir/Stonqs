@@ -1,0 +1,174 @@
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: var(--sp-6);
+}
+.panel__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-5);
+  flex-wrap: wrap;
+}
+.panel__note {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+/* The note is what gives way when the header runs out of room: it wraps to a second line
+   rather than pushing the actions onto one, and it is what holds them to the right edge. */
+.panel__head > .panel__note {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.panel__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+/* A panel body is a stack: two parts of one answer never touch. */
+.panel__body {
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+}
+
+/* A plot panel is the widget tile's shape on a page: the *block* states the size and the chart
+   fills the whole of what is left of it, exactly as a widget fills the tile it was dragged to.
+   A head of its own height therefore eats into the plot, never into the panel — two panels of a
+   pair stay the same box whatever their notes and controls do. */
+.panel--chart {
+  display: flex;
+  flex-direction: column;
+  height: 300px;
+}
+.panel--chart > .panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  flex: 1;
+  min-height: 0;
+}
+
+.panel--table {
+  padding: var(--sp-6) var(--sp-3) var(--sp-3);
+}
+/* Keep cell padding on the table so edge-to-edge panels do not shift columns. */
+.panel--table .tbl {
+  --cell-x: var(--sp-5);
+}
+.panel--table > .panel__head {
+  padding: 0 var(--sp-4);
+}
+/* Anything above an edge-to-edge table lines up with the table's first column. */
+.panel--table > .panel__body > :not(.scrolly, .tbl, .tbl-wrap) {
+  padding-left: var(--sp-5);
+  padding-right: var(--sp-5);
+}
+
+.violations {
+  display: grid;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-6);
+  padding: var(--sp-5);
+  border: 1px solid color-mix(in srgb, var(--neg) 45%, var(--border));
+  border-radius: var(--r);
+  background: var(--neg-soft);
+  color: var(--neg);
+  font-size: var(--fs-sm);
+}
+
+.legend {
+  display: flex;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.legend i {
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: var(--r-sm);
+  display: inline-block;
+}
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-5);
+  border-radius: var(--r);
+  background: var(--warn-soft);
+  border: 1px solid color-mix(in srgb, var(--warn) 30%, var(--border));
+  font-size: var(--fs-base);
+  color: var(--text);
+}
+.banner .lead {
+  color: var(--warn);
+  font-size: var(--fs-lg);
+  flex: none;
+}
+.banner--info {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.banner--info .lead {
+  color: var(--accent);
+}
+.banner--bad {
+  background: var(--neg-soft);
+  border-color: color-mix(in srgb, var(--neg) 30%, var(--border));
+}
+.banner--bad .lead {
+  color: var(--neg);
+}
+.empty {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r);
+  padding: var(--sp-8) var(--sp-6);
+  text-align: center;
+  color: var(--text-2);
+}
+.empty h3 {
+  margin-bottom: var(--sp-2);
+  color: var(--text);
+}
+.empty p {
+  margin: 0 0 var(--sp-5);
+  font-size: var(--fs-sm);
+  max-width: 46ch;
+  margin-inline: auto;
+}
+.steps {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.panel--bar {
+  padding: var(--sp-5);
+}
+.panel--bar .panel__head {
+  margin: 0;
+}
+
+.panel__body > .panel__note:last-child {
+  margin-top: auto;
+  padding-top: var(--sp-5);
+}
+
+@media (min-width: 700px) {
+  /* Where there is room the actions read as one strip, never as two rows of buttons. */
+  .panel__tools {
+    flex-wrap: nowrap;
+  }
+  .panel--chart {
+    height: 380px;
+  }
+}

@@ -1,0 +1,26 @@
+# Secret scanning configuration. `gitleaks detect --log-opts="--all"` scans the history,
+# `gitleaks dir .` the working tree; both run in CI.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+[rules.allowlist]
+description = "Cipher and KDF names read as high-entropy strings to the generic rule."
+regexes = [
+  '''XChaCha20-Poly1305''',
+  '''ChaCha20-Poly1305''',
+  '''Argon2id''',
+]
+
+[allowlist]
+description = "Paths that hold no secrets but do hold high-entropy test data."
+paths = [
+  '''^target/''',
+  '''^app/node_modules/''',
+  '''^app/dist/''',
+  '''^local-docs/''',
+  '''^Cargo\.lock$''',
+  '''^app/pnpm-lock\.yaml$''',
+]

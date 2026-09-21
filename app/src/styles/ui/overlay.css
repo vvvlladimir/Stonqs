@@ -1,0 +1,384 @@
+.scope {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: var(--h-ctl);
+  padding: var(--sp-2) var(--sp-5);
+  text-align: left;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-input);
+  background: var(--surface);
+  cursor: pointer;
+  min-width: 0;
+}
+.scope:hover {
+  background: var(--surface-2);
+}
+.scope__icon {
+  font-size: var(--fs-lg);
+  color: var(--text-3);
+}
+.scope__caret {
+  font-size: var(--fs-base);
+  color: var(--text-3);
+}
+.scope__label {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-med);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  line-height: 1.25;
+}
+.scope__sub {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  line-height: 1.25;
+}
+.smenu {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  font-size: var(--fs-sm);
+}
+.crumb {
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-chip);
+  font-size: var(--fs-sm);
+}
+.crumb:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.crumb--now {
+  color: var(--text);
+  font-weight: var(--fw-bold);
+  cursor: default;
+}
+.crumb--now:hover {
+  background: none;
+}
+.crumbs .sep {
+  color: var(--text-3);
+  font-size: var(--fs-meta);
+}
+.menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 190px;
+  padding: var(--sp-2);
+  display: grid;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-pop);
+}
+.menu__item {
+  height: var(--h-ctl-sm);
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.menu__item:hover:not([aria-disabled="true"]),
+.menu__item:focus-visible {
+  background: var(--surface-3);
+  outline: none;
+}
+.menu__item[aria-disabled="true"] {
+  color: var(--text-3);
+  cursor: default;
+}
+.menu__item--danger {
+  color: var(--neg);
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+}
+.menu__item--danger:hover:not([aria-disabled="true"]),
+.menu__item--danger:focus-visible {
+  background: color-mix(in srgb, var(--neg) 10%, transparent);
+}
+
+/* Room for the tick on every item of a menu where one of them is the current choice, so
+   picking another does not shift the list sideways. */
+.menu__tick {
+  display: inline-flex;
+  justify-content: center;
+  width: 14px;
+  margin-inline-end: var(--sp-3);
+  color: var(--accent);
+}
+
+.selbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  background: linear-gradient(var(--accent-soft), var(--accent-soft)), var(--surface);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: var(--r);
+}
+.selbar__n {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-med);
+  color: var(--accent);
+}
+.secpop__top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-5);
+}
+.secpop__top .logo {
+  width: var(--logo-lg);
+  height: var(--logo-lg);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-sm);
+}
+.secpop__t {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+.secpop__v {
+  text-align: right;
+  white-space: nowrap;
+}
+.secpop__v > :first-child {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.022em;
+}
+.secpop__v > :last-child {
+  font-size: var(--fs-sm);
+}
+.secpop__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: var(--sp-5);
+}
+.secpop__grid .metric {
+  background: var(--surface);
+  padding: var(--sp-5);
+}
+
+@media (min-width: 700px) {
+  .secpop__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* The line that stands where the metric tiles would: same height, so a sold-out instrument
+   does not make the card jump once the positions answer. */
+.secpop__none {
+  display: flex;
+  align-items: center;
+  min-height: 72px;
+  margin-bottom: var(--sp-5);
+}
+.secpop__tax {
+  gap: var(--sp-4);
+}
+.modal .panel + .grid-2,
+.modal .grid-2 + .panel {
+  margin-top: var(--sp-5);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(8, 9, 12, 0.44);
+  display: grid;
+  place-items: end center;
+  padding: 0;
+}
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: var(--shadow-pop);
+  width: 100%;
+  max-height: 88dvh;
+  overflow: auto;
+  padding: var(--sp-6) var(--sp-6) var(--sp-8);
+}
+.modal__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-6);
+}
+.modal .tbl thead th {
+  box-shadow:
+    inset 0 -1px 0 var(--border),
+    0 calc(-1 * var(--sp-6)) 0 0 var(--surface);
+}
+.modal__foot {
+  display: flex;
+  gap: var(--sp-4);
+  justify-content: flex-end;
+  margin-top: var(--sp-6);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal {
+    animation: sheet 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes sheet {
+    from {
+      transform: translateY(14px);
+      opacity: 0.6;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  background: var(--ink);
+  color: var(--ink-on);
+  padding: var(--sp-5) var(--sp-6);
+  border-radius: var(--r-chip);
+  box-shadow: var(--shadow-pop);
+  font-size: var(--fs-base);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: rise 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 8px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+}
+
+.tip {
+  position: fixed;
+  z-index: 70;
+  /* A hint, not a panel: it stops growing well before the window does, and the JS clamps the rest. */
+  max-width: min(220px, calc(100vw - 2 * var(--sp-4)));
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--ink-on);
+  font-size: var(--fs-meta);
+  line-height: 1.35;
+  text-wrap: balance;
+  transform: translateX(-50%);
+  pointer-events: none;
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.tip--long {
+  max-width: min(340px, calc(100vw - 2 * var(--sp-4)));
+  white-space: pre-line;
+  text-wrap: pretty;
+}
+.tip b {
+  font-weight: var(--fw-bold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    transition: none;
+  }
+}
+
+[data-tip] {
+  cursor: help;
+}
+
+@media (min-width: 700px) {
+  .backdrop {
+    place-items: center;
+    padding: var(--sp-8);
+  }
+  .modal {
+    max-width: 520px;
+    border-radius: var(--r-lg);
+    padding: var(--sp-7);
+  }
+  .modal--wide {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 1000px) {
+  .toast {
+    bottom: 26px;
+  }
+}
+
+/* The anchor of a heading's explanation: a quiet mark that stays in the heading's line. */
+.infotip {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  color: var(--text-3);
+  font-size: 15px;
+  cursor: help;
+  border-radius: 50%;
+}
+.infotip:hover,
+.infotip:focus-visible {
+  color: var(--text-2);
+}
+.infohead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}

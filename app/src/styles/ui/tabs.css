@@ -1,0 +1,52 @@
+.tabs {
+  display: grid;
+  gap: var(--sp-6);
+  align-content: start;
+  min-width: 0;
+}
+/* A strip, not a wrapping row: the tabs stay on one line and scroll sideways. */
+.tabs__strip {
+  display: flex;
+  gap: var(--sp-3);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.tabs__strip::-webkit-scrollbar {
+  display: none;
+}
+.tabs__tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: var(--h-ctl);
+  padding: 0 var(--sp-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-chip);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease);
+}
+.tabs__tab svg {
+  font-size: var(--fs-lg);
+}
+.tabs__tab:hover {
+  color: var(--text);
+}
+.tabs__tab[aria-current] {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  color: var(--accent);
+  font-weight: var(--fw-med);
+}
+.tabs__pane {
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+  min-width: 0;
+}

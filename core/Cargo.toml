@@ -1,0 +1,36 @@
+[package]
+name = "sq-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Core engine for an investment portfolio tracker: model, storage, quotes, FX, performance math"
+
+[lib]
+name = "sq_core"
+path = "src/lib.rs"
+
+[dependencies]
+rust_decimal.workspace = true
+rust_decimal_macros.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+rusqlite.workspace = true
+csv.workspace = true
+encoding_rs.workspace = true
+chardetng.workspace = true
+quick-xml.workspace = true
+ureq.workspace = true
+
+# SQLCipher needs a crypto library. Apple targets link CommonCrypto; everywhere else OpenSSL is
+# built from source, so Windows, Linux and Android need no system OpenSSL.
+[target.'cfg(not(target_vendor = "apple"))'.dependencies]
+libsqlite3-sys = { version = "0.35", features = ["bundled-sqlcipher-vendored-openssl"] }
+
+# Integration tests are separate crates and cannot see regular dependencies.
+[dev-dependencies]
+rust_decimal.workspace = true
+rust_decimal_macros.workspace = true
+chrono.workspace = true

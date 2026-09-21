@@ -1,0 +1,128 @@
+.dot {
+  width: var(--dot-sm);
+  height: var(--dot-sm);
+  border-radius: 50%;
+  background: currentcolor;
+  flex: none;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.pill:hover {
+  background: var(--surface-3);
+}
+/* Palette-slot square. Inside a pill it shrinks to the text it labels. */
+.sw {
+  display: inline-block;
+  width: var(--dot);
+  height: var(--dot);
+  flex: none;
+  align-self: center;
+  border-radius: var(--r-sm);
+  background: var(--slot, var(--slot-1));
+}
+.pill .sw {
+  width: var(--dot-sm);
+  height: var(--dot-sm);
+}
+.pill--empty {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--border));
+  background: var(--warn-soft);
+}
+.tag {
+  display: inline-block;
+  padding: 1px var(--sp-3);
+  border-radius: var(--r-chip);
+  background: var(--surface-3);
+  font-size: var(--fs-micro);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.tag--warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 30%, var(--border));
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--r-chip);
+  font-size: var(--fs-meta);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.badge--in {
+  color: var(--pos);
+  border-color: color-mix(in srgb, var(--pos) 32%, var(--border));
+  background: var(--pos-soft);
+}
+.badge--out {
+  color: var(--neg);
+  border-color: color-mix(in srgb, var(--neg) 32%, var(--border));
+  background: var(--neg-soft);
+}
+.badge--warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 32%, var(--border));
+  background: var(--warn-soft);
+}
+.badge--info {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  background: var(--accent-soft);
+}
+
+.swatch {
+  display: inline-block;
+  width: var(--dot);
+  height: var(--dot);
+  margin-right: var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--slot, var(--slot-1));
+  vertical-align: baseline;
+}
+.tab-dot {
+  display: inline-block;
+  width: var(--dot-sm);
+  height: var(--dot-sm);
+  border-radius: 50%;
+  background: var(--warn);
+  margin-left: var(--sp-3);
+}
+.swatches {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.swatches .swatch {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-input);
+  cursor: pointer;
+  padding: 0;
+}
+.swatches .swatch[aria-pressed="true"] {
+  border-color: var(--text-1);
+}
+
+.pill--flat {
+  cursor: default;
+  pointer-events: none;
+}

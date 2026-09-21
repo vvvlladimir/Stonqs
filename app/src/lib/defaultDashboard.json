@@ -1,0 +1,140 @@
+{
+  "kind": "stonqs.dashboard",
+  "version": 3,
+  "dashboard": {
+    "id": "d-mu1of2l9-1",
+    "name": "Main",
+    "widgets": [
+      {
+        "id": "w-mu1of2l9-2",
+        "type": "metric",
+        "w": 3,
+        "h": 4,
+        "cfg": {
+          "metric": "value"
+        }
+      },
+      {
+        "id": "w-mu1of2l9-3",
+        "type": "metric",
+        "w": 3,
+        "h": 4,
+        "cfg": {
+          "metric": "day"
+        }
+      },
+      {
+        "id": "w-mu1of2l9-4",
+        "type": "metric",
+        "w": 3,
+        "h": 4,
+        "cfg": {
+          "metric": "twr"
+        }
+      },
+      {
+        "id": "w-mu1of2l9-5",
+        "type": "metric",
+        "w": 3,
+        "h": 4,
+        "cfg": {
+          "metric": "delta"
+        }
+      },
+      {
+        "id": "w-mu1of2l9-6",
+        "type": "chart",
+        "w": 12,
+        "h": 11,
+        "cfg": {}
+      },
+      {
+        "id": "w-mu1of2l9-7",
+        "type": "heading",
+        "w": 12,
+        "h": 2,
+        "cfg": {
+          "title": "What it is made of"
+        }
+      },
+      {
+        "id": "w-mu1of2l9-8",
+        "type": "allocation",
+        "w": 6,
+        "h": 20,
+        "cfg": {}
+      },
+      {
+        "id": "w-mu1of2l9-9",
+        "type": "positions",
+        "w": 6,
+        "h": 20,
+        "cfg": {
+          "count": 8
+        }
+      },
+      {
+        "id": "w-mu1of2l9-a",
+        "type": "heading",
+        "w": 12,
+        "h": 2,
+        "cfg": {
+          "title": "Where the result came from"
+        }
+      },
+      {
+        "id": "w-mu1of2l9-b",
+        "type": "returns",
+        "w": 12,
+        "h": 6,
+        "cfg": {}
+      },
+      {
+        "id": "w-mu1of2l9-c",
+        "type": "bench",
+        "w": 6,
+        "h": 12,
+        "cfg": {}
+      },
+      {
+        "id": "w-mu1of2l9-d",
+        "type": "contribution",
+        "w": 6,
+        "h": 12,
+        "cfg": {
+          "count": 6
+        }
+      },
+      {
+        "id": "w-mu1of2l9-e",
+        "type": "heading",
+        "w": 12,
+        "h": 2,
+        "cfg": {
+          "title": "Risk and cash"
+        }
+      },
+      {
+        "id": "w-mu1of2l9-f",
+        "type": "drawdown",
+        "w": 12,
+        "h": 8,
+        "cfg": {}
+      },
+      {
+        "id": "w-mu1of2l9-g",
+        "type": "risk",
+        "w": 6,
+        "h": 8,
+        "cfg": {}
+      },
+      {
+        "id": "w-mu1of2l9-h",
+        "type": "cash",
+        "w": 6,
+        "h": 8,
+        "cfg": {}
+      }
+    ]
+  }
+}

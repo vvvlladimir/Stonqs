@@ -1,0 +1,678 @@
+/* The AI panel: full-screen on a narrow screen (mobile-first, `ui-boundary.md`), a docked
+   sidebar from 700px up — the same breakpoint every other panel switches on.
+
+   It wears the app's tokens throughout and adds one thing of its own: the accent mark and the
+   wash behind the header, so the panel reads as the assistant rather than as one more drawer.
+   Nothing here is a tooltip — a conversation explains itself. */
+
+.ai-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(8, 9, 12, 0.3);
+}
+.ai-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  /* Where the panel comes in from: up on a phone, in from the right where it is docked. One
+     keyframe reads these, so the two layouts do not need two animations. */
+  --ai-from-x: 0;
+  --ai-from-y: 12px;
+}
+/* A wash of the accent behind the top of the panel. Painted on the panel itself so it sits
+   under the header and the first messages and fades out well before the input. */
+.ai-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 180px;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--accent-softer), transparent);
+}
+/* Only a side panel has an edge to drag: full-screen, there is nothing to resize against. */
+.ai-panel__grip {
+  display: none;
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10px;
+  margin-inline-start: -5px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 2;
+}
+.ai-panel__grip::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 2px;
+  background: transparent;
+  transition: background var(--dur) var(--ease);
+}
+.ai-panel__grip:hover::after {
+  background: var(--accent);
+}
+
+/* Header ------------------------------------------------------------------------------- */
+
+.ai-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+.ai-head__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.ai-head__title {
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ai-head__sub {
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The assistant's mark: the one place the panel paints with the accent rather than borrowing
+   a surface, so the sparkle is recognisably this feature and not a generic icon button. */
+.ai-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--h-ctl-sm);
+  height: var(--h-ctl-sm);
+  border-radius: var(--r-input);
+  background: linear-gradient(
+    140deg,
+    var(--accent-line),
+    color-mix(in srgb, var(--slot-7) 70%, var(--accent))
+  );
+  color: #fff;
+  font-size: var(--fs-lg);
+}
+.ai-mark--big {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-lg);
+  font-size: var(--fs-2xl);
+  box-shadow: 0 8px 24px var(--accent-soft);
+}
+
+/* Body --------------------------------------------------------------------------------- */
+
+.ai-body {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+.ai-body--list {
+  gap: var(--sp-4);
+  /* Room for the floating button, so the last chat in the list is never under it. */
+  padding-bottom: calc(46px + var(--sp-8));
+}
+.ai-chats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+/* Starting a chat is the one action of this screen, so it floats over the list instead of
+   heading it: it stays reachable however far the history is scrolled, and the rows above it
+   keep the full width. */
+.ai-fab {
+  position: absolute;
+  inset: auto var(--sp-6) var(--sp-6) auto;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--accent);
+  color: var(--ink-on);
+  font-size: var(--fs-xl);
+  box-shadow: var(--shadow-pop);
+  cursor: pointer;
+}
+.ai-fab:hover:not(:disabled) {
+  background: var(--accent-line);
+}
+.ai-fab:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.ai-fab:disabled {
+  background: var(--surface-3);
+  color: var(--text-3);
+  box-shadow: none;
+  cursor: default;
+}
+
+/* What was said ------------------------------------------------------------------------ */
+
+.ai-said {
+  font-size: var(--fs-base);
+  line-height: 1.5;
+}
+/* The user's words sit in a bubble; the model's do not — an answer is the page, not a quote
+   on it, and boxing a long reply only narrows what is already dense with figures. */
+.ai-said--user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-lg);
+  background: var(--accent);
+  color: var(--ink-on);
+}
+.ai-said--user .md code {
+  background: rgba(255, 255, 255, 0.18);
+}
+.ai-said--model {
+  align-self: stretch;
+  color: var(--text);
+}
+/* A caret on the last line while tokens are still arriving: the panel is writing, not stalled. */
+.ai-said--streaming .md > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-inline-start: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+}
+
+/* Steps: what the assistant did before answering --------------------------------------- */
+
+.ai-steps {
+  align-self: stretch;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.ai-steps__fold,
+.ai-step__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: none;
+  border: 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  text-align: start;
+  cursor: pointer;
+}
+.ai-steps__fold {
+  font-weight: var(--fw-med);
+}
+.ai-steps__fold > span {
+  flex: 1;
+  min-width: 0;
+}
+.ai-step + .ai-step {
+  border-top: 1px solid var(--border);
+}
+.ai-steps__fold:hover,
+.ai-step__head:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+.ai-step__head:disabled {
+  cursor: default;
+}
+.ai-step__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+.ai-step__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-caret {
+  flex: none;
+  color: var(--text-3);
+  transition: transform var(--dur) var(--ease);
+}
+.ai-caret--on {
+  transform: rotate(180deg);
+}
+.ai-step__detail {
+  padding: 0 var(--sp-4) var(--sp-4) calc(var(--sp-4) + 20px + var(--sp-3));
+}
+.ai-step__detail pre {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-micro);
+  max-height: 260px;
+  overflow-y: auto;
+}
+/* The reasoning summary is prose, not a payload: it reads at the panel's own size, dimmed
+   because it is background to the answer above it. */
+.ai-step__detail .md {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.ai-step--busy .ai-step__icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ai-step--busy .ai-step__title {
+  color: var(--text-3);
+}
+/* The model's own words on a card whose facts are the app's: quoted, dimmed and smaller, so it
+   reads as an intention beside the values rather than as a statement of what will happen. */
+.ai-why {
+  margin: calc(var(--sp-1) * -1) var(--sp-4) var(--sp-3) calc(var(--sp-4) + 20px + var(--sp-3));
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  font-style: italic;
+}
+
+/* Consent ------------------------------------------------------------------------------ */
+
+.ai-ask {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: var(--r);
+  background: var(--accent-softer);
+}
+/* A change is not a reading: the card that asks for one says so before it is read. */
+.ai-ask--write {
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--border));
+  background: var(--warn-soft);
+}
+.ai-ask__head {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+}
+.ai-ask__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-chip);
+  background: var(--accent);
+  color: var(--ink-on);
+  font-size: var(--fs-sm);
+}
+.ai-ask--write .ai-ask__icon {
+  background: var(--warn);
+}
+.ai-ask .ai-why {
+  margin: calc(var(--sp-3) * -1) 0 0;
+}
+.ai-ask__values {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  font-size: var(--fs-sm);
+}
+.ai-ask__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.ai-granted {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0;
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+}
+
+/* An empty chat ------------------------------------------------------------------------ */
+
+.ai-opener {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  text-align: center;
+  padding: var(--sp-6) 0;
+}
+.ai-opener h3 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+.ai-opener p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: var(--fs-sm);
+}
+.ai-opener__asks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-top: var(--sp-3);
+}
+.ai-ask-chip {
+  padding: var(--sp-3) var(--sp-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-input);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  text-align: start;
+  cursor: pointer;
+}
+.ai-ask-chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: var(--accent-softer);
+  color: var(--text);
+}
+
+/* Composer ----------------------------------------------------------------------------- */
+
+.ai-compose {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.ai-input {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.ai-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-softer);
+}
+.ai-input textarea {
+  flex: 1;
+  min-height: var(--h-ctl-sm);
+  max-height: 140px;
+  padding: var(--sp-2) 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-base);
+  line-height: 1.45;
+  resize: none;
+  outline: none;
+}
+.ai-send {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--h-ctl-sm);
+  height: var(--h-ctl-sm);
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--accent);
+  color: var(--ink-on);
+  font-size: var(--fs-base);
+  cursor: pointer;
+}
+.ai-send:disabled {
+  background: var(--surface-3);
+  color: var(--text-3);
+  cursor: default;
+}
+.ai-send--stop {
+  background: var(--neg);
+}
+.ai-send:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+/* Footer controls ---------------------------------------------------------------------- */
+
+.ai-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ai-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 11rem;
+  height: var(--h-ctl-xs);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--text-2);
+  font-size: var(--fs-micro);
+  cursor: pointer;
+}
+.ai-pill:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.ai-pill--on {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-softer);
+  color: var(--accent);
+}
+.ai-pill__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-pill__caret {
+  flex: none;
+  opacity: 0.6;
+}
+/* Sits in the footer beside the pickers and gives way first: the count is the least important
+   thing there, and a long model name must not push it onto a line of its own. */
+.ai-usage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-inline-start: auto;
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+/* Waiting ------------------------------------------------------------------------------ */
+
+.ai-dots {
+  align-self: flex-start;
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0;
+}
+.ai-dots span {
+  width: var(--dot-sm);
+  height: var(--dot-sm);
+  border-radius: var(--r-chip);
+  background: var(--text-3);
+}
+
+@media (min-width: 700px) {
+  .ai-panel {
+    inset: 0 0 0 auto;
+    /* The stored width, bounded here too so a blob from another machine with a wider screen
+       cannot leave the app with no room beside the panel. */
+    width: clamp(320px, var(--ai-panel-w, 420px), min(900px, 90vw));
+    border-left: 1px solid var(--border);
+    --ai-from-x: 16px;
+    --ai-from-y: 0;
+  }
+  .ai-panel__grip {
+    display: block;
+  }
+}
+
+/* Motion, guarded like every other animation in the app: without it everything below simply
+   appears where it belongs. */
+@media (prefers-reduced-motion: no-preference) {
+  .ai-backdrop {
+    animation: ai-fade var(--dur) var(--ease);
+  }
+  .ai-panel {
+    animation: ai-rise 0.24s var(--ease);
+  }
+  .ai-said,
+  .ai-steps,
+  .ai-ask,
+  .ai-dots {
+    animation: ai-enter 0.22s var(--ease);
+  }
+  .ai-opener {
+    animation: ai-enter 0.3s var(--ease);
+  }
+  .ai-fab {
+    animation: ai-pop 0.26s var(--ease);
+  }
+  .ai-ask-chip,
+  .ai-fab,
+  .ai-pill,
+  .ai-send,
+  .ai-steps__fold,
+  .ai-step__head {
+    transition:
+      background-color var(--dur) var(--ease),
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease),
+      transform var(--dur) var(--ease);
+  }
+  .ai-said--streaming .md > :last-child::after {
+    animation: ai-blink 1s steps(2, start) infinite;
+  }
+  .ai-mark--big {
+    animation: ai-breathe 4s ease-in-out infinite;
+  }
+  /* A reading in progress pulses rather than spins twice: the spinner in its icon already
+     turns, and two motions in one row read as an error. */
+  .ai-step--busy .ai-step__title {
+    animation: ai-dim 1.4s ease-in-out infinite;
+  }
+  .ai-dots span {
+    animation: ai-bounce 1.2s ease-in-out infinite;
+  }
+  .ai-dots span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .ai-dots span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes ai-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes ai-rise {
+    from {
+      opacity: 0;
+      transform: translate(var(--ai-from-x), var(--ai-from-y));
+    }
+  }
+  @keyframes ai-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes ai-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  }
+  @keyframes ai-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes ai-breathe {
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+  @keyframes ai-dim {
+    50% {
+      opacity: 0.55;
+    }
+  }
+  @keyframes ai-bounce {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    30% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
+  }
+}

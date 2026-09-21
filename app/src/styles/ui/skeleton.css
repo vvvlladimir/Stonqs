@@ -1,0 +1,38 @@
+/* A placeholder the size of the value it waits for. Everything that loads late reserves its
+   space with one of these, so a card is laid out once instead of settling into place. */
+.skel {
+  display: block;
+  width: 100%;
+  height: 1.1rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+}
+
+.skel-rows {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* A placeholder inside a line of text keeps that line's height. */
+.facts .skel,
+.row__sub .skel,
+.metric__v .skel,
+.secpop__v .skel {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skel {
+    animation: skel-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes skel-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+}

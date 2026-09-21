@@ -1,0 +1,311 @@
+.is-editing-tax .tnode {
+  grid-template-columns: 14px minmax(0, 1fr) auto auto auto;
+}
+.is-editing-tax .tnode__tools {
+  display: inline-flex;
+}
+
+/* Two columns on a phone, six on a tablet, twelve on a desktop. A widget stores one width in
+   twelfths and the board scales it — see `screens/dashboard/grid.ts`. */
+.wgrid.is-moving,
+.wgrid.is-moving * {
+  user-select: none;
+}
+.wgrid {
+  --w-row: 23px;
+  /* Named because a tile's empty rows above it are paid in rows *and* gaps (`placement`). */
+  --w-gap: var(--sp-5);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: var(--w-row);
+  gap: var(--w-gap);
+}
+.w {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: var(--sp-5);
+  min-width: 0;
+  /* A tile is its row span tall, so its own content scrolls rather than pushing the grid. */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+/* A column, so a plot told to fill takes the room the notes above it leave rather than the
+   whole body. Everything a widget renders is a child of this box. */
+.w__body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+/* The summary tile: the text takes the room the tile has, the footer stays under it. */
+.brief {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-height: 0;
+}
+.brief > :first-child {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.brief__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.w--plain {
+  background: none;
+  border-color: transparent;
+  padding: 0 var(--sp-1);
+  justify-content: center;
+}
+.w--plain .w__head {
+  margin-bottom: 0;
+}
+.w__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+  /* Tall enough for the edit-mode tools, always: the header reserving their room is what keeps
+     a widget's body the same height whether the board is being edited or not. */
+  min-height: 26px;
+}
+.w__head--grab {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+/* The handle reaches into the tile's padding, so the whole top strip is grabbable — every
+   negative margin is paid back by equal padding, which leaves the box where it was. A plain
+   tile has no vertical padding to reach into, so it keeps its own header. */
+.w:not(.w--plain) .w__head--grab {
+  margin: calc(var(--sp-5) * -1) calc(var(--sp-5) * -1) 0;
+  padding: var(--sp-5);
+}
+.w__head--grab:active {
+  cursor: grabbing;
+}
+.w__head h2 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-base);
+}
+.w__meta {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: nowrap;
+  margin-left: auto;
+}
+.w__tools {
+  display: none;
+  gap: var(--sp-1);
+  margin-left: auto;
+}
+.w__grip {
+  display: none;
+  color: var(--text-3);
+  cursor: grab;
+  font-size: var(--fs-lg);
+}
+.w__foot {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  margin-top: var(--sp-3);
+}
+.wbtn {
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--r-input);
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: var(--fs-base);
+}
+.wbtn:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.wbtn--danger:hover {
+  color: var(--neg);
+  border-color: color-mix(in srgb, var(--neg) 35%, var(--border));
+}
+.is-editing .w {
+  border-style: dashed;
+  border-color: var(--border-strong);
+}
+/* While editing a tile is arranged, not read: a press that misses a handle by a pixel must not
+   start selecting the widget's text instead. */
+.is-editing .w__body {
+  user-select: none;
+}
+.is-editing .w__tools,
+.is-editing .w__grip {
+  display: inline-flex;
+}
+.is-editing .w__meta {
+  display: none;
+}
+.is-editing .w--plain {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+/* The dragged tile leaves the flow and follows the pointer; the hole it left is what reorders,
+   so the landing place is visible before the drop. It must not be hit-testable — the board asks
+   what is under the cursor, and the answer may not be the tile riding on it. */
+.w.is-drag {
+  z-index: 30;
+  pointer-events: none;
+  cursor: grabbing;
+  border-style: solid;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-pop);
+  will-change: transform;
+}
+.wslot {
+  border: 1px dashed var(--accent);
+  border-radius: var(--r);
+  background: var(--accent-softer);
+  min-width: 0;
+  min-height: 0;
+}
+/* While a gesture runs the tiles are boxes, not widgets: a chart that tracks the pointer would
+   otherwise recompute a hover on every move of a drag that is not about it. */
+.wgrid.is-moving .w__body {
+  pointer-events: none;
+}
+/* Every edge and every corner is a handle, wide enough for a finger, drawn only while
+   editing. The edge under the pointer is the one that moves; the opposite one stays. */
+.wgrab {
+  position: absolute;
+  display: none;
+  touch-action: none;
+  user-select: none;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+.is-editing .wgrab {
+  display: block;
+}
+.wgrab--n,
+.wgrab--s {
+  left: 14px;
+  right: 14px;
+  height: 12px;
+  cursor: ns-resize;
+}
+.wgrab--n {
+  top: -6px;
+}
+.wgrab--s {
+  bottom: -6px;
+}
+.wgrab--w,
+.wgrab--e {
+  top: 14px;
+  bottom: 14px;
+  width: 12px;
+  cursor: ew-resize;
+}
+.wgrab--w {
+  left: -6px;
+}
+.wgrab--e {
+  right: -6px;
+}
+.wgrab--nw,
+.wgrab--ne,
+.wgrab--sw,
+.wgrab--se {
+  width: 18px;
+  height: 18px;
+}
+.wgrab--nw {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+.wgrab--ne {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+.wgrab--sw {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+.wgrab--se {
+  right: -3px;
+  bottom: -3px;
+  cursor: nwse-resize;
+  border-radius: var(--r-input);
+}
+/* Only the corner that is also the keyboard control is drawn; the rest are felt, not seen. */
+.wgrab--se::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--border-strong);
+  border-bottom: 2px solid var(--border-strong);
+}
+.wgrab--se:hover::after,
+.wgrab--se:focus-visible::after {
+  border-color: var(--accent);
+}
+.wgrab:hover {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: var(--r-input);
+}
+
+.wadd {
+  display: none;
+  grid-column: 1 / -1;
+  grid-row: span 3;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  min-height: 0;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r);
+  background: none;
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: var(--fs-base);
+}
+.wadd:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.is-editing .wadd {
+  display: flex;
+}
+
+@media (min-width: 700px) {
+  .wgrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .wgrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}

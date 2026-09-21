@@ -1,0 +1,205 @@
+use super::*;
+
+/// Risk statistics use numbers; monetary values remain strings.
+#[test]
+fn risk_metrics_cross_as_numbers_not_strings() {
+    use sq_core::calc::{Drawdown, RiskMetrics};
+
+    let json = serde_json::to_value(RiskMetrics {
+        days: 120,
+        volatility: 0.183,
+        semi_deviation: 0.121,
+        max_drawdown: Some(Drawdown {
+            peak: chrono::NaiveDate::from_ymd_opt(2024, 7, 1).unwrap(),
+            trough: chrono::NaiveDate::from_ymd_opt(2024, 8, 5).unwrap(),
+            recovered: None,
+            depth: -0.12,
+        }),
+        max_drawdown_days: Some(35),
+        longest_drawdown: None,
+        longest_drawdown_days: None,
+        current_drawdown: -0.04,
+        current_drawdown_since: Some(chrono::NaiveDate::from_ymd_opt(2024, 7, 1).unwrap()),
+        sharpe: Some(0.74),
+        annualized_return: 0.17,
+        best_day: Some((chrono::NaiveDate::from_ymd_opt(2024, 7, 3).unwrap(), 0.021)),
+        worst_day: None,
+        positive_days_share: 0.54,
+    })
+    .unwrap();
+
+    assert!(json["volatility"].is_number());
+    assert!(json["max_drawdown"]["depth"].is_number());
+    assert_eq!(json["max_drawdown"]["recovered"], Value::Null);
+    // Durations are day counts, not dates; the standing drawdown is a plain number.
+    assert!(json["max_drawdown_days"].is_number());
+    assert!(json["current_drawdown"].is_number());
+    assert_eq!(json["current_drawdown_since"], Value::String("2024-07-01".into()));
+    // Tuples serialize as `[string, number]`.
+    assert!(json["best_day"].is_array());
+    assert_eq!(json["best_day"][0], Value::String("2024-07-03".into()));
+    assert!(json["best_day"][1].is_number());
+}
+
+/// Risk series use numeric statistics and string growth values.
+#[test]
+fn risk_and_growth_series_keep_their_two_conventions() {
+    use sq_core::calc::{GrowthSeries, StatSeries};
+
+    let mut stat = StatSeries::default();
+    stat.push(chrono::NaiveDate::from_ymd_opt(2024, 6, 4).unwrap(), 0.0123);
+    let stat: Value = serde_json::to_value(stat).unwrap();
+    assert_eq!(keys(&stat), ["dates", "values"]);
+    assert!(stat["values"][0].is_number());
+    assert_eq!(stat["dates"][0], "2024-06-04");
+
+    let mut growth = GrowthSeries::default();
+    growth.push(chrono::NaiveDate::from_ymd_opt(2024, 6, 4).unwrap(), dec!(1.0123));
+    let growth: Value = serde_json::to_value(growth).unwrap();
+    assert_eq!(keys(&growth), ["dates", "values"]);
+    assert_eq!(growth["values"][0], "1.0123");
+}
+
+/// Risk report is returned as one screen-level object.
+#[test]
+fn risk_report_keys_match_the_typescript_types() {
+    use rust_decimal::Decimal;
+    use sq_core::calc::ValueSeries;
+    use sq_core::calc::{RiskReport, risk_report};
+
+    let d = |day: u32| chrono::NaiveDate::from_ymd_opt(2024, 6, day).unwrap();
+    let series = ValueSeries {
+        base_currency: "EUR".into(),
+        dates: vec![d(3), d(4), d(5)],
+        total_value_base: vec![dec!(100), dec!(110), dec!(99)],
+        external_flow_base: vec![Decimal::ZERO, Decimal::ZERO, Decimal::ZERO],
+    };
+    let report: RiskReport = risk_report(&series, 0.02, 2);
+    let json: Value = serde_json::to_value(report).unwrap();
+
+    assert_eq!(
+        keys(&json),
+        [
+            "drawdown",
+            "episodes",
+            "metrics",
+            "returns",
+            "rolling_volatility",
+            "window_days",
+        ]
+    );
+    assert_eq!(
+        keys(&json["episodes"][0]),
+        ["depth", "peak", "recovered", "trough"]
+    );
+    assert!(json["metrics"]["volatility"].is_number());
+}
+
+/// Performance data keeps the value series and derived returns together.
+#[test]
+fn performance_payload_carries_the_curve_and_the_period_returns() {
+    use rust_decimal::Decimal;
+    use sq_app_lib::commands::performance::PerformanceData;
+    use sq_core::calc::{
+        ChargeSummary, GrowthSeries, Peak, PeriodReturn, PeriodSummary, TradingVolume, ValueSeries,
+    };
+
+    let d = |day: u32| chrono::NaiveDate::from_ymd_opt(2024, 6, day).unwrap();
+    let data = PerformanceData {
+        from: "2024-06-03".into(),
+        to: "2024-06-05".into(),
+        base_currency: "EUR".into(),
+        twr: dec!(-0.01),
+        twr_annualized: Some(dec!(-0.7770)),
+        xirr: None,
+        summary: PeriodSummary {
+            start_value_base: dec!(100),
+            end_value_base: dec!(99),
+            net_flow_base: Decimal::ZERO,
+            absolute_change_base: dec!(-1),
+            delta_base: dec!(-1),
+            invested_capital_base: dec!(100),
+            average_capital_base: dec!(100),
+        },
+        costs: ChargeSummary {
+            count: 1,
+            fees_base: dec!(0.92),
+            taxes_base: Decimal::ZERO,
+        },
+        fee_rate: Some(dec!(0.0092)),
+        tax_rate: Some(Decimal::ZERO),
+        volume: TradingVolume {
+            bought_base: dec!(500),
+            sold_base: dec!(200),
+            volume_base: dec!(700),
+            trades: 2,
+        },
+        turnover_rate: Some(dec!(7)),
+        peak: Some(Peak {
+            date: d(3),
+            value: dec!(100),
+            current: dec!(99),
+            distance: Some(dec!(-0.01)),
+            days_since: 2,
+        }),
+        series: ValueSeries {
+            base_currency: "EUR".into(),
+            dates: vec![d(3)],
+            total_value_base: vec![dec!(100)],
+            external_flow_base: vec![Decimal::ZERO],
+        },
+        growth: GrowthSeries {
+            dates: vec![d(3)],
+            values: vec![Decimal::ONE],
+        },
+        monthly_returns: vec![PeriodReturn {
+            from: d(1),
+            to: d(30),
+            twr: dec!(-0.01),
+        }],
+        annual_returns: Vec::new(),
+    };
+    let json: Value = serde_json::to_value(data).unwrap();
+
+    assert_eq!(
+        keys(&json),
+        [
+            "annual_returns",
+            "base_currency",
+            "costs",
+            "fee_rate",
+            "from",
+            "growth",
+            "monthly_returns",
+            "peak",
+            "series",
+            "summary",
+            "tax_rate",
+            "to",
+            "turnover_rate",
+            "twr",
+            "twr_annualized",
+            "volume",
+            "xirr",
+        ]
+    );
+    assert_eq!(
+        keys(&json["summary"]),
+        [
+            "absolute_change_base",
+            "average_capital_base",
+            "delta_base",
+            "end_value_base",
+            "invested_capital_base",
+            "net_flow_base",
+            "start_value_base",
+        ]
+    );
+    // Money stays a string; a count is a number.
+    assert!(json["summary"]["delta_base"].is_string());
+    assert!(json["costs"]["fees_base"].is_string());
+    assert!(json["costs"]["count"].is_number());
+    assert_eq!(keys(&json["monthly_returns"][0]), ["from", "to", "twr"]);
+    // Period returns are strings because they participate in decimal chaining.
+    assert!(json["monthly_returns"][0]["twr"].is_string());
+}

@@ -1,0 +1,3 @@
+# The default width (100) breaks multi-argument signatures across five lines;
+# 110 keeps them together and remains readable.
+max_width = 110

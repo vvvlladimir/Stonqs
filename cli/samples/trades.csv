@@ -1,0 +1,8 @@
+Datum;Typ;Symbol;Stück;Kurs;Gebühr;Steuer;Währung;Betrag;Bemerkung
+05.06.2024;Kauf;AAPL;5;195,00;1,00;0,00;USD;975,00;Erstkauf
+12.08.2024;Kauf;IWDA;10;90,00;1,00;0,00;EUR;900,00;Sparplan
+15.08.2024;Dividende;AAPL;10;1,25;0,00;1,88;USD;12,50;Quartalsdividende
+02.09.2024;Einzahlung;;;;;;EUR;500,00;Überweisung
+03.09.2024;Kauf;SAP;4;190,00;1,00;0,00;EUR;760,00;Neue Position
+04.11.2024;Verkauf;AAPL;4;222,00;1,00;0,00;USD;888,00;Teilverkauf
+10.11.2024;Umbuchung;IWDA;2;95,00;0,00;0,00;EUR;190,00;Übertrag von anderem Broker

@@ -1,0 +1,108 @@
+.cal {
+  display: grid;
+  grid-template-columns: 30px repeat(12, minmax(0, 1fr)) 62px;
+  gap: var(--sp-1);
+}
+/* The heatmap fills the tile it is in: the month heads keep their line and every year row
+   shares what is left, never less than a cell. */
+.cal--fill {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: auto;
+  grid-auto-rows: minmax(34px, 1fr);
+}
+.cal__c {
+  aspect-ratio: auto;
+  min-height: 34px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: var(--surface-3);
+}
+.cal__c[data-tip] {
+  cursor: pointer;
+}
+.cal__c:hover {
+  border-color: var(--text-2);
+}
+.cal__h,
+.cal__y {
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+  display: grid;
+  place-items: center;
+}
+.cal__v {
+  font-size: var(--fs-micro);
+  font-family: "Geist Mono Variable", ui-monospace, monospace;
+  color: var(--text);
+  opacity: 0.78;
+}
+.cal__t {
+  font-size: var(--fs-meta);
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+  font-family: "Geist Mono Variable", ui-monospace, monospace;
+}
+/* Full calendar: month names, room for the amount, cells pickable. */
+.cal--full {
+  grid-template-columns: 34px repeat(12, minmax(0, 1fr)) 76px;
+  gap: var(--sp-2);
+}
+.cal--full .cal__c {
+  min-height: 52px;
+}
+.cal--full .cal__v {
+  font-size: var(--fs-sm);
+  opacity: 1;
+}
+button.cal__c {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.cal__c[aria-pressed="true"] {
+  border-color: var(--text);
+  box-shadow: 0 0 0 1px var(--text);
+}
+.cal__f {
+  font-size: var(--fs-micro);
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  padding-top: var(--sp-2);
+}
+.monthnav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.monthnav__t {
+  min-width: 9ch;
+}
+.monthnav .iconbtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cashline {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+}
+.cashline__field {
+  width: 170px;
+}
+.cashline__after {
+  display: grid;
+  gap: var(--sp-1);
+  text-align: right;
+}
+.cashline__after b {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+}

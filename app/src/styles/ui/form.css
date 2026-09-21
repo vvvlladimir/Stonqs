@@ -1,0 +1,154 @@
+.field {
+  display: grid;
+  /* An explicit track: an implicit one is `auto`, which sizes to the widest child and lets a
+     select carrying a long instrument name push the whole dialog past its own edge. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+/* A group of fields is a fieldset for accessibility; its default frame is not wanted. */
+fieldset.field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+/* A button that adds a row to the group is an action, not a field: it keeps its own width
+   instead of stretching across the column the inputs fill. */
+fieldset.field > .btn {
+  justify-self: start;
+}
+
+.searchbox {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-4);
+  height: var(--h-ctl);
+  padding: 0 var(--sp-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-input);
+  background: var(--surface);
+  min-width: 0;
+}
+.searchbox:focus-within {
+  border-color: var(--accent);
+}
+.searchbox input {
+  border: 0;
+  background: none;
+  outline: none;
+  width: 100%;
+  height: var(--h-ctl);
+  padding: 0;
+}
+
+/* The eye sits inside the field's frame, so the input keeps the room under it free. */
+.secret {
+  position: relative;
+  display: block;
+}
+.secret > input {
+  width: 100%;
+  padding-right: var(--h-ctl);
+}
+.secret > .iconbtn {
+  position: absolute;
+  top: 50%;
+  right: var(--sp-2);
+  transform: translateY(-50%);
+}
+
+.field > input,
+.field > select,
+.field > textarea {
+  width: 100%;
+}
+
+.field textarea {
+  min-height: 160px;
+  resize: vertical;
+  line-height: 1.55;
+  font-family: "Geist Mono Variable", ui-monospace, monospace;
+  font-size: var(--fs-sm);
+}
+.field__label {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.field__hint {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+/* A percent share is two digits and a decimal — a full-width field would lie about the input. */
+.inp--pct {
+  width: 72px;
+}
+/* A repeated line in a fieldset: the picker takes the room, the number keeps a fixed width. */
+.field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.field__row > select {
+  flex: 1;
+  min-width: 0;
+}
+.field__row > input {
+  width: 96px;
+}
+/* What the row computed from what was typed; a fixed width keeps the inputs in one column. */
+.field__row-note {
+  min-width: 56px;
+  text-align: right;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+.field--checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.field--checkbox input {
+  width: 20px;
+  height: 20px;
+}
+/* A checkbox that explains itself is two lines, not one run-on sentence: the hint goes under
+   the label it belongs to, and the box lines up with the first of them. */
+.field--checkbox--note {
+  align-items: flex-start;
+}
+.field--checkbox--note .field__hint {
+  display: block;
+  margin-top: var(--sp-1);
+}
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+.field-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+.form__actions {
+  display: flex;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.err {
+  font-size: var(--fs-sm);
+  color: var(--neg);
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}
+
+.check {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex: none;
+}

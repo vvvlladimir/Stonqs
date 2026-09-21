@@ -1,0 +1,1074 @@
+[
+  {
+    "name": "Avanza",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": ","
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Datum",
+        "KIND": "Typ av transaktion",
+        "ISIN": "ISIN",
+        "NAME": "Värdepapper/beskrivning",
+        "QUANTITY": "Antal",
+        "PRICE": "Kurs",
+        "AMOUNT": "Belopp",
+        "FEE": "Courtage (SEK)",
+        "CURRENCY": "Transaktionsvaluta",
+        "FX_RATE": "Valutakurs",
+        "ACCOUNT": "Konto"
+      },
+      "kind_aliases": {
+        "INSÄTTNING": "DEPOSIT",
+        "KÖP": "BUY",
+        "RÄNTA": "INTEREST",
+        "SÄLJ": "SELL",
+        "UTDELNING": "DIVIDEND",
+        "UTLÄNDSKKÄLLSKATT": "TAX",
+        "UTTAG": "WITHDRAWAL",
+        "ÖVRIGT": "FEE_REFUND"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "BUX",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Transaction Time (CET)",
+        "KIND": "Transaction Type",
+        "SYMBOL": "Asset Id",
+        "NAME": "Asset Name",
+        "QUANTITY": "Asset Quantity",
+        "PRICE": "Asset Price",
+        "AMOUNT": "Transaction Amount",
+        "CURRENCY": "Transaction Currency",
+        "FX_RATE": "Exchange Rate",
+        "NOTE": "Transaction Description"
+      },
+      "kind_aliases": {
+        "BUYTRADE": "BUY",
+        "CASHDIVIDEND": "DIVIDEND",
+        "GENERALCORPORATEACTION": "DELIVERY_INBOUND",
+        "PROMOTIONAL": "CASHBACK",
+        "SELLTRADE": "SELL",
+        "SEPADEPOSIT": "DEPOSIT",
+        "SEPAWITHDRAWAL": "WITHDRAWAL",
+        "SUBSCRIPTIONFEE": "FEE",
+        "TOUSERCORRECTIONS": "DEPOSIT",
+        "TRADINGFEE": "FEE"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Bitvavo",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Type",
+        "PRICE": "Quote Price",
+        "AMOUNT": "Amount",
+        "FEE": "Fee amount",
+        "CURRENCY": "Currency",
+        "LINK_ID": "Transaction ID"
+      },
+      "kind_aliases": {
+        "STAKING": "TRANSFER_IN"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Charles Schwab",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 1,
+      "has_header": true,
+      "date_format": "%m/%d/%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Action",
+        "SYMBOL": "Symbol",
+        "QUANTITY": "Quantity",
+        "PRICE": "Price",
+        "AMOUNT": "Amount",
+        "FEE": "Fees & Comm",
+        "NOTE": "Description"
+      },
+      "kind_aliases": {
+        "ADRMGMTFEE": "FEE",
+        "ADVISORFEE": "FEE",
+        "CASHDIVIDEND": "DIVIDEND",
+        "CASHINLIEU": "DIVIDEND",
+        "CONVERSION": "TRANSFER_IN",
+        "CREDITINTEREST": "INTEREST",
+        "FOREIGNTAXPAID": "TAX",
+        "INTERNALTRANSFER": "TRANSFER_IN",
+        "JOURNALEDSHARES": "DELIVERY_INBOUND",
+        "LONGTERMCAPGAINREINVEST": "DIVIDEND",
+        "MONEYLINKTRANSFER": "TRANSFER_IN",
+        "NONQUALIFIEDDIV": "DIVIDEND",
+        "PRYRCASHDIV": "DIVIDEND",
+        "PRYRDIVREINVEST": "DIVIDEND",
+        "QUALDIVREINVEST": "DIVIDEND",
+        "REINVESTDIVIDEND": "DIVIDEND",
+        "REINVESTSHARES": "BUY",
+        "REVERSESPLIT": "DELIVERY_INBOUND",
+        "SPECIALNONQUALDIV": "DIVIDEND",
+        "SPINOFF": "DELIVERY_INBOUND",
+        "STOCKDIVDIST": "DELIVERY_INBOUND",
+        "STOCKMERGER": "DELIVERY_INBOUND",
+        "STOCKSPLIT": "DELIVERY_INBOUND",
+        "WIRESENT": "WITHDRAWAL"
+      },
+      "ignored_kinds": [
+        "NAMECHANGE"
+      ],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "CoinTracking",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Type",
+        "FEE": "Fee"
+      },
+      "kind_aliases": {
+        "STAKING": "TRANSFER_IN"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Coinbase",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Timestamp",
+        "KIND": "Transaction Type",
+        "SYMBOL": "Asset",
+        "QUANTITY": "Quantity Transacted",
+        "PRICE": "Price at Transaction",
+        "AMOUNT": "Subtotal",
+        "FEE": "Total (inclusive of fees and/or spread)",
+        "CURRENCY": "Price Currency",
+        "NOTE": "Notes"
+      },
+      "kind_aliases": {
+        "CONVERT": "TRANSFER_IN",
+        "RECEIVE": "TRANSFER_IN",
+        "SEND": "TRANSFER_OUT",
+        "STAKINGINCOME": "REWARD"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Crypto.com",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Timestamp (UTC)",
+        "KIND": "Transaction Kind",
+        "AMOUNT": "Amount",
+        "CURRENCY": "Currency",
+        "NOTE": "Transaction Description"
+      },
+      "kind_aliases": {
+        "CARDTOPUP": "DEPOSIT",
+        "CRYPTODEPOSIT": "DEPOSIT",
+        "CRYPTOEXCHANGE": "TRANSFER_IN",
+        "CRYPTOTOEXCHANGETRANSFER": "TRANSFER_IN",
+        "CRYPTOWALLETSWAPCREDITED": "TRANSFER_IN",
+        "CRYPTOWALLETSWAPDEBITED": "TRANSFER_IN",
+        "EXCHANGETOCRYPTOTRANSFER": "TRANSFER_IN",
+        "FINANCE.LOCKUP.DPOSCOMPOUNDINTEREST.CRYPTOWALLET": "INTEREST",
+        "FINANCE.LOCKUP.DPOSLOCK.CRYPTOWALLET": "TRANSFER_IN",
+        "FINANCE.LOCKUP.DPOSUNLOCK.CRYPTOWALLET": "TRANSFER_IN",
+        "LOCKUPUNLOCK": "TRANSFER_IN",
+        "MCOSTAKEREWARD": "REWARD",
+        "REFERRALCARDCASHBACK": "CASHBACK"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "DEGIRO",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d-%m-%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Datum",
+        "ISIN": "ISIN",
+        "NAME": "Product",
+        "LINK_ID": "Order Id",
+        "NOTE": "Omschrijving"
+      },
+      "kind_aliases": {},
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Delta",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Way",
+        "NAME": "Base currency (name)",
+        "AMOUNT": "Base amount",
+        "FEE": "Fee amount",
+        "CURRENCY": "Quote currency",
+        "NOTE": "Notes"
+      },
+      "kind_aliases": {
+        "WITHDRAW": "WITHDRAWAL"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Directa",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 6,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d-%m-%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Data operazione",
+        "KIND": "Tipo operazione",
+        "SYMBOL": "Ticker",
+        "ISIN": "Isin",
+        "QUANTITY": "Quantità",
+        "AMOUNT": "Importo euro",
+        "CURRENCY": "Divisa",
+        "NOTE": "Descrizione"
+      },
+      "kind_aliases": {
+        "ACQUISTO": "BUY",
+        "CEDOLAOBB.": "INTEREST",
+        "CONFERIMENTOCONBONIFICO": "DEPOSIT",
+        "COUPONCERTIF.": "INTEREST",
+        "PROVENTOETF": "DIVIDEND",
+        "RIT.CEDOLAOBB.": "TAX",
+        "RIT.PROVENTOETF": "DIVIDEND",
+        "RITENUTASUPLUSVALENZA": "TAX",
+        "VENDITA": "SELL"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Disnat",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": ","
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date de transaction",
+        "KIND": "Type de transaction",
+        "SYMBOL": "Symbole",
+        "QUANTITY": "Quantité",
+        "PRICE": "Prix",
+        "AMOUNT": "Montant de l'opération",
+        "FEE": "Commission payée",
+        "CURRENCY": "Devise du prix",
+        "NOTE": "Description"
+      },
+      "kind_aliases": {
+        "ACHAT": "BUY",
+        "COTISATION": "DEPOSIT",
+        "DIVIDENDESOCIÉTÉFIDUCIE": "DIVIDEND",
+        "FRAIS": "FEE",
+        "INCITATIFQUÉBÉCOIS": "DEPOSIT",
+        "INTÉRÊTS": "INTEREST",
+        "INTÉRÊTSVERSEMENTTARDIF": "INTEREST",
+        "RÉSILIATION": "WITHDRAWAL",
+        "SUBVENTIONREEE": "DEPOSIT",
+        "SUBVENTIONSUPPLÉMENTAIRE": "DEPOSIT",
+        "TAXEDEVENTEDUQUÉBEC": "TAX",
+        "TAXEPRODUITSETSERVICES": "TAX",
+        "TRANSFERTREÇU": "TRANSFER_IN",
+        "VENTE": "SELL"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Finpension 3a",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Category",
+        "ISIN": "ISIN",
+        "NAME": "Asset Name",
+        "QUANTITY": "Number of Shares",
+        "PRICE": "Asset Price in CHF",
+        "AMOUNT": "Cash Flow",
+        "CURRENCY": "Asset Currency",
+        "FX_RATE": "Currency Rate"
+      },
+      "kind_aliases": {
+        "FLATRATEADMINISTRATIVEFEE": "FEE",
+        "INTERESTS": "INTEREST"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Finpension BVG",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Category",
+        "ISIN": "ISIN",
+        "NAME": "Asset Name",
+        "QUANTITY": "Number of Shares",
+        "PRICE": "Asset Price in CHF",
+        "AMOUNT": "Cash Flow",
+        "CURRENCY": "Asset Currency",
+        "FX_RATE": "Currency Rate"
+      },
+      "kind_aliases": {
+        "DIVIDENDANDINTERESTDISTRIBUTIONS": "INTEREST",
+        "FLATRATEADMINISTRATIONFEE": "FEE",
+        "INTERESTS": "INTEREST",
+        "PORTFOLIOTRANSACTION": "BUY",
+        "TRANSFERVESTEDBENEFITS": "TRANSFER_IN"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Freetrade",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%dT%H:%M:%S%.fZ",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Timestamp",
+        "KIND": "Type",
+        "SYMBOL": "Ticker",
+        "ISIN": "ISIN",
+        "QUANTITY": "Quantity",
+        "PRICE": "Price per Share",
+        "AMOUNT": "Total Amount",
+        "FEE": "FX Fee (BPS)",
+        "TAX": "Stamp Duty",
+        "CURRENCY": "Account Currency",
+        "FX_RATE": "FX Rate",
+        "LINK_ID": "Order ID"
+      },
+      "kind_aliases": {
+        "INTERESTFROMCASH": "INTEREST",
+        "TOPUP": "DEPOSIT"
+      },
+      "ignored_kinds": [
+        "MONTHLYSTATEMENT"
+      ],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Interactive Brokers · dividends",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y%m%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "SettleDate",
+        "KIND": "Type",
+        "ISIN": "ISIN",
+        "AMOUNT": "Amount",
+        "CURRENCY": "CurrencyPrimary",
+        "NOTE": "Description"
+      },
+      "kind_aliases": {
+        "DIVIDENDS": "DIVIDEND",
+        "PAYMENTINLIEUOFDIVIDENDS": "DIVIDEND",
+        "WITHHOLDINGTAX": "TAX"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Interactive Brokers · trades",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y%m%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "TradeDate",
+        "KIND": "Buy/Sell",
+        "ISIN": "ISIN",
+        "QUANTITY": "Quantity",
+        "PRICE": "TradePrice",
+        "FEE": "IBCommission",
+        "CURRENCY": "CurrencyPrimary"
+      },
+      "kind_aliases": {},
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "InvestEngine",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d/%m/%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Settlement Date",
+        "KIND": "Transaction Type",
+        "QUANTITY": "Quantity",
+        "PRICE": "Share Price",
+        "AMOUNT": "Total Trade Value"
+      },
+      "kind_aliases": {},
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Investimental",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Update Time",
+        "KIND": "Side",
+        "SYMBOL": "Symbol",
+        "QUANTITY": "Volume",
+        "PRICE": "Price",
+        "AMOUNT": "Value",
+        "FEE": "Fee",
+        "ACCOUNT": "Account ID",
+        "LINK_ID": "Order ID"
+      },
+      "kind_aliases": {},
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Parqet",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d.%m.%Y",
+      "decimal_separator": ","
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "date",
+        "KIND": "type",
+        "SYMBOL": "wkn",
+        "ISIN": "identifier",
+        "NAME": "holdingname",
+        "QUANTITY": "shares",
+        "PRICE": "price",
+        "AMOUNT": "amount",
+        "FEE": "fee",
+        "TAX": "tax",
+        "CURRENCY": "currency"
+      },
+      "kind_aliases": {},
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Rabobank",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d-%m-%Y",
+      "decimal_separator": ","
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Datum",
+        "KIND": "Type mutatie",
+        "ISIN": "Isin code",
+        "NAME": "Naam",
+        "QUANTITY": "Volume",
+        "PRICE": "Koers",
+        "AMOUNT": "Bedrag",
+        "CURRENCY": "Valuta mutatie",
+        "ACCOUNT": "Portefeuille"
+      },
+      "kind_aliases": {
+        "CONTANTDIVIDEND": "DIVIDEND",
+        "KOOPFONDSEN": "BUY",
+        "RENTEBELEGGERSREKENING": "INTEREST",
+        "STORTING/OPNAME": "WITHDRAWAL",
+        "TARIEVENENSERVICES": "FEE",
+        "VERKOOPFONDSEN": "SELL"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Relai",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%dT%H:%M:%S%.fZ",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Transaction Type",
+        "PRICE": "BTC Price",
+        "AMOUNT": "BTC Amount",
+        "FEE": "Fee",
+        "CURRENCY": "Fiat Currency"
+      },
+      "kind_aliases": {},
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Revolut Crypto",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%b %d, %Y, %I:%M:%S %p",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Type",
+        "SYMBOL": "Symbol",
+        "QUANTITY": "Quantity",
+        "PRICE": "Price",
+        "AMOUNT": "Value",
+        "FEE": "Fees"
+      },
+      "kind_aliases": {
+        "RECEIVE": "TRANSFER_IN",
+        "SEND": "TRANSFER_OUT",
+        "STAKE": "TRANSFER_IN",
+        "STAKINGREWARD": "REWARD"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Revolut Invest",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%dT%H:%M:%S%.fZ",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Type",
+        "SYMBOL": "Ticker",
+        "QUANTITY": "Quantity",
+        "PRICE": "Price per share",
+        "AMOUNT": "Total Amount",
+        "CURRENCY": "Currency",
+        "FX_RATE": "FX Rate"
+      },
+      "kind_aliases": {
+        "BUYMARKET": "BUY",
+        "CASHTOPUP": "DEPOSIT",
+        "CASHWITHDRAWAL": "WITHDRAWAL",
+        "CUSTODYFEE": "FEE",
+        "SELLMARKET": "SELL",
+        "STOCKSPLIT": "DELIVERY_INBOUND",
+        "TRANSFERFROMREVOLUTBANKUABTOREVOLUTSECURITIESEUROPEUAB": "TRANSFER_IN",
+        "TRANSFERFROMREVOLUTTRADINGLTDTOREVOLUTSECURITIESEUROPEUAB": "TRANSFER_IN"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Saxo Bank",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d-%b-%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Trade Date",
+        "KIND": "Event",
+        "SYMBOL": "Instrument Symbol",
+        "ISIN": "Instrument ISIN",
+        "AMOUNT": "Amount",
+        "CURRENCY": "Instrument currency",
+        "FX_RATE": "Conversion Rate",
+        "NOTE": "Type"
+      },
+      "kind_aliases": {
+        "CASHTRANSFER": "TRANSFER_IN"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Swissquote",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d-%m-%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Transaction",
+        "SYMBOL": "Symbol",
+        "ISIN": "ISIN",
+        "NAME": "Name",
+        "QUANTITY": "Quantity",
+        "PRICE": "Unit price",
+        "AMOUNT": "Net Amount",
+        "FEE": "Costs",
+        "CURRENCY": "Currency"
+      },
+      "kind_aliases": {
+        "CUSTODYFEES": "FEE",
+        "DEBIT": "WITHDRAWAL",
+        "FOREXCREDIT": "TRANSFER_IN",
+        "FOREXDEBIT": "TRANSFER_IN",
+        "INTERESTS": "INTEREST"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Trade Republic",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Datum",
+        "KIND": "Transactietype",
+        "ISIN": "ISIN",
+        "QUANTITY": "Aantal",
+        "AMOUNT": "Waarde (netto)",
+        "FEE": "Kosten",
+        "NOTE": "Opmerking"
+      },
+      "kind_aliases": {
+        "AANKOOP": "BUY",
+        "ONTTREKKING": "WITHDRAWAL",
+        "STORTING": "DEPOSIT",
+        "VERKOOP": "SELL"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Trading 212",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Time",
+        "KIND": "Action",
+        "SYMBOL": "Ticker",
+        "ISIN": "ISIN",
+        "NAME": "Name",
+        "QUANTITY": "No. of shares",
+        "PRICE": "Price / share",
+        "AMOUNT": "Total",
+        "TAX": "Withholding tax",
+        "CURRENCY": "Currency (Result)",
+        "FX_RATE": "Exchange rate",
+        "NOTE": "Notes"
+      },
+      "kind_aliases": {
+        "DIVIDEND(DIVIDEND)": "DIVIDEND",
+        "INTERESTONCASH": "INTEREST",
+        "MARKETBUY": "BUY",
+        "MARKETSELL": "SELL",
+        "STOCKDISTRIBUTION": "DELIVERY_INBOUND",
+        "STOCKSPLITCLOSE": "DELIVERY_OUTBOUND",
+        "STOCKSPLITOPEN": "DELIVERY_INBOUND"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "XTB",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d.%m.%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Time",
+        "KIND": "Type",
+        "SYMBOL": "Symbol",
+        "AMOUNT": "Amount",
+        "NOTE": "Comment"
+      },
+      "kind_aliases": {
+        "AÇÕES/ETFCOMPRA": "BUY",
+        "AÇÕES/ETFVENDE": "SELL",
+        "FREEFUNDSINTERESTS": "INTEREST",
+        "FREEFUNDSINTERESTSTAX": "TAX",
+        "PROFIT/LOSS(FX/CFD)": "TRANSFER_IN",
+        "SPINOFF": "DELIVERY_INBOUND",
+        "STOCKS/ETFPURCHASE": "BUY",
+        "STOCKS/ETFSALE": "SELL",
+        "SWAP": "TRANSFER_IN",
+        "TRANSFER": "TRANSFER_IN",
+        "WITHHOLDINGTAX": "TAX"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "eToro",
+    "config": {
+      "delimiter": ",",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%d/%m/%Y",
+      "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "Date",
+        "KIND": "Type",
+        "QUANTITY": "Units",
+        "AMOUNT": "Amount",
+        "NOTE": "Details"
+      },
+      "kind_aliases": {
+        "OPENPOSITION": "BUY",
+        "OVERNIGHTFEE": "FEE",
+        "OVERNIGHTREFUND": "FEE_REFUND",
+        "POSITIONCLOSED": "SELL",
+        "SDRT": "TAX",
+        "WITHDRAWALCONVERSIONFEE": "FEE",
+        "WITHDRAWFEE": "FEE",
+        "WITHDRAWREQUEST": "WITHDRAWAL"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": null,
+      "new_securities": {}
+    }
+  }
+]

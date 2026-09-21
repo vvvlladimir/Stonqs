@@ -1,0 +1,34 @@
+/* A gate is centred in the window rather than laid out as a page: nothing else is on screen. */
+.gate {
+  min-height: 80dvh;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--sp-7);
+}
+.gate__card,
+.gate__foot {
+  width: min(100%, 460px);
+}
+/* The frame is the panel's own; the gate only adds the spacing of a card that is the whole screen. */
+.gate__card {
+  display: grid;
+  gap: var(--sp-7);
+}
+.gate__head {
+  display: grid;
+  gap: var(--sp-3);
+}
+.gate__lead {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.gate__foot {
+  display: grid;
+  gap: var(--sp-7);
+}
+.gate__section {
+  display: grid;
+  gap: var(--sp-4);
+}

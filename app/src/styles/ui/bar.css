@@ -1,0 +1,377 @@
+/* One track for every bar in the product: a fill, a stacked split, or a weight
+   against its target. Height is the only variant; colour is always a slot. */
+.bar {
+  position: relative;
+  height: var(--bar-h);
+  min-width: 2px;
+  border-radius: var(--r-chip);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.bar--sm {
+  --bar-h: var(--bar-h-sm);
+}
+.bar--md {
+  --bar-h: 10px;
+}
+.bar--lg {
+  border-radius: var(--r-input);
+  overflow: visible;
+}
+/* The sign as a colour: still the track's own slot variable, never a class on the row. */
+.bar--pos {
+  --slot: var(--pos);
+}
+.bar--neg {
+  --slot: var(--neg);
+}
+/* Segments paint the whole width, so the empty track never shows through. */
+.bar--open {
+  display: flex;
+  gap: var(--sp-1);
+  background: none;
+}
+.bar__seg {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--slot, var(--slot-1));
+}
+.bar__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: var(--slot, var(--slot-1));
+}
+.bar--lg .bar__fill {
+  border-radius: var(--r-input) var(--r-sm) var(--r-sm) var(--r-input);
+}
+.bar__over,
+.bar__gap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.bar__over {
+  border-radius: var(--r-sm) var(--r-input) var(--r-input) var(--r-sm);
+  background: repeating-linear-gradient(135deg, var(--warn) 0 3px, transparent 3px 6px), var(--warn-soft);
+}
+.bar__gap {
+  border: 1px dashed var(--border-strong);
+  border-left: 0;
+  border-radius: 0 var(--r-input) var(--r-input) 0;
+}
+.bar__tick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+  border-radius: var(--r-sm);
+}
+/* Legend swatches: a slot square, or the two patterns the track can wear. */
+.bar__k {
+  width: 14px;
+  height: 8px;
+  border-radius: var(--r-sm);
+  background: var(--slot-1);
+}
+.bar__k--over {
+  background: repeating-linear-gradient(135deg, var(--warn) 0 3px, transparent 3px 6px), var(--warn-soft);
+}
+.bar__k--gap {
+  height: 9px;
+  border: 1px dashed var(--border-strong);
+  background: none;
+}
+.bars {
+  display: grid;
+  gap: var(--sp-5);
+  margin-top: var(--sp-5);
+}
+.bars__row {
+  display: grid;
+  grid-template-columns: var(--dot) minmax(0, 1fr) auto auto;
+  gap: var(--sp-4);
+  align-items: baseline;
+  font-size: var(--fs-base);
+  cursor: inherit;
+}
+.bars__row[role="button"] {
+  cursor: pointer;
+}
+.bars__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bars__val {
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  min-width: 84px;
+  text-align: right;
+}
+.bars__pct {
+  min-width: 56px;
+  text-align: right;
+}
+.bars__row > .bar {
+  grid-column: 1 / -1;
+  margin-top: var(--sp-2);
+}
+.bars__total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  border-top: 1px solid var(--border);
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  font-size: var(--fs-base);
+}
+
+/* Yearly composition: one stacked bar per year, scaled against the best year. */
+.mix {
+  display: grid;
+  gap: var(--sp-4);
+}
+.mix__row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 72px;
+  gap: var(--sp-4);
+  align-items: center;
+  font-size: var(--fs-meta);
+}
+.mix__row > .num:last-child {
+  text-align: right;
+}
+
+.drift {
+  display: grid;
+  gap: var(--sp-1);
+}
+.drift__legend {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  padding: 0 var(--sp-2) var(--sp-8);
+}
+.drift__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.drift__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-2);
+  border-bottom: 1px solid var(--border);
+}
+.drift__row:last-of-type {
+  border-bottom: 0;
+}
+.drift__row:hover {
+  background: var(--surface-2);
+}
+.drift__name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  min-width: 0;
+  font-size: var(--fs-base);
+  justify-content: space-between;
+}
+.drift__lane,
+.drift__side {
+  min-width: 0;
+}
+.drift__lane {
+  display: flex;
+  align-items: center;
+}
+.drift__lane > .bar {
+  width: 100%;
+}
+.drift__v {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: nowrap;
+  flex: none;
+}
+.drift__side {
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+}
+.drift__pct {
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+.drift__act {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.drift__delta {
+  font-weight: var(--fw-bold);
+}
+.drift__delta.is-over {
+  color: var(--warn);
+}
+.drift__delta.is-under {
+  color: var(--accent);
+}
+.drift__axis {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--sp-5) var(--sp-2) 0;
+}
+.drift__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 15rem;
+}
+.drift__ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+}
+
+.tradeweight {
+  display: inline-grid;
+  gap: var(--sp-2);
+  min-width: 88px;
+}
+.tradeweight > .bar {
+  margin-top: var(--sp-2);
+}
+
+@media (min-width: 1000px) {
+  .drift__grid {
+    display: grid;
+    grid-template-columns: minmax(0, max-content) minmax(120px, 1fr) max-content;
+    column-gap: 0;
+    row-gap: 0;
+  }
+  .drift__row {
+    display: contents;
+  }
+  .drift__row > * {
+    padding-block: var(--sp-4);
+  }
+  .drift__row:hover > *,
+  .drift__row:focus-visible > * {
+    background: var(--surface-2);
+  }
+  .drift__row > *:first-child {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-6);
+    border-radius: var(--r-input) 0 0 var(--r-input);
+  }
+  .drift__row > *:last-child {
+    padding-left: var(--sp-6);
+    padding-right: var(--sp-2);
+    border-radius: 0 var(--r-input) var(--r-input) 0;
+  }
+  .drift__name {
+    align-items: center;
+  }
+  .drift__axis {
+    display: contents;
+  }
+  .drift__ticks {
+    grid-column: 2;
+    padding-top: var(--sp-5);
+  }
+  .drift__side {
+    grid-auto-flow: row;
+    justify-items: end;
+    justify-content: end;
+    text-align: right;
+  }
+}
+
+/* Contributions: ranked rows on one scale, the total beneath them. The block fills the tile it
+   is in, rows breathing up to a comfortable height rather than stretching without end. */
+.wfall {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--sp-3);
+}
+.wfall__rows {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--sp-2);
+  overflow: auto;
+}
+.wfall__row {
+  display: grid;
+  grid-template-columns: minmax(64px, 27%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4);
+  /* Rows share the tile rather than leaving a gap under the last one; the track grows with the
+     row up to a point, so a tall tile reads as air around the bars, not as one fat bar. */
+  flex: 1 1 0;
+  min-height: 26px;
+}
+.wfall__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.wfall__lane {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+}
+.wfall__bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: clamp(10px, 42%, 22px);
+}
+.wfall__bar .bar {
+  height: 100%;
+}
+/* Drawn only when something is negative: with every contribution positive the zero line is the
+   left edge, and a rule there would read as a border. */
+.wfall__zero {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--border-strong);
+}
+.wfall__v {
+  font-size: var(--fs-sm);
+}
+.wfall__foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}

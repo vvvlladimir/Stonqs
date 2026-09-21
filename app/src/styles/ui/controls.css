@@ -1,0 +1,306 @@
+/* A cluster of buttons that is always visible; row actions use .acts instead. */
+.btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+/* A select whose names are short still needs room to be recognised. */
+.sel--wide {
+  min-width: 150px;
+}
+/* A picker inside a table cell: the chosen label is cut rather than widening the column. */
+.sel--tight {
+  max-width: 150px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  height: var(--h-ctl);
+  padding: 0 var(--sp-6);
+  border-radius: var(--r-input);
+  border: 1px solid transparent;
+  background: var(--ink);
+  color: var(--ink-on);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-med);
+  cursor: pointer;
+}
+.btn--ghost {
+  background: none;
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.btn--danger {
+  background: none;
+  color: var(--neg);
+  border-color: color-mix(in srgb, var(--neg) 35%, var(--border));
+}
+.btn--sm {
+  height: var(--h-ctl-sm);
+  padding: 0 var(--sp-5);
+  font-size: var(--fs-sm);
+}
+.btn:active {
+  transform: scale(0.985) translateY(1px);
+}
+/* A button that cannot be pressed must look it: otherwise a blocked submit reads as a broken one. */
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn:disabled:active {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn,
+  .tbl tbody tr {
+    transition:
+      background-color var(--dur) var(--ease),
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease),
+      transform var(--dur) var(--ease);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .iconbtn,
+  .chip,
+  .seg button,
+  .row,
+  .tnode,
+  .crumb,
+  .pill {
+    transition:
+      background-color var(--dur) var(--ease),
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease),
+      transform var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+}
+
+.iconbtn {
+  height: var(--h-ctl);
+  min-width: var(--h-ctl);
+  padding: 0 var(--sp-5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-input);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.iconbtn:hover {
+  background: var(--surface-3);
+}
+.iconbtn:active {
+  transform: translateY(1px);
+}
+.iconbtn--on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+.iconbtn--danger {
+  color: var(--neg);
+  border-color: color-mix(in srgb, var(--neg) 35%, var(--border));
+}
+.iconbtn--sm {
+  height: var(--h-ctl-sm);
+  min-width: var(--h-ctl-sm);
+  padding: 0 var(--sp-4);
+}
+.chip-sync[data-state="loading"] {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.chip-sync[data-state="error"] {
+  color: var(--neg);
+  border-color: color-mix(in srgb, var(--neg) 40%, var(--border));
+  /* Mixed into the surface, not --neg-soft: that one is translucent and the chip sits over content. */
+  background: color-mix(in srgb, var(--neg) 12%, var(--surface));
+}
+.chip-sync[data-state="error"]:hover {
+  background: color-mix(in srgb, var(--neg) 18%, var(--surface));
+}
+
+@media (max-width: 699px) {
+  .chip-sync__text {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chip-sync[data-state="loading"] .dot {
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+}
+
+/* The period axis: last on the controls row, whatever else a screen puts there, and the one
+   thing that gives way when the row runs out of width — it scrolls inside itself instead of
+   pushing its neighbours off. */
+.period {
+  margin-left: auto;
+  /* Free to shrink well below its content, but never to nothing: a strip narrower than this is
+     a scrollbar, not a control. */
+  min-width: min(100%, 160px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.period::-webkit-scrollbar {
+  display: none;
+}
+/* Inside a scroller a block is as wide as the fold, so the strip's own background and border
+   would stop there while its buttons scrolled out past them. */
+.period .seg {
+  width: max-content;
+}
+/* The row pins every child at its natural width; this one is allowed to shrink. */
+.page__controls > .period,
+.page__filters > .period {
+  flex: 0 1 auto;
+}
+
+.seg {
+  display: flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--surface-3);
+  border-radius: var(--r-input);
+  border: 1px solid var(--border);
+  height: var(--h-ctl);
+  align-items: center;
+}
+.seg button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  height: var(--h-ctl-xs);
+  padding: 0 var(--sp-5);
+  border-radius: calc(var(--r-input) - 3px);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+/* Actions on the set itself sit after the options, divided from them. */
+.seg__end {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-left: var(--sp-1);
+  padding-left: var(--sp-2);
+  border-left: 1px solid var(--border);
+}
+.seg__end button {
+  display: inline-grid;
+  place-items: center;
+  padding: 0 var(--sp-3);
+  color: var(--text-2);
+}
+.seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: var(--fw-bold);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.chips {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.chip {
+  height: var(--h-ctl-sm);
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-input);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.chip:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.chip:disabled:hover {
+  background: var(--surface);
+  color: var(--text-2);
+}
+.chip[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  font-weight: var(--fw-med);
+}
+
+.kebab {
+  padding: 0;
+  background: none;
+  color: var(--text-3);
+}
+.kebab:hover,
+.kebab[aria-expanded="true"] {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+@media (hover: none) {
+  .kebab {
+    min-width: var(--h-ctl);
+    height: var(--h-ctl);
+  }
+}
+
+.dtabs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dtabs::-webkit-scrollbar {
+  display: none;
+}
+.dtab {
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-chip);
+  font-size: var(--fs-base);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.dtab:hover {
+  background: var(--surface-3);
+}
+.dtab--active {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  font-weight: var(--fw-bold);
+}
+.dtab--add {
+  color: var(--text-3);
+}

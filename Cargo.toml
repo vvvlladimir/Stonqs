@@ -1,0 +1,53 @@
+[workspace]
+resolver = "3"
+members = ["core", "cli", "app/src-tauri"]
+
+# Dependency versions live in the workspace so core and cli always build
+# against the same crates.
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-only"
+
+[workspace.dependencies]
+rust_decimal = { version = "1", features = ["serde-with-str", "maths"] }
+rust_decimal_macros = "1"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+# SQLCipher rather than plain SQLite: a profile with a password keeps its database encrypted
+# (ADR-0049). An unencrypted file opens exactly as before. Apple targets use CommonCrypto; the
+# others need OpenSSL, bundled through `libsqlite3-sys` in core/Cargo.toml.
+rusqlite = { version = "0.37", features = ["bundled-sqlcipher"] }
+# Broker CSV files contain quoted fields with embedded commas, so split(',') is insufficient.
+csv = "1.4"
+# A broker export is not necessarily UTF-8: encoding_rs decodes the legacy code pages,
+# chardetng guesses which one when there is no BOM.
+encoding_rs = "0.8"
+chardetng = "0.1"
+ureq = "3"
+# Interactive Brokers Flex Query statements are XML with the data in attributes; hand-scanning
+# them would still have to decode entities, so the reader is a dependency rather than a loop.
+quick-xml = { version = "0.42", default-features = false }
+
+# Application host. It lives only in app/src-tauri; neither core nor cli sees it.
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+# OS notifications for fired alerts; the frontend writes the text (ADR-0023, ADR-0034).
+tauri-plugin-notification = "2"
+# The OS language, read once at startup so the UI can follow it; host-only, like tauri.
+sys-locale = "0.3"
+# BYOK provider keys go to the OS keychain, never to settings.json or the DB; host-only.
+# The platform features are not optional: with none of them on, keyring 3 silently falls back to
+# its in-memory *mock* store, where every `Entry::new` is a fresh credential — saving a key then
+# appears to work and nothing is ever kept. The platform deps behind them are target-gated in
+# keyring's own manifest, so naming all three costs nothing on any one platform.
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+# The profile vault (ADR-0048): Argon2id turns a password into a key, XChaCha20-Poly1305 seals.
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+zeroize = "1"
+base64 = "0.22"

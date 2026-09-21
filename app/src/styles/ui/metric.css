@@ -1,0 +1,130 @@
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.metric {
+  background: var(--surface);
+  padding: var(--sp-5) var(--sp-6);
+}
+.metric__k {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+.metric__v {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  margin-top: var(--sp-1);
+}
+.metric__h {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  margin-top: var(--sp-1);
+}
+
+/* The shelf keeps its figures to one row; the rest sit behind this strip, which spans the grid
+   so the 1px gap draws its divider for free. */
+.metricfold {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 0;
+  background: var(--surface);
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-meta);
+  cursor: pointer;
+}
+.metricfold:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.metricfold svg {
+  transition: transform 0.15s ease;
+}
+.metricfold[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+@media (min-width: 700px) {
+  .metrics {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .metrics--pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3) var(--sp-6);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+.facts dt {
+  color: var(--text-3);
+}
+.facts dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* Tiles inside a panel: no outer border, same grid as the page metric shelf. */
+.metrics--inset {
+  background: none;
+  border-radius: 0;
+  gap: 0;
+  margin-bottom: var(--sp-5);
+}
+.metrics--inset .metric {
+  padding: var(--sp-4) var(--sp-5) var(--sp-4) 0;
+}
+/* Narrow: two per row, so the divider runs between the pairs and under the first row. */
+.metrics--inset .metric:nth-child(2n) {
+  padding-left: var(--sp-5);
+  border-left: 1px solid var(--border);
+}
+.metrics--inset .metric:nth-child(n + 3) {
+  border-top: 1px solid var(--border);
+}
+
+@media (min-width: 700px) {
+  .metrics--inset .metric:nth-child(n + 3) {
+    border-top: 0;
+  }
+  .metrics--inset .metric + .metric {
+    padding-left: var(--sp-5);
+    border-left: 1px solid var(--border);
+  }
+  /* Two columns keep wrapping, so the row divider stays and the first of each pair has none. */
+  .metrics--pair.metrics--inset .metric:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+  .metrics--pair.metrics--inset .metric:nth-child(2n + 1) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+.kpiline {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.kpiline__v {
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.022em;
+}
+.kpiline__d {
+  font-size: var(--fs-base);
+}
