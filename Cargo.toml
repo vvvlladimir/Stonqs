@@ -29,7 +29,7 @@ csv = "1.4"
 # A broker export is not necessarily UTF-8: encoding_rs decodes the legacy code pages,
 # chardetng guesses which one when there is no BOM.
 encoding_rs = "0.8"
-chardetng = "0.1"
+chardetng = "1.0"
 ureq = "3"
 # Interactive Brokers Flex Query statements are XML with the data in attributes; hand-scanning
 # them would still have to decode entities, so the reader is a dependency rather than a loop.
