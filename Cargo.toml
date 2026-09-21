@@ -5,7 +5,7 @@ members = ["core", "cli", "app/src-tauri"]
 # Dependency versions live in the workspace so core and cli always build
 # against the same crates.
 [workspace.package]
-version = "0.3.0"
+version = "0.2.0"
 edition = "2024"
 # Edition 2024 needs 1.85, `is_multiple_of` needs 1.87. The pin in rust-toolchain.toml is what
 # CI and a clone actually use; this is the floor a dependency is resolved against.

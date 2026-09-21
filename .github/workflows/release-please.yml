@@ -1,8 +1,8 @@
 name: Release please
 
 # Keeps one open pull request that carries the next version and its changelog, written from the
-# Conventional Commit subjects the commit-msg hook enforces. Merging it tags the release, and the
-# tag is what `release.yml` builds. Nothing is released by pushing to main.
+# Conventional Commit subjects the commit-msg hook enforces. Merging it tags the release and calls
+# `release.yml` to build it. Nothing is released by pushing to main.
 
 on:
   push:
@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       pr: ${{ steps.release.outputs.pr }}
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v5
         id: release
@@ -46,3 +48,28 @@ jobs:
           git add Cargo.lock
           git commit -m "chore: refresh Cargo.lock for the release"
           git push
+
+  # The release release-please writes is a draft, and a draft carries no git tag: GitHub materialises
+  # one only when somebody publishes it. Without the tag release-please cannot find its own last
+  # release and bumps the version again on every push (release-please#1650), so the tag is pushed
+  # here instead. `release.yml` is then *called*, not triggered by that push — a ref pushed with
+  # GITHUB_TOKEN raises no workflow event.
+  tag:
+    needs: release-please
+    if: needs.release-please.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tag the release commit
+        env:
+          TAG: ${{ needs.release-please.outputs.tag }}
+        run: |
+          git tag "$TAG"
+          git push origin "$TAG"
+
+  build:
+    needs: [release-please, tag]
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag }}
+    secrets: inherit

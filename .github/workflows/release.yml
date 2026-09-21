@@ -4,9 +4,22 @@ name: Release
 # that draft is published by hand: publishing is also what makes `latest.json` visible, so the
 # updater offers a version only after somebody has looked at it.
 
+# Called by `release-please.yml` once it has tagged the release, never by the tag itself: a tag
+# pushed with GITHUB_TOKEN raises no event, so `on: push: tags` would simply never fire. The
+# manual trigger is for rebuilding a tag whose run failed.
 on:
-  push:
-    tags: ["v*"]
+  workflow_call:
+    inputs:
+      tag:
+        description: The tag to build, for example v0.2.0.
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag to build, for example v0.2.0.
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -18,12 +31,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
       - name: Tag matches the workspace version
+        env:
+          TAG: ${{ inputs.tag }}
         run: |
           crate=$(grep -m1 '^version = ' Cargo.toml | cut -d'"' -f2)
-          tag="${GITHUB_REF_NAME#v}"
-          test "$crate" = "$tag" || {
-            echo "tag $GITHUB_REF_NAME does not match Cargo.toml version $crate" >&2
+          test "$crate" = "${TAG#v}" || {
+            echo "tag $TAG does not match Cargo.toml version $crate" >&2
             exit 1
           }
 
@@ -49,6 +65,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Linux system libraries
         if: startsWith(matrix.os, 'ubuntu')
@@ -97,7 +115,7 @@ jobs:
           # The draft release and its notes already exist: release-please made them when its pull
           # request was merged, and this only hangs the installers on them. Naming a body here
           # would overwrite the changelog with a commit subject.
-          tagName: ${{ github.ref_name }}
+          tagName: ${{ inputs.tag }}
           releaseDraft: true
           prerelease: false
           # `latest.json`, the feed the updater reads. One per run, merged across the matrix.
