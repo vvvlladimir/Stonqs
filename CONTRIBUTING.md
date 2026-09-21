@@ -88,6 +88,20 @@ stop. The `commit-msg` hook above checks all of that locally.
 
 Say *why* in the body. What changed is visible in the diff; why it had to is not.
 
+Those subjects are what the changelog is made of, so the ones users read are `feat` and `fix`;
+everything else is kept out of it. A `!` after the scope and a `BREAKING CHANGE:` paragraph are
+what move the major version.
+
+## Releases
+
+Nobody tags by hand. A bot keeps one open pull request holding the next version number and the
+changelog entries earned since the last release; merging it writes `CHANGELOG.md`, bumps the
+version everywhere it is written down, tags, and opens a draft release. The installers are built
+from that tag and attached to the same draft, which a maintainer publishes after looking at it.
+
+Publishing is also what makes the update feed visible, so a build nobody has checked cannot be
+offered to anybody. See [ADR-0063](docs/decisions/0063-an-update-is-offered-never-applied.md).
+
 ## Adding a broker
 
 Broker layouts are data, not code: `core/presets/brokers.json`. Detection is per *language*, never

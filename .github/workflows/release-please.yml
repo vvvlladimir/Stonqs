@@ -1,0 +1,48 @@
+name: Release please
+
+# Keeps one open pull request that carries the next version and its changelog, written from the
+# Conventional Commit subjects the commit-msg hook enforces. Merging it tags the release, and the
+# tag is what `release.yml` builds. Nothing is released by pushing to main.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      pr: ${{ steps.release.outputs.pr }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # The bump touches Cargo.toml but not Cargo.lock, which records the workspace crates' own
+  # versions — and every job builds with `--locked`. Left alone, the release pull request fails
+  # its own CI. `--workspace` rewrites those three entries and nothing else.
+  lockfile:
+    needs: release-please
+    if: needs.release-please.outputs.pr != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
+      - name: Install the pinned toolchain
+        run: rustup show
+      - run: cargo update --workspace
+      - name: Commit the refreshed lock
+        run: |
+          git diff --quiet -- Cargo.lock && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.lock
+          git commit -m "chore: refresh Cargo.lock for the release"
+          git push

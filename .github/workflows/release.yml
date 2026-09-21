@@ -91,10 +91,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: app
+          # The draft release and its notes already exist: release-please made them when its pull
+          # request was merged, and this only hangs the installers on them. Naming a body here
+          # would overwrite the changelog with a commit subject.
           tagName: ${{ github.ref_name }}
-          releaseName: ${{ github.ref_name }}
-          # Written by hand — or by whatever generates the changelog — before publishing.
-          releaseBody: ${{ github.event.head_commit.message }}
           releaseDraft: true
           prerelease: false
           # `latest.json`, the feed the updater reads. One per run, merged across the matrix.
