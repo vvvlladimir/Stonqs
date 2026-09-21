@@ -22,8 +22,9 @@ use zeroize::{Zeroize, Zeroizing};
 const FILE: &str = "vault.json";
 const VERSION: u32 = 1;
 
-/// Keychain service of the remembered data keys; the account is `profile:<id>`.
-const SERVICE: &str = "app.stonqs.desktop.ai";
+/// Keychain service of the remembered data keys; the account is `profile:<id>`. The same string
+/// is `ai::keys::SERVICE` — two accounts of one service, so the two must not drift apart.
+const SERVICE: &str = "app.stonqs.ai";
 
 /// Shortest password accepted. NIST SP 800-63B asks for at least eight characters and nothing
 /// else — no composition rules, which only make passwords harder to remember.

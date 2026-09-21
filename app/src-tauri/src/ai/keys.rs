@@ -8,8 +8,8 @@ use keyring::Entry;
 use std::collections::BTreeMap;
 use std::sync::Mutex;
 
-/// Fixed across every provider.
-const SERVICE: &str = "app.stonqs.desktop.ai";
+/// Fixed across every provider, and the same string as `vault::SERVICE`.
+const SERVICE: &str = "app.stonqs.ai";
 /// The account of the one entry that holds all keys, as JSON `{provider: key}`.
 const VAULT: &str = "keys";
 
