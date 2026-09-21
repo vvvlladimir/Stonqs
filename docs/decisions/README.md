@@ -23,6 +23,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [12](0012-plain-sql-migrations.md) | Migrations as a plain array of SQL files | Accepted |
 | [13](0013-storage-design.md) | SQLite storage design | Accepted |
 | [31](0031-instrument-attributes-are-typed-key-values.md) | Instrument attributes are typed key/values, not columns | Accepted |
+| [62](0062-an-upgrade-copies-the-database-before-it-changes-it.md) | An upgrade copies the database before it changes it | Accepted |
 
 ## Market data and FX
 

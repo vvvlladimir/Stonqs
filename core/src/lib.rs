@@ -48,6 +48,10 @@
 //! # Ok::<(), sq_core::Error>(())
 //! ```
 
+// A bare `unwrap()` outside tests is a crash in somebody's portfolio. An invariant that really
+// cannot fail is written as `expect("why")`, so the reason survives into the panic message.
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 pub mod calc;
 pub mod error;
 pub mod fx;

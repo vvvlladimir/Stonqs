@@ -544,7 +544,8 @@ export const api = {
     return call<void>("ai_send", { chatId, text, screen, onEvent: channel });
   },
 
-  devSeedDemo: () => call<void>("dev_seed_demo"),
+  /** Fills an empty portfolio with the sample history; refuses once it holds an account. */
+  demoSeed: () => call<void>("demo_seed"),
   /** Debug builds only: moves a real quote across a rule's level; returns crossings logged. */
   devAlertSimulate: (alert_id: string, step: DevAlertStep) =>
     call<number>("dev_alert_simulate", { alertId: alert_id, step }),

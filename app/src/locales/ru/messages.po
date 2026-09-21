@@ -2389,8 +2389,8 @@ msgid "Days the deepest fall lasted before the peak was regained."
 msgstr "Сколько дней длилось самое глубокое падение до возврата к пику."
 
 #: src/screens/Onboarding.tsx
-msgid "Debug"
-msgstr "Отладка"
+#~ msgid "Debug"
+#~ msgstr "Отладка"
 
 #: src/screens/Import/ParseSettings.tsx
 msgid "Decimal mark"
@@ -3268,6 +3268,10 @@ msgstr "Заполнить из атрибута"
 msgid "Filling…"
 msgstr "Заполняем…"
 
+#: src/screens/Onboarding.tsx
+msgid "Fills this profile with a sample portfolio so you can see what the app does before importing anything of your own."
+msgstr "Заполняет профиль примерным портфелем, чтобы посмотреть, как всё работает, до импорта собственных данных."
+
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Financial independence"
 msgstr "Финансовая независимость"
@@ -4024,6 +4028,10 @@ msgstr "Запомнит раскладку колонок и все псевд�
 msgid "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
 msgstr "Ключ для него задаётся в разделе выше, под тем именем, которое вы указали. Серверу на этом компьютере ключ обычно не нужен — оставьте его пустым."
 
+#: src/screens/Onboarding.tsx
+msgid "Just looking"
+msgstr "Просто посмотреть"
+
 #: src/lib/format.ts
 msgid "k"
 msgstr "тыс."
@@ -4285,8 +4293,8 @@ msgid "Lists"
 msgstr "Списки"
 
 #: src/screens/Onboarding.tsx
-msgid "Load demo data"
-msgstr "Загрузить демо-данные"
+#~ msgid "Load demo data"
+#~ msgstr "Загрузить демо-данные"
 
 #: src/screens/dashboard/Dashboard.tsx
 msgid "Loading the layout…"
@@ -8241,6 +8249,10 @@ msgstr "Попробуйте ISIN или полное название."
 #: src/screens/Import/AssetSearch.tsx
 msgid "Try the ISIN, or the full name. The instrument can also be left as it is, with prices entered by hand."
 msgstr "Попробуйте ISIN или название целиком. Бумагу можно оставить как есть и вводить цены вручную."
+
+#: src/screens/Onboarding.tsx
+msgid "Try with demo portfolio"
+msgstr "Открыть демо-портфель"
 
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Turn off"

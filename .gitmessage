@@ -1,0 +1,22 @@
+# <type>(<scope>): <subject>          <- 72 chars max, imperative, no full stop
+#
+# Why this change, and what it costs. Wrap at 72. Leave it out only when the
+# subject already says everything.
+#
+# Refs: ADR-00NN                      <- when the change follows or adds a decision
+#
+# type:   feat     a capability the user can see
+#         fix      a defect, with the behaviour it restores
+#         perf     same behaviour, measurably faster
+#         refactor same behaviour, different shape
+#         docs     documentation only, including ADRs and the guides
+#         test     tests only
+#         build    Cargo, pnpm, bundling, icons
+#         ci       workflows
+#         chore    anything with no effect on the shipped app
+#
+# scope:  core cli app ui calc storage market fx inflation import ai
+#         dashboard i18n docs deps  (omit when the change is repo-wide)
+#
+# A breaking change adds ! after the scope and a "BREAKING CHANGE:" paragraph
+# explaining what a user or a caller must now do differently.

@@ -1,0 +1,42 @@
+#!/bin/sh
+# Checks the shape of a commit message: Conventional Commits, so the changelog can be generated
+# from the history rather than written by hand. Enable with:
+#
+#     git config core.hooksPath .githooks
+#
+# A merge, revert or fixup commit is left alone — git writes those itself.
+
+msg_file="$1"
+subject=$(sed -n '1p' "$msg_file")
+
+case "$subject" in
+  ''|'#'*) exit 0 ;;
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+types='feat|fix|perf|refactor|docs|test|build|ci|chore'
+
+fail() {
+  echo "commit-msg: $1" >&2
+  echo >&2
+  echo "  got:      $subject" >&2
+  echo "  expected: <type>(<scope>): <subject>   e.g. fix(storage): back up the database before an upgrade" >&2
+  echo "  types:    $(echo "$types" | tr '|' ' ')" >&2
+  exit 1
+}
+
+echo "$subject" | grep -Eq "^($types)(\([a-z0-9-]+\))?!?: .+" \
+  || fail "the subject does not start with a known type"
+
+# The 72-character limit is where GitHub and `git log --oneline` start truncating.
+[ "${#subject}" -le 72 ] || fail "the subject is ${#subject} characters, the limit is 72"
+
+case "$subject" in
+  *.) fail "the subject ends with a full stop" ;;
+esac
+
+# A body must be separated from the subject by a blank line, or git treats it as part of it.
+second=$(sed -n '2p' "$msg_file")
+[ -z "$second" ] || fail "line 2 must be blank when there is a body"
+
+exit 0

@@ -1,5 +1,9 @@
 //! Tauri host built on top of [`sq_core`].
 
+// A bare `unwrap()` outside tests is a crash in somebody's portfolio. An invariant that really
+// cannot fail is written as `expect("why")`, so the reason survives into the panic message.
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 pub mod ai;
 pub mod commands;
 pub mod dbfile;
@@ -204,7 +208,7 @@ pub fn run() {
             commands::ai::ai_send,
             commands::ai::ai_brief,
             commands::ai::ai_usage_totals,
-            commands::dev::dev_seed_demo,
+            commands::demo::demo_seed,
             commands::dev::dev_alert_simulate,
         ])
         .run(tauri::generate_context!())

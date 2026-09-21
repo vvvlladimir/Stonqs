@@ -52,17 +52,19 @@ pub struct Store {
 impl Store {
     /// Opens or creates a database file.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
         let conn = Connection::open(path)?;
-        Self::init(conn)
+        Self::init(conn, Some(path))
     }
 
     /// Opens or creates a database file encrypted with SQLCipher under a raw 256-bit key — raw, so
     /// SQLCipher runs no key derivation of its own; the caller's key is already a random one. A
     /// wrong key fails here, on the first read, never later.
     pub fn open_encrypted(path: impl AsRef<Path>, key: &[u8; 32]) -> Result<Self> {
+        let path = path.as_ref();
         let conn = Connection::open(path)?;
         conn.execute_batch(&format!("PRAGMA key = \"{}\";", raw_key(Some(key))))?;
-        Self::init(conn)
+        Self::init(conn, Some(path))
     }
 
     /// Writes a complete copy of this database to `dest` — encrypted under `key`, or plain when
@@ -91,10 +93,10 @@ impl Store {
     /// Opens an in-memory database for tests and CLI demos.
     pub fn open_in_memory() -> Result<Self> {
         let conn = Connection::open_in_memory()?;
-        Self::init(conn)
+        Self::init(conn, None)
     }
 
-    fn init(conn: Connection) -> Result<Self> {
+    fn init(conn: Connection, path: Option<&Path>) -> Result<Self> {
         // Keep referential actions enabled and let concurrent readers wait for writers.
         conn.execute_batch(
             "PRAGMA foreign_keys = ON;
@@ -102,7 +104,7 @@ impl Store {
              PRAGMA busy_timeout = 5000;",
         )?;
         let store = Store { conn };
-        migrate::run(&store.conn)?;
+        migrate::run(&store.conn, path)?;
         Ok(store)
     }
 
@@ -159,7 +161,100 @@ mod tests {
     use super::*;
 
     fn temp(name: &str) -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("vs-store-{name}-{}.db", uuid::Uuid::new_v4()))
+        std::env::temp_dir().join(format!("sq-store-{name}-{}.db", uuid::Uuid::new_v4()))
+    }
+
+    /// Writes a database file stopped one migration short of the current schema.
+    fn at_previous_version(path: &std::path::Path) {
+        let conn = rusqlite::Connection::open(path).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_migrations (
+                 version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL
+             );",
+        )
+        .unwrap();
+        for (version, name, sql) in &MIGRATIONS[..MIGRATIONS.len() - 1] {
+            conn.execute_batch(sql).unwrap();
+            conn.execute(
+                "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?1, ?2, '')",
+                rusqlite::params![version, name],
+            )
+            .unwrap();
+        }
+    }
+
+    /// An upgrade copies the file first; a database that has never been migrated has nothing to
+    /// lose and gets no copy.
+    #[test]
+    fn an_upgrade_leaves_a_copy_of_the_previous_version() {
+        let (old, fresh) = (temp("upgrade"), temp("fresh"));
+        at_previous_version(&old);
+
+        let previous = MIGRATIONS[MIGRATIONS.len() - 2].0;
+        let backup = old.with_file_name(format!(
+            "{}.bak-v{previous}",
+            old.file_name().unwrap().to_str().unwrap()
+        ));
+        assert!(!backup.exists(), "nothing is copied before the upgrade runs");
+
+        let store = Store::open(&old).unwrap();
+        drop(store);
+        assert!(backup.exists(), "the pre-upgrade copy is beside the database");
+
+        // The copy is the database as it was: still one version behind.
+        let copied = rusqlite::Connection::open(&backup).unwrap();
+        let version: i64 = copied
+            .query_row("SELECT MAX(version) FROM schema_migrations", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(version, previous);
+        drop(copied);
+
+        drop(Store::open(&fresh).unwrap());
+        let fresh_dir = fresh.parent().unwrap();
+        let fresh_name = format!("{}.bak-v", fresh.file_name().unwrap().to_str().unwrap());
+        assert!(
+            !std::fs::read_dir(fresh_dir)
+                .unwrap()
+                .flatten()
+                .any(|e| e.file_name().to_str().is_some_and(|n| n.starts_with(&fresh_name))),
+            "a new database is not backed up"
+        );
+
+        for path in [old, fresh, backup] {
+            for suffix in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{}{suffix}", path.display()));
+            }
+        }
+    }
+
+    /// Only the newest copies are kept: a backup is a whole database, and every upgrade ever
+    /// applied would outweigh what it protects.
+    #[test]
+    fn older_copies_are_pruned() {
+        let path = temp("pruned");
+        at_previous_version(&path);
+        let name = path.file_name().unwrap().to_str().unwrap().to_string();
+        let backup_of = |version: i64| path.with_file_name(format!("{name}.bak-v{version}"));
+
+        for version in 1..=4 {
+            std::fs::write(backup_of(version), b"older copy").unwrap();
+        }
+        drop(Store::open(&path).unwrap());
+
+        let previous = MIGRATIONS[MIGRATIONS.len() - 2].0;
+        let kept: Vec<i64> = (1..=4)
+            .chain(std::iter::once(previous))
+            .filter(|v| backup_of(*v).exists())
+            .collect();
+        assert_eq!(kept, vec![3, 4, previous], "the three newest survive");
+
+        for version in 1..=4 {
+            let _ = std::fs::remove_file(backup_of(version));
+        }
+        let _ = std::fs::remove_file(backup_of(previous));
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{}{suffix}", path.display()));
+        }
     }
 
     /// Plain to encrypted and back: the data survives both ways, the encrypted file opens only
@@ -204,7 +299,7 @@ mod tests {
     fn migrations_apply_and_are_idempotent() {
         let store = Store::open_in_memory().unwrap();
         // Re-running migrations must be idempotent.
-        migrate::run(store.conn()).unwrap();
+        migrate::run(store.conn(), None).unwrap();
         let n: i64 = store
             .conn()
             .query_row("SELECT count(*) FROM schema_migrations", [], |r| r.get(0))
@@ -232,7 +327,7 @@ mod tests {
             .unwrap();
         }
 
-        migrate::run(&conn).unwrap();
+        migrate::run(&conn, None).unwrap();
 
         // The latest columns exist and a second run remains idempotent.
         let columns: Vec<String> = conn
@@ -248,6 +343,6 @@ mod tests {
                 "missing column {expected}"
             );
         }
-        migrate::run(&conn).unwrap();
+        migrate::run(&conn, None).unwrap();
     }
 }

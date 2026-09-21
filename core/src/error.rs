@@ -46,6 +46,12 @@ pub enum Error {
 
     #[error("math error: {0}")]
     Math(String),
+
+    /// The copy taken before a schema upgrade could not be written, so the upgrade did not run.
+    /// A migration cannot be undone, and refusing to start is recoverable where a lost portfolio
+    /// is not.
+    #[error("could not back up the database before migrating: {0}")]
+    Backup(String),
 }
 
 impl Error {

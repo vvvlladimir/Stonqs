@@ -1,5 +1,10 @@
-use crate::error::Result;
+use crate::error::{Error, Result};
 use rusqlite::Connection;
+use std::path::{Path, PathBuf};
+
+/// How many upgrade copies are kept beside the database. A backup is a whole database file, so
+/// every upgrade ever applied would eventually cost more than the portfolio it protects.
+const KEEP_BACKUPS: usize = 3;
 
 /// Migrations in application order; applied files must never be edited.
 pub const MIGRATIONS: &[(i64, &str, &str)] = &[
@@ -115,7 +120,10 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
 ];
 
 /// Applies all pending migrations.
-pub fn run(conn: &Connection) -> Result<()> {
+///
+/// `path` is the database's own file when it has one, and is what makes the pre-upgrade copy
+/// possible; an in-memory database passes `None` and is never backed up.
+pub fn run(conn: &Connection, path: Option<&Path>) -> Result<()> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS schema_migrations (
              version    INTEGER PRIMARY KEY,
@@ -123,6 +131,21 @@ pub fn run(conn: &Connection) -> Result<()> {
              applied_at TEXT NOT NULL
          );",
     )?;
+
+    // A database that has never been migrated holds nothing to lose, so only an *upgrade* is
+    // copied: a fresh file would otherwise leave an empty backup beside every new profile.
+    let from: i64 = conn.query_row(
+        "SELECT COALESCE(MAX(version), 0) FROM schema_migrations",
+        [],
+        |r| r.get(0),
+    )?;
+    let pending = MIGRATIONS.iter().any(|(v, _, _)| *v > from);
+    if from > 0
+        && pending
+        && let Some(path) = path
+    {
+        back_up(conn, path, from)?;
+    }
 
     for (version, name, sql) in MIGRATIONS {
         let already: bool = conn.query_row(
@@ -152,4 +175,48 @@ pub fn run(conn: &Connection) -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// Copies the database beside itself as `<name>.bak-v<from>` before an upgrade touches it.
+///
+/// Each migration is atomic on its own, but a *sequence* of them is not undoable: a version that
+/// drops a column cannot give it back. An encrypted database copies as the encrypted bytes it
+/// already is, so the backup is no weaker than the original.
+fn back_up(conn: &Connection, path: &Path, from: i64) -> Result<()> {
+    let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+        return Err(Error::Backup(format!("{} is not a file", path.display())));
+    };
+    // Committed pages can still be sitting in the -wal file; a byte copy taken without this
+    // would silently be missing the most recent transactions.
+    conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))?;
+
+    let target = path.with_file_name(format!("{name}.bak-v{from}"));
+    std::fs::copy(path, &target)
+        .map_err(|e| Error::Backup(format!("{} -> {}: {e}", path.display(), target.display())))?;
+    prune_backups(path, name);
+    Ok(())
+}
+
+/// Deletes all but the [`KEEP_BACKUPS`] newest copies. A failure here is not the caller's
+/// problem: the backup that matters has already been written, and a full disk is a better
+/// complaint from the next upgrade than from this one.
+fn prune_backups(path: &Path, name: &str) {
+    let Some(dir) = path.parent() else { return };
+    let prefix = format!("{name}.bak-v");
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    let mut found: Vec<(i64, PathBuf)> = entries
+        .flatten()
+        .filter_map(|e| {
+            let file = e.file_name();
+            let version: i64 = file.to_str()?.strip_prefix(&prefix)?.parse().ok()?;
+            Some((version, e.path()))
+        })
+        .collect();
+    found.sort_by_key(|(version, _)| *version);
+    let drop_count = found.len().saturating_sub(KEEP_BACKUPS);
+    for (_, old) in found.into_iter().take(drop_count) {
+        let _ = std::fs::remove_file(old);
+    }
 }

@@ -46,7 +46,7 @@ export function DataPanel({ status }: { status: AppStatus }) {
   const templates = useImportTemplates();
 
   const seed = useMutation({
-    mutationFn: api.devSeedDemo,
+    mutationFn: api.demoSeed,
     onSuccess: () => invalidate(...affects.transactions, ...affects.accounts),
   });
 

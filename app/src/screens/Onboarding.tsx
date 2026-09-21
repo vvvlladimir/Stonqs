@@ -30,7 +30,7 @@ export function Onboarding({ status }: { status: AppStatus }) {
   const leave = useMutation({ mutationFn: (id: string) => openProfile(id, profiles.data?.open ?? "") });
 
   const seed = useMutation({
-    mutationFn: api.devSeedDemo,
+    mutationFn: api.demoSeed,
     onSuccess: () => invalidate(...affects.portfolio),
   });
 
@@ -41,24 +41,26 @@ export function Onboarding({ status }: { status: AppStatus }) {
       title={<Trans>Let's set up the portfolio</Trans>}
       lead={t`Money and instruments live on separate accounts: cash on one, securities on another that settles through it.`}
       foot={
-        (others.length > 0 || status.dev_build) && (
-          <>
-            {others.length > 0 && (
-              <GateSection title={t`Other profiles`}>
-                <ProfileRows profiles={others} disabled={leave.isPending} onPick={(id) => leave.mutate(id)} />
-                <ErrorText error={leave.error} />
-              </GateSection>
-            )}
-            {status.dev_build && (
-              <GateSection title={t`Debug`}>
-                <button className="btn btn--ghost" onClick={() => seed.mutate()} disabled={seed.isPending}>
-                  {seed.isPending ? t`Filling…` : t`Load demo data`}
-                </button>
-                <ErrorText error={seed.error} />
-              </GateSection>
-            )}
-          </>
-        )
+        <>
+          {others.length > 0 && (
+            <GateSection title={t`Other profiles`}>
+              <ProfileRows profiles={others} disabled={leave.isPending} onPick={(id) => leave.mutate(id)} />
+              <ErrorText error={leave.error} />
+            </GateSection>
+          )}
+          <GateSection title={t`Just looking`}>
+            <p className="dim">
+              <Trans>
+                Fills this profile with a sample portfolio so you can see what the app does before importing
+                anything of your own.
+              </Trans>
+            </p>
+            <button className="btn btn--ghost" onClick={() => seed.mutate()} disabled={seed.isPending}>
+              {seed.isPending ? t`Filling…` : t`Try with demo portfolio`}
+            </button>
+            <ErrorText error={seed.error} />
+          </GateSection>
+        </>
       }
     >
       <Form

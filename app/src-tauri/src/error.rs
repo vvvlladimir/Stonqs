@@ -115,6 +115,7 @@ impl From<Error> for UiError {
                 message,
             },
             Error::Math(_) => UiError::Math { message },
+            Error::Backup(_) => UiError::Storage { message },
         }
     }
 }

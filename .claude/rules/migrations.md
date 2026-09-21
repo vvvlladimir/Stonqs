@@ -5,6 +5,13 @@ one only through `Store::open_encrypted` (ADR-0049). A migration is plain SQL ei
 
 `storage/migrate.rs` holds `MIGRATIONS: &[(version, name, include_str!(...))]`, applied in order, each in its own transaction. `PRAGMA foreign_keys = ON` is set on every connection. **An applied migration is never edited** — add `000N_*.sql` and a new tuple.
 
+Before the first migration of an **upgrade**, the file is copied beside itself as
+`<name>.bak-v<from>` (`migrate::back_up`, ADR-0062): a WAL checkpoint first, so the copy is not
+missing committed pages; an encrypted database copies as the encrypted bytes it already is; a
+failed copy is `Error::Backup` and **aborts the upgrade**. A database with nothing applied yet is
+not copied, and only the three newest copies are kept. An in-memory database passes `None` for the
+path and is never copied.
+
 Latest is `0025_price_index.sql`: `price_index (region, month, value, source)` — one consumer-price
 level per region and month, the month stored as its first day so lexicographic order stays
 chronological, and `source` recorded because index bases differ between publishers (2015=100 vs
