@@ -6,6 +6,8 @@ money, so the bar for a change is "I can show why this number is right", not "it
 Before a large change, open an issue or a discussion first. A refused pull request wastes more of
 your evening than a refused idea.
 
+Taking part here means following the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Getting set up
 
 ```bash

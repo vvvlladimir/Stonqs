@@ -1,0 +1,78 @@
+name: Bug report
+description: Something the app does that it should not, or does not do that it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before you write: the app holds your own financial records. Screenshots and log excerpts
+        usually contain them. Please crop or redact amounts, account numbers and names — a
+        reproduction almost never needs the real figures.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+      placeholder: |
+        I imported a CSV from … and opened Positions.
+        I expected … but the quantity showed …
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: >
+        Numbered, starting from a state somebody else can reach. If "Try with demo portfolio"
+        reproduces it, say so — that is the most useful report there is.
+      placeholder: |
+        1. Start a new profile with "Try with demo portfolio"
+        2. Open Rebalance and set a target of …
+        3. Press …
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings, at the bottom. Or the tag of the release you installed.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple silicon)
+        - macOS (Intel)
+        - Windows
+        - Linux
+        - Built from source
+    validations:
+      required: true
+
+  - type: textarea
+    id: numbers
+    attributes:
+      label: If a figure is wrong, what should it have been
+      description: >
+        Say which number, on which screen, over which period and under which data source, and what
+        you believe the right answer is and why. A return is computed several defensible ways, so
+        "this is too high" is not yet a defect — the arithmetic you expected is.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues.
+          required: true
+        - label: I removed real amounts, account numbers and names from anything I pasted.
+          required: true

@@ -1,0 +1,96 @@
+name: Broker file support
+description: A broker export this app reads wrongly, or does not read at all.
+labels: [broker-format]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Strip your data first
+
+        **A broker export is a list of everything you own and every transfer you have made. This
+        issue is public and permanent.**
+
+        Before you paste anything:
+
+        - Replace every amount, quantity and balance with a made-up number.
+        - Remove account numbers, customer numbers, order references, your name and your address.
+        - **Five rows are enough** — the header row plus one example of each operation that goes
+          wrong. A whole statement tells us nothing the five rows do not.
+
+        What is genuinely needed is the *shape*: the column headers in the file's own language, the
+        exact wording in the type column, the date format, and which character separates the
+        decimals. None of that requires a real figure.
+
+        If you would rather not post it at all, that is a reasonable decision: describe the columns
+        in prose instead, and we will work from that.
+
+  - type: input
+    id: broker
+    attributes:
+      label: Broker and country
+      placeholder: Trade Republic, Germany
+    validations:
+      required: true
+
+  - type: input
+    id: export
+    attributes:
+      label: Which export
+      description: >
+        Brokers publish several, and they have different columns. Name it as the broker's own
+        interface names it.
+      placeholder: Transactions export (CSV), from the web office
+    validations:
+      required: true
+
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: What happens now
+      options:
+        - The file is refused outright
+        - The columns are mapped to the wrong fields
+        - Operations come in as the wrong kind (a fee read as a purchase, and so on)
+        - Amounts or dates are parsed wrongly
+        - Deposits and withdrawals are counted when they should be internal transfers, or vice versa
+        - The broker is not in the list of layouts at all
+    validations:
+      required: true
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: A few redacted rows
+      description: >
+        The header row plus up to five data rows, with invented figures. Paste as text rather than
+        as a screenshot — the text is what the parser sees.
+      render: text
+      placeholder: |
+        Date;Type;ISIN;Shares;Amount;Currency
+        2024-11-30;Kauf;IE00B4L5Y983;1,5;-123,45;EUR
+        2024-12-02;Zinsen;;;1,23;EUR
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What those rows should become
+      description: One line each — which operation, which direction, on which account.
+      placeholder: |
+        Row 1 is a purchase of 1.5 shares for 123.45 EUR.
+        Row 2 is interest credited to the cash account.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Before submitting
+      options:
+        - label: >
+            Every amount, quantity, balance, account number and name above is invented or removed.
+            I understand this issue is public.
+          required: true
+        - label: I tried the file with the layouts already shipped and none of them fits.
+          required: false

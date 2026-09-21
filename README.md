@@ -10,14 +10,20 @@ True time-weighted and money-weighted returns, lots and realised gains, classifi
 rebalancing, broker CSV import in any language — on your computer, encrypted if you want it,
 with no account and no server.
 
+[![CI](https://github.com/vvvlladimir/stonqs/actions/workflows/ci.yml/badge.svg)](https://github.com/vvvlladimir/stonqs/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/vvvlladimir/stonqs?include_prereleases&sort=semver)](https://github.com/vvvlladimir/stonqs/releases/latest)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](#install)
 [![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](#status)
 
-</div>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/main-dark.png">
+  <img src="docs/images/main-light.png" width="900"
+       alt="The Overview screen: portfolio value, the day's change, time-weighted return and money
+            earned over the period, above a value-and-flows chart and the portfolio's composition.">
+</picture>
 
-<!-- TODO before making the repository public: replace with a real screenshot of the dashboard on
-     demo data, light and dark. A README without a picture does not get read. -->
+</div>
 
 ## Why
 

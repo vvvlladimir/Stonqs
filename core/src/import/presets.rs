@@ -3,6 +3,11 @@
 //! Detection reads an unknown file; a preset is the answer for a file we have already seen.
 //! It is data, not code: adding a broker means one entry in `presets/brokers.json`, which is
 //! also the shape a downloaded preset would arrive in.
+//!
+//! Every entry is written by hand from a broker's published column documentation or from a
+//! redacted sample — nothing here is copied from another project, and no broker endorses it.
+//! Not all of them have been tried against a real export yet, which is why a preset is only ever
+//! a starting point: the import wizard lets the user override every part of it (`import.md`).
 
 use super::mapping::{ImportMapping, default_kind_aliases};
 use super::parse::ParseConfig;

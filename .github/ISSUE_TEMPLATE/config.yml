@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question, idea or "how do I …"
+    url: https://github.com/vvvlladimir/stonqs/discussions
+    about: Anything that is not a defect or a broker file goes to Discussions.
+  - name: Security vulnerability
+    url: https://github.com/vvvlladimir/stonqs/security/advisories/new
+    about: Report it privately, never as a public issue. See SECURITY.md for what is in scope.
