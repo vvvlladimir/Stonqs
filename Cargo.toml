@@ -56,6 +56,6 @@ sys-locale = "0.3"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 # The profile vault (ADR-0048): Argon2id turns a password into a key, XChaCha20-Poly1305 seals.
 argon2 = "0.5"
-chacha20poly1305 = "0.10"
+chacha20poly1305 = "0.11"
 zeroize = "1"
 base64 = "0.22"
