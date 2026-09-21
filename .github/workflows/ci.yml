@@ -28,7 +28,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Tauri's build script refuses to run when `frontendDist` does not exist, and the Rust job
       # deliberately does not build the frontend — an empty directory is enough for `cargo test`.
@@ -78,14 +78,14 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # The action runs from the repository root, where there is no package.json: the pin it
       # reads has to be pointed at.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           package_json_file: app/package.json
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
