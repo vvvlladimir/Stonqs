@@ -55,7 +55,7 @@ sys-locale = "0.3"
 # keyring's own manifest, so naming all three costs nothing on any one platform.
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 # The profile vault (ADR-0048): Argon2id turns a password into a key, XChaCha20-Poly1305 seals.
-argon2 = "0.5"
+argon2 = "0.6"
 chacha20poly1305 = "0.10"
 zeroize = "1"
 base64 = "0.22"
