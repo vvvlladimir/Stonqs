@@ -18,6 +18,10 @@ permissions:
 
 jobs:
   cla:
+    # A run triggered by a bot gets a read-only token and no secrets, so the action cannot write
+    # the signature file even to say the author is allowlisted — and a bot has nothing to agree
+    # to: its pull requests are this repository's own dependency bumps.
+    if: github.actor != 'dependabot[bot]' && github.event.pull_request.user.type != 'Bot'
     runs-on: ubuntu-latest
     steps:
       - name: Check or record the contributor's signature

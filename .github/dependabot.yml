@@ -1,31 +1,50 @@
 version: 2
 
-# Weekly rather than daily, and grouped: a separate pull request per patch bump is a queue nobody
-# reads, and what matters — an advisory — is watched by the audit workflow anyway.
+# Weekly rather than daily, grouped, and capped: a separate pull request per bump is a queue
+# nobody reads, and an update nobody reads is an update nobody checked. What actually matters —
+# a published advisory — is watched by the audit workflow, not by this file.
 updates:
   - package-ecosystem: cargo
     directory: /
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    # One pull request for everything compatible, plus at most two majors at a time. A major of
+    # a crate this app trusts with passwords or with decoding somebody's broker export is read
+    # on its own, never as a line in a list.
+    open-pull-requests-limit: 3
     groups:
       cargo-minor-and-patch:
         update-types: [minor, patch]
+    commit-message:
+      prefix: build
+      include: scope
 
   - package-ecosystem: npm
     directory: /app
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
+    commit-message:
+      prefix: build
+      prefix-development: build
+      include: scope
 
-  # Actions are pinned by major tag, so this only catches the ones that move a major.
+  # Actions are small and are read together — majors included, since a workflow either still runs
+  # or does not. One pull request for the lot.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
+    open-pull-requests-limit: 2
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: build
+      include: scope
