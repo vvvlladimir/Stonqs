@@ -1,0 +1,106 @@
+name: CI
+
+# Everything that must hold before a change reaches main. The release workflow trusts this one and
+# does not repeat it: a tag is only ever put on a commit that already passed here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A second push to the same branch makes the first run's answer worthless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+
+      # Tauri's build script refuses to run when `frontendDist` does not exist, and the Rust job
+      # deliberately does not build the frontend — an empty directory is enough for `cargo test`.
+      - name: Placeholder frontend output
+        shell: bash
+        run: mkdir -p app/dist
+
+      - name: Linux system libraries
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            libdbus-1-dev \
+            libssl-dev \
+            patchelf
+
+      # rustup reads rust-toolchain.toml and installs that version with its components; no action
+      # is needed, and none may override it, or CI would test a compiler nobody develops against.
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # SQLCipher vendors OpenSSL, so a cold build is minutes on every runner.
+          shared-key: ci
+
+      - name: Format
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      # No `--ignored`: those tests reach the network, and a CI run must not depend on a data
+      # provider being up.
+      - name: Test
+        run: cargo test --workspace --locked
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v5
+
+      # Version comes from `packageManager` in app/package.json.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm lint:css
+      - run: pnpm format:check
+
+      # tsc --noEmit then vite build.
+      - run: pnpm build
+
+      # The catalogs are generated from the source, so a message added without extracting them
+      # ships untranslatable. Line numbers are off in lingui.config.ts, so an unrelated edit does
+      # not move anything here.
+      - name: Catalogs are up to date
+        run: |
+          pnpm i18n:extract
+          git diff --exit-code -- src/locales
