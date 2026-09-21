@@ -38,7 +38,10 @@ jobs:
           - os: macos-latest
             target: x86_64-apple-darwin
           # The oldest supported runner, because a Linux binary cannot run against a glibc older
-          # than the one it was built on.
+          # than the one it was built on. Deprecated by GitHub on 2026-09-17 and unsupported from
+          # 2027-04-17, with brownouts failing the job at random in between; it is kept anyway,
+          # because moving to ubuntu-24.04 raises the floor from glibc 2.35 to 2.39 and drops
+          # Ubuntu 22.04 and Debian 12 users. Move before the April date, not after a red release.
           - os: ubuntu-22.04
             target: ""
           - os: windows-latest
