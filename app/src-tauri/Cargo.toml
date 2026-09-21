@@ -32,3 +32,8 @@ uuid.workspace = true
 chrono.workspace = true
 rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
+
+# The updater replaces an installed bundle, which is a thing only a desktop OS lets an app do.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater.workspace = true
+tauri-plugin-process.workspace = true

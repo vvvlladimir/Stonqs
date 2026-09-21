@@ -13,6 +13,7 @@ import { InflationPanel } from "./InflationPanel";
 import { MarketDataPanel } from "./MarketDataPanel";
 import { PortfolioPanel } from "./PortfolioPanel";
 import { ProfilesPanel } from "./ProfilesPanel";
+import { UpdatesPanel } from "./UpdatesPanel";
 
 export function Settings({ status }: { status: AppStatus }) {
   const { t, i18n } = useLingui();
@@ -43,6 +44,7 @@ export function Settings({ status }: { status: AppStatus }) {
         {category === "appearance" && <AppearancePanel />}
         {category === "profiles" && <ProfilesPanel />}
         {category === "data" && <DataPanel status={status} />}
+        {category === "updates" && <UpdatesPanel />}
       </Tabs>
     </Page>
   );

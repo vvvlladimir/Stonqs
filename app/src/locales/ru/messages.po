@@ -1901,6 +1901,18 @@ msgstr "Изменить разбивку в «{0}»"
 msgid "Charts"
 msgstr "Графики"
 
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Check for updates"
+msgstr "Проверить обновления"
+
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Check for updates automatically"
+msgstr "Проверять обновления автоматически"
+
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Checking…"
+msgstr "Проверяем…"
+
 #: src/screens/Import/AssetSearch.tsx
 msgid "choose"
 msgstr "выбрать"
@@ -1965,6 +1977,7 @@ msgstr "Нажмите, чтобы повторить."
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/SecurityPopup.tsx
+#: src/components/domain/UpdateDialog.tsx
 #: src/components/ui/Modal.tsx
 #: src/screens/dashboard/dialogs.tsx
 msgid "Close"
@@ -2712,6 +2725,10 @@ msgstr "в минус"
 #: src/components/domain/MarketRefresh.tsx
 msgid "Download history"
 msgstr "Загрузить историю"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Downloading the update"
+msgstr "Загрузка обновления"
 
 #: src/screens/dashboard/EditBar.tsx
 msgid "Drag a tile's header to move it, or any of its edges or corners to resize it."
@@ -4146,6 +4163,10 @@ msgstr "Выплаты за год к сегодняшней стоимости.
 #~ msgid "Last year's payments over what the shares cost."
 #~ msgstr "Выплаты за год к стоимости покупки."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "Later"
+msgstr "Позже"
+
 #: src/screens/Import/TemplateBar.tsx
 msgid "Layout"
 msgstr "Шаблон"
@@ -5031,6 +5052,10 @@ msgstr "Нет операций — отчитываться пока не о ч
 msgid "No transactions."
 msgstr "Нет операций."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "No update available"
+msgstr "Обновлений нет"
+
 #: src/screens/Securities/model.ts
 msgid "No venue"
 msgstr "Без листинга"
@@ -5336,6 +5361,10 @@ msgstr "От всего портфеля это <0/>."
 msgid "Off"
 msgstr "Выкл."
 
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Offer it again"
+msgstr "Предлагать снова"
+
 #: src/screens/Securities/Splits.tsx
 msgid "Old shares"
 msgstr "Старых бумаг"
@@ -5372,6 +5401,10 @@ msgstr "По счёту"
 #: src/screens/dashboard/dialogs.tsx
 msgid "Once a day"
 msgstr "Раз в день"
+
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Once a day, over the internet. Nothing is downloaded before you say so."
+msgstr "Раз в день, через интернет. Ничего не скачивается, пока вы не согласитесь."
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Once a month"
@@ -6325,6 +6358,10 @@ msgstr "Изменить размер"
 msgid "Resize the panel"
 msgstr "Изменить ширину панели"
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "Restart now"
+msgstr "Перезапустить"
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Restore"
 msgstr "Вернуть"
@@ -6890,6 +6927,10 @@ msgstr "С {late}: более ранних котировок нет"
 #: src/components/domain/PeriodEditor.tsx
 msgid "Six months"
 msgstr "Полгода"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Skip this version"
+msgstr "Пропустить эту версию"
 
 #: src/screens/Import/labels.ts
 msgid "skipped"
@@ -7579,6 +7620,10 @@ msgstr "Модель отказалась отвечать на этот зап�
 msgid "The new quantity applies from this day on, so a purchase made before it is restated and a later one is not."
 msgstr "Новое количество действует с этого дня: покупка до него пересчитывается, покупка после — нет."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "The new version is in place and starts the next time the app opens."
+msgstr "Новая версия установлена и запустится при следующем открытии приложения."
+
 #: src/screens/dashboard/dialogs.tsx
 msgid "The newest"
 msgstr "Самая новая"
@@ -7857,6 +7902,10 @@ msgstr "В дереве нет категорий — вес ставить не
 msgid "The two do not match."
 msgstr "Пароли не совпадают."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "The update could not be downloaded or installed. Nothing has changed — this version keeps working, and the new one can be downloaded by hand from the releases page."
+msgstr "Обновление не удалось скачать или установить. Ничего не изменилось — эта версия продолжает работать, а новую можно скачать вручную со страницы релизов."
+
 #: src/screens/dashboard/widgets/index.tsx
 msgid "The value line over the period with deposit bars beneath it."
 msgstr "Линия стоимости за период и столбики пополнений под ней."
@@ -7962,6 +8011,10 @@ msgstr "У бумаги не заполнен ISIN"
 #: src/components/domain/ListingPicker.tsx
 msgid "This instrument has no ISIN, so the venues were looked for under its ticker alone and the provider named none. Adding the ISIN under \"Edit\" asks the directory proper."
 msgstr "У инструмента нет ISIN, поэтому площадки искались по одному тикеру и провайдер не назвал ни одной. Впишите ISIN в «Изменить», и запрос уйдёт в сам справочник."
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "This is the newest published version."
+msgstr "Это самая новая опубликованная версия."
 
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
@@ -8230,6 +8283,7 @@ msgstr "Уровень триггера"
 msgid "trough {0}"
 msgstr "дно {0}"
 
+#: src/components/domain/UpdateDialog.tsx
 #: src/components/ErrorBoundary.tsx
 msgid "Try again"
 msgstr "Попробовать снова"
@@ -8378,6 +8432,27 @@ msgstr "в плюс"
 msgid "Upcoming contributions"
 msgstr "Ближайшие взносы"
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "Update available"
+msgstr "Доступно обновление"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Update failed"
+msgstr "Обновление не удалось"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Update installed"
+msgstr "Обновление установлено"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Update now"
+msgstr "Обновить"
+
+#: src/screens/Settings/model.ts
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Updates"
+msgstr "Обновления"
+
 #: src/components/charts/ValueChart.tsx
 #: src/screens/Allocation/Header.tsx
 #: src/screens/Allocation/MembersPanel.tsx
@@ -8437,6 +8512,20 @@ msgstr "Площадки · {0}"
 #: src/screens/Securities/index.tsx
 msgid "Venues…"
 msgstr "Площадки…"
+
+#. placeholder {0}: update.version
+#: src/components/domain/UpdateDialog.tsx
+msgid "Version {0} is available."
+msgstr "Доступна версия {0}."
+
+#. placeholder {0}: update.version
+#: src/components/domain/UpdateDialog.tsx
+msgid "Version {0} is downloading. The app restarts once it is in place."
+msgstr "Версия {0} загружается. Приложение перезапустится, когда она встанет на место."
+
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Version {skipped} was skipped and is not offered again."
+msgstr "Версия {skipped} пропущена и больше не предлагается."
 
 #: src/components/domain/AiChatPanel.tsx
 msgid "Vibe"
@@ -8778,6 +8867,10 @@ msgstr "Где цена находится между минимумом и ма
 #: src/screens/Watchlist/columns.tsx
 msgid "Where the price stands between the period's low and high."
 msgstr "Где стоит цена между минимумом и максимумом периода."
+
+#: src/screens/Settings/UpdatesPanel.tsx
+msgid "Where this app looks for a newer version, and whether it may look on its own."
+msgstr "Где приложение ищет новую версию и может ли искать само."
 
 #: src/screens/Settings/InflationPanel.tsx
 msgid "Where you spend, which need not be where your base currency is legal tender. Left empty, no real returns are shown."

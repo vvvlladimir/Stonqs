@@ -95,6 +95,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [30](0030-a-dashboard-widget-may-name-its-own-data-source.md) | A dashboard widget may name its own data source | Accepted |
 | [45](0045-a-dashboard-tile-is-resized-from-the-edge-being-dragged.md) | A dashboard tile is resized from the edge being dragged | Accepted |
 | [59](0059-a-tile-may-hold-assumptions-and-a-ratio-is-a-rendering.md) | A tile may hold assumptions, and a ratio of two shown figures is a rendering | Accepted |
+| [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted |
 
 ## Profiles, keys and encryption
 

@@ -1,6 +1,7 @@
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import {
+  ArrowsClockwiseIcon,
   BankIcon,
   BriefcaseIcon,
   CloudArrowDownIcon,
@@ -15,7 +16,7 @@ import type { Portfolio, PortfolioInput } from "../../lib/types";
 
 /** The categories of the settings rail, in the order they are offered. */
 export type CategoryId =
-  "portfolio" | "accounts" | "attributes" | "market" | "ai" | "appearance" | "profiles" | "data";
+  "portfolio" | "accounts" | "attributes" | "market" | "ai" | "appearance" | "profiles" | "data" | "updates";
 
 export const CATEGORIES: { id: CategoryId; label: MessageDescriptor; icon: Icon }[] = [
   { id: "portfolio", label: msg`Portfolio`, icon: BriefcaseIcon },
@@ -26,6 +27,7 @@ export const CATEGORIES: { id: CategoryId; label: MessageDescriptor; icon: Icon 
   { id: "appearance", label: msg`Appearance`, icon: PaletteIcon },
   { id: "profiles", label: msg`Profiles`, icon: UsersIcon },
   { id: "data", label: msg`Data and storage`, icon: DatabaseIcon },
+  { id: "updates", label: msg`Updates`, icon: ArrowsClockwiseIcon },
 ];
 
 /**

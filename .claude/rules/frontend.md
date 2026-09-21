@@ -23,6 +23,10 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 - `components/domain/` holds every reusable piece that names a domain type (`Instrument`, `KindTag`, `ScopePicker`, `PeriodControl`, `AllocationBar`, `ListingPicker`, `MarketRefresh`, `SecurityPopup`). What stays in `components/` itself is infrastructure only — `Page`, `ErrorBoundary`. Value rendering is not domain-aware — `Money` and friends live in `components/ui/`, over `lib/format` alone.
 - An archetype (`components/Page.tsx`) says which slots a screen may fill. A `registry` may carry `controls` only because a column of it is computed over a period rather than read off a date (the positions table showing TWR); its total still belongs in the summary line, never in `metrics`.
 - `screens/<Screen>/index.tsx` is composition only — queries, state, `Page` slots. A panel longer than ~80 lines moves to its own file; a screen file over ~250 lines gets split.
+- The updater is the frontend's, not the host's (ADR-0063): `lib/updates.tsx` owns the check (once
+  a calendar day, `UiState::updates`), `UpdateDialog` is the only place a version is offered, and
+  `api.ts` keeps the plugin's handle so nothing else holds an installer. An automatic check that
+  fails is silent; one the user pressed answers. Desktop only — `useUpdates()` is null elsewhere.
 - `Settings` is a strip of categories, not one long page: `screens/Settings/model.ts` lists them, one
   panel file each, `index.tsx` only switches. `Tabs` (`components/ui`) owns that layout — one shape at
   every width, the strip scrolling sideways rather than becoming a side rail.

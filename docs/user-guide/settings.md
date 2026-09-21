@@ -1,7 +1,7 @@
 # Settings
 
 A strip of categories, one panel each: Portfolio, Accounts, Attributes, Market data, AI assistant,
-Appearance, Profiles, Data and storage.
+Appearance, Profiles, Data and storage, Updates.
 
 **Portfolio** — its name, the base currency every report converts into, and the **cost-basis
 method** (how a sale decides which lots it consumed). The method is what determines every realised
@@ -81,6 +81,20 @@ interface language, theme, dashboard layouts and the dashboard summary texts are
 beside the data, because the lock screen needs them before any password is typed. Setting or
 removing a password can be refused while a quote refresh or an AI answer is running; it works once
 that finishes.
+
+**Updates** — which version is running, and whether the app may look for a newer one. With `Check
+for updates automatically` on, it asks once a day whether a newer version has been published;
+`Check for updates` asks straight away. Finding one changes nothing by itself: the app says what
+the new version is and what the release notes say, and waits. `Update now` downloads it, `Later`
+leaves it for the next check, and `Skip this version` means that exact version is never offered
+again — a later one still is, and `Offer it again` takes the refusal back. An installed update
+takes effect on the next start, which `Restart now` does immediately. A download that fails changes
+nothing: the running version keeps working.
+
+Updates are the one thing besides market data and the AI assistant that reaches the internet, and
+the app only ever asks a release feed whether a version exists — it sends nothing about the
+portfolio. A version that fails its signature check is refused, so an update can only come from
+whoever holds the project's signing key.
 
 **Data and storage** — what is stored (accounts, instruments, quotes, the first transaction),
 saved import layouts (including restoring the shipped ones that were removed), and the database

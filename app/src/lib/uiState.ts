@@ -47,6 +47,22 @@ export interface UiState {
   ai_panel_width: number;
   /** The last brief each summary tile generated, by widget id. */
   ai_briefs: Record<string, Brief>;
+  /** What the updater already asked about; only the frontend acts on it. */
+  updates: UpdatePrefs;
+}
+
+/**
+ * The update check is a thing the app does to the user rather than for them, so it remembers
+ * two answers: the version they said no to, and the day it last asked. A version declined once
+ * is never offered again; a newer one is.
+ */
+export interface UpdatePrefs {
+  /** Off means the check never runs on its own; `Check for updates` still works. */
+  auto: boolean;
+  /** Version the user chose to skip, or `null`. */
+  skip: string | null;
+  /** Local date of the last automatic check, `YYYY-MM-DD`. */
+  checked: string | null;
 }
 
 /** A column key and a direction: what a table's heading was last clicked into. */
@@ -94,6 +110,7 @@ export const DEFAULT_UI: UiState = {
   theme: "system",
   ai_panel_width: 420,
   ai_briefs: {},
+  updates: { auto: true, skip: null, checked: null },
 };
 
 /** Parses versioned or plugin-provided UI JSON with safe defaults. */
@@ -120,6 +137,18 @@ export function parseUiState(raw: unknown): UiState {
     theme: isTheme(value.theme) ? value.theme : DEFAULT_UI.theme,
     ai_panel_width: clampPanel(value.ai_panel_width),
     ai_briefs: briefs(value.ai_briefs),
+    updates: updatePrefs(value.updates),
+  };
+}
+
+/** A blob written before the updater existed, or by hand: anything unreadable is the default. */
+function updatePrefs(value: unknown): UpdatePrefs {
+  const prefs = value as Partial<UpdatePrefs> | undefined;
+  if (!prefs || typeof prefs !== "object") return DEFAULT_UI.updates;
+  return {
+    auto: typeof prefs.auto === "boolean" ? prefs.auto : DEFAULT_UI.updates.auto,
+    skip: typeof prefs.skip === "string" ? prefs.skip : null,
+    checked: typeof prefs.checked === "string" ? prefs.checked : null,
   };
 }
 

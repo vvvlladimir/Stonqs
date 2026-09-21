@@ -23,11 +23,21 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         // The dialog plugin is only here for file pickers and save locations.
         .plugin(tauri_plugin_dialog::init())
         // Notifications for fired alerts; the frontend asks for permission and writes the text.
-        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_notification::init());
+
+    // In-app updates, desktop only — a store updates the mobile builds. The frontend asks and
+    // decides; the plugin fetches, checks the signature against the key in tauri.conf.json,
+    // installs, and `process` restarts into the new version.
+    #[cfg(desktop)]
+    let builder = builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init());
+
+    builder
         .setup(|app| {
             let state = AppState::bootstrap(app)?;
             // A locked profile refreshes once it is unlocked (`profile_unlock`), not before.
