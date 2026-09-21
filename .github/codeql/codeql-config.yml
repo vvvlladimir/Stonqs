@@ -1,0 +1,19 @@
+name: Stonqs
+
+# Read only by the advanced setup in .github/workflows/codeql.yml — the default setup ignores this
+# file entirely, which is the whole reason that workflow exists.
+#
+# What is excluded is test code and the developer harness, and the trade is deliberate: a real
+# defect in these paths will no longer be reported. Everything a user runs is still scanned.
+#
+# This cannot cover `#[cfg(test)] mod tests`, which sits in the same file as the code it tests —
+# path filters work on files. Alerts from those (the vault's tests hold key literals by necessity)
+# are dismissed by hand as "Used in tests".
+paths-ignore:
+  # Not a product: a throwaway harness for exercising the core by hand, whose entire job is to
+  # print portfolio figures to stdout. Every `println!` of a number reads as cleartext logging.
+  - cli/**
+  - core/tests/**
+  - app/src-tauri/tests/**
+  # Generated: Lingui compiles the catalogs from the source.
+  - app/src/locales/**

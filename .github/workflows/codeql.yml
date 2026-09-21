@@ -1,0 +1,74 @@
+name: CodeQL
+
+# Replaces the default setup, which cannot be given a configuration file: without one, the
+# developer harness in `cli/` reports every printed figure as cleartext logging, forever.
+#
+# Turn the default setup off (Settings, Code security, CodeQL analysis) once this has run on main,
+# or both write into the same alert list and every finding appears twice.
+
+# The two `paths-ignore` lists are duplicated because GitHub Actions does not expand YAML anchors.
+# Keep them identical. Nothing listed is code, so skipping the scan for a documentation change
+# costs no coverage — but do not make code scanning a required check while this filter exists, or
+# a docs-only pull request waits for a report that never comes.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - docs/**
+      - local-docs/**
+      - LICENSE
+      - .github/ISSUE_TEMPLATE/**
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - docs/**
+      - local-docs/**
+      - LICENSE
+      - .github/ISSUE_TEMPLATE/**
+  schedule:
+    # An advisory is published against code that has been sitting still, and a query suite improves
+    # without the code changing.
+    - cron: "0 7 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      # Needed to read the workflow files themselves for the `actions` analysis.
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Rust accepts no other build mode: the extractor reads the sources, so SQLCipher and its
+          # vendored OpenSSL are never built here.
+          - language: rust
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          # The workflows in this directory, including the one that runs on `pull_request_target`.
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: .github/codeql/codeql-config.yml
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
