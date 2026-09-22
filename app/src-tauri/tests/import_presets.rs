@@ -73,9 +73,21 @@ fn a_shipped_preset_arrives_with_the_wordings_every_broker_shares() {
         .expect("Trade Republic preset");
     let mapping = preset.mapping();
 
-    assert_eq!(mapping.column(ImportField::Date), Some("Datum"));
-    assert_eq!(mapping.column(ImportField::Kind), Some("Transactietype"));
-    assert_eq!(preset.config.delimiter, Some(';'));
+    assert_eq!(mapping.column(ImportField::Date), Some("date"));
+    assert_eq!(mapping.column(ImportField::Kind), Some("type"));
+    assert_eq!(preset.config.delimiter, Some(','));
     // The file lists only what is peculiar to this broker; the rest is merged in on use.
     assert_eq!(mapping.kind_of("BUY"), Some(sq_core::model::TransactionKind::Buy));
+    // A card payment is money leaving the portfolio, and nothing shared says so.
+    assert_eq!(
+        mapping.kind_of("CARD_TRANSACTION"),
+        Some(sq_core::model::TransactionKind::Withdrawal)
+    );
+    // The broker's older statement keeps its own entry rather than being overwritten.
+    let statement = builtin_presets()
+        .iter()
+        .find(|p| p.name == "Trade Republic · statement")
+        .expect("Trade Republic statement preset");
+    assert_eq!(statement.mapping().column(ImportField::Date), Some("Datum"));
+    assert_eq!(statement.config.delimiter, Some(';'));
 }
