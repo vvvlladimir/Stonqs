@@ -93,6 +93,9 @@ export type RowStatus =
   /** The broker restated a row we already hold; importing replaces it. */
   | "UPDATED"
   | "UNKNOWN_SECURITY"
+  /** A stored operation of the same day, account, instrument and quantity is worth something
+   *  else: the likeliest reading is that it is this row, corrected by hand since. */
+  | "SIMILAR"
   | "IGNORED"
   | "INVALID";
 
@@ -131,7 +134,12 @@ export type ProblemCode =
   | "FUTURE_DATE"
   | "IMPLAUSIBLE_DATE_SPAN"
   | "ZERO_AMOUNT"
-  | "SUSPICIOUS_CURRENCY";
+  | "SUSPICIOUS_CURRENCY"
+  | "DELIVERY_WITHOUT_COST"
+  | "ACCOUNT_CURRENCY_MISMATCH"
+  | "TICKER_ISIN_CONFLICT"
+  | "SIMILAR_IN_STORE"
+  | "POSSIBLE_SPLIT";
 
 export interface ImportProblem {
   row: number | null;
@@ -209,6 +217,8 @@ export interface ImportSummary {
   total: number;
   ready: number;
   duplicates: number;
+  /** Rows a stored operation resembles closely enough to be the same one, edited since. */
+  similar: number;
   /** Rows that replace an operation already stored, matched by the broker's identifier. */
   updated: number;
   unknown_securities: number;
@@ -291,6 +301,8 @@ export interface ImportOptions {
   /** Absent means the host's default source; `null` means manual prices. */
   new_security_source?: string | null;
   import_duplicates: boolean;
+  /** Write rows a stored operation only resembles. Off by default. */
+  import_similar: boolean;
 }
 
 export interface ImportResult {
@@ -298,6 +310,8 @@ export interface ImportResult {
   /** Rows that replaced a stored operation rather than adding one. */
   updated: number;
   skipped: number;
+  /** Rows skipped because a stored operation resembles them. */
+  similar: number;
   created_securities: string[];
   problems: ImportProblem[];
 }

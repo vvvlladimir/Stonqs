@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: result.similar
+#: src/screens/Import/CommitStep.tsx
+msgid " {0} left out: an operation like them is already stored."
+msgstr " {0} left out: an operation like them is already stored."
+
 #. placeholder {0}: result.updated
 #: src/screens/Import/CommitStep.tsx
 msgid " {0} replaced a row the broker restated."
@@ -27,6 +32,10 @@ msgstr " Instruments created: {0}."
 msgid "— as detected —"
 msgstr "— as detected —"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "— choose above first —"
+msgstr "— choose above first —"
+
 #: src/screens/Import/FileTable.tsx
 msgid "— choose an account —"
 msgstr "— choose an account —"
@@ -34,6 +43,10 @@ msgstr "— choose an account —"
 #: src/components/domain/AlertDialogs.tsx
 msgid "— choose an instrument —"
 msgstr "— choose an instrument —"
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "— choose the account —"
+msgstr "— choose the account —"
 
 #: src/screens/Import/ParseSettings.tsx
 msgid "— detect from the file —"
@@ -57,8 +70,8 @@ msgid "— none chosen"
 msgstr "— none chosen"
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "— none chosen —"
-msgstr "— none chosen —"
+#~ msgid "— none chosen —"
+#~ msgstr "— none chosen —"
 
 #: src/screens/Import/FileTable.tsx
 msgid "— not mapped —"
@@ -133,7 +146,10 @@ msgid "{0, plural, one {# account} few {# accounts} many {# accounts} other {# a
 msgstr "{0, plural, one {# account} few {# accounts} many {# accounts} other {# accounts}}"
 
 #. placeholder {0}: accounts.data.length
+#. placeholder {0}: of("DEPOSIT").length
+#. placeholder {0}: of("SECURITIES").length
 #: src/screens/Accounts/index.tsx
+#: src/screens/Import/AccountTarget.tsx
 msgid "{0, plural, one {# account} other {# accounts}}"
 msgstr "{0, plural, one {# account} other {# accounts}}"
 
@@ -218,6 +234,11 @@ msgstr "{0, plural, one {# not identified} other {# not identified}}"
 #: src/screens/Trades/index.tsx
 msgid "{0, plural, one {# open trade} other {# open trades}}"
 msgstr "{0, plural, one {# open trade} other {# open trades}}"
+
+#. placeholder {0}: found.length
+#: src/screens/Import/TransferPairs.tsx
+msgid "{0, plural, one {# pair} other {# pairs}}"
+msgstr "{0, plural, one {# pair} other {# pairs}}"
 
 #. placeholder {0}: data.by_security.length
 #: src/screens/Income/index.tsx
@@ -434,6 +455,12 @@ msgstr "{0} of {1} · net {2}"
 msgid "{0} of {1} instruments"
 msgstr "{0} of {1} instruments"
 
+#. placeholder {0}: p.quantity
+#. placeholder {1}: p.symbol
+#: src/screens/Import/labels.ts
+msgid "{0} of {1} move with no value given. The lot enters at a cost of zero and the whole holding will read as profit — open the row and enter the price paid, or the total."
+msgstr "{0} of {1} move with no value given. The lot enters at a cost of zero and the whole holding will read as profit — open the row and enter the price paid, or the total."
+
 #. placeholder {0}: formatMoney(data.gains_total.taxes_base, currency, { compact: true })
 #: src/screens/Reports/index.tsx
 msgid "{0} of tax withheld"
@@ -465,6 +492,15 @@ msgstr "{0} records downloaded."
 #: src/components/domain/MarketRefresh.tsx
 msgid "{0} to refresh in total"
 msgstr "{0} to refresh in total"
+
+#. placeholder {0}: p.symbol
+#. placeholder {1}: p.before
+#. placeholder {2}: p.after
+#. placeholder {3}: p.date
+#. placeholder {4}: p.ratio
+#: src/screens/Import/labels.ts
+msgid "{0} trades at {1} and then at {2} on {3} — a factor of about {4}. If the broker applied a split here, the quantities before and after mean different shares; record the split on the instrument instead of importing the change."
+msgstr "{0} trades at {1} and then at {2} on {3} — a factor of about {4}. If the broker applied a split here, the quantities before and after mean different shares; record the split on the instrument instead of importing the change."
 
 #. placeholder {0}: metrics.days
 #: src/screens/Risk.tsx
@@ -778,6 +814,14 @@ msgstr "90 days"
 #: src/screens/Securities/Splits.tsx
 msgid "A 2:1 split is 1 → 2; a 1:10 reverse split is 10 → 1. The position keeps its value: only the quantity and the per-share cost move."
 msgstr "A 2:1 split is 1 → 2; a 1:10 reverse split is 10 → 1. The position keeps its value: only the quantity and the per-share cost move."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "A bank or wallet statement"
+msgstr "A bank or wallet statement"
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "A broker statement"
+msgstr "A broker statement"
 
 #: src/screens/Accounts/AccountForm.tsx
 msgid "A cash account holds money in one currency; a securities account holds instruments and settles through a cash account"
@@ -1453,6 +1497,14 @@ msgstr "An ISIN finds the instrument; a ticker finds one listing"
 msgid "an odd currency code"
 msgstr "an odd currency code"
 
+#: src/screens/Import/labels.ts
+msgid "an operation like it is already stored"
+msgstr "an operation like it is already stored"
+
+#: src/screens/Import/CommitStep.tsx
+msgid "An operation like it is already stored"
+msgstr "An operation like it is already stored"
+
 #: src/App.tsx
 msgid "Analysis"
 msgstr "Analysis"
@@ -1481,6 +1533,10 @@ msgstr "Annualized volatility over a sliding window of {0} trading days."
 #: src/screens/Risk.tsx
 msgid "Annualized volatility over a sliding window of trading days."
 msgstr "Annualized volatility over a sliding window of trading days."
+
+#: src/screens/Import/labels.ts
+msgid "another currency than the account keeps"
+msgstr "another currency than the account keeps"
 
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Answer format"
@@ -1551,6 +1607,11 @@ msgstr "Apply"
 #: src/screens/Import/RowFix.tsx
 msgid "Applying…"
 msgstr "Applying…"
+
+#. placeholder {0}: pair.amount_in
+#: src/screens/Import/TransferPairs.tsx
+msgid "arrived {0}"
+msgstr "arrived {0}"
 
 #: src/screens/Income/MonthPanel.tsx
 msgid "arrived on the account"
@@ -1838,7 +1899,6 @@ msgid "Cash · {0}"
 msgstr "Cash · {0}"
 
 #: src/screens/Accounts/AccountForm.tsx
-#: src/screens/Import/TargetSummary.tsx
 #: src/screens/Onboarding.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "Cash account"
@@ -2445,8 +2505,8 @@ msgid "Deepest fall from a peak inside the period."
 msgstr "Deepest fall from a peak inside the period."
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "Default account"
-msgstr "Default account"
+#~ msgid "Default account"
+#~ msgstr "Default account"
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/SecurityAlerts.tsx
@@ -2605,6 +2665,10 @@ msgstr "Deposits"
 #: src/screens/Performance/index.tsx
 msgid "Deposits and withdrawals run under the chart, so a deposit is not mistaken for a gain."
 msgstr "Deposits and withdrawals run under the chart, so a deposit is not mistaken for a gain."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "Deposits, withdrawals, interest, fees. Everything lands on this one cash account; a row that carries an instrument does not belong in such a file."
+msgstr "Deposits, withdrawals, interest, fees. Everything lands on this one cash account; a row that carries an instrument does not belong in such a file."
 
 #: src/screens/Risk.tsx
 msgid "Depth"
@@ -2802,6 +2866,10 @@ msgstr "each lands in its category whole"
 #: src/screens/dashboard/dialogs.tsx
 msgid "Each line is computed on the portfolio series' dates, so the lines do not drift apart on another exchange's closed days."
 msgstr "Each line is computed on the portfolio series' dates, so the lines do not drift apart on another exchange's closed days."
+
+#: src/screens/Import/TransferPairs.tsx
+msgid "Each of these is a payment out of one account and a payment into another, of the same size within days. If it is one move — a portfolio carried between brokers, money sent to your own account — join the two: the app then stops reading it as money leaving the portfolio and coming back, which distorts every return figure. If they are genuinely two separate payments, leave them alone."
+msgstr "Each of these is a payment out of one account and a payment into another, of the same size within days. If it is one move — a portfolio carried between brokers, money sent to your own account — join the two: the app then stops reading it as money leaving the portfolio and coming back, which distorts every return figure. If they are genuinely two separate payments, leave them alone."
 
 #: src/screens/Income/index.tsx
 msgid "Each payment counts under the category of whoever paid it, split by the same weights the tree uses for value."
@@ -4385,6 +4453,10 @@ msgstr "Look at the result and write it. Nothing in the database changes before 
 #~ msgid "Looked at {0} things"
 #~ msgstr "Looked at {0} things"
 
+#: src/screens/Import/labels.ts
+msgid "looks stored"
+msgstr "looks stored"
+
 #: src/components/charts/Histogram.tsx
 msgid "losing days"
 msgstr "losing days"
@@ -4484,12 +4556,20 @@ msgstr "Money for this securities account's trades passes through it"
 #~ msgstr "Money in one currency. One cash account can serve several securities accounts"
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "Money lands here: deposits, dividends, fees"
-msgstr "Money lands here: deposits, dividends, fees"
+#~ msgid "Money lands here: deposits, dividends, fees"
+#~ msgstr "Money lands here: deposits, dividends, fees"
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "Money moves on"
+msgstr "Money moves on"
 
 #: src/screens/Onboarding.tsx
 msgid "Money sits here: deposits, fees, interest"
 msgstr "Money sits here: deposits, fees, interest"
+
+#: src/screens/Import/TransferPairs.tsx
+msgid "Money that left one account and arrived at another"
+msgstr "Money that left one account and arrived at another"
 
 #: src/screens/Rebalance/CashPanel.tsx
 msgid "Money to invest on top of the portfolio; with \"Buy only\" the drift is closed by buying, never by selling."
@@ -5460,6 +5540,10 @@ msgstr "One figure over another: a yield, a cost share, how much of it is cash."
 msgid "One instrument trades on many exchanges and in many currencies. Pick the venue your broker actually traded on: price and cost basis then share one currency, and the valuation stops going through an exchange rate every day. Switching a venue deletes the quotes already downloaded — the new one has a different price series."
 msgstr "One instrument trades on many exchanges and in many currencies. Pick the venue your broker actually traded on: price and cost basis then share one currency, and the valuation stops going through an exchange rate every day. Switching a venue deletes the quotes already downloaded — the new one has a different price series."
 
+#: src/screens/Import/TransferPairs.tsx
+msgid "One move"
+msgstr "One move"
+
 #: src/screens/dashboard/widgets/index.tsx
 msgid "One number from the catalog: value, return, drawdown."
 msgstr "One number from the catalog: value, return, drawdown."
@@ -5954,6 +6038,10 @@ msgstr "Purchases still held at the end of the period."
 #: src/screens/Trades/TradeMetrics.tsx
 #~ msgid "Purchases whose shares are still held at the end of the period, each with the unrealized result of its own lot."
 #~ msgstr "Purchases whose shares are still held at the end of the period, each with the unrealized result of its own lot."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "Purchases, sales, dividends. Instruments are recorded on the brokerage account, and the money moves on the cash account linked to it — no second choice to make."
+msgstr "Purchases, sales, dividends. Instruments are recorded on the brokerage account, and the money moves on the cash account linked to it — no second choice to make."
 
 #. placeholder {0}: bucket.index
 #: src/screens/Income/model.ts
@@ -6567,6 +6655,10 @@ msgstr "rows"
 msgid "Rows"
 msgstr "Rows"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "Rows land on"
+msgstr "Rows land on"
+
 #: src/screens/Import/ParseSettings.tsx
 msgid "Rows to drop at the bottom"
 msgstr "Rows to drop at the bottom"
@@ -6594,6 +6686,10 @@ msgstr "Same as a new chat"
 #: src/screens/dashboard/dialogs.tsx
 msgid "Same as the dashboard"
 msgstr "Same as the dashboard"
+
+#: src/screens/Import/CommitStep.tsx
+msgid "same day, account, instrument and quantity — worth something else. Usually the stored row, corrected by hand after it was imported"
+msgstr "same day, account, instrument and quantity — worth something else. Usually the stored row, corrected by hand after it was imported"
 
 #: src/screens/Income/MonthPanel.tsx
 msgid "Same month a year ago"
@@ -6879,6 +6975,10 @@ msgstr "Shares as one bar: by instrument or by classification."
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Shares by area: the large and the small are visible at once."
 msgstr "Shares by area: the large and the small are visible at once."
+
+#: src/screens/Import/labels.ts
+msgid "shares moved with no value given"
+msgstr "shares moved with no value given"
 
 #: src/components/domain/AllocationBar.tsx
 msgid "Shares of this level"
@@ -7406,6 +7506,10 @@ msgstr "The calculation did not converge: {0}"
 msgid "The cash account the contribution lands on"
 msgstr "The cash account the contribution lands on"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "the cash account this one settles through"
+msgstr "the cash account this one settles through"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "The cash balances of the selection, converted to the reporting currency."
 msgstr "The cash balances of the selection, converted to the reporting currency."
@@ -7525,6 +7629,10 @@ msgstr "the fees and taxes you paid"
 #: src/screens/Import/ParseStep.tsx
 msgid "The file cannot be parsed without these columns: {0}. Point at them in the table header below."
 msgstr "The file cannot be parsed without these columns: {0}. Point at them in the table header below."
+
+#: src/screens/Import/RowFix.tsx
+msgid "the file has no column for this — the value is added to the row"
+msgstr "the file has no column for this — the value is added to the row"
 
 #: src/screens/Import/ParseStep.tsx
 msgid "The file holds no row with a transaction kind."
@@ -7757,6 +7865,14 @@ msgstr "The period's time-weighted return restated as a yearly rate."
 msgid "the plan has no targets"
 msgstr "the plan has no targets"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
+msgstr "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "The portfolio has no cash account yet. Create one on the \"Accounts\" screen."
+msgstr "The portfolio has no cash account yet. Create one on the \"Accounts\" screen."
+
 #. placeholder {0}: formatDay(real.twr.to)
 #: src/screens/Performance/Metrics.tsx
 msgid "The portfolio return with inflation taken out, through {0}."
@@ -7781,6 +7897,10 @@ msgstr "The previous refresh was stopped — the list was not walked to the end.
 #: src/lib/alerts.ts
 #~ msgid "The price rose to {price}; the limit is {limit}."
 #~ msgstr "The price rose to {price}; the limit is {limit}."
+
+#: src/screens/Import/labels.ts
+msgid "the prices step by a whole factor"
+msgstr "the prices step by a whole factor"
 
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "The profile's data is decrypted, and every API key saved in it is deleted."
@@ -7848,6 +7968,16 @@ msgstr "The right column is each year's total, the bottom row each month across 
 #: src/screens/Import/labels.ts
 msgid "the row could not be parsed"
 msgstr "the row could not be parsed"
+
+#. placeholder {0}: p.currency
+#. placeholder {1}: p.account
+#: src/screens/Import/labels.ts
+msgid "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
+msgstr "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "the same account"
+msgstr "the same account"
 
 #: src/screens/Import/CommitStep.tsx
 msgid "the same operation, with different values: the stored row is replaced"
@@ -7950,6 +8080,10 @@ msgstr "the targets are derived from it"
 #: src/screens/Reports/Dividends.tsx
 #~ msgid "The three rightmost figures are read off the instrument's whole payment history rather than the window: \"Pays\" is the schedule inferred from the gaps between payments, \"Yield a year\" divides the last twelve months by the cost basis, and \"Yield on cost\" divides everything ever paid by it. A closed position has nothing to divide by, hence \"—\" and not zero."
 #~ msgstr "The three rightmost figures are read off the instrument's whole payment history rather than the window: \"Pays\" is the schedule inferred from the gaps between payments, \"Yield a year\" divides the last twelve months by the cost basis, and \"Yield on cost\" divides everything ever paid by it. A closed position has nothing to divide by, hence \"—\" and not zero."
+
+#: src/screens/Import/labels.ts
+msgid "the ticker already names another instrument"
+msgstr "the ticker already names another instrument"
 
 #: src/screens/Risk.tsx
 #~ msgid "The time-weighted return brought to a yearly figure: next to volatility it shows what was paid for it."
@@ -8155,6 +8289,13 @@ msgstr "through {0}"
 #: src/screens/Securities/SecurityForm.tsx
 msgid "Ticker"
 msgstr "Ticker"
+
+#. placeholder {0}: p.symbol
+#. placeholder {1}: p.stored
+#. placeholder {2}: p.isin
+#: src/screens/Import/labels.ts
+msgid "Ticker {0} is already in the database under ISIN {1}, and this row says {2} — two instruments cannot share one ticker. Give this one a ticker of its own on the \"Instruments\" step."
+msgstr "Ticker {0} is already in the database under ISIN {1}, and this row says {2} — two instruments cannot share one ticker. Give this one a ticker of its own on the \"Instruments\" step."
 
 #: src/screens/Import/AssetRow.tsx
 msgid "ticker in the database"
@@ -8809,6 +8950,10 @@ msgstr "What the amount holds"
 msgid "What the exchange rate did to the unrealised result."
 msgstr "What the exchange rate did to the unrealised result."
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "what the file's operations are recorded against"
+msgstr "what the file's operations are recorded against"
+
 #: src/screens/Performance/PositionReturns.tsx
 msgid "What the instrument did, regardless of when it was bought."
 msgstr "What the instrument did, regardless of when it was bought."
@@ -8942,8 +9087,8 @@ msgid "Where quotes and exchange rates come from; an instrument's own source is 
 msgstr "Where quotes and exchange rates come from; an instrument's own source is asked first."
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "Where rows without an account column land"
-msgstr "Where rows without an account column land"
+#~ msgid "Where rows without an account column land"
+#~ msgstr "Where rows without an account column land"
 
 #: src/screens/Reports/Charges.tsx
 #~ msgid "Where the money is charged"
@@ -8969,6 +9114,10 @@ msgstr "Where this app looks for a newer version, and whether it may look on its
 msgid "Where you spend, which need not be where your base currency is legal tender. Left empty, no real returns are shown."
 msgstr "Where you spend, which need not be where your base currency is legal tender. Left empty, no real returns are shown."
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "Which account"
+msgstr "Which account"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "which categories your income came from"
 msgstr "which categories your income came from"
@@ -8980,6 +9129,10 @@ msgstr "Which export we are reading and what is actually inside it."
 #: src/components/domain/AiTools.tsx
 msgid "Which model answers"
 msgstr "Which model answers"
+
+#: src/screens/Import/AccountTarget.tsx
+#~ msgid "Which one"
+#~ msgstr "Which one"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "which periods are available"

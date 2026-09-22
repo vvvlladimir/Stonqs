@@ -109,6 +109,8 @@ pub fn run() {
             commands::transactions::transactions_export_save,
             commands::transactions::transaction_save,
             commands::transactions::transaction_delete,
+            commands::transactions::transfer_suggestions,
+            commands::transactions::transfer_link,
             commands::periods::period_ranges,
             commands::periods::periods_get,
             commands::periods::period_save,

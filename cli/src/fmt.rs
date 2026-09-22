@@ -45,6 +45,7 @@ pub fn print_preview(preview: &ImportPreview) {
             RowStatus::Ready => "ready",
             RowStatus::Duplicate => "duplicate",
             RowStatus::Updated => "restated",
+            RowStatus::Similar => "looks stored",
             RowStatus::UnknownSecurity => "no instrument",
             RowStatus::Ignored => "skipped",
             RowStatus::Invalid => "error",

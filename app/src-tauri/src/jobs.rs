@@ -645,7 +645,15 @@ fn relist(
     if !sparse_history(held_from, span, today) {
         return None;
     }
-    let found = better_listing(quotes, security)?;
+    let found = match better_listing(quotes, security) {
+        Ok(Some(found)) => found,
+        // The directory answered and no venue it knows has prices for this instrument: it is
+        // delisted, or nothing free quotes it. Asking again at every import would spend requests
+        // to be told the same thing, so it becomes a manual-price instrument and says so in the
+        // directory. A *failed* lookup changes nothing — that is the network, not the answer.
+        Ok(None) => return retire(store, security, span),
+        Err(_) => return None,
+    };
     let symbol = found.symbol.clone()?.to_uppercase();
     if symbol == security.provider_symbol().to_uppercase() {
         return None;
@@ -677,16 +685,29 @@ fn relist(
 }
 
 /// A usable venue for an instrument: from the directory when there is an ISIN to ask it with,
-/// from the bare ticker otherwise.
-fn better_listing(quotes: &MarketDataService, security: &Security) -> Option<Listing> {
+/// from the bare ticker otherwise. `Ok(None)` means the directory answered and had nothing; an
+/// `Err` means it was not reached, which is a different fact and must not be read as the first.
+fn better_listing(quotes: &MarketDataService, security: &Security) -> Result<Option<Listing>> {
     let preferred = Some(security.currency.as_str());
     match security.isin.as_deref().filter(|i| sq_core::model::is_isin(i)) {
-        Some(isin) => quotes.best_listing(isin, preferred).ok().flatten(),
-        None => quotes
-            .best_listing_by_symbol(security.provider_symbol(), preferred)
-            .ok()
-            .flatten(),
+        Some(isin) => quotes.best_listing(isin, preferred),
+        None => quotes.best_listing_by_symbol(security.provider_symbol(), preferred),
     }
+}
+
+/// Takes an instrument off automatic pricing. Only when the source returned *nothing at all*
+/// after a window it accepted: a thin series still has prices, and dropping its source would
+/// stop the few that do arrive. Prices are typed in from here on, and a refresh skips it.
+fn retire(store: &Store, security: &Security, span: Option<DateRange>) -> Option<usize> {
+    if span.is_some() {
+        return None;
+    }
+    let updated = Security {
+        data_source: None,
+        ..security.clone()
+    };
+    store.save_security(&updated).ok()?;
+    Some(0)
 }
 
 /// Select the refresh start date, retaining a three-day correction window.

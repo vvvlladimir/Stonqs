@@ -1,8 +1,9 @@
 import type { I18n, MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
-import { IMPORTABLE_TRANSACTION_KINDS, transactionLabel } from "../../lib/kinds";
+import { IMPORTABLE_TRANSACTION_KINDS, accountKindLabel, transactionLabel } from "../../lib/kinds";
 import type { BadgeTone } from "../../components/ui";
 import type {
+  AccountRow,
   AmountBasis,
   AmountSign,
   ImportRule,
@@ -55,6 +56,11 @@ export const FIELDS: Array<[ImportField, MessageDescriptor]> = [
 /** Fields required for parsing. */
 export const REQUIRED_FIELDS: ImportField[] = ["DATE", "KIND"];
 
+/** An account named the way the wizard needs it: what kind it is, then which one, then in what. */
+export function accountLabel(i18n: I18n, account: AccountRow): string {
+  return `${accountKindLabel(i18n, account.kind)} · ${account.name} · ${account.currency}`;
+}
+
 export function fieldLabel(i18n: I18n, field: ImportField): string {
   const found = FIELDS.find(([id]) => id === field);
   return found ? i18n._(found[1]) : field;
@@ -79,6 +85,7 @@ export const STATUS_LABELS: Record<RowStatus, MessageDescriptor> = {
   DUPLICATE: msg`duplicate`,
   UPDATED: msg`restated`,
   UNKNOWN_SECURITY: msg`no instrument`,
+  SIMILAR: msg`looks stored`,
   IGNORED: msg`skipped`,
   INVALID: msg`error`,
 };
@@ -89,6 +96,7 @@ export const STATUS_TONES: Record<RowStatus, BadgeTone> = {
   DUPLICATE: "neutral",
   UPDATED: "warn",
   UNKNOWN_SECURITY: "warn",
+  SIMILAR: "warn",
   IGNORED: "neutral",
   INVALID: "out",
 };
@@ -132,6 +140,11 @@ export const PROBLEM_LABELS: Record<ProblemCode, MessageDescriptor> = {
   IMPLAUSIBLE_DATE_SPAN: msg`the dates span decades`,
   ZERO_AMOUNT: msg`a zero amount`,
   SUSPICIOUS_CURRENCY: msg`an odd currency code`,
+  DELIVERY_WITHOUT_COST: msg`shares moved with no value given`,
+  ACCOUNT_CURRENCY_MISMATCH: msg`another currency than the account keeps`,
+  TICKER_ISIN_CONFLICT: msg`the ticker already names another instrument`,
+  SIMILAR_IN_STORE: msg`an operation like it is already stored`,
+  POSSIBLE_SPLIT: msg`the prices step by a whole factor`,
 };
 
 /** Column -> field: the reading direction of the mapping table, where a file column says what it is. */
@@ -286,6 +299,22 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
     case "IMPLAUSIBLE_DATE_SPAN":
       return i18n._(
         msg`The file's dates span ${p.min} to ${p.max} — the date format is most likely detected wrong.`,
+      );
+    case "DELIVERY_WITHOUT_COST":
+      return i18n._(
+        msg`${p.quantity} of ${p.symbol} move with no value given. The lot enters at a cost of zero and the whole holding will read as profit — open the row and enter the price paid, or the total.`,
+      );
+    case "ACCOUNT_CURRENCY_MISMATCH":
+      return i18n._(
+        msg`The row is in ${p.currency} and the account it lands on keeps ${p.account}. Correct it if the currency column was read wrong; ignore it if the account really holds both.`,
+      );
+    case "TICKER_ISIN_CONFLICT":
+      return i18n._(
+        msg`Ticker ${p.symbol} is already in the database under ISIN ${p.stored}, and this row says ${p.isin} — two instruments cannot share one ticker. Give this one a ticker of its own on the "Instruments" step.`,
+      );
+    case "POSSIBLE_SPLIT":
+      return i18n._(
+        msg`${p.symbol} trades at ${p.before} and then at ${p.after} on ${p.date} — a factor of about ${p.ratio}. If the broker applied a split here, the quantities before and after mean different shares; record the split on the instrument instead of importing the change.`,
       );
     default:
       return problem.message;

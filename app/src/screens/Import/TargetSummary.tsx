@@ -1,10 +1,9 @@
-import type { I18n } from "@lingui/core";
 import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { Buttons, Choice, List, ListRow, Panel } from "../../components/ui";
-import { accountKindLabel } from "../../lib/kinds";
+import { Buttons, List, ListRow, Panel } from "../../components/ui";
 import type { AccountRow, ImportMapping, ImportPreviewData, ParseConfig } from "../../lib/types";
+import { AccountTarget } from "./AccountTarget";
 import { ParseSettings } from "./ParseSettings";
 import { SIGN_LABELS } from "./labels";
 
@@ -15,10 +14,6 @@ function span(preview: ImportPreviewData): string | null {
   const from = dates.reduce((a, b) => (a < b ? a : b));
   const to = dates.reduce((a, b) => (a > b ? a : b));
   return from === to ? from : `${from} — ${to}`;
-}
-
-function accountLabel(i18n: I18n, account: AccountRow): string {
-  return `${accountKindLabel(i18n, account.kind)} · ${account.name} · ${account.currency}`;
 }
 
 /**
@@ -44,11 +39,6 @@ export function TargetSummary({
   const [settings, setSettings] = useState(false);
 
   const target = accounts.find((a) => a.id === mapping.account_id) ?? null;
-  // A securities account never holds the money: its cash leg is the account it references.
-  const cash =
-    target?.kind === "SECURITIES"
-      ? (accounts.find((a) => a.id === target.reference_account_id) ?? null)
-      : target;
 
   const currency = mapping.default_currency
     ? mapping.default_currency
@@ -70,26 +60,8 @@ export function TargetSummary({
         </Buttons>
       }
     >
+      <AccountTarget accounts={accounts} mapping={mapping} onChange={onChange} />
       <List>
-        <ListRow
-          title={t`Default account`}
-          sub={t`Where rows without an account column land`}
-          end={
-            <Choice
-              wide
-              label={t`Default account`}
-              placeholder={t`— none chosen —`}
-              value={mapping.account_id ?? ""}
-              onChange={(id) => onChange({ ...mapping, account_id: id || null })}
-              options={accounts.map((a) => ({ value: a.id, label: accountLabel(i18n, a) }))}
-            />
-          }
-        />
-        <ListRow
-          title={t`Cash account`}
-          sub={t`Money lands here: deposits, dividends, fees`}
-          value={cash ? accountLabel(i18n, cash) : "—"}
-        />
         <ListRow title={t`Transaction currency`} value={currency} />
         {dates && <ListRow title={t`Export period`} value={dates} />}
         <ListRow

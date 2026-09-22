@@ -7,7 +7,7 @@
 //! because they are one line of the file, and are read the same way — a rule changes what a row
 //! says, never how it is read.
 
-use super::cells::Cells;
+use super::cells::{Cells, RowInput};
 use super::fields::{self, Index};
 use super::status::{self, Dedupe};
 use super::tally::Tallies;
@@ -31,24 +31,28 @@ pub(super) struct File<'a> {
 
 pub(super) fn read(
     number: usize,
-    raw: BTreeMap<String, String>,
+    input: RowInput,
     file: &File<'_>,
     context: &ImportContext<'_>,
     index: &Index<'_>,
     tallies: &mut Tallies,
     dedupe: &mut Dedupe<'_>,
 ) -> Vec<ImportRow> {
+    let RowInput { raw, added } = input;
     let plain = Cells {
         raw: &raw,
         mapping: file.mapping,
         decimal_separator: file.decimal_separator,
         number,
         emitted: BTreeMap::new(),
+        added: &added,
     };
     let value = |field: ImportField| plain.get(field).map(str::to_string);
 
     let Some(rule) = first_match(&file.mapping.rules, &value, file.decimal_separator) else {
-        return vec![one(number, 1, &raw, None, file, context, index, tallies, dedupe)];
+        return vec![one(
+            number, 1, &raw, &added, None, file, context, index, tallies, dedupe,
+        )];
     };
     if rule.emit.is_empty() {
         // A rule that produces nothing is a line the file prints and the ledger has no room
@@ -66,6 +70,7 @@ pub(super) fn read(
                 number,
                 at + 1,
                 &raw,
+                &added,
                 Some((emit.kind, emitted)),
                 file,
                 context,
@@ -127,6 +132,7 @@ fn one(
     number: usize,
     part: usize,
     raw: &BTreeMap<String, String>,
+    added: &BTreeMap<ImportField, String>,
     emitted: Option<(TransactionKind, BTreeMap<ImportField, String>)>,
     file: &File<'_>,
     context: &ImportContext<'_>,
@@ -145,6 +151,7 @@ fn one(
         decimal_separator: file.decimal_separator,
         number,
         emitted: overrides,
+        added,
     };
 
     let date = fields::date(&cells, &file.date_format, &mut problems);
@@ -180,7 +187,7 @@ fn one(
         Some(kind) => Some(kind),
         None => fields::directed(kind, &amounts, file.amount_sign, &cells, &mut problems),
     };
-    let instrument = fields::instrument(&cells, index, kind, &mut tallies.symbols);
+    let instrument = fields::instrument(&cells, index, kind, &mut tallies.symbols, &mut problems);
 
     let draft = match (date, kind, account_id, currency) {
         (Some(date), Some(kind), Some(account_id), Some(currency)) => Some(TransactionDraft {
@@ -215,7 +222,12 @@ fn one(
     if let Some(d) = &draft
         && !matches!(status, super::RowStatus::Invalid | super::RowStatus::Ignored)
     {
-        problems.extend(checks::check_row(number, d, &file.checks));
+        let mut checks = file.checks;
+        // Only a row that moves money can land in the wrong currency; a delivery moves none.
+        if d.kind.cash_sign() != 0 {
+            checks.account_currency = index.settlement_currency(&d.account_id);
+        }
+        problems.extend(checks::check_row(number, d, &checks));
     }
 
     ImportRow {

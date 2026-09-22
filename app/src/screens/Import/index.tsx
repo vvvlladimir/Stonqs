@@ -51,6 +51,7 @@ export function Import() {
     create_missing_securities: true,
     new_security_kind: "OTHER",
     import_duplicates: false,
+    import_similar: false,
   });
   const [result, setResult] = useState<ImportResult | null>(null);
 

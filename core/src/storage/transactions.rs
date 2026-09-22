@@ -158,6 +158,31 @@ impl Store {
         Ok(need)
     }
 
+    /// Ties two stored operations together as the two legs of one move. Both get the same new
+    /// link id, so `calc` stops reading them as money crossing the portfolio boundary
+    /// (`paired_links` believes a link only when two rows make it). Refuses anything other than
+    /// exactly two rows: a link is a claim about a pair.
+    pub fn link_transactions(&self, ids: &[String]) -> Result<String> {
+        if ids.len() != 2 || ids[0] == ids[1] {
+            return Err(Error::Invalid(
+                "a transfer link joins exactly two different operations".into(),
+            ));
+        }
+        let link_id = crate::model::new_id();
+        let tx = self.conn.unchecked_transaction()?;
+        for id in ids {
+            let changed = tx.execute(
+                "UPDATE transactions SET link_id = ?2 WHERE id = ?1",
+                params![id, link_id],
+            )?;
+            if changed == 0 {
+                return Err(Error::NotFound(format!("transaction {id}")));
+            }
+        }
+        tx.commit()?;
+        Ok(link_id)
+    }
+
     pub fn delete_transaction(&self, id: &str) -> Result<()> {
         self.conn
             .execute("DELETE FROM transactions WHERE id = ?1", [id])?;

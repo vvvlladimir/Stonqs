@@ -26,6 +26,7 @@ mod scope;
 mod series;
 mod summary;
 mod trades;
+mod transfers;
 mod twr;
 mod valuation;
 mod watchlist;
@@ -99,6 +100,7 @@ pub use summary::{PeriodSummary, period_summary};
 pub use trades::{
     Trade, TradeBook, TradeStats, TradingVolume, closed_trades, open_trades, trade_stats, trading_volume,
 };
+pub use transfers::{TransferPair, transfer_candidates};
 pub use twr::{TwrPoint, annualize, time_weighted_return};
 pub use valuation::{
     DayChange, DayChanges, PortfolioValuation, PositionValuation, day_changes, value_holdings,

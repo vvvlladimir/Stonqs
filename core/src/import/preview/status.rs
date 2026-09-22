@@ -3,7 +3,7 @@
 //! warning, and a warned row still imports.
 
 use super::{ImportRow, RowStatus, TransactionDraft};
-use crate::import::dedupe::{KnownRow, fingerprint};
+use crate::import::dedupe::{KnownRow, fingerprint, loose_fingerprint};
 use crate::import::parse::{ImportProblem, ProblemCode, Severity};
 use crate::model::TransactionKind;
 use std::collections::HashSet;
@@ -13,14 +13,16 @@ use std::collections::HashSet;
 /// by that name first: the broker restating an operation is not a second operation.
 pub(super) struct Dedupe<'a> {
     known: &'a HashSet<String>,
+    loose: &'a HashSet<String>,
     external: &'a [KnownRow],
     seen: HashSet<String>,
 }
 
 impl<'a> Dedupe<'a> {
-    pub fn against(known: &'a HashSet<String>, external: &'a [KnownRow]) -> Self {
+    pub fn against(known: &'a HashSet<String>, loose: &'a HashSet<String>, external: &'a [KnownRow]) -> Self {
         Dedupe {
             known,
+            loose,
             external,
             seen: HashSet::new(),
         }
@@ -123,6 +125,23 @@ pub(super) fn decide(
                 "the same row already appeared in this file",
             ));
             status = RowStatus::Duplicate;
+        } else if let Some(loose) = loose_fingerprint(d)
+            && dedupe.loose.contains(&loose)
+        {
+            // Same day, same account, same instrument, same quantity — and a different value.
+            // Either the stored row was corrected by hand, or the same size really traded twice
+            // that day at two prices. Only the user knows which, so it is offered, not decided.
+            problems.push(
+                ImportProblem::row(
+                    ProblemCode::SimilarInStore,
+                    number,
+                    "an operation of the same day, account, instrument and quantity is already in \
+                     the database with different values — probably this row, corrected by hand \
+                     after it was imported",
+                )
+                .warn(),
+            );
+            status = RowStatus::Similar;
         }
     }
 
@@ -137,6 +156,7 @@ pub(super) fn summarize(rows: &[ImportRow]) -> super::ImportSummary {
         match row.status {
             RowStatus::Ready => summary.ready += 1,
             RowStatus::Duplicate => summary.duplicates += 1,
+            RowStatus::Similar => summary.similar += 1,
             RowStatus::Updated => summary.updated += 1,
             RowStatus::UnknownSecurity => summary.unknown_securities += 1,
             RowStatus::Ignored => summary.ignored += 1,

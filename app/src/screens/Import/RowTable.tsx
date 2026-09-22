@@ -43,6 +43,7 @@ export function RowTable({
     READY: preview.summary.ready,
     DUPLICATE: preview.summary.duplicates,
     UPDATED: preview.summary.updated,
+    SIMILAR: preview.summary.similar,
     UNKNOWN_SECURITY: preview.summary.unknown_securities,
     IGNORED: preview.summary.ignored,
     INVALID: preview.summary.invalid,

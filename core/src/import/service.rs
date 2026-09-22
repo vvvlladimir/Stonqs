@@ -1,4 +1,4 @@
-use super::dedupe::{fingerprint, fingerprint_of};
+use super::dedupe::{fingerprint, fingerprint_of, loose_fingerprint_of};
 use super::ibflex;
 use super::mapping::{ImportMapping, normalize_alias};
 use super::parse::{ImportProblem, ParseConfig, ProblemCode, parse_csv};
@@ -24,6 +24,11 @@ pub struct ImportOptions {
     pub new_security_source: Option<String>,
 
     pub import_duplicates: bool,
+
+    /// Write rows a stored operation only *resembles*. Off by default: the likeliest reading is
+    /// that the stored row is this one, corrected by hand since (`RowStatus::Similar`).
+    #[serde(default)]
+    pub import_similar: bool,
 }
 
 fn default_new_security_source() -> Option<String> {
@@ -37,6 +42,7 @@ impl Default for ImportOptions {
             new_security_kind: SecurityKind::Other,
             new_security_source: default_new_security_source(),
             import_duplicates: false,
+            import_similar: false,
         }
     }
 }
@@ -50,6 +56,11 @@ pub struct ImportResult {
     #[serde(default)]
     pub updated: usize,
     pub skipped: usize,
+
+    /// Rows skipped because a stored operation resembles them. Counted apart from `skipped`, so
+    /// the screen can offer to write them after all rather than leave the user guessing.
+    #[serde(default)]
+    pub similar: usize,
 
     pub created_securities: Vec<String>,
     pub problems: Vec<ImportProblem>,
@@ -103,13 +114,14 @@ impl<'a> ImportService<'a> {
 
         let securities = self.store.list_securities()?;
         let accounts = self.store.list_accounts()?;
-        let known = self.known_fingerprints()?;
+        let (known, loose) = self.known_fingerprints()?;
         let known_external = self.known_external()?;
         let context = ImportContext {
             securities: &securities,
             accounts: &accounts,
             known_external: &known_external,
             known_fingerprints: &known,
+            known_loose: &loose,
             base_currency: self.base_currency.as_deref(),
             today: self.today,
         };
@@ -128,7 +140,7 @@ impl<'a> ImportService<'a> {
         // import in between — so identity is checked again here, against the store, inside
         // the transaction. A row the preview already called a duplicate is excluded: writing
         // it is what `import_duplicates` was answered about.
-        let mut known = self.known_fingerprints()?;
+        let (mut known, _) = self.known_fingerprints()?;
 
         for row in &preview.rows {
             let importable = match row.status {
@@ -137,10 +149,14 @@ impl<'a> ImportService<'a> {
                 // what the duplicate switch was answered about.
                 RowStatus::Updated => true,
                 RowStatus::Duplicate => options.import_duplicates,
+                RowStatus::Similar => options.import_similar,
                 RowStatus::UnknownSecurity => options.create_missing_securities,
                 RowStatus::Ignored | RowStatus::Invalid => false,
             };
             if !importable {
+                if row.status == RowStatus::Similar {
+                    result.similar += 1;
+                }
                 result.skipped += 1;
                 continue;
             }
@@ -192,6 +208,29 @@ impl<'a> ImportService<'a> {
                             .store
                             .find_security_by_symbol(&plan.symbol)?
                             .or(self.store.find_security_by_symbol(symbol)?);
+                        // A ticker names a listing, an ISIN names the instrument. The stored row
+                        // under this ticker carrying a different ISIN is a different company, and
+                        // a ticker is unique, so neither reusing it nor creating beside it is
+                        // possible: the row waits for a ticker of its own.
+                        if let (Some(found), Some(wanted)) = (&existing, &plan.isin)
+                            && found
+                                .isin
+                                .as_deref()
+                                .is_some_and(|stored| normalize_alias(stored) != normalize_alias(wanted))
+                        {
+                            result.skipped += 1;
+                            result.problems.push(ImportProblem::row(
+                                ProblemCode::TickerIsinConflict,
+                                row.number,
+                                format!(
+                                    "ticker {} is already in the database under ISIN {}, and this \
+                                     row says {wanted} — give the new instrument a ticker of its own",
+                                    found.symbol,
+                                    found.isin.as_deref().unwrap_or("-")
+                                ),
+                            ));
+                            continue;
+                        }
                         let security = match existing {
                             Some(s) => s,
                             None => {
@@ -210,8 +249,10 @@ impl<'a> ImportService<'a> {
 
             // A restatement writes over a row that is in the store already, so its content
             // may well match one — that is the point of it, not a reason to skip it.
-            if !matches!(row.status, RowStatus::Duplicate | RowStatus::Updated)
-                && !known.insert(fingerprint(&draft))
+            if !matches!(
+                row.status,
+                RowStatus::Duplicate | RowStatus::Updated | RowStatus::Similar
+            ) && !known.insert(fingerprint(&draft))
             {
                 result.skipped += 1;
                 continue;
@@ -271,13 +312,14 @@ impl<'a> ImportService<'a> {
             .collect())
     }
 
-    fn known_fingerprints(&self) -> Result<HashSet<String>> {
+    /// Both readings of what the store already holds: the exact content fingerprint, and the
+    /// one that ignores what an operation is worth (`dedupe::loose_fingerprint_of`).
+    fn known_fingerprints(&self) -> Result<(HashSet<String>, HashSet<String>)> {
         let accounts: Vec<String> = self.store.list_accounts()?.into_iter().map(|a| a.id).collect();
-        Ok(self
-            .store
-            .transactions_for_accounts(&accounts, None)?
-            .iter()
-            .map(fingerprint_of)
-            .collect())
+        let stored = self.store.transactions_for_accounts(&accounts, None)?;
+        Ok((
+            stored.iter().map(fingerprint_of).collect(),
+            stored.iter().filter_map(loose_fingerprint_of).collect(),
+        ))
     }
 }

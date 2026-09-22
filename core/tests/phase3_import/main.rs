@@ -10,6 +10,7 @@ mod ibflex;
 mod rules;
 mod shapes;
 mod signs;
+mod traps;
 
 use rust_decimal_macros::dec;
 use sq_core::calc::{build_holdings, income_by_kind};

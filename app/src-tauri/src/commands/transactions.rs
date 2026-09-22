@@ -248,6 +248,49 @@ pub fn transaction_save(
     Ok(transaction)
 }
 
+/// One suggested pair of legs, with the names the screen shows instead of ids.
+#[derive(Debug, Serialize)]
+pub struct TransferSuggestion {
+    #[serde(flatten)]
+    pub pair: sq_core::calc::TransferPair,
+    pub account_out_name: String,
+    pub account_in_name: String,
+}
+
+/// Moves between two of the user's own accounts that arrived as two unrelated rows — the usual
+/// shape of a portfolio carried from one broker to another, where each export knows only its own
+/// half. Read from the whole portfolio rather than the lens: a leg the picker is not looking at
+/// is still the other half of the move. Nothing is written; the pairs are offered.
+#[tauri::command]
+pub fn transfer_suggestions(state: State<AppState>) -> UiResult<Vec<TransferSuggestion>> {
+    let store = state.store()?;
+    let portfolio = state.portfolio()?;
+    let rows = store.transactions_for_accounts(&portfolio.account_ids, None)?;
+    let names: std::collections::BTreeMap<String, String> = store
+        .list_accounts()?
+        .into_iter()
+        .map(|a| (a.id, a.name))
+        .collect();
+    let name_of = |id: &str| names.get(id).cloned().unwrap_or_else(|| id.to_string());
+
+    Ok(sq_core::calc::transfer_candidates(&rows)
+        .into_iter()
+        .map(|pair| TransferSuggestion {
+            account_out_name: name_of(&pair.account_out),
+            account_in_name: name_of(&pair.account_in),
+            pair,
+        })
+        .collect())
+}
+
+/// Confirms one suggestion: the two operations become the two legs of one move, and stop
+/// counting as money entering and leaving the portfolio.
+#[tauri::command]
+pub fn transfer_link(app: AppHandle, state: State<AppState>, ids: Vec<String>) -> UiResult<()> {
+    state.store()?.link_transactions(&ids)?;
+    emit_changed(&app, "transactions")
+}
+
 #[tauri::command]
 pub fn transaction_delete(app: AppHandle, state: State<AppState>, id: String) -> UiResult<()> {
     state.store()?.delete_transaction(&id)?;

@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: result.similar
+#: src/screens/Import/CommitStep.tsx
+msgid " {0} left out: an operation like them is already stored."
+msgstr " {0} не записано: похожая операция уже есть в базе."
+
 #. placeholder {0}: result.updated
 #: src/screens/Import/CommitStep.tsx
 msgid " {0} replaced a row the broker restated."
@@ -27,6 +32,10 @@ msgstr " Заведены бумаги: {0}."
 msgid "— as detected —"
 msgstr "— как определилось само —"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "— choose above first —"
+msgstr "— сначала выберите выше —"
+
 #: src/screens/Import/FileTable.tsx
 msgid "— choose an account —"
 msgstr "— выберите счёт —"
@@ -34,6 +43,10 @@ msgstr "— выберите счёт —"
 #: src/components/domain/AlertDialogs.tsx
 msgid "— choose an instrument —"
 msgstr "— выберите инструмент —"
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "— choose the account —"
+msgstr "— выберите счёт —"
 
 #: src/screens/Import/ParseSettings.tsx
 msgid "— detect from the file —"
@@ -57,8 +70,8 @@ msgid "— none chosen"
 msgstr "— не выбран"
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "— none chosen —"
-msgstr "— не выбран —"
+#~ msgid "— none chosen —"
+#~ msgstr "— не выбран —"
 
 #: src/screens/Import/FileTable.tsx
 msgid "— not mapped —"
@@ -133,7 +146,10 @@ msgid "{0, plural, one {# account} few {# accounts} many {# accounts} other {# a
 msgstr "{0, plural, one {# счёт} few {# счёта} many {# счетов} other {# счетов}}"
 
 #. placeholder {0}: accounts.data.length
+#. placeholder {0}: of("DEPOSIT").length
+#. placeholder {0}: of("SECURITIES").length
 #: src/screens/Accounts/index.tsx
+#: src/screens/Import/AccountTarget.tsx
 msgid "{0, plural, one {# account} other {# accounts}}"
 msgstr "{0, plural, one {# счёт} few {# счёта} many {# счетов} other {# счетов}}"
 
@@ -218,6 +234,11 @@ msgstr "{0, plural, one {# не опознан} few {# не опознаны} ma
 #: src/screens/Trades/index.tsx
 msgid "{0, plural, one {# open trade} other {# open trades}}"
 msgstr "{0, plural, one {# открытая сделка} few {# открытые сделки} many {# открытых сделок} other {# открытой сделки}}"
+
+#. placeholder {0}: found.length
+#: src/screens/Import/TransferPairs.tsx
+msgid "{0, plural, one {# pair} other {# pairs}}"
+msgstr "{0, plural, one {# пара} few {# пары} other {# пар}}"
 
 #. placeholder {0}: data.by_security.length
 #: src/screens/Income/index.tsx
@@ -434,6 +455,12 @@ msgstr "{0} из {1} · нетто {2}"
 msgid "{0} of {1} instruments"
 msgstr "{0} из {1} инструментов"
 
+#. placeholder {0}: p.quantity
+#. placeholder {1}: p.symbol
+#: src/screens/Import/labels.ts
+msgid "{0} of {1} move with no value given. The lot enters at a cost of zero and the whole holding will read as profit — open the row and enter the price paid, or the total."
+msgstr "{0} {1} перемещается без указания стоимости. Лот попадёт в портфель с нулевой себестоимостью, и вся позиция будет выглядеть прибылью — откройте строку и впишите цену покупки или сумму."
+
 #. placeholder {0}: formatMoney(data.gains_total.taxes_base, currency, { compact: true })
 #: src/screens/Reports/index.tsx
 msgid "{0} of tax withheld"
@@ -465,6 +492,15 @@ msgstr "Записей загружено: {0}."
 #: src/components/domain/MarketRefresh.tsx
 msgid "{0} to refresh in total"
 msgstr "Всего к обновлению: {0}"
+
+#. placeholder {0}: p.symbol
+#. placeholder {1}: p.before
+#. placeholder {2}: p.after
+#. placeholder {3}: p.date
+#. placeholder {4}: p.ratio
+#: src/screens/Import/labels.ts
+msgid "{0} trades at {1} and then at {2} on {3} — a factor of about {4}. If the broker applied a split here, the quantities before and after mean different shares; record the split on the instrument instead of importing the change."
+msgstr "{0} торгуется по {1}, а затем по {2} — {3}, разница примерно в {4} раз. Если брокер провёл здесь сплит, количества до и после означают разные бумаги; заведите сплит на инструменте, а не импортируйте это изменение."
 
 #. placeholder {0}: metrics.days
 #: src/screens/Risk.tsx
@@ -778,6 +814,14 @@ msgstr "90 дней"
 #: src/screens/Securities/Splits.tsx
 msgid "A 2:1 split is 1 → 2; a 1:10 reverse split is 10 → 1. The position keeps its value: only the quantity and the per-share cost move."
 msgstr "Сплит 2:1 — это 1 → 2, обратный 1:10 — это 10 → 1. Стоимость позиции не меняется: двигаются только количество и цена за бумагу."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "A bank or wallet statement"
+msgstr "Выписка банка или кошелька"
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "A broker statement"
+msgstr "Выписка брокера"
 
 #: src/screens/Accounts/AccountForm.tsx
 msgid "A cash account holds money in one currency; a securities account holds instruments and settles through a cash account"
@@ -1453,6 +1497,14 @@ msgstr "ISIN находит инструмент, тикер — конкрет�
 msgid "an odd currency code"
 msgstr "странный код валюты"
 
+#: src/screens/Import/labels.ts
+msgid "an operation like it is already stored"
+msgstr "похожая операция уже есть в базе"
+
+#: src/screens/Import/CommitStep.tsx
+msgid "An operation like it is already stored"
+msgstr "Похожая операция уже есть в базе"
+
 #: src/App.tsx
 msgid "Analysis"
 msgstr "Анализ"
@@ -1481,6 +1533,10 @@ msgstr "Годовая волатильность в скользящем окн
 #: src/screens/Risk.tsx
 msgid "Annualized volatility over a sliding window of trading days."
 msgstr "Годовая волатильность в скользящем окне торговых дней."
+
+#: src/screens/Import/labels.ts
+msgid "another currency than the account keeps"
+msgstr "валюта не та, что у счёта"
 
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Answer format"
@@ -1551,6 +1607,11 @@ msgstr "Применить"
 #: src/screens/Import/RowFix.tsx
 msgid "Applying…"
 msgstr "Применяем…"
+
+#. placeholder {0}: pair.amount_in
+#: src/screens/Import/TransferPairs.tsx
+msgid "arrived {0}"
+msgstr "пришло {0}"
 
 #: src/screens/Income/MonthPanel.tsx
 msgid "arrived on the account"
@@ -1838,7 +1899,6 @@ msgid "Cash · {0}"
 msgstr "Денежный · {0}"
 
 #: src/screens/Accounts/AccountForm.tsx
-#: src/screens/Import/TargetSummary.tsx
 #: src/screens/Onboarding.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "Cash account"
@@ -2445,8 +2505,8 @@ msgid "Deepest fall from a peak inside the period."
 msgstr "Самое глубокое падение от пика внутри периода."
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "Default account"
-msgstr "Счёт по умолчанию"
+#~ msgid "Default account"
+#~ msgstr "Счёт по умолчанию"
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/SecurityAlerts.tsx
@@ -2605,6 +2665,10 @@ msgstr "Пополнения"
 #: src/screens/Performance/index.tsx
 msgid "Deposits and withdrawals run under the chart, so a deposit is not mistaken for a gain."
 msgstr "Пополнения и выводы показаны под графиком, чтобы пополнение не принять за прибыль."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "Deposits, withdrawals, interest, fees. Everything lands on this one cash account; a row that carries an instrument does not belong in such a file."
+msgstr "Пополнения, выводы, проценты, комиссии. Всё попадёт на этот денежный счёт; строке с инструментом в таком файле не место."
 
 #: src/screens/Risk.tsx
 msgid "Depth"
@@ -2802,6 +2866,10 @@ msgstr "каждый попадёт в свою категорию целико�
 #: src/screens/dashboard/dialogs.tsx
 msgid "Each line is computed on the portfolio series' dates, so the lines do not drift apart on another exchange's closed days."
 msgstr "Каждая линия считается на датах портфельного ряда, чтобы на закрытых днях чужой биржи линии не разъезжались."
+
+#: src/screens/Import/TransferPairs.tsx
+msgid "Each of these is a payment out of one account and a payment into another, of the same size within days. If it is one move — a portfolio carried between brokers, money sent to your own account — join the two: the app then stops reading it as money leaving the portfolio and coming back, which distorts every return figure. If they are genuinely two separate payments, leave them alone."
+msgstr "Каждая пара — это списание с одного счёта и зачисление на другой, на ту же сумму и в пределах нескольких дней. Если это один перевод — перенос портфеля между брокерами, деньги на собственный счёт — свяжите их: приложение перестанет считать это уходом денег из портфеля и возвратом, что искажает все показатели доходности. Если это действительно два разных платежа, оставьте как есть."
 
 #: src/screens/Income/index.tsx
 msgid "Each payment counts under the category of whoever paid it, split by the same weights the tree uses for value."
@@ -4380,6 +4448,10 @@ msgstr "Самая долгая просадка"
 msgid "Look at the result and write it. Nothing in the database changes before that button."
 msgstr "Посмотрите, что получилось, и запишите. До этой кнопки в базе ничего не меняется."
 
+#: src/screens/Import/labels.ts
+msgid "looks stored"
+msgstr "похоже на имеющуюся"
+
 #: src/components/charts/Histogram.tsx
 msgid "losing days"
 msgstr "убыточные дни"
@@ -4479,12 +4551,20 @@ msgstr "Через него проходят деньги по сделкам э
 #~ msgstr "Деньги в одной валюте. Один денежный счёт может обслуживать несколько депо"
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "Money lands here: deposits, dividends, fees"
-msgstr "Сюда лягут деньги: пополнения, дивиденды, комиссии"
+#~ msgid "Money lands here: deposits, dividends, fees"
+#~ msgstr "Сюда лягут деньги: пополнения, дивиденды, комиссии"
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "Money moves on"
+msgstr "Деньги двигаются по счёту"
 
 #: src/screens/Onboarding.tsx
 msgid "Money sits here: deposits, fees, interest"
 msgstr "Здесь лежат деньги: пополнения, комиссии, проценты"
+
+#: src/screens/Import/TransferPairs.tsx
+msgid "Money that left one account and arrived at another"
+msgstr "Деньги ушли с одного счёта и пришли на другой"
 
 #: src/screens/Rebalance/CashPanel.tsx
 msgid "Money to invest on top of the portfolio; with \"Buy only\" the drift is closed by buying, never by selling."
@@ -5455,6 +5535,10 @@ msgstr "Одна величина к другой: доходность, дол�
 msgid "One instrument trades on many exchanges and in many currencies. Pick the venue your broker actually traded on: price and cost basis then share one currency, and the valuation stops going through an exchange rate every day. Switching a venue deletes the quotes already downloaded — the new one has a different price series."
 msgstr "Один и тот же инструмент торгуется на разных биржах и в разных валютах. Выберите ту площадку, на которой сделки совершал ваш брокер: тогда цена и себестоимость будут в одной валюте, а оценка не будет каждый день проходить через курс. Смена площадки стирает загруженные котировки — у новой другой ряд цен."
 
+#: src/screens/Import/TransferPairs.tsx
+msgid "One move"
+msgstr "Один перевод"
+
 #: src/screens/dashboard/widgets/index.tsx
 msgid "One number from the catalog: value, return, drawdown."
 msgstr "Одно число из каталога: стоимость, доходность, просадка."
@@ -5949,6 +6033,10 @@ msgstr "Покупки, ещё не проданные на конец пери�
 #: src/screens/Trades/TradeMetrics.tsx
 #~ msgid "Purchases whose shares are still held at the end of the period, each with the unrealized result of its own lot."
 #~ msgstr "Покупки, бумаги которых ещё держатся на конец периода, каждая со своим нереализованным результатом по своему лоту."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "Purchases, sales, dividends. Instruments are recorded on the brokerage account, and the money moves on the cash account linked to it — no second choice to make."
+msgstr "Покупки, продажи, дивиденды. Инструменты учитываются на брокерском счёте, а деньги двигаются по привязанному к нему денежному счёту — второй выбор делать не нужно."
 
 #. placeholder {0}: bucket.index
 #: src/screens/Income/model.ts
@@ -6562,6 +6650,10 @@ msgstr "строк"
 msgid "Rows"
 msgstr "Строк"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "Rows land on"
+msgstr "Строки попадут на счёт"
+
 #: src/screens/Import/ParseSettings.tsx
 msgid "Rows to drop at the bottom"
 msgstr "Отбросить строк снизу"
@@ -6589,6 +6681,10 @@ msgstr "Как у нового чата"
 #: src/screens/dashboard/dialogs.tsx
 msgid "Same as the dashboard"
 msgstr "Как у дашборда"
+
+#: src/screens/Import/CommitStep.tsx
+msgid "same day, account, instrument and quantity — worth something else. Usually the stored row, corrected by hand after it was imported"
+msgstr "та же дата, счёт, инструмент и количество — но другая сумма. Обычно это сохранённая строка, исправленная вручную после импорта"
 
 #: src/screens/Income/MonthPanel.tsx
 msgid "Same month a year ago"
@@ -6874,6 +6970,10 @@ msgstr "Доли одной полосой: по бумагам или по кл
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Shares by area: the large and the small are visible at once."
 msgstr "Доли площадью: видно и крупное, и мелкое сразу."
+
+#: src/screens/Import/labels.ts
+msgid "shares moved with no value given"
+msgstr "бумаги перемещены без указания стоимости"
 
 #: src/components/domain/AllocationBar.tsx
 msgid "Shares of this level"
@@ -7401,6 +7501,10 @@ msgstr "Расчёт не сошёлся: {0}"
 msgid "The cash account the contribution lands on"
 msgstr "Денежный счёт, на который приходит взнос"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "the cash account this one settles through"
+msgstr "денежный счёт, через который идут расчёты"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "The cash balances of the selection, converted to the reporting currency."
 msgstr "Остатки денежных счетов выборки, пересчитанные в валюту отчётности."
@@ -7520,6 +7624,10 @@ msgstr "уплаченные комиссии и налоги"
 #: src/screens/Import/ParseStep.tsx
 msgid "The file cannot be parsed without these columns: {0}. Point at them in the table header below."
 msgstr "Без этих колонок файл не разобрать: {0}. Укажите их в шапке таблицы ниже."
+
+#: src/screens/Import/RowFix.tsx
+msgid "the file has no column for this — the value is added to the row"
+msgstr "в файле нет такой колонки — значение добавляется к строке"
 
 #: src/screens/Import/ParseStep.tsx
 msgid "The file holds no row with a transaction kind."
@@ -7752,6 +7860,14 @@ msgstr "Взвешенная по времени доходность перио
 msgid "the plan has no targets"
 msgstr "целей в плане нет"
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
+msgstr "В портфеле ещё нет брокерского счёта. Создайте его на экране \"Счета\" — ему нужен денежный счёт для расчётов — и вернитесь на этот шаг."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "The portfolio has no cash account yet. Create one on the \"Accounts\" screen."
+msgstr "В портфеле ещё нет денежного счёта. Создайте его на экране \"Счета\"."
+
 #. placeholder {0}: formatDay(real.twr.to)
 #: src/screens/Performance/Metrics.tsx
 msgid "The portfolio return with inflation taken out, through {0}."
@@ -7776,6 +7892,10 @@ msgstr "Предыдущее обновление было остановлен�
 #: src/lib/alerts.ts
 #~ msgid "The price rose to {price}; the limit is {limit}."
 #~ msgstr "Цена выросла до {price}; лимит — {limit}."
+
+#: src/screens/Import/labels.ts
+msgid "the prices step by a whole factor"
+msgstr "цены меняются в целое число раз"
 
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "The profile's data is decrypted, and every API key saved in it is deleted."
@@ -7843,6 +7963,16 @@ msgstr "В правой колонке — итог года, в нижней с
 #: src/screens/Import/labels.ts
 msgid "the row could not be parsed"
 msgstr "строка не разобрана"
+
+#. placeholder {0}: p.currency
+#. placeholder {1}: p.account
+#: src/screens/Import/labels.ts
+msgid "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
+msgstr "Строка в {0}, а счёт, на который она попадёт, ведётся в {1}. Исправьте, если колонка валюты прочитана неверно; пропустите, если счёт действительно держит обе."
+
+#: src/screens/Import/AccountTarget.tsx
+msgid "the same account"
+msgstr "тот же счёт"
 
 #: src/screens/Import/CommitStep.tsx
 msgid "the same operation, with different values: the stored row is replaced"
@@ -7945,6 +8075,10 @@ msgstr "от него считаются цели"
 #: src/screens/Reports/Dividends.tsx
 #~ msgid "The three rightmost figures are read off the instrument's whole payment history rather than the window: \"Pays\" is the schedule inferred from the gaps between payments, \"Yield a year\" divides the last twelve months by the cost basis, and \"Yield on cost\" divides everything ever paid by it. A closed position has nothing to divide by, hence \"—\" and not zero."
 #~ msgstr "Три правых показателя читаются по всей истории выплат инструмента, а не по окну: «Платит» — периодичность, выведенная из промежутков между выплатами, «Доходность за год» делит выплаты последних двенадцати месяцев на базу, «Доходность к базе» — всё когда-либо выплаченное. У закрытой позиции делить не на что — отсюда «—», а не ноль."
+
+#: src/screens/Import/labels.ts
+msgid "the ticker already names another instrument"
+msgstr "тикер уже занят другим инструментом"
 
 #: src/screens/Risk.tsx
 #~ msgid "The time-weighted return brought to a yearly figure: next to volatility it shows what was paid for it."
@@ -8150,6 +8284,13 @@ msgstr "через {0}"
 #: src/screens/Securities/SecurityForm.tsx
 msgid "Ticker"
 msgstr "Тикер"
+
+#. placeholder {0}: p.symbol
+#. placeholder {1}: p.stored
+#. placeholder {2}: p.isin
+#: src/screens/Import/labels.ts
+msgid "Ticker {0} is already in the database under ISIN {1}, and this row says {2} — two instruments cannot share one ticker. Give this one a ticker of its own on the \"Instruments\" step."
+msgstr "Тикер {0} уже есть в базе под ISIN {1}, а в этой строке указан {2} — два инструмента не могут делить один тикер. Задайте этому собственный тикер на шаге \"Инструменты\"."
 
 #: src/screens/Import/AssetRow.tsx
 msgid "ticker in the database"
@@ -8804,6 +8945,10 @@ msgstr "Что содержит сумма"
 msgid "What the exchange rate did to the unrealised result."
 msgstr "Что сделал с нереализованным результатом валютный курс."
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "what the file's operations are recorded against"
+msgstr "на чём учитываются операции файла"
+
 #: src/screens/Performance/PositionReturns.tsx
 msgid "What the instrument did, regardless of when it was bought."
 msgstr "Что показал инструмент, независимо от даты покупки."
@@ -8937,8 +9082,8 @@ msgid "Where quotes and exchange rates come from; an instrument's own source is 
 msgstr "Откуда берутся котировки и курсы; сначала спрашивается собственный источник инструмента."
 
 #: src/screens/Import/TargetSummary.tsx
-msgid "Where rows without an account column land"
-msgstr "Куда попадут строки без колонки счёта"
+#~ msgid "Where rows without an account column land"
+#~ msgstr "Куда попадут строки без колонки счёта"
 
 #: src/screens/Reports/Charges.tsx
 #~ msgid "Where the money is charged"
@@ -8964,6 +9109,10 @@ msgstr "Где приложение ищет новую версию и може
 msgid "Where you spend, which need not be where your base currency is legal tender. Left empty, no real returns are shown."
 msgstr "Где вы тратите — это не обязательно страна вашей базовой валюты. Если не выбрано, реальная доходность не показывается."
 
+#: src/screens/Import/AccountTarget.tsx
+msgid "Which account"
+msgstr "Какой счёт"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "which categories your income came from"
 msgstr "из каких категорий пришёл доход"
@@ -8975,6 +9124,10 @@ msgstr "Какую выгрузку читаем и что в ней на сам
 #: src/components/domain/AiTools.tsx
 msgid "Which model answers"
 msgstr "Какая модель отвечает"
+
+#: src/screens/Import/AccountTarget.tsx
+#~ msgid "Which one"
+#~ msgstr "Какой именно"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "which periods are available"

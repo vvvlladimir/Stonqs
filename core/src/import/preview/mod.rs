@@ -122,6 +122,11 @@ pub enum RowStatus {
 
     UnknownSecurity,
 
+    /// A stored operation of the same day, account, instrument and quantity differs only in what
+    /// it is worth: what a row edited by hand after import looks like on the next re-import.
+    /// Not written unless asked for — the content fingerprint cannot recognise it (ADR-0005).
+    Similar,
+
     /// Its operation value is on the skip list: not a problem, just not imported.
     Ignored,
 
@@ -177,6 +182,10 @@ pub struct ImportContext<'a> {
 
     pub known_fingerprints: &'a HashSet<String>,
 
+    /// Stored share movements by day, account, instrument and quantity — identity without the
+    /// amount, so a row corrected by hand is still recognised (`dedupe::loose_fingerprint`).
+    pub known_loose: &'a HashSet<String>,
+
     pub base_currency: Option<&'a str>,
     pub today: Option<NaiveDate>,
 }
@@ -192,6 +201,7 @@ impl Default for ImportContext<'_> {
             accounts: NO_ACCOUNTS,
             known_external: NO_EXTERNAL,
             known_fingerprints: Box::leak(Box::new(HashSet::new())),
+            known_loose: Box::leak(Box::new(HashSet::new())),
             base_currency: None,
             today: None,
         }
@@ -246,6 +256,9 @@ pub struct ImportSummary {
     pub total: usize,
     pub ready: usize,
     pub duplicates: usize,
+    /// Rows a stored operation resembles closely enough to be the same one, edited since.
+    #[serde(default)]
+    pub similar: usize,
     #[serde(default)]
     pub updated: usize,
     pub unknown_securities: usize,
@@ -374,17 +387,23 @@ pub fn build_preview(
         checks: CheckContext {
             base_currency: context.base_currency,
             today: context.today,
+            // Per row, not per file: filled in once the row's account is known.
+            account_currency: None,
         },
     };
     let index = Index::of(context);
     let mut tallies = Tallies::default();
-    let mut dedupe = Dedupe::against(context.known_fingerprints, context.known_external);
+    let mut dedupe = Dedupe::against(
+        context.known_fingerprints,
+        context.known_loose,
+        context.known_external,
+    );
 
     let mut rows = Vec::with_capacity(parsed.rows.len());
-    for (offset, raw) in raw_rows.into_iter().enumerate() {
+    for (offset, input) in raw_rows.into_iter().enumerate() {
         rows.extend(row::read(
             offset + 1,
-            raw,
+            input,
             &file,
             context,
             &index,
@@ -417,7 +436,7 @@ pub fn build_preview(
 /// file, like the sign: one row where the two readings differ by a commission answers it, and a
 /// broker is consistent about which of the two it prints.
 fn vote_on_basis(
-    raw_rows: &[BTreeMap<String, String>],
+    raw_rows: &[cells::RowInput],
     mapping: &ImportMapping,
     decimal_separator: char,
 ) -> (AmountBasis, Option<ImportProblem>) {
@@ -427,7 +446,7 @@ fn vote_on_basis(
             .unwrap_or(Decimal::ZERO)
     };
     let mut vote = BasisVote::default();
-    for raw in raw_rows {
+    for raw in raw_rows.iter().map(|input| &input.raw) {
         let Some(kind) = cells::cell_of(raw, mapping, ImportField::Kind).and_then(|v| mapping.kind_of(v))
         else {
             continue;
@@ -456,12 +475,12 @@ fn vote_on_basis(
 /// whole file rather than of a row: one type value can span both directions, and it is the
 /// correlation across every cash-moving row that answers it (`.claude/rules/import.md`).
 fn vote_on_signs(
-    raw_rows: &[BTreeMap<String, String>],
+    raw_rows: &[cells::RowInput],
     mapping: &ImportMapping,
     decimal_separator: char,
 ) -> (AmountSign, Option<ImportProblem>) {
     let mut vote = SignVote::default();
-    for raw in raw_rows {
+    for raw in raw_rows.iter().map(|input| &input.raw) {
         let kind = cells::cell_of(raw, mapping, ImportField::Kind).and_then(|v| mapping.kind_of(v));
         let amount = cells::cell_of(raw, mapping, ImportField::Amount)
             .and_then(|v| parse_decimal(v, decimal_separator))

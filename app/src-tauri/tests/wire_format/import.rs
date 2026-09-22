@@ -16,6 +16,10 @@ fn import_enums_cross_as_screaming_snake_case() {
         Value::String("IGNORED".into())
     );
     assert_eq!(
+        serde_json::to_value(RowStatus::Similar).unwrap(),
+        Value::String("SIMILAR".into())
+    );
+    assert_eq!(
         serde_json::to_value(ImportField::FxRate).unwrap(),
         Value::String("FX_RATE".into())
     );
@@ -54,6 +58,93 @@ fn import_enums_cross_as_screaming_snake_case() {
             "symbol_aliases"
         ]
     );
+}
+
+/// Every count the commit screen shows is its own field, and a row status the screen switches
+/// on has to reach it under the name the label table uses.
+#[test]
+fn the_import_summary_counts_each_reason_separately() {
+    use sq_core::import::{ImportOptions, ImportResult, ImportSummary};
+
+    let json = serde_json::to_value(ImportSummary::default()).unwrap();
+    assert_eq!(
+        keys(&json),
+        [
+            "duplicates",
+            "ignored",
+            "invalid",
+            "ready",
+            "similar",
+            "total",
+            "unknown_securities",
+            "updated",
+            "warnings"
+        ]
+    );
+
+    // A row only a stored operation resembles is skipped *and* counted apart, so the screen can
+    // offer to write it after all instead of leaving the user to guess what "skipped" held.
+    let json = serde_json::to_value(ImportResult::default()).unwrap();
+    assert_eq!(
+        keys(&json),
+        [
+            "created_securities",
+            "imported",
+            "problems",
+            "similar",
+            "skipped",
+            "updated"
+        ]
+    );
+
+    let json = serde_json::to_value(ImportOptions::default()).unwrap();
+    assert_eq!(json["import_similar"], Value::Bool(false));
+    assert_eq!(json["import_duplicates"], Value::Bool(false));
+}
+
+/// A suggested pair carries both ids, both accounts by name, and the two amounts as strings —
+/// the screen states what it is about to join before the user joins it.
+#[test]
+fn a_transfer_suggestion_names_both_legs() {
+    use sq_app_lib::commands::transactions::TransferSuggestion;
+    use sq_core::calc::TransferPair;
+
+    let json = serde_json::to_value(TransferSuggestion {
+        pair: TransferPair {
+            out_id: "t-1".into(),
+            in_id: "t-2".into(),
+            currency: "EUR".into(),
+            amount_out: dec!(1000),
+            amount_in: dec!(998),
+            date_out: "2024-06-03".into(),
+            date_in: "2024-06-05".into(),
+            account_out: "acc-a".into(),
+            account_in: "acc-b".into(),
+            days_apart: 2,
+        },
+        account_out_name: "Trade Republic · cash".into(),
+        account_in_name: "IBKR · cash".into(),
+    })
+    .unwrap();
+
+    assert_eq!(
+        keys(&json),
+        [
+            "account_in",
+            "account_in_name",
+            "account_out",
+            "account_out_name",
+            "amount_in",
+            "amount_out",
+            "currency",
+            "date_in",
+            "date_out",
+            "days_apart",
+            "in_id",
+            "out_id"
+        ]
+    );
+    assert_eq!(json["amount_out"], "1000");
 }
 
 /// Resolved security and search candidates are hand-mapped in TypeScript.

@@ -131,6 +131,25 @@ pub enum ProblemCode {
     ZeroAmount,
 
     SuspiciousCurrency,
+
+    /// Shares arrived or left with no money named: the row moves a quantity at a price of zero,
+    /// so the lot enters the portfolio with no cost basis and shows the whole holding as profit.
+    DeliveryWithoutCost,
+
+    /// The row is denominated in a currency the account it lands on does not keep.
+    AccountCurrencyMismatch,
+
+    /// The file's ticker names an instrument already stored under a different ISIN: one ticker,
+    /// two instruments.
+    TickerIsinConflict,
+
+    /// A stored operation of the same day, account, instrument and quantity, differing only in
+    /// what it is worth — what editing an imported row by hand leaves behind.
+    SimilarInStore,
+
+    /// One instrument's prices in the file step by a whole factor: a split the broker applied
+    /// part-way through the statement.
+    PossibleSplit,
 }
 
 /// File- or row-level diagnostic collected during parsing.

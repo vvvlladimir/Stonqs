@@ -13,6 +13,13 @@ The steps are four questions:
    transaction, and which account everything lands on. Only the date and the kind columns are
    required; the rest improve the result. A wording the user does not want imported at all can be
    marked as skipped rather than mapped to something wrong.
+
+   The account is asked as what the file *is*: a broker statement, or a bank or wallet statement.
+   Choosing the first records instruments on the brokerage account and moves the money on the cash
+   account linked to it, so there is no second question to answer; choosing the second puts
+   everything on one cash account. Only when the portfolio holds more than one account of the kind
+   chosen does the step ask which. What was picked is then restated in full — where rows land, and
+   where money moves — before anything else on the step.
 3. **Instruments** — link the export's codes to real instruments so that prices can arrive
    afterwards. The search starts by itself when the step opens and works down: the ISIN, then the
    code and the name printed in the file, then the exchanges the instrument trades on, taking the
@@ -55,6 +62,39 @@ identifier with corrected values is marked as restated, and writing it updates t
 operation instead of adding a second one. Restated rows are listed before the write and counted
 separately afterwards, because nothing new entered the ledger. The duplicate switch does not
 cover them: a correction is not a repetition.
+
+**Notices worth reading before the write.** The wizard checks the file for four things it cannot
+decide on the user's behalf, and every one of them is a notice rather than a refusal:
+
+- *Shares moved with no value given* — a position carried in from another broker arrives as a
+  quantity with no price. Written as it stands, the holding enters at a cost of zero and shows the
+  entire position as profit. The row can be opened and the price paid, or the total, typed in —
+  even when the file has no such column at all.
+- *Another currency than the account keeps* — the row is denominated in something the cash account
+  it lands on does not hold. Legal, since an account really can hold two currencies, and also
+  exactly what a mis-read currency column looks like.
+- *The ticker already names another instrument* — the file's ticker is in the portfolio already
+  under a different ISIN. These are two instruments, and one ticker cannot name both, so the row
+  is not written until it is given a ticker of its own on the "Instruments" step. This is the one
+  notice that does block its row, because writing it would pour one company's trades into
+  another's position.
+- *The prices step by a whole factor* — one instrument trades at one price and then at a third or
+  a tenth of it. If the broker applied a split part-way through the statement, the quantities
+  before and after mean different shares; a split is recorded on the instrument rather than
+  imported.
+
+**A row edited by hand is not imported twice.** Correcting a stored operation changes what it
+says, so the next import of the same file no longer recognises it by content. The app also
+compares day, account, instrument and quantity — what an edit cannot change — and marks such a row
+as already stored. It is left out by default and can be written anyway with the switch beside it,
+for the case where the same size really did trade twice in one day at two prices.
+
+**Money that left one account and arrived at another** is offered for joining after the write.
+Two brokers export separately, so carrying a portfolio between them arrives as a withdrawal in one
+file and a deposit in the other, and the app reads each as money crossing the portfolio boundary —
+which every return figure is measured against. Payments that match in currency and size within a
+few days are listed as candidate pairs; confirming one makes it a single move. Nothing is joined
+automatically: two amounts agreeing is not proof that one payment is the other.
 
 **Some brokers print the amount with the commission already in it.** The app works out which of
 the two a file means by comparing the amount against quantity × price across the whole file, and

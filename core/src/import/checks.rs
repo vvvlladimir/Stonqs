@@ -5,6 +5,7 @@ use crate::model::TransactionKind;
 use chrono::{Datelike, NaiveDate};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+use std::collections::BTreeMap;
 
 /// Optional context for plausibility checks.
 #[derive(Debug, Clone, Copy, Default)]
@@ -12,6 +13,11 @@ pub struct CheckContext<'a> {
     pub base_currency: Option<&'a str>,
 
     pub today: Option<NaiveDate>,
+
+    /// Currency of the account this row lands on, when one was resolved. A row denominated in
+    /// something else is legal — a multi-currency account is a real thing — but it is also what
+    /// a mis-mapped currency column looks like, so it is said once per row.
+    pub account_currency: Option<&'a str>,
 }
 
 /// Agreement between operation kinds and amount signs.
@@ -195,8 +201,19 @@ pub fn resolve_direction(kind: TransactionKind, value: Decimal, sign: AmountSign
     }
 }
 
-const AMOUNT_TOLERANCE_RATIO: Decimal = dec!(0.01);
+/// How far `amount` may sit from quantity × price before it is worth saying so. A broker prints
+/// the unit price rounded, and that rounding multiplies by the quantity — which is why the
+/// allowance is mostly per unit rather than a flat percentage: a flat 1 % hides a hundred euros
+/// on a ten-thousand-euro trade, and a flat cent flags every thousand-unit crypto order.
+const AMOUNT_TOLERANCE_PER_UNIT: Decimal = dec!(0.005);
+const AMOUNT_TOLERANCE_RATIO: Decimal = dec!(0.002);
 const AMOUNT_TOLERANCE_ABSOLUTE: Decimal = dec!(0.01);
+
+fn amount_tolerance(quantity: Decimal, expected: Decimal) -> Decimal {
+    AMOUNT_TOLERANCE_ABSOLUTE
+        + quantity.abs() * AMOUNT_TOLERANCE_PER_UNIT
+        + expected.abs() * AMOUNT_TOLERANCE_RATIO
+}
 
 /// Emits non-blocking plausibility diagnostics for one draft.
 pub fn check_row(number: usize, draft: &TransactionDraft, context: &CheckContext<'_>) -> Vec<ImportProblem> {
@@ -208,8 +225,7 @@ pub fn check_row(number: usize, draft: &TransactionDraft, context: &CheckContext
         && !draft.amount.is_zero()
     {
         let expected = draft.quantity * draft.price;
-        let tolerance = expected * AMOUNT_TOLERANCE_RATIO + AMOUNT_TOLERANCE_ABSOLUTE;
-        if (draft.amount - expected).abs() > tolerance {
+        if (draft.amount - expected).abs() > amount_tolerance(draft.quantity, expected) {
             out.push(
                 ImportProblem::row(
                     ProblemCode::AmountVsQuantityPrice,
@@ -291,6 +307,49 @@ pub fn check_row(number: usize, draft: &TransactionDraft, context: &CheckContext
         );
     }
 
+    // Shares crossing the boundary with no money named: the lot's cost basis becomes zero and
+    // the whole position reads as profit. The commonest cause is moving a portfolio between
+    // brokers, where the receiving statement states quantities and never what they cost.
+    if draft.kind.affects_quantity()
+        && !draft.quantity.is_zero()
+        && draft.price.is_zero()
+        && draft.amount.is_zero()
+    {
+        out.push(
+            ImportProblem::row(
+                ProblemCode::DeliveryWithoutCost,
+                number,
+                format!(
+                    "{} shares move with no value given: the lot enters at a cost of zero and the \
+                     whole holding will read as profit. Enter the price paid, or the total, on this row",
+                    draft.quantity
+                ),
+            )
+            .with("quantity", draft.quantity)
+            .with("symbol", draft.symbol.as_deref().unwrap_or("-"))
+            .warn(),
+        );
+    }
+
+    if let Some(account) = context.account_currency
+        && !draft.currency.eq_ignore_ascii_case(account)
+    {
+        out.push(
+            ImportProblem::row(
+                ProblemCode::AccountCurrencyMismatch,
+                number,
+                format!(
+                    "the row is in {} and the account it lands on keeps {account}: correct if the \
+                     currency column was read wrong, ignore if the account really holds both",
+                    draft.currency
+                ),
+            )
+            .with("currency", &draft.currency)
+            .with("account", account)
+            .warn(),
+        );
+    }
+
     if let Some(today) = context.today
         && draft.date > today
     {
@@ -315,8 +374,83 @@ const MAX_SPAN_YEARS: i32 = 50;
 
 const SINGLE_KIND_MIN_ROWS: usize = 20;
 
-pub fn check_file(rows: &[ImportRow], kinds: &[KindMapping]) -> Vec<ImportProblem> {
+/// Smallest price step read as a split rather than as a market move, and how close to a whole
+/// number the step has to be. A stock really can double between two trades, so this is a warning
+/// and never a refusal — it says "check this", not "this is wrong".
+const SPLIT_MIN_RATIO: f64 = 1.8;
+const SPLIT_MAX_RATIO: f64 = 20.0;
+const SPLIT_ROUNDNESS: f64 = 0.03;
+
+/// Prices of one instrument stepping by a whole factor between two adjacent trades: the broker
+/// applied a split part-way through the statement. Quantities then refer to two different
+/// shares, and the stored quotes are adjusted throughout, so the average cost comes out wrong
+/// while the holding still adds up.
+fn check_split_steps(rows: &[ImportRow]) -> Vec<ImportProblem> {
+    let mut by_symbol: BTreeMap<&str, Vec<(NaiveDate, Decimal)>> = BTreeMap::new();
+    for draft in rows.iter().filter_map(|r| r.draft.as_ref()) {
+        if !draft.kind.affects_quantity() || draft.price.is_zero() {
+            continue;
+        }
+        let Some(symbol) = draft.symbol.as_deref() else {
+            continue;
+        };
+        by_symbol
+            .entry(symbol)
+            .or_default()
+            .push((draft.date, draft.price.abs()));
+    }
+
     let mut out = Vec::new();
+    for (symbol, mut prices) in by_symbol {
+        prices.sort_by_key(|(date, _)| *date);
+        for pair in prices.windows(2) {
+            let ((_, before), (date, after)) = (pair[0], pair[1]);
+            let Some(ratio) = step_ratio(before, after) else {
+                continue;
+            };
+            out.push(
+                ImportProblem::file(
+                    ProblemCode::PossibleSplit,
+                    format!(
+                        "{symbol} trades at {before} and then at {after} on {date} — a factor of \
+                         about {ratio}. If the broker applied a split here, the quantities before \
+                         and after mean different shares; record the split on the instrument \
+                         instead of importing the change"
+                    ),
+                )
+                .with("symbol", symbol)
+                .with("before", before)
+                .with("after", after)
+                .with("date", date)
+                .with("ratio", ratio)
+                .warn(),
+            );
+            break;
+        }
+    }
+    out
+}
+
+/// The whole factor two prices differ by, or `None` when the step is small or not round.
+fn step_ratio(before: Decimal, after: Decimal) -> Option<i64> {
+    let (before, after) = (f64::try_from(before).ok()?, f64::try_from(after).ok()?);
+    if before <= 0.0 || after <= 0.0 {
+        return None;
+    }
+    let ratio = if before > after {
+        before / after
+    } else {
+        after / before
+    };
+    if !(SPLIT_MIN_RATIO..=SPLIT_MAX_RATIO).contains(&ratio) {
+        return None;
+    }
+    let whole = ratio.round();
+    ((ratio - whole).abs() / whole <= SPLIT_ROUNDNESS).then_some(whole as i64)
+}
+
+pub fn check_file(rows: &[ImportRow], kinds: &[KindMapping]) -> Vec<ImportProblem> {
+    let mut out = check_split_steps(rows);
 
     if kinds.len() == 1 && rows.len() >= SINGLE_KIND_MIN_ROWS {
         out.push(
@@ -497,6 +631,7 @@ mod tests {
         let context = CheckContext {
             base_currency: Some("EUR"),
             today: None,
+            account_currency: None,
         };
         let codes: Vec<_> = check_row(1, &draft, &context).iter().map(|p| p.code).collect();
         assert!(codes.contains(&ProblemCode::FxRateOnBaseCurrency));

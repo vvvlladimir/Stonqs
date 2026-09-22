@@ -21,6 +21,37 @@
   contract with a multiplier other than 1, a cancelled trade and a corporate action get wordings the
   reader invents and ships in `ignored_kinds` — a split would double against already-adjusted
   quotes, and the model has no multiplier — so they stay counted and visible instead of wrong.
+- Which account a file lands on is asked as **what the file is**, not as which account to pick:
+  `Import/AccountTarget.tsx` offers a broker statement or a bank/wallet one, derives the cash leg
+  from the choice (`Account::settlement_account_id`), and only then narrows to a specific account
+  when the portfolio holds more than one of that kind. `ImportMapping::account_id` is unchanged —
+  the wizard asks differently, the wire does not.
+- A row's identity has a **second, looser reading**: `dedupe::loose_fingerprint` drops the amount
+  and keeps account, day, kind, instrument and quantity, which is what a row edited by hand after
+  it was imported still matches. Such a row is `RowStatus::Similar` and is **not** written unless
+  `ImportOptions::import_similar` says so. Only a share movement has one — two cash rows differing
+  in amount are two payments, and folding them would hide a real second dividend.
+- An override of a field the file has **no column for** is carried beside the row
+  (`cells::RowInput::added`, ahead of a rule's `emitted`), so a delivery stating only a quantity
+  can be given the price it was worth. An override of a mapped field still rewrites the cell, so
+  the sign and basis votes see it.
+- The ISIN matches before the ticker (`preview::fields::instrument`), and a stored instrument whose
+  ISIN **conflicts** with the row's is a `TickerIsinConflict` **error**, not a silent join: the
+  symbol column is unique in the database, so the row waits for a ticker of its own rather than
+  pouring one company's trades into another's position. `ImportService::commit` repeats the check
+  against the store.
+- `checks.rs` gained three heuristics and they are all warnings, as everything there is:
+  `DeliveryWithoutCost` (a quantity crossing the boundary at a price of zero — the shape of a
+  portfolio moved between brokers, and the most expensive thing a file can do to the numbers),
+  `AccountCurrencyMismatch` (money landing where another currency is kept; asked of the
+  **settlement** account and only of a row that moves money), and `PossibleSplit` (one
+  instrument's prices stepping by a near-whole factor between adjacent trades). The
+  amount-vs-quantity×price allowance is per **unit** rather than flat, because a printed unit
+  price is rounded and that rounding multiplies by the quantity.
+- Two legs of one move that arrived from **two different exports** are never joined by the import:
+  `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
+  `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
+  wrong pair erases a real deposit and a real withdrawal from every return figure at once.
 - `build_preview` is pure (takes securities + fingerprints as slices); only `ImportService` touches `Store` (same rule for `commit_taxonomy`). Re-importing the same file must be a no-op — `import::fingerprint` guarantees it.
 - Detection is per *language*, never per broker: a rule keyed to one broker's file helps only that broker's customers. Header aliases (`mapping::aliases`) and operation wording (`mapping::keywords`) are dictionaries and live apart from the matching that reads them (`mapping::shape`, `mapping::normalize`); both are ordered canonical-first because the index breaks ties, and sell keywords precede buy ones (`Verkoop` contains `Koop`).
 - Headers lie, values do not. `ImportMapping::detect_with_values` ranks a header match exact > whole word > substring, drops a claim on a column another field names better ("Asset type" is a kind, so it is not a symbol), and lets `ValueShape` veto a weak match — a currency or ISIN column is required to look like one, a date is not, because its format may simply be unknown to us. A column that is empty in every row is not a mapping.
