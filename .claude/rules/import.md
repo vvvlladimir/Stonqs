@@ -45,7 +45,11 @@
   portfolio moved between brokers, and the most expensive thing a file can do to the numbers),
   `AccountCurrencyMismatch` (money landing where another currency is kept; asked of the
   **settlement** account and only of a row that moves money), and `PossibleSplit` (one
-  instrument's prices stepping by a near-whole factor between adjacent trades). The
+  instrument's prices stepping by a whole factor between two trades **within 90 days**, the
+  factor exact to 1%). Both gates are the point: a split's factor is exact and instantaneous,
+  while two trades a year apart in an instrument that doubled give 2.03 — which is the market.
+  The reliable route to a split is the provider's own event (`events=div|split` rides the quote
+  request, ADR-0034), so this covers only what that route cannot. The
   amount-vs-quantity×price allowance is per **unit** rather than flat, because a printed unit
   price is rounded and that rounding multiplies by the quantity.
 - Two legs of one move that arrived from **two different exports** are never joined by the import:

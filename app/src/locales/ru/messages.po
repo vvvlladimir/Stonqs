@@ -499,8 +499,18 @@ msgstr "Всего к обновлению: {0}"
 #. placeholder {3}: p.date
 #. placeholder {4}: p.ratio
 #: src/screens/Import/labels.ts
-msgid "{0} trades at {1} and then at {2} on {3} — a factor of about {4}. If the broker applied a split here, the quantities before and after mean different shares; record the split on the instrument instead of importing the change."
-msgstr "{0} торгуется по {1}, а затем по {2} — {3}, разница примерно в {4} раз. Если брокер провёл здесь сплит, количества до и после означают разные бумаги; заведите сплит на инструменте, а не импортируйте это изменение."
+#~ msgid "{0} trades at {1} and then at {2} on {3} — a factor of about {4}. If the broker applied a split here, the quantities before and after mean different shares; record the split on the instrument instead of importing the change."
+#~ msgstr "{0} торгуется по {1}, а затем по {2} — {3}, разница примерно в {4} раз. Если брокер провёл здесь сплит, количества до и после означают разные бумаги; заведите сплит на инструменте, а не импортируйте это изменение."
+
+#. placeholder {0}: p.symbol
+#. placeholder {1}: p.before
+#. placeholder {2}: p.was
+#. placeholder {3}: p.after
+#. placeholder {4}: p.date
+#. placeholder {5}: p.ratio
+#: src/screens/Import/labels.ts
+msgid "{0} trades at {1} on {2} and at {3} on {4} — a factor of exactly {5}. If the broker applied a split in between, the quantities on either side mean different shares; record the split on the instrument instead of importing the change. A split the quote source reports is offered by itself, under the instrument's events."
+msgstr "{0} торгуется по {1} — {2}, и по {3} — {4}, разница ровно в {5} раз. Если между этими датами брокер провёл сплит, количества по обе стороны означают разные бумаги; заведите сплит на инструменте, а не импортируйте это изменение. Сплит, о котором сообщил источник котировок, предлагается сам — в событиях инструмента."
 
 #. placeholder {0}: metrics.days
 #: src/screens/Risk.tsx

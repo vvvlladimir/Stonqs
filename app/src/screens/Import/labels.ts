@@ -314,7 +314,7 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
       );
     case "POSSIBLE_SPLIT":
       return i18n._(
-        msg`${p.symbol} trades at ${p.before} and then at ${p.after} on ${p.date} — a factor of about ${p.ratio}. If the broker applied a split here, the quantities before and after mean different shares; record the split on the instrument instead of importing the change.`,
+        msg`${p.symbol} trades at ${p.before} on ${p.was} and at ${p.after} on ${p.date} — a factor of exactly ${p.ratio}. If the broker applied a split in between, the quantities on either side mean different shares; record the split on the instrument instead of importing the change. A split the quote source reports is offered by itself, under the instrument's events.`,
       );
     default:
       return problem.message;

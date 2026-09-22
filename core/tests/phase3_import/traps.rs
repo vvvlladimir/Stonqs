@@ -168,14 +168,14 @@ date,type,symbol,quantity,unit_price,currency
     assert_eq!(result.imported, 1);
 }
 
-/// One instrument's prices stepping by a whole factor between two adjacent trades: the broker
-/// applied a split mid-statement, so the quantities on either side mean different shares.
+/// One instrument's prices stepping by a whole factor between two trades weeks apart: the
+/// broker applied a split mid-statement, so the quantities on either side mean different shares.
 #[test]
 fn prices_stepping_by_a_whole_factor_are_called_out() {
     const CSV: &str = "\
 date,type,symbol,quantity,unit_price,currency
 2024-05-01,BUY,NVDA,2,900.00,USD
-2024-07-01,BUY,NVDA,20,90.00,USD
+2024-06-20,BUY,NVDA,20,90.00,USD
 ";
     let (store, account) = store_with_account();
     let service = ImportService::new(&store);
@@ -199,27 +199,47 @@ date,type,symbol,quantity,unit_price,currency
     assert_eq!(split[0].params.get("ratio").map(String::as_str), Some("10"));
 }
 
-/// A market move is not a split. Doubling over two months is ordinary, and a notice on it would
-/// train the user to ignore the one that matters.
+/// A market move is not a split, and the two are told apart by exactness and by time. A real
+/// case: a semiconductor ETF bought twice a year apart, 9.386 then 19.06 — a factor of 2.03,
+/// which is the index doubling, not a corporate action. Calling that a split once teaches the
+/// user to ignore the notice when it is real.
 #[test]
 fn an_ordinary_price_move_is_not_called_a_split() {
-    const CSV: &str = "\
+    const NEARLY_DOUBLED: &str = "\
+date,type,symbol,quantity,unit_price,currency
+2025-06-02,BUY,SEMI.AS,10,9.3860000000,EUR
+2026-06-02,BUY,SEMI.AS,10,19.0600000000,EUR
+";
+    const ORDINARY: &str = "\
 date,type,symbol,quantity,unit_price,currency
 2024-05-01,BUY,AAPL,2,185.50,USD
 2024-07-01,BUY,AAPL,2,214.30,USD
 ";
     let (store, account) = store_with_account();
-    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
-    let preview = ImportService::new(&store)
-        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
-        .unwrap();
-
-    assert!(
-        !preview
+    let flagged = |csv: &str| {
+        let mapping = ImportMapping::detect(&headers_of(csv)).with_account(&account.id);
+        ImportService::new(&store)
+            .preview(csv.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+            .unwrap()
             .problems
             .iter()
             .any(|p| p.code == ProblemCode::PossibleSplit)
+    };
+
+    assert!(
+        !flagged(NEARLY_DOUBLED),
+        "2.03 over a year is the market, not a split"
     );
+    assert!(!flagged(ORDINARY));
+
+    // The same two prices weeks apart, and exact, still are a split.
+    assert!(flagged(
+        "\
+date,type,symbol,quantity,unit_price,currency
+2026-05-02,BUY,SEMI.AS,10,19.0600000000,EUR
+2026-06-02,BUY,SEMI.AS,20,9.5300000000,EUR
+"
+    ));
 }
 
 /// Money landing on an account that keeps another currency. Legal — a multi-currency account is

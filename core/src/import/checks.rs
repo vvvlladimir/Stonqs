@@ -379,7 +379,15 @@ const SINGLE_KIND_MIN_ROWS: usize = 20;
 /// and never a refusal — it says "check this", not "this is wrong".
 const SPLIT_MIN_RATIO: f64 = 1.8;
 const SPLIT_MAX_RATIO: f64 = 20.0;
-const SPLIT_ROUNDNESS: f64 = 0.03;
+/// A split's factor is *exact*; a market move that happens to land near a whole number is not.
+/// Two trades a year apart in an instrument that doubled give 2.03, and calling that a split
+/// once teaches the user to ignore the notice when it is real.
+const SPLIT_ROUNDNESS: f64 = 0.01;
+/// And the market has to have had no time to blur that factor. Over a quarter its contribution
+/// is small enough that an exact whole number means something; over a year it is the whole
+/// signal. The price series a provider sends is the reliable route to a split — it reports the
+/// event itself — so this stays the narrow case that route cannot cover.
+const SPLIT_MAX_DAYS: i64 = 90;
 
 /// Prices of one instrument stepping by a whole factor between two adjacent trades: the broker
 /// applied a split part-way through the statement. Quantities then refer to two different
@@ -404,7 +412,10 @@ fn check_split_steps(rows: &[ImportRow]) -> Vec<ImportProblem> {
     for (symbol, mut prices) in by_symbol {
         prices.sort_by_key(|(date, _)| *date);
         for pair in prices.windows(2) {
-            let ((_, before), (date, after)) = (pair[0], pair[1]);
+            let ((was, before), (date, after)) = (pair[0], pair[1]);
+            if (date - was).num_days() > SPLIT_MAX_DAYS {
+                continue;
+            }
             let Some(ratio) = step_ratio(before, after) else {
                 continue;
             };
@@ -412,15 +423,16 @@ fn check_split_steps(rows: &[ImportRow]) -> Vec<ImportProblem> {
                 ImportProblem::file(
                     ProblemCode::PossibleSplit,
                     format!(
-                        "{symbol} trades at {before} and then at {after} on {date} — a factor of \
-                         about {ratio}. If the broker applied a split here, the quantities before \
-                         and after mean different shares; record the split on the instrument \
-                         instead of importing the change"
+                        "{symbol} trades at {before} on {was} and at {after} on {date} — a factor \
+                         of exactly {ratio}. If the broker applied a split in between, the \
+                         quantities on either side mean different shares; record the split on the \
+                         instrument instead of importing the change"
                     ),
                 )
                 .with("symbol", symbol)
                 .with("before", before)
                 .with("after", after)
+                .with("was", was)
                 .with("date", date)
                 .with("ratio", ratio)
                 .warn(),
@@ -431,7 +443,7 @@ fn check_split_steps(rows: &[ImportRow]) -> Vec<ImportProblem> {
     out
 }
 
-/// The whole factor two prices differ by, or `None` when the step is small or not round.
+/// The whole factor two prices differ by, or `None` when the step is small or not exact.
 fn step_ratio(before: Decimal, after: Decimal) -> Option<i64> {
     let (before, after) = (f64::try_from(before).ok()?, f64::try_from(after).ok()?);
     if before <= 0.0 || after <= 0.0 {
