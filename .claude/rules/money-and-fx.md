@@ -35,6 +35,21 @@
 - Quotes are a chain too (ADR-0052): the instrument's own source first; only on its **failure** the others that `covers` it and have its symbol in `security_symbols`, asked 14 days early so `market::guard::check` can compare (same currency, median ratio within 2%). An accepted fallback `fill_quotes` and extends no coverage. A source failing 3× in a row (or once with a rejected key) rests for the rest of the service's life. Kraken covers `Crypto` only; Stooq is off (JS challenge). A source with `SourceInfo::per_day` spends from `Budgets` before each call and is `RateLimited` once the day is spent (ADR-0055). A custom source (`market::custom`, ADR-0054) is quotes or FX by `CustomRole`; a rate one joins the FX chain last.
 - Providers are one-method (`fetch(&Security, DateRange)`). Caching, gap-filling, retries belong in `MarketDataService`/`FxService`, never in a provider. `fetch_history` is a default method a provider overrides only when the same response also carries dividends and splits (Yahoo's `events=div|split`) — never a second request (ADR-0034).
 - A range counts as fetched only when both `quote_coverage` and `event_coverage` hold it; the refresh job asks the full window for a security with no event coverage, so older databases backfill events once. A reported event moves no money and no quantity.
+- How far back a refresh reaches is read off the ledger, not off a constant: `Store::history_need`
+  gives the first operation per instrument and per currency (charge currencies and the security's
+  own currency included), and `jobs::start_from` widens the mode's window back to it whenever what
+  is stored does not already reach it. A catch-up asks from where the series ends, so a hole older
+  than the series is one no later refresh would ever close — which is what importing a decade into
+  a database holding this year looks like. `RefreshMode::Missing` therefore also *retains* what is
+  covered but not covered far enough.
+- A source that answers with today's close alone is on the wrong venue, and that is not an error
+  the provider reports: `Store::quote_span` (what came back) against `quote_coverage` (what was
+  asked) is the only place the two diverge. `jobs::sparse_history` calls a series covering under a
+  quarter of the holding period too short — never below 90 days of holding, so a young position
+  says nothing — and `jobs::relist` then moves the instrument to `best_listing` /
+  `best_listing_by_symbol` and fetches it there. **Only in `RefreshMode::Missing`**: a venue the
+  user chose by hand is never overwritten by a refresh they pressed. A relisted instrument emits
+  `securities`, not only `quotes` — its ticker and currency changed with the series.
 - A new instrument gets its quotes at once, whatever wrote it: every command that creates or re-points a security or writes transactions (`security_save`, `security_identify`, `security_set_listing`, `import_commit`, `transaction_save`, `plan_commit`) calls `jobs::fetch_missing`. That `Missing` refresh fetches only securities lacking either coverage and currency pairs with no rate, full window, and is queued behind a running refresh — which listed its instruments before the new one existed. The frontend never starts it. A security with no `data_source` is manual prices and stays untouched; a new one from the form defaults to a provider.
 - A listing is chosen, not guessed: one ISIN maps to many venue tickers (IWDA.L vs EUNL.DE vs SWDA). `ListingDirectory` (OpenFIGI) gives MIC + ticker, `SecuritySearch::symbol_for` builds the provider symbol, `best_listing` prefers base currency — final say is the user's. Switching a listing deletes that security's quotes and `quote_coverage`, and the events its provider reported with `event_coverage`; the user's notes stay. Choosing the listing whose provider symbol is already set deletes nothing — the series belongs to the symbol, and naming its venue is a correction, so `security_set_listing` compares `provider_symbol()` first.
 - Reading the venue off the source is not guessing it: `SecuritySearch::mic_for` (inverse of
@@ -51,5 +66,5 @@
 - A price alert is a level: a close at or above it is *above*, and every change of side between two closes is a crossing — logged, with the level and close of that moment, only when it matches the rule's `direction` (`UP | DOWN | BOTH`) (`calc::check_alert`). A quote in another currency is converted at the rate of its own day; a missing rate skips the rule until it arrives, and a status with no quote is `MissingMarketData`, never "far from the level".
 - `resolve` doesn't trust search ranking — some results carry a name/currency but no candles. Probe with `profile` until `has_history == Some(true)`; a preferred currency breaks ties.
 - An ISIN is never a provider symbol (`Security::is_quotable()` is false for one). `MarketDataService` refuses before the request. Fix via `security_identify`.
-- Resolving a broker code to a real instrument is network, so it never happens inside `build_preview` (must stay reproducible) — the wizard does it via `import_resolve_symbol`.
+- Resolving a broker code to a real instrument is network, so it never happens inside `build_preview` (must stay reproducible) — the wizard does it via `import_resolve_symbol`, which the Instruments step starts by itself on arrival. Search first, then the **directory**: a code the search places nowhere still has venues, and `best_listing` / `best_listing_by_symbol` probe each for candles before one is taken (`SecurityDraft::from_listing`). A listing carries no kind, so such a draft is `Other`.
 - `Security::mic` survives the listing choice; the venue name is never stored, only derived via `market::mic` (closed ISO 10383 list).

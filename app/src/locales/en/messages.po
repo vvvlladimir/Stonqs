@@ -286,6 +286,11 @@ msgstr "{0, plural, one {# transaction} other {# transactions}}"
 msgid "{0, plural, one {# unique transaction} other {# unique transactions}} of {1}"
 msgstr "{0, plural, one {# unique transaction} other {# unique transactions}} of {1}"
 
+#. placeholder {0}: thin.length
+#: src/screens/Securities/index.tsx
+msgid "{0, plural, one {# with too little history} other {# with too little history}}"
+msgstr "{0, plural, one {# with too little history} other {# with too little history}}"
+
 #. placeholder {0}: venueless.length
 #: src/screens/Securities/index.tsx
 msgid "{0, plural, one {# without a venue} other {# without a venue}}"
@@ -3698,13 +3703,17 @@ msgid "Identify"
 msgstr "Identify"
 
 #: src/screens/Import/AssetsStep.tsx
-msgid "Identify all"
-msgstr "Identify all"
+#~ msgid "Identify all"
+#~ msgstr "Identify all"
 
 #. placeholder {0}: broken.length
 #: src/screens/Securities/index.tsx
 msgid "Identify all ({0})"
 msgstr "Identify all ({0})"
+
+#: src/screens/Import/AssetsStep.tsx
+msgid "Identifying instruments: {progress}"
+msgstr "Identifying instruments: {progress}"
 
 #: src/screens/Securities/index.tsx
 msgid "Identifying…"
@@ -6016,8 +6025,12 @@ msgid "Quote history"
 msgstr "Quote history"
 
 #: src/screens/Securities/SecurityTable.tsx
-msgid "Quote history: the period cached locally and how many quotes it holds"
-msgstr "Quote history: the period cached locally and how many quotes it holds"
+#~ msgid "Quote history: the period cached locally and how many quotes it holds"
+#~ msgstr "Quote history: the period cached locally and how many quotes it holds"
+
+#: src/screens/Securities/SecurityTable.tsx
+msgid "Quote history: the period cached locally and how many quotes it holds. Red means the series is far shorter than the instrument has been held — usually the wrong venue"
+msgstr "Quote history: the period cached locally and how many quotes it holds. Red means the series is far shorter than the instrument has been held — usually the wrong venue"
 
 #: src/screens/Securities/SecurityForm.tsx
 msgid "Quote provider"
@@ -6633,6 +6646,10 @@ msgstr "Search"
 #: src/screens/Import/AssetRow.tsx
 msgid "search again"
 msgstr "search again"
+
+#: src/screens/Import/AssetsStep.tsx
+msgid "Search again"
+msgstr "Search again"
 
 #: src/screens/Import/AssetSearch.tsx
 msgid "Search the directory"
@@ -7841,8 +7858,12 @@ msgstr "the same operation, with different values: the stored row is replaced"
 #~ msgstr "The same swing counted over losing days only."
 
 #: src/screens/Import/AssetsStep.tsx
-msgid "The search goes by ISIN first, then by the column value and the name from the file. What it finds can be corrected or replaced with another listing."
-msgstr "The search goes by ISIN first, then by the column value and the name from the file. What it finds can be corrected or replaced with another listing."
+#~ msgid "The search goes by ISIN first, then by the column value and the name from the file. What it finds can be corrected or replaced with another listing."
+#~ msgstr "The search goes by ISIN first, then by the column value and the name from the file. What it finds can be corrected or replaced with another listing."
+
+#: src/screens/Import/AssetsStep.tsx
+msgid "The search runs by itself when the step opens: by ISIN first, then by the column value and the name from the file, and finally over the exchanges the instrument trades on, taking the first that actually has prices. What it finds can be corrected or replaced with another listing."
+msgstr "The search runs by itself when the step opens: by ISIN first, then by the column value and the name from the file, and finally over the exchanges the instrument trades on, taking the first that actually has prices. What it finds can be corrected or replaced with another listing."
 
 #: src/components/domain/PlanForm.tsx
 msgid "The securities account the purchases land on; the money comes from its cash account"

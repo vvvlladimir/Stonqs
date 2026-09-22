@@ -51,6 +51,8 @@ export function Securities({ focus }: { focus?: string | null }) {
   const rows = securities.data ?? [];
   const broken = rows.filter((row) => row.needs_lookup);
   const venueless = rows.filter((row) => row.mic === null);
+  // Named in the summary because the symptom sits in one cell of one row otherwise.
+  const thin = rows.filter((row) => row.sparse_history);
   // Quote currency may differ from the directory currency; that often indicates another listing.
   const mismatched = rows.filter(currencyMismatch);
   const needle = query.trim().toLowerCase();
@@ -163,6 +165,9 @@ export function Securities({ focus }: { focus?: string | null }) {
           : null,
         broken.length > 0
           ? plural(broken.length, { one: "# not identified", other: "# not identified" })
+          : null,
+        thin.length > 0
+          ? plural(thin.length, { one: "# with too little history", other: "# with too little history" })
           : null,
       ]
         .filter(Boolean)

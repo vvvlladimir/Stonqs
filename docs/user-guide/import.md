@@ -14,7 +14,12 @@ The steps are four questions:
    required; the rest improve the result. A wording the user does not want imported at all can be
    marked as skipped rather than mapped to something wrong.
 3. **Instruments** — link the export's codes to real instruments so that prices can arrive
-   afterwards. A code the broker uses that matches nothing yet can be resolved here.
+   afterwards. The search starts by itself when the step opens and works down: the ISIN, then the
+   code and the name printed in the file, then the exchanges the instrument trades on, taking the
+   first one that actually has prices rather than the first that merely has a name. Anything it
+   got wrong can be corrected or pointed at another listing, and "Search again" repeats the whole
+   pass. A code left unresolved enters the portfolio under the broker's own spelling and stays
+   without prices, which is why the step says how many are in that state.
 4. **Commit** — the summary, then the write.
 
 **Saved layouts** answer every mapping question at once for a broker the user imports from
@@ -31,6 +36,13 @@ Choosing "— detect —" throws the layout away and reads the file from scratch
 Rows carry a status. An error blocks that row alone, never the file; a warning — a corrected
 direction, a suspicious amount — is shown and imported. The wizard refuses to continue only when a
 required column has not been pointed at.
+
+**Prices are fetched after the write, as far back as the file goes.** The instruments the import
+created and the currencies it introduced are fetched from the date of their earliest operation in
+the file, not from a fixed window, so an export covering ten years does not leave its older half
+without prices or exchange rates. This runs in the background; the import screen does not wait for
+it. An instrument whose prices come back almost empty is moved to another exchange automatically
+and fetched again — see the Instruments screen, where such a row is marked.
 
 **Re-importing the same file adds nothing.** Rows are recognised by their content, so a monthly
 export that repeats the previous month is safe. There is an option to import duplicates anyway,

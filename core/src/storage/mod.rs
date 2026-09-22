@@ -24,6 +24,7 @@ mod watchlists;
 pub use attributes::AttributeValues;
 pub use migrate::MIGRATIONS;
 pub use quotes::QuoteStats;
+pub use transactions::HistoryNeed;
 
 use crate::error::Result;
 use chrono::NaiveDate;

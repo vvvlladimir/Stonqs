@@ -5,7 +5,9 @@ use crate::events::emit_changed;
 use crate::state::AppState;
 use chrono::{Duration, Months, NaiveDate, Utc};
 use serde::Serialize;
+use sq_core::market::{Listing, MarketDataService};
 use sq_core::prelude::*;
+use sq_core::storage::Store;
 use std::sync::atomic::Ordering;
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -194,6 +196,7 @@ pub fn start(app: &AppHandle, state: &AppState, mode: RefreshMode) -> bool {
                 source: None,
             }],
             cancelled: false,
+            relisted: 0,
         });
         finish(&handle, &access.path, mode, outcome);
     });
@@ -217,6 +220,8 @@ struct Outcome {
     fetched: usize,
     failed: Vec<Failure>,
     cancelled: bool,
+    /// Instruments this run moved to another venue by itself; the directory changed with them.
+    relisted: usize,
 }
 
 fn finish(app: &AppHandle, db_path: &std::path::Path, mode: RefreshMode, outcome: Outcome) {
@@ -224,6 +229,7 @@ fn finish(app: &AppHandle, db_path: &std::path::Path, mode: RefreshMode, outcome
         fetched,
         failed,
         cancelled,
+        relisted,
     } = outcome;
     let now = Utc::now().to_rfc3339();
     // Fetching one new instrument is not a refresh of the portfolio: the time of the last refresh
@@ -277,6 +283,11 @@ fn finish(app: &AppHandle, db_path: &std::path::Path, mode: RefreshMode, outcome
     if !partial || fetched > 0 {
         let _ = emit_changed(app, "quotes");
     }
+    // A venue the refresh chose by itself changes the instrument's ticker and currency, which
+    // the directory shows and a quote event does not invalidate.
+    if relisted > 0 {
+        let _ = emit_changed(app, "securities");
+    }
     if queued && let Some(state) = app.try_state::<AppState>() {
         start(app, &state, RefreshMode::Missing);
     }
@@ -327,6 +338,7 @@ fn fatal(code: FailureCode, e: Error) -> Outcome {
             source: None,
         }],
         cancelled: false,
+        relisted: 0,
     }
 }
 
@@ -340,6 +352,7 @@ fn run(
 ) -> Outcome {
     let mut fetched = 0usize;
     let mut failed = Vec::new();
+    let mut relisted = 0usize;
 
     let store = match access.open() {
         Ok(store) => store,
@@ -358,14 +371,23 @@ fn run(
             .partition(Security::is_quotable),
         Err(e) => return fatal(FailureCode::Securities, e),
     };
+    // How far back the ledger needs data. A window that stops short of the first operation is
+    // the same hole to the user as no window at all: the position exists and cannot be valued.
+    let need = store.history_need().unwrap_or_default();
     let missing = mode == RefreshMode::Missing;
     if missing {
-        // Fetched means both coverages hold a range; anything less is fetched in full.
+        // Fetched means both coverages hold a range reaching the first operation *and* the
+        // source answered with a series to match. An import of older history and an instrument
+        // left on a venue with no candles are both "nothing was fetched for this yet".
         securities.retain(|s| {
-            !matches!(
-                (store.quote_coverage(&s.id), store.event_coverage(&s.id)),
-                (Ok(Some(_)), Ok(Some(_)))
-            )
+            let held = need.securities.get(&s.id).copied();
+            match asked_from(&store, &s.id) {
+                None => true,
+                Some(from) => {
+                    held.is_some_and(|first| first < from)
+                        || sparse_history(held, store.quote_span(&s.id).ok().flatten(), today)
+                }
+            }
         });
     }
     if !needs_lookup.is_empty() && !missing {
@@ -386,11 +408,9 @@ fn run(
     currencies.remove(&base);
     let mut pairs: Vec<String> = currencies.into_iter().collect();
     if missing {
-        pairs.retain(|c| {
-            store
-                .rate_series(c, &base, today)
-                .map(|series| series.is_empty())
-                .unwrap_or(true)
+        pairs.retain(|c| match stored_rates_from(&store, c, &base, today) {
+            None => true,
+            Some(from) => need.currencies.get(c).is_some_and(|first| *first < from),
         });
     }
 
@@ -400,6 +420,7 @@ fn run(
             fetched,
             failed,
             cancelled: false,
+            relisted,
         };
     }
     report(app, Progress::Started { total });
@@ -411,6 +432,7 @@ fn run(
                 fetched,
                 failed,
                 cancelled: true,
+                relisted,
             };
         }
         // Quotes fetched before events were asked for: backfill the full window once.
@@ -418,7 +440,9 @@ fn run(
             Ok(Some(_)) => store.latest_quote_date(&security.id).ok().flatten(),
             _ => None,
         };
-        let range = DateRange::new(since(mode, known, today), today);
+        let held = need.securities.get(&security.id).copied();
+        let from = start_from(mode, known, today, asked_from(&store, &security.id), held);
+        let range = DateRange::new(from, today);
         match quotes.ensure_history_through(&store, security, range, settled_through) {
             Ok(saved) => fetched += saved,
             Err(e) => failed.push(Failure {
@@ -428,6 +452,13 @@ fn run(
                 detail: e.to_string(),
                 source: security.data_source.clone(),
             }),
+        }
+        // A file names a ticker, not a venue, so a first fetch can land on one this source does
+        // not quote. Only what nothing was fetched for yet is relisted: the venue behind a
+        // series the user chose by hand is never overwritten without being asked.
+        if missing && let Some(saved) = relist(&store, &quotes, security, held, today, settled_through) {
+            fetched += saved;
+            relisted += 1;
         }
         done += 1;
         report(
@@ -447,13 +478,21 @@ fn run(
                 fetched,
                 failed,
                 cancelled: true,
+                relisted,
             };
         }
         let known = store
             .rate_series(currency, &base, today)
             .ok()
             .and_then(|series| series.keys().next_back().copied());
-        let range = DateRange::new(since(mode, known, today), today);
+        let from = start_from(
+            mode,
+            known,
+            today,
+            stored_rates_from(&store, currency, &base, today),
+            need.currencies.get(currency).copied(),
+        );
+        let range = DateRange::new(from, today);
         match rates.ensure_rates(&store, currency, &base, range) {
             Ok((saved, _)) => fetched += saved,
             Err(e) => failed.push(Failure {
@@ -490,6 +529,7 @@ fn run(
         fetched,
         failed,
         cancelled: false,
+        relisted,
     }
 }
 
@@ -528,6 +568,124 @@ fn refresh_index(
             detail: e.to_string(),
             source: service.first_for(region).map(str::to_string),
         }),
+    }
+}
+
+/// Where a subject's refresh begins. The mode's own window is widened back to the first
+/// operation when what is stored does not reach it — a catch-up asks from where the series
+/// already ends, so a gap older than the series is one no later refresh would ever close.
+fn start_from(
+    mode: RefreshMode,
+    known: Option<NaiveDate>,
+    today: NaiveDate,
+    stored_from: Option<NaiveDate>,
+    needed_from: Option<NaiveDate>,
+) -> NaiveDate {
+    let start = since(mode, known, today);
+    match needed_from {
+        Some(need) if need < start && stored_from.is_none_or(|from| need < from) => need,
+        _ => start,
+    }
+}
+
+/// The start of the window already requested for a security, `None` when either coverage is
+/// absent — quotes and events ride on one request, so both must hold a range.
+fn asked_from(store: &Store, security_id: &str) -> Option<NaiveDate> {
+    match (
+        store.quote_coverage(security_id),
+        store.event_coverage(security_id),
+    ) {
+        (Ok(Some(quotes)), Ok(Some(events))) => Some(quotes.from.max(events.from)),
+        _ => None,
+    }
+}
+
+/// The first stored rate of a pair; `None` when nothing is stored. FX keeps no coverage table,
+/// so what is stored is the only record of what was asked.
+fn stored_rates_from(store: &Store, currency: &str, base: &str, today: NaiveDate) -> Option<NaiveDate> {
+    store
+        .rate_series(currency, base, today)
+        .ok()
+        .and_then(|series| series.keys().next().copied())
+}
+
+/// Whether a stored series is too short for how long the instrument has been held — the shape a
+/// ticker from the wrong venue leaves behind: the source answers, but with today's price alone.
+/// A holding younger than 90 days says nothing yet, and an instrument listed part-way through
+/// the window is not sparse — only a series covering under a quarter of it is.
+pub fn sparse_history(held_from: Option<NaiveDate>, span: Option<DateRange>, today: NaiveDate) -> bool {
+    let Some(held) = held_from else {
+        return false;
+    };
+    let wanted = (today - held).num_days();
+    if wanted < 90 {
+        return false;
+    }
+    match span {
+        None => true,
+        Some(span) => (span.to - span.from).num_days() * 4 < wanted,
+    }
+}
+
+/// Moves an instrument whose source answered with next to nothing onto a venue that has candles,
+/// and fetches it there. `None` when nothing was changed; `Some(n)` with the quotes the new
+/// venue gave, which may be zero if that fetch failed after the switch was already written.
+fn relist(
+    store: &Store,
+    quotes: &MarketDataService,
+    security: &Security,
+    held_from: Option<NaiveDate>,
+    today: NaiveDate,
+    settled_through: NaiveDate,
+) -> Option<usize> {
+    if security.data_source.is_none() || !security.is_quotable() {
+        return None;
+    }
+    let span = store.quote_span(&security.id).ok().flatten();
+    if !sparse_history(held_from, span, today) {
+        return None;
+    }
+    let found = better_listing(quotes, security)?;
+    let symbol = found.symbol.clone()?.to_uppercase();
+    if symbol == security.provider_symbol().to_uppercase() {
+        return None;
+    }
+
+    let updated = Security {
+        symbol,
+        currency: found
+            .currency
+            .clone()
+            .unwrap_or_else(|| security.currency.clone()),
+        data_source: Some(found.source.clone()),
+        data_symbol: None,
+        mic: Some(found.mic.clone()).filter(|m| !m.is_empty()),
+        ..security.clone()
+    };
+    // The old series belonged to the old ticker: another venue quotes in its own currency.
+    store.delete_quotes(&updated.id).ok()?;
+    store.save_security(&updated).ok()?;
+    let range = DateRange::new(
+        held_from.unwrap_or_else(|| today - Duration::days(365 * 5)),
+        today,
+    );
+    Some(
+        quotes
+            .ensure_history_through(store, &updated, range, settled_through)
+            .unwrap_or(0),
+    )
+}
+
+/// A usable venue for an instrument: from the directory when there is an ISIN to ask it with,
+/// from the bare ticker otherwise.
+fn better_listing(quotes: &MarketDataService, security: &Security) -> Option<Listing> {
+    let preferred = Some(security.currency.as_str());
+    match security.isin.as_deref().filter(|i| sq_core::model::is_isin(i)) {
+        Some(isin) => quotes.best_listing(isin, preferred).ok().flatten(),
+        None => quotes
+            .best_listing_by_symbol(security.provider_symbol(), preferred)
+            .ok()
+            .flatten(),
     }
 }
 
@@ -587,4 +745,66 @@ pub fn data_coverage(state: State<AppState>) -> UiResult<Vec<DataCoverage>> {
             }
         })
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    }
+
+    /// A catch-up asks from where the series ends, so a hole older than the series is one no
+    /// later refresh closes by itself: importing five years of history into a database that
+    /// only ever held this year's has to widen the window back to the first operation.
+    #[test]
+    fn a_window_widens_back_to_the_first_operation_it_does_not_reach() {
+        let today = d(2026, 9, 22);
+        let stored = Some(d(2025, 1, 2));
+        let first = Some(d(2019, 3, 4));
+
+        assert_eq!(
+            start_from(RefreshMode::CatchUp, Some(d(2026, 9, 19)), today, stored, first),
+            d(2019, 3, 4)
+        );
+        // Already reaching back far enough: the mode's own three-day correction window stands.
+        assert_eq!(
+            start_from(
+                RefreshMode::CatchUp,
+                Some(d(2026, 9, 19)),
+                today,
+                Some(d(2018, 1, 1)),
+                first
+            ),
+            d(2026, 9, 16)
+        );
+        // Nothing stored and nothing held: the five-year default, unchanged.
+        assert_eq!(
+            start_from(RefreshMode::Missing, None, today, None, None),
+            today - Duration::days(365 * 5)
+        );
+    }
+
+    /// The symptom of a ticker on a venue the source does not quote: the request is answered,
+    /// but with today's price alone. A short holding and a late listing are not that.
+    #[test]
+    fn a_series_covering_a_sliver_of_the_holding_is_sparse() {
+        let today = d(2026, 9, 22);
+        let held = Some(d(2021, 9, 1));
+        let one_day = |day| Some(DateRange::new(day, day));
+
+        assert!(sparse_history(held, None, today));
+        assert!(sparse_history(held, one_day(d(2026, 9, 22)), today));
+        // Two of the five years held is a listing that started later, not a broken ticker.
+        assert!(!sparse_history(
+            held,
+            Some(DateRange::new(d(2024, 9, 1), today)),
+            today
+        ));
+        // Bought last week: nothing can be said about a series yet.
+        assert!(!sparse_history(Some(d(2026, 9, 15)), one_day(today), today));
+        // Never traded: there is no holding to measure the series against.
+        assert!(!sparse_history(None, None, today));
+    }
 }

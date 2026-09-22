@@ -3,6 +3,19 @@ use crate::error::{Error, Result};
 use crate::model::{AccountKind, Transaction, TransactionKind};
 use chrono::NaiveDate;
 use rusqlite::{Row, params};
+use std::collections::BTreeMap;
+
+/// How far back market data has to reach for the ledger to be valuable at all: the first
+/// operation touching each instrument, and the first touching each currency. A refresh that
+/// stops short of these dates leaves a hole no later catch-up ever fills — the window a
+/// catch-up asks for begins at what is already stored.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct HistoryNeed {
+    /// Security id -> date of its first operation.
+    pub securities: BTreeMap<String, NaiveDate>,
+    /// Currency -> date of the first operation denominated or charged in it.
+    pub currencies: BTreeMap<String, NaiveDate>,
+}
 
 fn row_to_transaction(row: &Row<'_>) -> rusqlite::Result<Transaction> {
     let kind: String = row.get("kind")?;
@@ -105,6 +118,44 @@ impl Store {
             ))),
             _ => Ok(()),
         }
+    }
+
+    /// The earliest date each instrument and each currency is needed from. Charge currencies
+    /// count too: a fee billed in USD needs USD/base on that day as much as the trade does.
+    pub fn history_need(&self) -> Result<HistoryNeed> {
+        let mut need = HistoryNeed::default();
+
+        let mut stmt = self.conn.prepare(
+            "SELECT security_id, min(date) FROM transactions
+             WHERE security_id IS NOT NULL GROUP BY security_id",
+        )?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        for row in rows {
+            let (id, date) = row?;
+            need.securities.insert(id, date_from_sql(&date)?);
+        }
+
+        // One pass per column rather than a join: each is a separate "first day this currency
+        // was involved", and the earliest of the three is what has to be fetched.
+        let mut stmt = self.conn.prepare(
+            "SELECT currency, min(date) FROM transactions GROUP BY currency
+             UNION ALL SELECT fee_currency, min(date) FROM transactions
+                 WHERE fee_currency IS NOT NULL GROUP BY fee_currency
+             UNION ALL SELECT tax_currency, min(date) FROM transactions
+                 WHERE tax_currency IS NOT NULL GROUP BY tax_currency
+             UNION ALL SELECT s.currency, min(t.date) FROM transactions t
+                 JOIN securities s ON s.id = t.security_id GROUP BY s.currency",
+        )?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        for row in rows {
+            let (currency, date) = row?;
+            let date = date_from_sql(&date)?;
+            need.currencies
+                .entry(crate::money::normalize_currency(&currency))
+                .and_modify(|known| *known = (*known).min(date))
+                .or_insert(date);
+        }
+        Ok(need)
     }
 
     pub fn delete_transaction(&self, id: &str) -> Result<()> {

@@ -263,9 +263,19 @@ impl MarketDataService {
     }
 
     pub fn best_listing(&self, isin: &str, preferred: Option<&str>) -> Result<Option<Listing>> {
-        let preferred = preferred.map(normalize_currency);
-        let candidates = self.listings(isin)?;
+        Ok(self.pick_usable(self.listings(isin)?, preferred))
+    }
 
+    /// The same choice for an instrument with no ISIN, where the venues come from the bare
+    /// ticker rather than from the directory ([`Self::listings_by_symbol`]).
+    pub fn best_listing_by_symbol(&self, symbol: &str, preferred: Option<&str>) -> Result<Option<Listing>> {
+        Ok(self.pick_usable(self.listings_by_symbol(symbol)?, preferred))
+    }
+
+    /// First candidate that actually has candles, preferring the given currency. Probed one at a
+    /// time so a list of venues costs only the requests it takes to find a usable one.
+    fn pick_usable(&self, candidates: Vec<Listing>, preferred: Option<&str>) -> Option<Listing> {
+        let preferred = preferred.map(normalize_currency);
         let mut best: Option<Listing> = None;
         for listing in candidates.into_iter().take(MAX_PROFILE_PROBES) {
             let checked = self.probe_listings(vec![listing], 1).remove(0);
@@ -273,13 +283,13 @@ impl MarketDataService {
                 continue;
             }
             if preferred.is_none() || checked.currency == preferred {
-                return Ok(Some(checked));
+                return Some(checked);
             }
             if best.is_none() {
                 best = Some(checked);
             }
         }
-        Ok(best)
+        best
     }
 
     pub fn search(&self, query: &str) -> Result<Vec<SecurityMatch>> {

@@ -1,4 +1,4 @@
-use crate::market::SecurityMatch;
+use crate::market::{Listing, SecurityMatch};
 use crate::model::{Security, SecurityKind, is_isin};
 use crate::money::{Currency, normalize_currency};
 use serde::{Deserialize, Serialize};
@@ -37,6 +37,27 @@ impl SecurityDraft {
             exchange: found.exchange.clone(),
             mic: found.mic.clone(),
         }
+    }
+
+    /// Builds a draft from a venue the directory named. Used when the search could not place
+    /// the broker's code at all: the listing was probed, so it is known to have candles, which
+    /// a search hit is not. The kind is unknown — a listing carries none.
+    pub fn from_listing(listing: &Listing, fallback_currency: &str) -> Option<Self> {
+        let symbol = listing.symbol.clone()?;
+        Some(SecurityDraft {
+            name: listing.name.clone().unwrap_or_else(|| symbol.clone()),
+            symbol: symbol.to_uppercase(),
+            currency: listing
+                .currency
+                .clone()
+                .unwrap_or_else(|| normalize_currency(fallback_currency)),
+            kind: SecurityKind::Other,
+            isin: Some(listing.isin.clone()).filter(|i| is_isin(i)),
+            data_source: Some(listing.source.clone()),
+            data_symbol: None,
+            exchange: listing.exchange.clone(),
+            mic: Some(listing.mic.clone()).filter(|m| !m.is_empty()),
+        })
     }
 
     /// Builds an unresolved draft without treating an ISIN as a quote symbol.
