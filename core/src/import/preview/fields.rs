@@ -5,7 +5,7 @@
 use super::cells::Cells;
 use super::{AccountMapping, ImportContext, KindMapping, SymbolMapping};
 use crate::import::checks::{self, Direction};
-use crate::import::mapping::{AmountSign, ImportField, normalize_alias};
+use crate::import::mapping::{AmountBasis, AmountSign, ImportField, normalize_alias};
 use crate::import::parse::{ImportProblem, ProblemCode, parse_date_any, parse_date_with};
 use crate::import::securities::SecurityDraft;
 use crate::model::{Account, AccountKind, Security, TransactionKind, is_isin};
@@ -271,6 +271,42 @@ pub(super) fn amounts(cells: &Cells, problems: &mut Vec<ImportProblem>) -> Amoun
         fx_rate,
         amount,
     }
+}
+
+/// Puts back what a net amount had taken out of it. The model stores the trade's own value and
+/// the charges beside it, so a file printing the sum of the two has to be undone here — only for
+/// the charges in the row's own currency, since the others were never in that total.
+pub(super) fn restore_gross(
+    amounts: &mut Amounts,
+    kind: Option<TransactionKind>,
+    basis: AmountBasis,
+    fee_is_local: bool,
+    tax_is_local: bool,
+) {
+    let Some(kind) = kind else { return };
+    let sign = Decimal::from(kind.charge_sign());
+    if basis != AmountBasis::Net || sign.is_zero() {
+        return;
+    }
+    let charges = if fee_is_local {
+        amounts.fees.abs()
+    } else {
+        Decimal::ZERO
+    } + if tax_is_local {
+        amounts.taxes.abs()
+    } else {
+        Decimal::ZERO
+    };
+    if charges.is_zero() {
+        return;
+    }
+    // The file's own sign carries direction and must survive the correction.
+    let direction = if amounts.amount.is_sign_negative() {
+        Decimal::NEGATIVE_ONE
+    } else {
+        Decimal::ONE
+    };
+    amounts.amount = direction * (amounts.amount.abs() - sign * charges);
 }
 
 /// The currency a fee or a tax was billed in, kept only when it differs from the operation's —

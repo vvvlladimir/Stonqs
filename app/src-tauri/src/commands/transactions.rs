@@ -172,6 +172,8 @@ pub(crate) fn from_input(input: TransactionInput) -> UiResult<Transaction> {
         currency,
         fx_rate_to_base: decimal(input.fx_rate_to_base.as_deref(), "fx rate")?,
         link_id: None,
+        // The broker's own identifier belongs to an imported row and is never typed by hand.
+        external_id: None,
         note: input.note.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
         // Nothing the user writes is a lens's rewrite of something else.
         scoped_from: None,

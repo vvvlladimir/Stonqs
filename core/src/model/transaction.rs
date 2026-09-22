@@ -100,6 +100,20 @@ impl TransactionKind {
         }
     }
 
+    /// How charges enter this operation's total: they add to what an acquisition cost and come
+    /// off what a disposal or a payment yielded. Zero where the amount is already the whole of
+    /// it — a deposit, a standalone fee — so fees recorded there change no total.
+    pub fn charge_sign(self) -> i8 {
+        match self {
+            TransactionKind::Buy | TransactionKind::DeliveryInbound => 1,
+            TransactionKind::Sell
+            | TransactionKind::DeliveryOutbound
+            | TransactionKind::Dividend
+            | TransactionKind::Interest => -1,
+            _ => 0,
+        }
+    }
+
     /// Opposite-direction counterpart, used when import flips a row by amount sign. `Buy`/`Sell` never pair — see CLAUDE.md import invariants.
     pub fn reversed(self) -> Option<TransactionKind> {
         match self {
@@ -173,6 +187,11 @@ pub struct Transaction {
     /// Links the two legs of a transfer or currency exchange — two rows, since sides can have different accounts, currencies, and dates.
     #[serde(default)]
     pub link_id: Option<String>,
+    /// The broker's own identifier for this operation, when the file carried one. It is what
+    /// makes a re-import an update rather than a second row: the same id is the same
+    /// operation even when its numbers have been restated.
+    #[serde(default)]
+    pub external_id: Option<String>,
     pub note: Option<String>,
     /// The kind this row had before `calc::scope` rewrote it into a delivery — set only where the
     /// shares are in scope and the cash that paid for them is not. A lens changes the point of
@@ -200,6 +219,7 @@ impl Transaction {
             tax_currency: None,
             fx_rate_to_base: None,
             link_id: None,
+            external_id: None,
             note: None,
             scoped_from: None,
         }
@@ -417,6 +437,11 @@ impl Transaction {
         self
     }
 
+    pub fn with_external_id(mut self, id: impl Into<String>) -> Self {
+        self.external_id = Some(id.into());
+        self
+    }
+
     pub fn with_note(mut self, note: impl Into<String>) -> Self {
         self.note = Some(note.into());
         self
@@ -428,7 +453,7 @@ impl Transaction {
     /// another balance, and adding it here would sum two currencies into one number. It comes
     /// back as its own leg in [`Self::foreign_charge_legs`].
     pub fn gross_in_transaction_currency(&self) -> Decimal {
-        let sign = Decimal::from(self.charge_sign());
+        let sign = Decimal::from(self.kind.charge_sign());
         let fees = if self.fee_currency.is_none() {
             self.fees
         } else {
@@ -442,25 +467,11 @@ impl Transaction {
         self.amount + sign * (fees + taxes)
     }
 
-    /// How charges enter this operation's total: they add to what an acquisition cost and come
-    /// off what a disposal or a payment yielded. Zero where the amount is already the whole of
-    /// it — a deposit, a standalone fee — so fees recorded there change no total.
-    pub fn charge_sign(&self) -> i8 {
-        match self.kind {
-            TransactionKind::Buy | TransactionKind::DeliveryInbound => 1,
-            TransactionKind::Sell
-            | TransactionKind::DeliveryOutbound
-            | TransactionKind::Dividend
-            | TransactionKind::Interest => -1,
-            _ => 0,
-        }
-    }
-
     /// Charges paid in a currency other than the transaction's, as cash movements. A commission
     /// leaves money whichever side of the trade it sits on, so both legs are negative; a
     /// delivery moves no cash at all and therefore has no legs here.
     pub fn foreign_charge_legs(&self) -> Vec<(Currency, Decimal)> {
-        if self.charge_sign() == 0 || self.kind.cash_sign() == 0 {
+        if self.kind.charge_sign() == 0 || self.kind.cash_sign() == 0 {
             return Vec::new();
         }
         let mut legs = Vec::new();

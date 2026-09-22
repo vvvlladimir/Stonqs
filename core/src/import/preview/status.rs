@@ -3,24 +3,31 @@
 //! warning, and a warned row still imports.
 
 use super::{ImportRow, RowStatus, TransactionDraft};
-use crate::import::dedupe::fingerprint;
+use crate::import::dedupe::{KnownRow, fingerprint};
 use crate::import::parse::{ImportProblem, ProblemCode, Severity};
 use crate::model::TransactionKind;
 use std::collections::HashSet;
 
 /// Re-importing the same file must be a no-op, so a row is compared both against the database
-/// and against the rows already read out of this file.
+/// and against the rows already read out of this file. A file that names its rows is compared
+/// by that name first: the broker restating an operation is not a second operation.
 pub(super) struct Dedupe<'a> {
     known: &'a HashSet<String>,
+    external: &'a [KnownRow],
     seen: HashSet<String>,
 }
 
 impl<'a> Dedupe<'a> {
-    pub fn against(known: &'a HashSet<String>) -> Self {
+    pub fn against(known: &'a HashSet<String>, external: &'a [KnownRow]) -> Self {
         Dedupe {
             known,
+            external,
             seen: HashSet::new(),
         }
+    }
+
+    fn stored(&self, external_id: &str) -> Option<&KnownRow> {
+        self.external.iter().find(|row| row.external_id == external_id)
     }
 }
 
@@ -48,7 +55,7 @@ pub(super) fn check_transfer_keeps_its_instrument(
 pub(super) fn decide(
     number: usize,
     ignored: bool,
-    draft: &Option<TransactionDraft>,
+    draft: &mut Option<TransactionDraft>,
     dedupe: &mut Dedupe<'_>,
     problems: &mut Vec<ImportProblem>,
 ) -> RowStatus {
@@ -63,6 +70,7 @@ pub(super) fn decide(
     if let Some(d) = draft
         && status == RowStatus::Ready
     {
+        let d: &mut TransactionDraft = d;
         if d.kind.requires_security() && d.security_id.is_none() {
             status = RowStatus::UnknownSecurity;
         }
@@ -77,6 +85,30 @@ pub(super) fn decide(
             status = RowStatus::Invalid;
         }
         let print = fingerprint(d);
+        // The broker's own name for the row outranks its content: same id and same numbers is
+        // the row we already have, same id and different numbers is that row restated.
+        if let Some(external_id) = d.external_id.clone()
+            && let Some(stored) = dedupe.stored(&external_id)
+        {
+            if stored.fingerprint == print {
+                problems.push(ImportProblem::row(
+                    ProblemCode::DuplicateInStore,
+                    number,
+                    "the same transaction is already in the database",
+                ));
+                return RowStatus::Duplicate;
+            }
+            d.replaces = Some(stored.transaction_id.clone());
+            problems.push(
+                ImportProblem::row(
+                    ProblemCode::RestatedInStore,
+                    number,
+                    format!("the broker restated operation {external_id}: importing replaces the stored row"),
+                )
+                .warn(),
+            );
+            return RowStatus::Updated;
+        }
         if dedupe.known.contains(&print) {
             problems.push(ImportProblem::row(
                 ProblemCode::DuplicateInStore,
@@ -105,6 +137,7 @@ pub(super) fn summarize(rows: &[ImportRow]) -> super::ImportSummary {
         match row.status {
             RowStatus::Ready => summary.ready += 1,
             RowStatus::Duplicate => summary.duplicates += 1,
+            RowStatus::Updated => summary.updated += 1,
             RowStatus::UnknownSecurity => summary.unknown_securities += 1,
             RowStatus::Ignored => summary.ignored += 1,
             RowStatus::Invalid => summary.invalid += 1,

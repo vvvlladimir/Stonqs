@@ -35,6 +35,7 @@ pub enum ImportField {
     Account,
 
     LinkId,
+    ExternalId,
     Note,
 }
 
@@ -57,6 +58,7 @@ impl ImportField {
         ImportField::FxRate,
         ImportField::Account,
         ImportField::LinkId,
+        ImportField::ExternalId,
         ImportField::Note,
     ];
 
@@ -114,6 +116,7 @@ impl ImportField {
             }
             ImportField::Isin => ValueShape::Isin,
             ImportField::LinkId => ValueShape::Link,
+            ImportField::ExternalId => ValueShape::Unique,
             _ => ValueShape::Free,
         }
     }

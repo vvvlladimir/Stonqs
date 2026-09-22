@@ -347,6 +347,8 @@ pub(super) fn transaction_create(context: &ToolContext, args: &Value) -> AiResul
         fx_rate_to_base: None,
         // A linked pair is two rows written together; this writes one.
         link_id: None,
+        // Only a broker file names a row; one written here is the user's own.
+        external_id: None,
         note: optional(args, "note"),
         // Nothing the user writes is a lens's rewrite of something else.
         scoped_from: None,

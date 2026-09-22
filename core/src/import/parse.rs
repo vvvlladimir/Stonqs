@@ -102,6 +102,8 @@ pub enum ProblemCode {
 
     DuplicateInFile,
 
+    RestatedInStore,
+
     SecurityWithoutSource,
 
     UnknownSecurity,
@@ -111,6 +113,8 @@ pub enum ProblemCode {
     DirectionConflict,
 
     AmountSignAmbiguous,
+
+    AmountBasisAmbiguous,
 
     AmountVsQuantityPrice,
 

@@ -265,6 +265,16 @@ impl ImportField {
                 "transactionid",
                 "связка",
             ],
+            ImportField::ExternalId => &[
+                "externalid",
+                "transactionid",
+                "orderid",
+                "tradeid",
+                "bookingid",
+                "referenceid",
+                "operationid",
+                "идентификатороперации",
+            ],
             ImportField::Note => &[
                 "note",
                 "notes",

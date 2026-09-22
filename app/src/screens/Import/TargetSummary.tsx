@@ -98,7 +98,13 @@ export function TargetSummary({
         />
       </List>
       {settings && (
-        <ParseSettings config={config} mapping={mapping} detected={preview.amount_sign} onChange={onConfig} />
+        <ParseSettings
+          config={config}
+          mapping={mapping}
+          detected={preview.amount_sign}
+          detectedBasis={preview.amount_basis}
+          onChange={onConfig}
+        />
       )}
     </Panel>
   );

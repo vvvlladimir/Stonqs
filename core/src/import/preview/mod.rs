@@ -13,8 +13,9 @@ mod row;
 mod status;
 mod tally;
 
-use super::checks::{self, CheckContext, SignVote};
-use super::mapping::{AmountSign, ImportField, ImportMapping};
+use super::checks::{self, BasisVote, CheckContext, SignVote};
+use super::dedupe::KnownRow;
+use super::mapping::{AmountBasis, AmountSign, ImportField, ImportMapping};
 use super::parse::{ImportProblem, ParseConfig, ParsedCsv, ProblemCode, parse_decimal};
 use super::securities::SecurityDraft;
 use crate::error::{Error, Result};
@@ -60,6 +61,13 @@ pub struct TransactionDraft {
     #[serde(default, with = "rust_decimal::serde::str_option")]
     pub fx_rate_to_base: Option<Decimal>,
     pub link_id: Option<String>,
+    /// The broker's own identifier for the row, when the file carries one.
+    #[serde(default)]
+    pub external_id: Option<String>,
+    /// The stored operation this row restates, named by the external id it repeats. Set by the
+    /// preview, never by a file: a row cannot claim which database row it replaces.
+    #[serde(default)]
+    pub replaces: Option<String>,
     pub note: Option<String>,
 }
 
@@ -89,6 +97,11 @@ impl TransactionDraft {
         t.tax_currency = self.tax_currency.clone().filter(|c| *c != t.currency);
         t.fx_rate_to_base = self.fx_rate_to_base;
         t.link_id = self.link_id.clone();
+        t.external_id = self.external_id.clone();
+        // Restating an operation writes the row that is already there; a new one gets its own id.
+        if let Some(id) = &self.replaces {
+            t.id = id.clone();
+        }
         t.note = self.note.clone();
         t.validate()?;
         Ok(t)
@@ -102,6 +115,10 @@ pub enum RowStatus {
     Ready,
 
     Duplicate,
+
+    /// The broker's own identifier is already in the database against different values: the
+    /// statement was restated, so importing this row replaces the one that is there.
+    Updated,
 
     UnknownSecurity,
 
@@ -146,6 +163,9 @@ pub struct ImportContext<'a> {
 
     pub accounts: &'a [Account],
 
+    /// Operations the database already knows by the broker's own identifier.
+    pub known_external: &'a [KnownRow],
+
     pub known_fingerprints: &'a HashSet<String>,
 
     pub base_currency: Option<&'a str>,
@@ -156,10 +176,12 @@ impl Default for ImportContext<'_> {
     fn default() -> Self {
         static NO_SECURITIES: &[Security] = &[];
         static NO_ACCOUNTS: &[Account] = &[];
+        static NO_EXTERNAL: &[KnownRow] = &[];
 
         ImportContext {
             securities: NO_SECURITIES,
             accounts: NO_ACCOUNTS,
+            known_external: NO_EXTERNAL,
             known_fingerprints: Box::leak(Box::new(HashSet::new())),
             base_currency: None,
             today: None,
@@ -215,6 +237,8 @@ pub struct ImportSummary {
     pub total: usize,
     pub ready: usize,
     pub duplicates: usize,
+    #[serde(default)]
+    pub updated: usize,
     pub unknown_securities: usize,
     pub ignored: usize,
     pub invalid: usize,
@@ -238,6 +262,8 @@ pub struct ImportPreview {
     pub accounts: Vec<AccountMapping>,
 
     pub amount_sign: AmountSign,
+    /// Whether the file's amount column was read as gross or as net of the row's charges.
+    pub amount_basis: AmountBasis,
     pub summary: ImportSummary,
 }
 
@@ -247,7 +273,7 @@ impl ImportPreview {
     }
 
     pub fn has_anything_to_import(&self) -> bool {
-        self.summary.ready > 0 || self.summary.unknown_securities > 0
+        self.summary.ready > 0 || self.summary.updated > 0 || self.summary.unknown_securities > 0
     }
 
     pub fn unknown_kinds(&self) -> Vec<&str> {
@@ -321,11 +347,21 @@ pub fn build_preview(
         }
     };
 
+    let amount_basis = match mapping.amount_basis {
+        Some(chosen) => chosen,
+        None => {
+            let (basis, problem) = vote_on_basis(&raw_rows, mapping, decimal_separator);
+            problems.extend(problem);
+            basis
+        }
+    };
+
     let file = row::File {
         mapping,
         decimal_separator,
         date_format: parsed.config.date_format.clone(),
         amount_sign,
+        amount_basis,
         checks: CheckContext {
             base_currency: context.base_currency,
             today: context.today,
@@ -333,7 +369,7 @@ pub fn build_preview(
     };
     let index = Index::of(context);
     let mut tallies = Tallies::default();
-    let mut dedupe = Dedupe::against(context.known_fingerprints);
+    let mut dedupe = Dedupe::against(context.known_fingerprints, context.known_external);
 
     let mut rows = Vec::with_capacity(parsed.rows.len());
     for (offset, raw) in raw_rows.into_iter().enumerate() {
@@ -364,7 +400,47 @@ pub fn build_preview(
         symbols,
         accounts,
         amount_sign,
+        amount_basis,
     }
+}
+
+/// Whether the amount column is the trade's own value or what the account moved. Asked of the
+/// file, like the sign: one row where the two readings differ by a commission answers it, and a
+/// broker is consistent about which of the two it prints.
+fn vote_on_basis(
+    raw_rows: &[BTreeMap<String, String>],
+    mapping: &ImportMapping,
+    decimal_separator: char,
+) -> (AmountBasis, Option<ImportProblem>) {
+    let number = |raw: &BTreeMap<String, String>, field| {
+        cells::cell_of(raw, mapping, field)
+            .and_then(|v| parse_decimal(v, decimal_separator))
+            .unwrap_or(Decimal::ZERO)
+    };
+    let mut vote = BasisVote::default();
+    for raw in raw_rows {
+        let Some(kind) = cells::cell_of(raw, mapping, ImportField::Kind).and_then(|v| mapping.kind_of(v))
+        else {
+            continue;
+        };
+        // A charge billed in another currency is not in this total and cannot be compared
+        // against it, so the row abstains for that charge rather than voting on a mismatch.
+        let charge = |amount_field, currency_field| match cells::cell_of(raw, mapping, currency_field) {
+            Some(_) => Decimal::ZERO,
+            None => number(raw, amount_field),
+        };
+        let charges = charge(ImportField::Fee, ImportField::FeeCurrency)
+            + charge(ImportField::Tax, ImportField::TaxCurrency);
+        checks::count_basis_vote(
+            &mut vote,
+            kind.charge_sign(),
+            number(raw, ImportField::Quantity).abs(),
+            number(raw, ImportField::Price).abs(),
+            number(raw, ImportField::Amount),
+            charges.abs(),
+        );
+    }
+    checks::decide_amount_basis(vote)
 }
 
 /// Whether the file carries direction in the sign of its amounts. The question is asked of the

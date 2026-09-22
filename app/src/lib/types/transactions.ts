@@ -40,6 +40,8 @@ export interface Transaction {
   /** Transaction-time FX rate, or null to use the rate table. */
   fx_rate_to_base: MoneyString | null;
   link_id: string | null;
+  /** The broker's own identifier, for a row that came from a file. */
+  external_id: string | null;
   note: string | null;
 }
 

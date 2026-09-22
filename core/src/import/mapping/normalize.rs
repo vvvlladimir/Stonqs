@@ -13,7 +13,7 @@ pub fn normalize_alias(value: &str) -> String {
 
 /// A header without punctuation: "Fees & Comm" and "Buy/Sell" have to compare equal to
 /// "feescomm" and "buysell".
-pub(super) fn normalize_header(header: &str) -> String {
+pub(crate) fn normalize_header(header: &str) -> String {
     header
         .trim()
         .to_lowercase()

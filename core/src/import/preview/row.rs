@@ -8,7 +8,7 @@ use super::status::{self, Dedupe};
 use super::tally::Tallies;
 use super::{ImportContext, ImportRow, TransactionDraft};
 use crate::import::checks::{self, CheckContext};
-use crate::import::mapping::{AmountSign, ImportField, ImportMapping};
+use crate::import::mapping::{AmountBasis, AmountSign, ImportField, ImportMapping};
 use std::collections::BTreeMap;
 
 /// What does not change from row to row.
@@ -17,6 +17,7 @@ pub(super) struct File<'a> {
     pub decimal_separator: char,
     pub date_format: Option<String>,
     pub amount_sign: AmountSign,
+    pub amount_basis: AmountBasis,
     pub checks: CheckContext<'a>,
 }
 
@@ -42,7 +43,20 @@ pub(super) fn read(
     let account_id = fields::account(&cells, &mut tallies.accounts, &mut problems);
     let account_id = fields::settled(account_id, kind, index, &cells, &mut problems);
     let currency = fields::currency(&cells, context, account_id.as_deref(), &mut problems);
-    let amounts = fields::amounts(&cells, &mut problems);
+    let mut amounts = fields::amounts(&cells, &mut problems);
+    let fee_currency = currency
+        .as_ref()
+        .and_then(|c| fields::charge_currency(&cells, ImportField::FeeCurrency, c));
+    let tax_currency = currency
+        .as_ref()
+        .and_then(|c| fields::charge_currency(&cells, ImportField::TaxCurrency, c));
+    fields::restore_gross(
+        &mut amounts,
+        kind,
+        file.amount_basis,
+        fee_currency.is_none(),
+        tax_currency.is_none(),
+    );
     let kind = fields::directed(kind, &amounts, file.amount_sign, &cells, &mut problems);
     let instrument = fields::instrument(&cells, index, kind, &mut tallies.symbols);
 
@@ -60,18 +74,21 @@ pub(super) fn read(
             amount: amounts.amount.abs(),
             fees: amounts.fees.abs(),
             taxes: amounts.taxes.abs(),
-            fee_currency: fields::charge_currency(&cells, ImportField::FeeCurrency, &currency),
-            tax_currency: fields::charge_currency(&cells, ImportField::TaxCurrency, &currency),
+            fee_currency,
+            tax_currency,
             currency,
             fx_rate_to_base: amounts.fx_rate,
             link_id: cells.get(ImportField::LinkId).map(|s| s.to_string()),
+            external_id: cells.get(ImportField::ExternalId).map(|s| s.to_string()),
+            replaces: None,
             note: cells.get(ImportField::Note).map(|s| s.to_string()),
         }),
         _ => None,
     };
 
+    let mut draft = draft;
     status::check_transfer_keeps_its_instrument(&draft, number, &mut problems);
-    let status = status::decide(number, ignored, &draft, dedupe, &mut problems);
+    let status = status::decide(number, ignored, &mut draft, dedupe, &mut problems);
 
     if let Some(d) = &draft
         && !matches!(status, super::RowStatus::Invalid | super::RowStatus::Ignored)

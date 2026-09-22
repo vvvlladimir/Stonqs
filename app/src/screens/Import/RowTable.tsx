@@ -42,6 +42,7 @@ export function RowTable({
   const counts: Record<RowStatus, number> = {
     READY: preview.summary.ready,
     DUPLICATE: preview.summary.duplicates,
+    UPDATED: preview.summary.updated,
     UNKNOWN_SECURITY: preview.summary.unknown_securities,
     IGNORED: preview.summary.ignored,
     INVALID: preview.summary.invalid,

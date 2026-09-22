@@ -1,4 +1,4 @@
-use super::mapping::AmountSign;
+use super::mapping::{AmountBasis, AmountSign};
 use super::parse::{ImportProblem, ProblemCode};
 use super::preview::{ImportRow, KindMapping, TransactionDraft};
 use crate::model::TransactionKind;
@@ -86,6 +86,81 @@ pub fn decide_amount_sign(vote: SignVote) -> (AmountSign, Option<ImportProblem>)
     .with("votes", vote.votes)
     .warn();
     (AmountSign::Unsigned, Some(problem))
+}
+
+/// How many rows say the amount is the trade's own value and how many say it is what the
+/// account actually moved.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct BasisVote {
+    pub gross: usize,
+    pub net: usize,
+}
+
+/// A broker rounds, so the two readings are compared with a little room: two cents plus a
+/// fifth of a basis point, which separates a commission from a rounding difference.
+fn about_equal(a: Decimal, b: Decimal) -> bool {
+    let tolerance = dec!(0.02) + (a.abs() * dec!(0.0002));
+    (a - b).abs() <= tolerance
+}
+
+/// Counts one row's answer to "is the amount net of this row's charges". Only a row that has
+/// both a quantity × price to compare against and a charge to find can answer at all, and a
+/// row where the two readings coincide (no charge) says nothing.
+pub fn count_basis_vote(
+    vote: &mut BasisVote,
+    charge_sign: i8,
+    quantity: Decimal,
+    price: Decimal,
+    amount: Decimal,
+    charges: Decimal,
+) {
+    let traded = quantity * price;
+    if charge_sign == 0 || traded.is_zero() || charges.is_zero() || amount.is_zero() {
+        return;
+    }
+    let amount = amount.abs();
+    let net = traded + Decimal::from(charge_sign) * charges;
+    if about_equal(amount, traded) {
+        vote.gross += 1;
+    } else if about_equal(amount, net) {
+        vote.net += 1;
+    }
+}
+
+/// The smallest number of rows that may decide the file's reading. Lower than the sign vote's:
+/// a file that prints a commission on every trade answers this in a handful of rows, while a
+/// sign convention is a claim about every cash row there is.
+const MIN_BASIS_VOTES: usize = 3;
+
+/// Infers whether the amount column already has the row's charges in it. Gross is the answer
+/// when nothing can be compared — it is the model's own convention, and the wizard says so.
+pub fn decide_amount_basis(vote: BasisVote) -> (AmountBasis, Option<ImportProblem>) {
+    let total = vote.gross + vote.net;
+    if total < MIN_BASIS_VOTES {
+        return (AmountBasis::Gross, None);
+    }
+    let (basis, agree) = if vote.net > vote.gross {
+        (AmountBasis::Net, vote.net)
+    } else {
+        (AmountBasis::Gross, vote.gross)
+    };
+    let agreement = agree as f64 / total as f64;
+    if agreement >= SIGNED_THRESHOLD {
+        return (basis, None);
+    }
+    let percent = (agreement * 100.0).round();
+    let problem = ImportProblem::file(
+        ProblemCode::AmountBasisAmbiguous,
+        format!(
+            "the amount matches quantity × price in {} rows and the same total with charges in              {} — only {percent} % agree. It is read as {basis:?}; set it by hand if the file              means the other one",
+            vote.gross, vote.net
+        ),
+    )
+    .with("percent", percent)
+    .with("gross", vote.gross)
+    .with("net", vote.net)
+    .warn();
+    (basis, Some(problem))
 }
 
 /// Result of applying a file-level sign convention to one row.
@@ -446,6 +521,8 @@ mod tests {
             tax_currency: None,
             fx_rate_to_base: None,
             link_id: None,
+            external_id: None,
+            replaces: None,
             note: None,
         }
     }

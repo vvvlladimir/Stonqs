@@ -43,6 +43,8 @@ export interface ImportMapping {
   default_currency: string | null;
   /** Whether the amount sign encodes transaction direction. */
   amount_sign: AmountSign | null;
+  /** Whether the amount column already has the row's charges in it. */
+  amount_basis: AmountBasis | null;
   /** Normalized file symbol mapped to a security to create. */
   new_securities: Record<string, SecurityDraft>;
 }
@@ -83,10 +85,18 @@ export interface RowOverride {
   value: string;
 }
 
-export type RowStatus = "READY" | "DUPLICATE" | "UNKNOWN_SECURITY" | "IGNORED" | "INVALID";
+export type RowStatus =
+  | "READY"
+  | "DUPLICATE"
+  /** The broker restated a row we already hold; importing replaces it. */
+  | "UPDATED"
+  | "UNKNOWN_SECURITY"
+  | "IGNORED"
+  | "INVALID";
 
 /** Whether a statement amount sign determines transaction direction. */
 export type AmountSign = "SIGNED" | "UNSIGNED";
+export type AmountBasis = "GROSS" | "NET";
 
 /** Import severity: errors block writing; warnings remain reviewable. */
 export type Severity = "ERROR" | "WARNING";
@@ -106,10 +116,12 @@ export type ProblemCode =
   | "INVALID_TRANSACTION"
   | "DUPLICATE_IN_STORE"
   | "DUPLICATE_IN_FILE"
+  | "RESTATED_IN_STORE"
   | "SECURITY_WITHOUT_SOURCE"
   | "DIRECTION_FROM_SIGN"
   | "DIRECTION_CONFLICT"
   | "AMOUNT_SIGN_AMBIGUOUS"
+  | "AMOUNT_BASIS_AMBIGUOUS"
   | "AMOUNT_VS_QUANTITY_PRICE"
   | "FEE_EXCEEDS_AMOUNT"
   | "FX_RATE_ON_BASE_CURRENCY"
@@ -149,6 +161,10 @@ export interface TransactionDraft {
   tax_currency: string | null;
   fx_rate_to_base: MoneyString | null;
   link_id: string | null;
+  /** The broker's own identifier for the row, when the file carried one. */
+  external_id: string | null;
+  /** Stored operation this row restates, decided by the preview. */
+  replaces: string | null;
   note: string | null;
 }
 
@@ -164,6 +180,8 @@ export interface ImportSummary {
   total: number;
   ready: number;
   duplicates: number;
+  /** Rows that replace an operation already stored, matched by the broker's identifier. */
+  updated: number;
   unknown_securities: number;
   /** Rows whose operation value the user chose to skip. */
   ignored: number;
@@ -215,6 +233,7 @@ export interface ImportPreview {
   accounts: AccountMapping[];
   /** Whether the amount sign was chosen or inferred. */
   amount_sign: AmountSign;
+  amount_basis: AmountBasis;
   summary: ImportSummary;
 }
 
@@ -232,6 +251,8 @@ export interface ImportTemplate {
 /** Preview plus file headers for column mapping. */
 export interface ImportPreviewData extends ImportPreview {
   headers: string[];
+  /** Layout the file was recognised as when it was loaded; absent when nothing fitted. */
+  applied_template?: string;
 }
 
 export interface ImportOptions {
@@ -245,6 +266,8 @@ export interface ImportOptions {
 
 export interface ImportResult {
   imported: number;
+  /** Rows that replaced a stored operation rather than adding one. */
+  updated: number;
   skipped: number;
   created_securities: string[];
   problems: ImportProblem[];

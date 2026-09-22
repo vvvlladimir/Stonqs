@@ -3,6 +3,7 @@ import { msg } from "@lingui/core/macro";
 import { IMPORTABLE_TRANSACTION_KINDS, transactionLabel } from "../../lib/kinds";
 import type { BadgeTone } from "../../components/ui";
 import type {
+  AmountBasis,
   AmountSign,
   ImportProblem,
   ImportField,
@@ -75,6 +76,7 @@ export function kindLabels(i18n: I18n): Record<string, string> {
 export const STATUS_LABELS: Record<RowStatus, MessageDescriptor> = {
   READY: msg`ready`,
   DUPLICATE: msg`duplicate`,
+  UPDATED: msg`restated`,
   UNKNOWN_SECURITY: msg`no instrument`,
   IGNORED: msg`skipped`,
   INVALID: msg`error`,
@@ -84,6 +86,7 @@ export const STATUS_LABELS: Record<RowStatus, MessageDescriptor> = {
 export const STATUS_TONES: Record<RowStatus, BadgeTone> = {
   READY: "in",
   DUPLICATE: "neutral",
+  UPDATED: "warn",
   UNKNOWN_SECURITY: "warn",
   IGNORED: "neutral",
   INVALID: "out",
@@ -92,6 +95,11 @@ export const STATUS_TONES: Record<RowStatus, BadgeTone> = {
 export const SIGN_LABELS: Record<AmountSign, MessageDescriptor> = {
   SIGNED: msg`a minus means money out`,
   UNSIGNED: msg`direction comes from the transaction kind`,
+};
+
+export const BASIS_LABELS: Record<AmountBasis, MessageDescriptor> = {
+  GROSS: msg`the amount is the trade itself`,
+  NET: msg`the amount includes commission and tax`,
 };
 
 /** Stable label for grouping parser notices. */
@@ -109,9 +117,11 @@ export const PROBLEM_LABELS: Record<ProblemCode, MessageDescriptor> = {
   INVALID_TRANSACTION: msg`the transaction failed validation`,
   DUPLICATE_IN_STORE: msg`already in the database`,
   DUPLICATE_IN_FILE: msg`repeated inside the file`,
+  RESTATED_IN_STORE: msg`the broker restated a row already imported`,
   SECURITY_WITHOUT_SOURCE: msg`an instrument without a quote source`,
   DIRECTION_FROM_SIGN: msg`direction taken from the sign of the amount`,
   DIRECTION_CONFLICT: msg`the sign disagrees with the transaction kind`,
+  AMOUNT_BASIS_AMBIGUOUS: msg`the amount reads as gross in some rows and as net in others`,
   AMOUNT_SIGN_AMBIGUOUS: msg`the sign of the amount only partly agrees with the kinds`,
   AMOUNT_VS_QUANTITY_PRICE: msg`the amount does not match quantity × price`,
   FEE_EXCEEDS_AMOUNT: msg`the commission exceeds the amount`,
@@ -197,6 +207,10 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
     case "AMOUNT_SIGN_AMBIGUOUS":
       return i18n._(
         msg`The sign of the amount agrees with the transaction direction in only ${p.percent} % of rows (${p.agree} of ${p.votes}). Direction is taken from the transaction kind; if it should come from the sign, check the kind mapping and the amount column.`,
+      );
+    case "AMOUNT_BASIS_AMBIGUOUS":
+      return i18n._(
+        msg`The amount matches quantity × price in ${p.gross} rows and the same total with commission and tax in ${p.net} — only ${p.percent} % agree. Set it by hand if the file means the other one.`,
       );
     case "AMOUNT_VS_QUANTITY_PRICE":
       return i18n._(

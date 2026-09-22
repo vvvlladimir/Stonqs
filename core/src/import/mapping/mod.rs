@@ -23,6 +23,7 @@ pub(crate) use field::header_row_score;
 pub use keywords::default_kind_aliases;
 pub(crate) use keywords::kind_from_keywords;
 pub use normalize::normalize_alias;
+pub(crate) use normalize::normalize_header;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -32,6 +33,18 @@ pub enum AmountSign {
 
     /// Operation kinds provide direction; amount signs are ignored.
     Unsigned,
+}
+
+/// Whether the file's amount column already has the row's charges taken out of it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AmountBasis {
+    /// The amount is the trade's own value; commission and tax sit beside it.
+    Gross,
+
+    /// The amount is what the account was actually debited or credited, charges included —
+    /// so the stored gross has to be restored from it.
+    Net,
 }
 
 /// User-editable mapping from file values and columns to model fields.
@@ -58,6 +71,11 @@ pub struct ImportMapping {
     #[serde(default)]
     pub amount_sign: Option<AmountSign>,
 
+    /// Whether `amount` is gross or net of the row's own charges. Absent is decided from the
+    /// file: a broker that prints both the total and the commission says which it meant.
+    #[serde(default)]
+    pub amount_basis: Option<AmountBasis>,
+
     #[serde(default)]
     pub new_securities: BTreeMap<String, SecurityDraft>,
 }
@@ -79,27 +97,12 @@ impl ImportMapping {
         };
 
         let mut candidates: Vec<(u32, ImportField, usize)> = Vec::new();
-        // The best claim on a column also settles what the column is *not*: a lower-scoring
-        // field never takes a column another field names better ("Asset type" is a kind, so
-        // it is not a symbol), even when that other field is already mapped elsewhere.
-        let mut best_on_column = vec![0u32; headers.len()];
-        for field in ImportField::ALL {
-            for (index, header) in headers.iter().enumerate() {
-                if let Some(found) = field.header_match(header) {
-                    best_on_column[index] = best_on_column[index].max(found.score);
-                }
-            }
-        }
-
         for field in ImportField::ALL {
             let shape = field.value_shape();
             for (index, header) in headers.iter().enumerate() {
                 let Some(found) = field.header_match(header) else {
                     continue;
                 };
-                if found.score < best_on_column[index] {
-                    continue;
-                }
                 let values = column(index);
                 // A column that is empty everywhere is not a mapping: Investimental leaves
                 // "Settlement Date" blank and keeps the real one in another column.
@@ -112,6 +115,18 @@ impl ImportMapping {
                 candidates.push((found.score, *field, index));
             }
         }
+
+        // The best *surviving* claim on a column also settles what the column is *not*: a
+        // lower-scoring field never takes a column another field names better ("Asset type" is
+        // a kind, so it is not a symbol), even when that other field is already mapped
+        // elsewhere. A field the values vetoed is not such a claim — "Transaction ID" is an
+        // external id when its values are unique and a pairing key when they repeat, and
+        // whichever it is must not block the other.
+        let mut best_on_column = vec![0u32; headers.len()];
+        for (score, _, index) in &candidates {
+            best_on_column[*index] = best_on_column[*index].max(*score);
+        }
+        candidates.retain(|(score, _, index)| *score >= best_on_column[*index]);
 
         candidates.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)).then(a.2.cmp(&b.2)));
 
@@ -220,6 +235,11 @@ impl ImportMapping {
 
     pub fn with_amount_sign(mut self, sign: AmountSign) -> Self {
         self.amount_sign = Some(sign);
+        self
+    }
+
+    pub fn with_amount_basis(mut self, basis: AmountBasis) -> Self {
+        self.amount_basis = Some(basis);
         self
     }
 

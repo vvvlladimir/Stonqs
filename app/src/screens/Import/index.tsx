@@ -24,6 +24,16 @@ import { STEPS, fieldLabel, missingFields } from "./labels";
 
 const LAST = STEPS.length - 1;
 
+/** No settings at all: the core detects every one of them from the file itself. */
+const BLANK_CONFIG: ParseConfig = {
+  delimiter: null,
+  skip_top_rows: 0,
+  skip_bottom_rows: 0,
+  has_header: null,
+  date_format: null,
+  decimal_separator: null,
+};
+
 export function Import() {
   const { t, i18n } = useLingui();
   const invalidate = useInvalidate();
@@ -51,12 +61,14 @@ export function Import() {
     mutationFn: api.importLoadPath,
     onSuccess: (data) => {
       setPreview(data);
-      setDetected({ config: data.config, mapping: data.mapping });
+      // A recognised file arrives already laid out, so what the core would have detected on
+      // its own is not in hand — "— detect —" asks for it again rather than replaying it.
+      setDetected(data.applied_template ? null : { config: data.config, mapping: data.mapping });
       setConfig(data.config);
       setMapping(data.mapping);
       setOverrides([]);
       setResult(null);
-      setTemplate("");
+      setTemplate(data.applied_template ?? "");
       setStep(0);
     },
   });
@@ -102,6 +114,7 @@ export function Import() {
     const found = templates.data?.find((t) => t.name === name);
     if (!found) {
       if (detected) apply(detected.config, { ...detected.mapping, account_id: account }, overrides);
+      else apply(BLANK_CONFIG, null, overrides);
       return;
     }
     // The saved account comes back with the layout, unless it has since been deleted —

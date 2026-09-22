@@ -122,6 +122,11 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
         "charge_currencies",
         include_str!("../../migrations/0026_charge_currencies.sql"),
     ),
+    (
+        27,
+        "external_id",
+        include_str!("../../migrations/0027_external_id.sql"),
+    ),
 ];
 
 /// Applies all pending migrations.

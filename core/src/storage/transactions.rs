@@ -33,6 +33,7 @@ fn row_to_transaction(row: &Row<'_>) -> rusqlite::Result<Transaction> {
         currency,
         fx_rate_to_base: fx.map(|d| d.0),
         link_id: row.get("link_id")?,
+        external_id: row.get("external_id")?,
         note: row.get("note")?,
         // A row read back is the operation the user entered, never a lens's rewrite of it.
         scoped_from: None,
@@ -47,8 +48,9 @@ impl Store {
         self.conn.execute(
             "INSERT INTO transactions
                  (id, account_id, security_id, kind, date, quantity, price, amount,
-                  fees, taxes, currency, fee_currency, tax_currency, fx_rate_to_base, link_id, note)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+                  fees, taxes, currency, fee_currency, tax_currency, fx_rate_to_base, link_id,
+                  external_id, note)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
              ON CONFLICT (id) DO UPDATE SET
                  account_id = excluded.account_id,
                  security_id = excluded.security_id,
@@ -64,6 +66,7 @@ impl Store {
                  tax_currency = excluded.tax_currency,
                  fx_rate_to_base = excluded.fx_rate_to_base,
                  link_id = excluded.link_id,
+                 external_id = excluded.external_id,
                  note = excluded.note",
             params![
                 t.id,
@@ -81,6 +84,7 @@ impl Store {
                 t.tax_currency.as_ref().filter(|c| **c != t.currency),
                 t.fx_rate_to_base.map(dec_to_sql),
                 t.link_id,
+                t.external_id,
                 t.note,
             ],
         )?;

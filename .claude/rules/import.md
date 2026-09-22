@@ -20,6 +20,25 @@
 - Broker layouts ship with the app as data: `core/presets/brokers.json` (`import::presets`), one entry per broker, `include_str!`-ed and merged with `default_kind_aliases()` on use, so the file lists only what is peculiar to that broker. The host lists the user's own layouts first and the shipped ones after (`app/src-tauri/src/import_templates.rs`); a shipped preset is removed by writing its name down (`import_presets_hidden.json`), never by editing what ships, and `import_presets_restore` brings them all back. A user layout saved under a shipped name shadows it; deleting that copy uncovers the original.
 - A layout is applied to the *next* export, not the one it was made from, so `build_preview` tops up `kind_aliases` from the keyword dictionary for every value the layout does not answer (Saxo writes the operation as `Sell 3 @ 139.74 USD` — no list enumerates that). Values already aliased or already skipped are left alone, and the topped-up mapping is what the preview hands back.
 - Direction comes from the number that carries it: the amount for a cash operation, the **quantity** for a share movement, which has no cash to sign (`Reverse Split` is `+1` and `-10` of one wording). `resolve_direction` therefore compares against `cash_sign()` or, when that is zero, `quantity_sign()`.
+- The amount column is gross or net of the row's own charges, and the file says which by being
+  consistent: `checks::count_basis_vote` compares `quantity × price` with the amount and with the
+  amount plus/minus the charges (`TransactionKind::charge_sign`), three decisive rows decide it,
+  and a disagreement is a warning rather than a refusal. `Net` is put back into the model's own
+  shape by `preview::fields::restore_gross` — the stored `amount` is always before charges — and
+  only for the charges in the row's own currency, since a foreign one was never in that total.
+  `ImportMapping::amount_basis` overrides the vote, exactly like `amount_sign`.
+- A file that names its rows is recognised by that name: `ImportField::ExternalId` has
+  `ValueShape::Unique` and shares its aliases with `LinkId`, whose `ValueShape::Link` demands the
+  opposite — the values decide which of the two a column is, so a vetoed field yields the column
+  instead of blocking it (`detect_with_values`). Same id and same fingerprint is a `Duplicate`;
+  same id and different values is `RowStatus::Updated`, which **replaces** the stored row on
+  commit and is counted apart from what was imported (ADR-0065).
+- A file is recognised as a layout before anything is detected from it: `presets::best_match`
+  scores every shipped preset and user template (`import_load`), a preset's rule being its own
+  `match` block or, absent one, the columns it maps — a layout naming "Wertpapierbezeichnung"
+  already describes its broker. Everything a rule declares must hold, and a tie is **no** answer:
+  two layouts fitting equally well means neither was recognised. The applied name comes back as
+  `applied_template`, and "— detect —" in the wizard puts the core's own reading back.
 - Import is semi-automatic: everything auto-detected (`ParsedCsv::config`, `ImportPreview::mapping`) must stay overridable — parse settings, column mapping, kind/symbol aliases, per-cell `RowOverride`, `ImportMapping::amount_sign`. Never silently guess for the user.
 - A broker file carries direction in two channels: the type column says *what* happened, the sign of the amount says *which way*. One type value can span both directions (e.g. a card charge and its refund), so `checks::decide_amount_sign` correlates `sign(amount)` with `TransactionKind::cash_sign` across the whole file and calls it `Signed` only when ≥90% of cash-moving rows agree **and** both signs occur; a disagreeing row flips to `TransactionKind::reversed`. Buy/Sell vote but never flip — their direction is also carried by quantity and by having a security.
 - The two legs of one internal wording are linked by `build_preview` (same date, same source wording, opposite direction, link id derived from those three so the preview stays reproducible). A leg left without a partner is a one-sided transfer, which `calc` reads as money crossing the portfolio boundary — see ADR-0020.

@@ -64,6 +64,7 @@ export function CommitStep({
   const newSecurities = preview.symbols.filter((x) => x.required && !x.security_id);
   const willWrite =
     s.ready +
+    s.updated +
     (options.create_missing_securities ? s.unknown_securities : 0) +
     (options.import_duplicates ? s.duplicates : 0);
 
@@ -79,6 +80,7 @@ export function CommitStep({
           <Trans>
             {result.imported} written, {result.skipped} skipped.
           </Trans>
+          {result.updated > 0 && t` ${result.updated} replaced a row the broker restated.`}
           {result.created_securities.length > 0 &&
             t` Instruments created: ${result.created_securities.join(", ")}.`}{" "}
           <Trans>The file is in the database — writing it again adds nothing.</Trans>
@@ -109,6 +111,13 @@ export function CommitStep({
                   onChange={(on) => onOptions({ ...options, create_missing_securities: on })}
                 />
               }
+            />
+          )}
+          {s.updated > 0 && (
+            <ListRow
+              title={t`Restated by the broker`}
+              sub={t`the same operation, with different values: the stored row is replaced`}
+              value={<Badge tone="warn">{s.updated}</Badge>}
             />
           )}
           {s.duplicates > 0 && (

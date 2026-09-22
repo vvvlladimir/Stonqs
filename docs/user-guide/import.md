@@ -22,6 +22,12 @@ regularly. A layout is applied to the *next* export, not the one it was built fr
 still fills in wordings the layout does not mention. Picking a layout is undoable: what the app
 detected on its own is kept.
 
+**A recognised file lays itself out on opening.** A layout — one the user saved or one shipped
+with the app — claims a file by the columns it expects, so an export from a known broker arrives
+with its settings already filled in and the layout named at the top of the step. Two layouts that
+fit a file equally well recognise nothing: the app would rather ask than pick the wrong broker.
+Choosing "— detect —" throws the layout away and reads the file from scratch.
+
 Rows carry a status. An error blocks that row alone, never the file; a warning — a corrected
 direction, a suspicious amount — is shown and imported. The wizard refuses to continue only when a
 required column has not been pointed at.
@@ -29,6 +35,19 @@ required column has not been pointed at.
 **Re-importing the same file adds nothing.** Rows are recognised by their content, so a monthly
 export that repeats the previous month is safe. There is an option to import duplicates anyway,
 which exists for the case where two identical operations really did happen.
+
+**A row the broker restated replaces the one already stored.** When the export carries the
+broker's own identifier for each row — a transaction or order number — that identifier decides
+what a row *is*. The same identifier with the same values is a duplicate and is skipped; the same
+identifier with corrected values is marked as restated, and writing it updates the stored
+operation instead of adding a second one. Restated rows are listed before the write and counted
+separately afterwards, because nothing new entered the ledger. The duplicate switch does not
+cover them: a correction is not a repetition.
+
+**Some brokers print the amount with the commission already in it.** The app works out which of
+the two a file means by comparing the amount against quantity × price across the whole file, and
+says what it decided beside the other parse settings, where it can be set by hand. The
+distinction matters: read the wrong way round, every purchase's cost is off by its commission.
 
 ## Interactive Brokers
 

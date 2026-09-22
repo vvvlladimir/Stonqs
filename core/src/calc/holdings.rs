@@ -601,7 +601,7 @@ impl Charges {
         let foreign = t.fee_currency.as_ref().map_or(Decimal::ZERO, |_| fees_base)
             + t.tax_currency.as_ref().map_or(Decimal::ZERO, |_| taxes_base);
 
-        let sign = Decimal::from(t.charge_sign());
+        let sign = Decimal::from(t.kind.charge_sign());
         let mut gross_in_currency = t.gross_in_transaction_currency();
         let mut gross_base = gross_in_currency * rate;
         if !foreign.is_zero() {

@@ -1,18 +1,20 @@
 import { useLingui } from "@lingui/react/macro";
 import { CheckField, Field, Form } from "../../components/ui";
-import type { AmountSign, ImportMapping, ParseConfig } from "../../lib/types";
-import { SIGN_LABELS } from "./labels";
+import type { AmountBasis, AmountSign, ImportMapping, ParseConfig } from "../../lib/types";
+import { BASIS_LABELS, SIGN_LABELS } from "./labels";
 
 /** Parser settings: detected values and user overrides. */
 export function ParseSettings({
   config,
   mapping,
   detected,
+  detectedBasis,
   onChange,
 }: {
   config: ParseConfig;
   mapping: ImportMapping;
   detected: AmountSign;
+  detectedBasis: AmountBasis;
   onChange: (c: ParseConfig, m: ImportMapping) => void;
 }) {
   const { t, i18n } = useLingui();
@@ -67,6 +69,23 @@ export function ParseSettings({
         value={mapping.amount_sign}
         onChange={(sign) =>
           onChange(config, { ...mapping, amount_sign: (sign || null) as AmountSign | null })
+        }
+      />
+      <Field
+        label={t`What the amount holds`}
+        hint={
+          mapping.amount_basis
+            ? t`Set by hand`
+            : t`Detected from the file: ${i18n._(BASIS_LABELS[detectedBasis]).toLowerCase()}`
+        }
+        placeholder={t`— detect from the file —`}
+        options={[
+          { value: "GROSS", label: i18n._(BASIS_LABELS.GROSS) },
+          { value: "NET", label: i18n._(BASIS_LABELS.NET) },
+        ]}
+        value={mapping.amount_basis}
+        onChange={(basis) =>
+          onChange(config, { ...mapping, amount_basis: (basis || null) as AmountBasis | null })
         }
       />
       <CheckField

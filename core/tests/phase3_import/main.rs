@@ -2,7 +2,9 @@
 //! Fixtures mirror English comma-separated and German semicolon-separated broker exports.
 
 mod basics;
+mod basis;
 mod brokers;
+mod external;
 mod ibflex;
 mod shapes;
 mod signs;
@@ -11,8 +13,8 @@ use rust_decimal_macros::dec;
 use sq_core::calc::{build_holdings, income_by_kind};
 use sq_core::fx::FxRate;
 use sq_core::import::{
-    AmountSign, ImportField, ImportMapping, ImportOptions, ImportService, ParseConfig, PriceMapping,
-    ProblemCode, RowOverride, RowStatus, SecurityDraft, Severity,
+    AmountBasis, AmountSign, ImportField, ImportMapping, ImportOptions, ImportService, ParseConfig,
+    PriceMapping, ProblemCode, RowOverride, RowStatus, SecurityDraft, Severity,
 };
 use sq_core::model::{Account, Security, SecurityKind, Transaction, TransactionKind};
 use sq_core::storage::Store;
@@ -25,6 +27,16 @@ date,type,symbol,quantity,unit_price,currency,fee,amount,comment
 2024-03-01,DEPOSIT,,,,USD,,5000,Monthly contribution
 2024-05-15,SPLIT,NVDA,,,USD,,3,3-for-1 stock split
 ";
+
+/// A file's header row, the way every fixture here starts.
+fn headers_of(csv: &str) -> Vec<String> {
+    csv.lines()
+        .next()
+        .unwrap()
+        .split(',')
+        .map(str::to_string)
+        .collect()
+}
 
 fn store_with_account() -> (Store, Account) {
     let store = Store::open_in_memory().unwrap();

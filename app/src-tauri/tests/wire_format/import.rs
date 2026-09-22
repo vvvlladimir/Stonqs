@@ -43,6 +43,7 @@ fn import_enums_cross_as_screaming_snake_case() {
         [
             "account_aliases",
             "account_id",
+            "amount_basis",
             "amount_sign",
             "columns",
             "default_currency",

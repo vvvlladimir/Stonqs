@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: result.updated
+#: src/screens/Import/CommitStep.tsx
+msgid " {0} replaced a row the broker restated."
+msgstr " {0} replaced a row the broker restated."
+
 #. placeholder {0}: result.created_securities.join(", ")
 #: src/screens/Import/CommitStep.tsx
 msgid " Instruments created: {0}."
@@ -2600,6 +2605,7 @@ msgstr "Depth"
 msgid "Detected from the content; it can be replaced"
 msgstr "Detected from the content; it can be replaced"
 
+#. placeholder {0}: i18n._(BASIS_LABELS[detectedBasis]).toLowerCase()
 #. placeholder {0}: i18n._(SIGN_LABELS[detected]).toLowerCase()
 #: src/screens/Import/ParseSettings.tsx
 msgid "Detected from the file: {0}"
@@ -6376,6 +6382,14 @@ msgstr "Resize the panel"
 msgid "Restart now"
 msgstr "Restart now"
 
+#: src/screens/Import/labels.ts
+msgid "restated"
+msgstr "restated"
+
+#: src/screens/Import/CommitStep.tsx
+msgid "Restated by the broker"
+msgstr "Restated by the broker"
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Restore"
 msgstr "Restore"
@@ -7292,9 +7306,28 @@ msgstr "The amount {0} does not match quantity × price ({1} × {2} = {3}). Chec
 msgid "the amount does not match quantity × price"
 msgstr "the amount does not match quantity × price"
 
+#: src/screens/Import/labels.ts
+msgid "the amount includes commission and tax"
+msgstr "the amount includes commission and tax"
+
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "The amount is quantity × price"
 msgstr "The amount is quantity × price"
+
+#: src/screens/Import/labels.ts
+msgid "the amount is the trade itself"
+msgstr "the amount is the trade itself"
+
+#. placeholder {0}: p.gross
+#. placeholder {1}: p.net
+#. placeholder {2}: p.percent
+#: src/screens/Import/labels.ts
+msgid "The amount matches quantity × price in {0} rows and the same total with commission and tax in {1} — only {2} % agree. Set it by hand if the file means the other one."
+msgstr "The amount matches quantity × price in {0} rows and the same total with commission and tax in {1} — only {2} % agree. Set it by hand if the file means the other one."
+
+#: src/screens/Import/labels.ts
+msgid "the amount reads as gross in some rows and as net in others"
+msgstr "the amount reads as gross in some rows and as net in others"
 
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "The annual return on the money invested, accounting for the dates of deposits."
@@ -7333,6 +7366,10 @@ msgstr "The best return of the period, whatever the position is worth."
 #: src/components/domain/aiToolLabels.ts
 msgid "the branches of a tree"
 msgstr "the branches of a tree"
+
+#: src/screens/Import/labels.ts
+msgid "the broker restated a row already imported"
+msgstr "the broker restated a row already imported"
 
 #: src/screens/Import/ParseSettings.tsx
 msgid "The broker's header above the table"
@@ -7789,6 +7826,10 @@ msgstr "The right column is each year's total, the bottom row each month across 
 #: src/screens/Import/labels.ts
 msgid "the row could not be parsed"
 msgstr "the row could not be parsed"
+
+#: src/screens/Import/CommitStep.tsx
+msgid "the same operation, with different values: the stored row is replaced"
+msgstr "the same operation, with different values: the stored row is replaced"
 
 #: src/components/domain/positionColumns.tsx
 #~ msgid "The same swing counted over losing days only."
@@ -8725,6 +8766,10 @@ msgstr "what selling realised"
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "What the active plans add up to in an average month, read off the coming year."
 msgstr "What the active plans add up to in an average month, read off the coming year."
+
+#: src/screens/Import/ParseSettings.tsx
+msgid "What the amount holds"
+msgstr "What the amount holds"
 
 #: src/screens/Settings/AppearancePanel.tsx
 #~ msgid "What the app looks like and which language it speaks"

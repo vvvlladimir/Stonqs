@@ -15,11 +15,15 @@ mod securities;
 mod service;
 mod taxonomy;
 
-pub use checks::{CheckContext, Direction, SignVote, decide_amount_sign, resolve_direction};
-pub use dedupe::{fingerprint, fingerprint_of};
+pub use checks::{
+    BasisVote, CheckContext, Direction, SignVote, decide_amount_basis, decide_amount_sign, resolve_direction,
+};
+pub use dedupe::{KnownRow, fingerprint, fingerprint_of};
 pub use grouping::group_by_attribute;
 pub use ibflex::{is_flex, parse_flex};
-pub use mapping::{AmountSign, ImportField, ImportMapping, default_kind_aliases, normalize_alias};
+pub use mapping::{
+    AmountBasis, AmountSign, ImportField, ImportMapping, default_kind_aliases, normalize_alias,
+};
 pub use parse::{
     ImportProblem, KNOWN_DATE_FORMATS, ParseConfig, ParsedCsv, ProblemCode, Severity, parse_csv,
     parse_date_with, parse_decimal,
@@ -34,7 +38,7 @@ pub fn parse_file(content: &[u8], config: &ParseConfig) -> crate::error::Result<
         parse_csv(content, config)
     }
 }
-pub use presets::{BrokerPreset, builtin_presets, parse_presets, presets_to_json};
+pub use presets::{BrokerPreset, PresetMatch, best_match, builtin_presets, parse_presets, presets_to_json};
 pub use preview::{
     AccountMapping, ImportContext, ImportPreview, ImportRow, ImportSummary, KindMapping, RowOverride,
     RowStatus, SymbolMapping, TransactionDraft, build_preview,

@@ -45,6 +45,10 @@ impl Default for ImportOptions {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportResult {
     pub imported: usize,
+    /// Rows that replaced an operation already in the database, matched by the broker's own
+    /// identifier. Counted apart from `imported`: nothing new entered the ledger.
+    #[serde(default)]
+    pub updated: usize,
     pub skipped: usize,
 
     pub created_securities: Vec<String>,
@@ -97,9 +101,11 @@ impl<'a> ImportService<'a> {
         let securities = self.store.list_securities()?;
         let accounts = self.store.list_accounts()?;
         let known = self.known_fingerprints()?;
+        let known_external = self.known_external()?;
         let context = ImportContext {
             securities: &securities,
             accounts: &accounts,
+            known_external: &known_external,
             known_fingerprints: &known,
             base_currency: self.base_currency.as_deref(),
             today: self.today,
@@ -124,6 +130,9 @@ impl<'a> ImportService<'a> {
         for row in &preview.rows {
             let importable = match row.status {
                 RowStatus::Ready => true,
+                // A restatement is a correction of a row that is already there, so it is not
+                // what the duplicate switch was answered about.
+                RowStatus::Updated => true,
                 RowStatus::Duplicate => options.import_duplicates,
                 RowStatus::UnknownSecurity => options.create_missing_securities,
                 RowStatus::Ignored | RowStatus::Invalid => false,
@@ -196,7 +205,11 @@ impl<'a> ImportService<'a> {
                 draft.security_id = Some(id);
             }
 
-            if row.status != RowStatus::Duplicate && !known.insert(fingerprint(&draft)) {
+            // A restatement writes over a row that is in the store already, so its content
+            // may well match one — that is the point of it, not a reason to skip it.
+            if !matches!(row.status, RowStatus::Duplicate | RowStatus::Updated)
+                && !known.insert(fingerprint(&draft))
+            {
                 result.skipped += 1;
                 continue;
             }
@@ -204,7 +217,11 @@ impl<'a> ImportService<'a> {
             match draft.to_transaction() {
                 Ok(transaction) => {
                     self.store.save_transaction(&transaction)?;
-                    result.imported += 1;
+                    if row.status == RowStatus::Updated {
+                        result.updated += 1;
+                    } else {
+                        result.imported += 1;
+                    }
                 }
                 Err(e) => {
                     result.skipped += 1;
@@ -238,6 +255,17 @@ impl<'a> ImportService<'a> {
 
     pub fn commit_prices(&self, import: &PriceImport) -> Result<usize> {
         self.store.save_quotes(&import.quotes)
+    }
+
+    /// What the store knows by the broker's own identifier, for the rows that carry one.
+    fn known_external(&self) -> Result<Vec<super::dedupe::KnownRow>> {
+        let accounts: Vec<String> = self.store.list_accounts()?.into_iter().map(|a| a.id).collect();
+        Ok(self
+            .store
+            .transactions_for_accounts(&accounts, None)?
+            .iter()
+            .filter_map(super::dedupe::KnownRow::of)
+            .collect())
     }
 
     fn known_fingerprints(&self) -> Result<HashSet<String>> {

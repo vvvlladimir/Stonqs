@@ -21,13 +21,29 @@ pub struct ImportPreviewData {
     #[serde(flatten)]
     pub preview: ImportPreview,
     pub headers: Vec<String>,
+    /// The layout the file was recognised as when it was loaded, so the wizard can say which
+    /// one it applied. Only ever set by `import_load`: a later preview is the user's own doing.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub applied_template: Option<String>,
 }
 
 #[tauri::command]
 pub fn import_load(state: State<AppState>, name: String, content: Vec<u8>) -> UiResult<ImportPreviewData> {
     let size = content.len();
+    // The file is recognised before anything is detected from it: a layout answers every
+    // question the wizard is about to ask, and applying it is what "it just opens" means.
+    let parsed = parse_file(&content, &ParseConfig::default())?;
+    let head = String::from_utf8_lossy(&content[..content.len().min(2048)]).to_string();
+    let found = crate::import_templates::match_for(&state.db_path()?, &parsed.headers, Some(&name), &head);
+
     *state.import_file()? = Some((LoadedFile { name, size }, content));
-    import_preview(state, ParseConfig::default(), None, Vec::new())
+    let (config, mapping) = match &found {
+        Some(template) => (template.config.clone(), Some(template.mapping.clone())),
+        None => (ParseConfig::default(), None),
+    };
+    let mut data = import_preview(state, config, mapping, Vec::new())?;
+    data.applied_template = found.map(|t| t.name);
+    Ok(data)
 }
 
 #[tauri::command]
@@ -77,6 +93,7 @@ pub fn import_preview(
     Ok(ImportPreviewData {
         headers: parse_file(content, &config)?.headers,
         preview: service(&store, &state)?.preview(content, &config, mapping.as_ref(), &overrides)?,
+        applied_template: None,
     })
 }
 
