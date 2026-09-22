@@ -1,5 +1,14 @@
 # Broker file import
 
+- The app has a transaction file of its own (`import::canonical`, ADR-0066): `format` /
+  `version` / rows in the model's own vocabulary, read by a **third reader** that flattens them
+  into the same `ParsedCsv` with a fixed mapping — so a canonical file goes through the one
+  wizard, the one identity check and the one commit, with nothing left to ask. Its column names
+  are the canonical header aliases, so the same thing written as a CSV needs no reader at all.
+  Nothing in it names an internal id: an account is its name (and `fields::account` resolves a
+  name the portfolio already carries), an instrument its ticker and ISIN. `canonical_to_file`
+  writes it; `transactions_export` is that with the screen's filter. Operations only — a taxonomy
+  or a plan is not in it.
 - A broker file is not always a CSV: `import::parse_file` picks the reader off the bytes, and an
   Interactive Brokers Flex statement (XML, ADR-0061) goes to `import::ibflex`, which flattens its
   sections into the same `ParsedCsv` and carries its own fixed `ImportMapping` — the columns are

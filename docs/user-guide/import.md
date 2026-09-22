@@ -49,6 +49,21 @@ the two a file means by comparing the amount against quantity × price across th
 says what it decided beside the other parse settings, where it can be set by hand. The
 distinction matters: read the wrong way round, every purchase's cost is off by its commission.
 
+## The app's own file
+
+The app writes its own transaction file, and reads it back with nothing to answer: the format
+states the dates, the numbers, the operations and the currencies in the app's own terms, so the
+parsing and mapping steps have no questions left. It is produced by "Export" on the Transactions
+screen and holds exactly what that screen was showing.
+
+The file names accounts and instruments the way a person would — by account name, ticker and
+ISIN, never by an internal identifier — so it imports into a different portfolio, on a different
+machine, and not only back into the one it came from. An account whose name already exists is
+matched to it; anything unmatched is asked for in the wizard as usual.
+
+It carries operations and nothing else. Classification trees, investment plans, alerts and
+settings are not in it, and a backup of everything is the profile itself rather than this file.
+
 ## Interactive Brokers
 
 An Interactive Brokers export is a Flex Query: a report the user defines once in the broker's web

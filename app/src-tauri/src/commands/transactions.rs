@@ -8,6 +8,7 @@ use sq_core::calc::{
     MonthlyNet, YearlyNet, transaction_amount_base, transaction_net_base, transactions_net_by_month,
     transactions_net_by_year,
 };
+use sq_core::import::canonical_to_file;
 use sq_core::prelude::*;
 use std::str::FromStr;
 use tauri::{AppHandle, State};
@@ -43,20 +44,42 @@ pub struct TransactionFilter {
     pub to: Option<String>,
 }
 
+/// Writes the filtered operations as the app's own transaction file. The export is of what the
+/// screen shows, so it takes the same filter the list does — and it names accounts and
+/// instruments rather than ids, so the file imports into another portfolio (ADR-0066).
 #[tauri::command]
-pub fn transactions_list(state: State<AppState>, filter: TransactionFilter) -> UiResult<TransactionsData> {
+pub fn transactions_export(state: State<AppState>, filter: TransactionFilter) -> UiResult<String> {
     let store = state.store()?;
     let portfolio = state.scoped_portfolio(&store)?;
-    let base = portfolio.base_currency.clone();
+    let rows = filtered_transactions(&store, &portfolio.account_ids, &filter)?;
+    Ok(canonical_to_file(
+        &rows,
+        &store.list_accounts()?,
+        &store.list_securities()?,
+    )?)
+}
 
+#[tauri::command]
+pub fn transactions_export_save(
+    state: State<AppState>,
+    filter: TransactionFilter,
+    path: String,
+) -> UiResult<()> {
+    let text = transactions_export(state, filter)?;
+    std::fs::write(&path, text).map_err(|e| UiError::invalid(format!("cannot write {path}: {e}")))
+}
+
+/// The rows a filter leaves, in stored order. Shared by the list and its export so the file can
+/// never hold a different set of operations than the screen it was taken from.
+fn filtered_transactions(
+    store: &Store,
+    account_ids: &[String],
+    filter: &TransactionFilter,
+) -> UiResult<Vec<Transaction>> {
     let from = filter.from.as_deref().map(parse_date).transpose()?;
     let to = filter.to.as_deref().map(parse_date).transpose()?;
-
-    let accounts = store.list_accounts()?;
-    let securities = store.list_securities()?;
-
-    let filtered: Vec<Transaction> = store
-        .transactions_for_accounts(&portfolio.account_ids, to)?
+    Ok(store
+        .transactions_for_accounts(account_ids, to)?
         .into_iter()
         .filter(|t| from.is_none_or(|d| t.date >= d))
         .filter(|t| filter.account_id.as_ref().is_none_or(|id| &t.account_id == id))
@@ -67,7 +90,19 @@ pub fn transactions_list(state: State<AppState>, filter: TransactionFilter) -> U
                 .is_none_or(|id| t.security_id.as_ref() == Some(id))
         })
         .filter(|t| filter.kind.is_none_or(|k| t.kind == k))
-        .collect();
+        .collect())
+}
+
+#[tauri::command]
+pub fn transactions_list(state: State<AppState>, filter: TransactionFilter) -> UiResult<TransactionsData> {
+    let store = state.store()?;
+    let portfolio = state.scoped_portfolio(&store)?;
+    let base = portfolio.base_currency.clone();
+
+    let accounts = store.list_accounts()?;
+    let securities = store.list_securities()?;
+
+    let filtered = filtered_transactions(&store, &portfolio.account_ids, &filter)?;
 
     let pairs: Vec<(String, String)> = filtered
         .iter()

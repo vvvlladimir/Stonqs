@@ -94,6 +94,9 @@ impl<'a> ImportService<'a> {
             Some(m) => m.clone(),
             // A Flex statement's columns are this crate's own, so detecting them off their
             // headers would be guessing at an answer we already know.
+            // Our own file states the model's own wording, so detecting it off the headers
+            // would be guessing at an answer the format already gives.
+            None if super::canonical::is_canonical(content) => super::canonical::mapping(),
             None if ibflex::is_flex(content) => ibflex::mapping(),
             None => ImportMapping::detect_with_values(&parsed.headers, &parsed.rows),
         };

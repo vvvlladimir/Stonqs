@@ -40,7 +40,7 @@ pub(super) fn read(
 
     let date = fields::date(&cells, &file.date_format, &mut problems);
     let (kind, ignored) = fields::kind(&cells, &mut tallies.kinds, &mut problems);
-    let account_id = fields::account(&cells, &mut tallies.accounts, &mut problems);
+    let account_id = fields::account(&cells, index, &mut tallies.accounts, &mut problems);
     let account_id = fields::settled(account_id, kind, index, &cells, &mut problems);
     let currency = fields::currency(&cells, context, account_id.as_deref(), &mut problems);
     let mut amounts = fields::amounts(&cells, &mut problems);

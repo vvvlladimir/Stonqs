@@ -4,6 +4,7 @@
 mod basics;
 mod basis;
 mod brokers;
+mod canonical;
 mod external;
 mod ibflex;
 mod shapes;
@@ -14,7 +15,7 @@ use sq_core::calc::{build_holdings, income_by_kind};
 use sq_core::fx::FxRate;
 use sq_core::import::{
     AmountBasis, AmountSign, ImportField, ImportMapping, ImportOptions, ImportService, ParseConfig,
-    PriceMapping, ProblemCode, RowOverride, RowStatus, SecurityDraft, Severity,
+    PriceMapping, ProblemCode, RowOverride, RowStatus, SecurityDraft, Severity, canonical_to_file,
 };
 use sq_core::model::{Account, Security, SecurityKind, Transaction, TransactionKind};
 use sq_core::storage::Store;

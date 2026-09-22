@@ -20,6 +20,7 @@ pub(super) struct Index<'a> {
     by_symbol: BTreeMap<String, &'a Security>,
     by_isin: BTreeMap<String, &'a Security>,
     accounts_by_id: BTreeMap<&'a str, &'a Account>,
+    accounts_by_name: BTreeMap<String, &'a Account>,
 }
 
 impl<'a> Index<'a> {
@@ -36,6 +37,11 @@ impl<'a> Index<'a> {
                 .filter_map(|s| s.isin.as_ref().map(|i| (normalize_alias(i), s)))
                 .collect(),
             accounts_by_id: context.accounts.iter().map(|a| (a.id.as_str(), a)).collect(),
+            accounts_by_name: context
+                .accounts
+                .iter()
+                .map(|a| (normalize_alias(&a.name), a))
+                .collect(),
         }
     }
 }
@@ -134,16 +140,25 @@ pub(super) fn kind(
 
 pub(super) fn account(
     cells: &Cells,
+    index: &Index,
     stats: &mut BTreeMap<String, AccountMapping>,
     problems: &mut Vec<ImportProblem>,
 ) -> Option<String> {
     match cells.get(ImportField::Account) {
         Some(value) => {
+            // A name the portfolio already carries is not a guess: our own export writes
+            // accounts by name, and a broker that prints one means the same thing by it.
             let mapped = cells
                 .mapping
                 .account_aliases
                 .get(&normalize_alias(value))
-                .cloned();
+                .cloned()
+                .or_else(|| {
+                    index
+                        .accounts_by_name
+                        .get(&normalize_alias(value))
+                        .map(|a| a.id.clone())
+                });
             let resolved = mapped.clone().or_else(|| cells.mapping.account_id.clone());
             let stat = stats.entry(value.to_string()).or_insert(AccountMapping {
                 value: value.to_string(),

@@ -26,6 +26,12 @@ trade leaves the dollar balance, not the euro one, and is converted at the rate 
 currency on that day. It still counts as part of what the shares cost, so a purchase commission
 is never also listed among the fees paid.
 
+**Export** writes the operations currently listed — the account picker and the filters apply —
+as the app's own transaction file. It is the file the Import screen reads back without asking
+anything, and it names accounts and instruments rather than internal identifiers, so it can be
+carried to another portfolio or another machine. It holds operations only: it is an interchange,
+not a backup of the whole profile.
+
 A whole broker export does not belong here — that is the Import screen, which reads the file,
 matches the instruments and writes the rows in one pass.
 

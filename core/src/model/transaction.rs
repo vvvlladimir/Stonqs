@@ -41,6 +41,30 @@ pub enum TransactionKind {
 }
 
 impl TransactionKind {
+    /// Every operation the model has, in declaration order — which is the order reports group
+    /// by. Used where a list has to be complete rather than merely long.
+    pub const ALL: &'static [TransactionKind] = &[
+        TransactionKind::Buy,
+        TransactionKind::Sell,
+        TransactionKind::DeliveryInbound,
+        TransactionKind::DeliveryOutbound,
+        TransactionKind::SecurityTransferIn,
+        TransactionKind::SecurityTransferOut,
+        TransactionKind::Dividend,
+        TransactionKind::Interest,
+        TransactionKind::InterestCharge,
+        TransactionKind::Cashback,
+        TransactionKind::Reward,
+        TransactionKind::Fee,
+        TransactionKind::FeeRefund,
+        TransactionKind::Tax,
+        TransactionKind::TaxRefund,
+        TransactionKind::Deposit,
+        TransactionKind::Withdrawal,
+        TransactionKind::TransferIn,
+        TransactionKind::TransferOut,
+    ];
+
     pub fn affects_quantity(self) -> bool {
         self.quantity_sign() != 0
     }

@@ -105,6 +105,8 @@ pub fn run() {
             commands::positions::position_return,
             commands::positions::position_returns,
             commands::transactions::transactions_list,
+            commands::transactions::transactions_export,
+            commands::transactions::transactions_export_save,
             commands::transactions::transaction_save,
             commands::transactions::transaction_delete,
             commands::periods::period_ranges,

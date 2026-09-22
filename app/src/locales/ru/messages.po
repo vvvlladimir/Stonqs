@@ -3170,6 +3170,7 @@ msgid "Explain the file's columns, its operation names and the account everythin
 msgstr "Объясните приложению колонки файла, названия операций и счёт, на который всё ложится."
 
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/Transactions/index.tsx
 msgid "Export"
 msgstr "Выгрузить"
 
