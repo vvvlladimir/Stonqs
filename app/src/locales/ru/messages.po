@@ -834,6 +834,10 @@ msgstr "дата в будущем"
 msgid "a dated note on an instrument"
 msgstr "заметка с датой по инструменту"
 
+#: src/screens/Import/labels.ts
+msgid "a dividend and a purchase"
+msgstr "дивиденд и покупка"
+
 #: src/screens/dashboard/widgets/index.tsx
 msgid "A divider line: it splits the dashboard into meaningful parts."
 msgstr "Строка-разделитель: делит дашборд на смысловые части."
@@ -8388,6 +8392,10 @@ msgstr "Дважды в год"
 #: src/components/domain/PeriodEditor.tsx
 msgid "Two dates"
 msgstr "Две даты"
+
+#: src/screens/Import/labels.ts
+msgid "two legs of one move"
+msgstr "две ноги одного перевода"
 
 #: src/components/domain/positionColumns.tsx
 msgid "TWR"

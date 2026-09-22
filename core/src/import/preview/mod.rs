@@ -132,11 +132,20 @@ pub enum RowStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportRow {
     pub number: usize,
+    /// Which operation of that row this is, 1-based. A rule can turn one row into several —
+    /// a reinvested dividend is an income and a purchase — and they share the row's number
+    /// because they are one line of the file (ADR-0067).
+    #[serde(default = "one")]
+    pub part: usize,
 
     pub raw: BTreeMap<String, String>,
     pub draft: Option<TransactionDraft>,
     pub status: RowStatus,
     pub problems: Vec<ImportProblem>,
+}
+
+fn one() -> usize {
+    1
 }
 
 /// Replaces one source cell before parsing.
@@ -373,7 +382,7 @@ pub fn build_preview(
 
     let mut rows = Vec::with_capacity(parsed.rows.len());
     for (offset, raw) in raw_rows.into_iter().enumerate() {
-        rows.push(row::read(
+        rows.extend(row::read(
             offset + 1,
             raw,
             &file,

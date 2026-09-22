@@ -48,6 +48,16 @@
   already describes its broker. Everything a rule declares must hold, and a tie is **no** answer:
   two layouts fitting equally well means neither was recognised. The applied name comes back as
   `applied_template`, and "— detect —" in the wizard puts the core's own reading back.
+- What a row *becomes* can be a rule rather than a wording (`mapping::rules`, ADR-0067):
+  conditions over **mapped fields** (`equals`, `contains`, `sign`, `present`, `empty`, joined by
+  AND, first match wins) and a list of operations to emit, each setting fields to a constant or
+  to `{field}` of the same row. No arithmetic and no regex — the net-amount case is
+  `amount_basis`, and captures belong to column extraction, not here. An empty `emit` drops the
+  row like the skip list does. The parts share the file row's `number` and carry `part`, so
+  identity, problems and the commit are unchanged; a broker's id gains `#n` per part and a
+  `link`ed rule gives its parts one derived link id. A rule decides direction, so `directed`
+  does not flip it. The wizard offers two splits (`SPLITS` in `Import/labels.ts`) beside the
+  kinds; anything else is written in the layout.
 - Import is semi-automatic: everything auto-detected (`ParsedCsv::config`, `ImportPreview::mapping`) must stay overridable — parse settings, column mapping, kind/symbol aliases, per-cell `RowOverride`, `ImportMapping::amount_sign`. Never silently guess for the user.
 - A broker file carries direction in two channels: the type column says *what* happened, the sign of the amount says *which way*. One type value can span both directions (e.g. a card charge and its refund), so `checks::decide_amount_sign` correlates `sign(amount)` with `TransactionKind::cash_sign` across the whole file and calls it `Signed` only when ≥90% of cash-moving rows agree **and** both signs occur; a disagreeing row flips to `TransactionKind::reversed`. Buy/Sell vote but never flip — their direction is also carried by quantity and by having a security.
 - The two legs of one internal wording are linked by `build_preview` (same date, same source wording, opposite direction, link id derived from those three so the preview stays reproducible). A leg left without a partner is a one-sided transfer, which `calc` reads as money crossing the portfolio boundary — see ADR-0020.

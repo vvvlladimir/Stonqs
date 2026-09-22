@@ -50,6 +50,7 @@ fn import_enums_cross_as_screaming_snake_case() {
             "ignored_kinds",
             "kind_aliases",
             "new_securities",
+            "rules",
             "symbol_aliases"
         ]
     );

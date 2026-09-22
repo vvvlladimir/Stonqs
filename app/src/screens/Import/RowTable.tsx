@@ -95,7 +95,7 @@ export function RowTable({
           sizing="content"
           card={false}
           rows={rows.slice(0, SHOWN)}
-          rowKey={(row: PreviewRow) => String(row.number)}
+          rowKey={(row: PreviewRow) => `${row.number}.${row.part}`}
           rowProps={(row: PreviewRow) => ({ onClick: () => setFixing(row) })}
           columns={[
             {
@@ -104,7 +104,8 @@ export function RowTable({
               header: "№",
               align: "left",
               className: "dim",
-              cell: (row) => row.number,
+              // A rule can turn one file line into several operations; they share its number.
+              cell: (row) => (row.part > 1 ? `${row.number}.${row.part}` : row.number),
             },
             {
               key: "status",

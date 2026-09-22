@@ -49,6 +49,13 @@ the two a file means by comparing the amount against quantity × price across th
 says what it decided beside the other parse settings, where it can be set by hand. The
 distinction matters: read the wrong way round, every purchase's cost is off by its commission.
 
+**One line of a file can be two operations.** A reinvested dividend is income *and* a purchase;
+money moved between two of your own wallets is a leg out and a leg in. Where the broker prints
+such a line once, the transaction-kind list offers those two answers beside the ordinary kinds,
+and the preview then shows the line twice — numbered `12.1` and `12.2`, one row of the file, two
+operations. Both halves are written together or not at all, and a later corrected export still
+recognises each half separately.
+
 ## The app's own file
 
 The app writes its own transaction file, and reads it back with nothing to answer: the format

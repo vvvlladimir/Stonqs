@@ -43,11 +43,17 @@ pub(super) struct Cells<'a> {
     pub decimal_separator: char,
     /// 1-based, as the user sees it in the wizard.
     pub number: usize,
+    /// What the rule that produced this operation says instead of the row (ADR-0067). Empty
+    /// for a row that became one operation, which is every row of most files.
+    pub emitted: BTreeMap<ImportField, String>,
 }
 
 impl Cells<'_> {
     pub fn get(&self, field: ImportField) -> Option<&str> {
-        cell_of(self.raw, self.mapping, field)
+        match self.emitted.get(&field) {
+            Some(value) => Some(value.trim()).filter(|v| !v.is_empty()),
+            None => cell_of(self.raw, self.mapping, field),
+        }
     }
 
     /// The column a problem points at. Empty when nothing is mapped to the field — the message

@@ -101,6 +101,21 @@ pub(super) fn date(
 
 /// The operation, and whether the user chose to skip this wording entirely. An ignored value is
 /// not an unknown one: it stays visible in the preview so the choice can be taken back.
+/// Counts the file's own wording without deciding anything by it — a rule has already said
+/// what the operation is, and the wizard still lists what the file called it.
+pub(super) fn count_kind(cells: &Cells, stats: &mut BTreeMap<String, KindMapping>) {
+    let Some(value) = cells.get(ImportField::Kind) else {
+        return;
+    };
+    let stat = stats.entry(value.to_string()).or_insert(KindMapping {
+        value: value.to_string(),
+        count: 0,
+        kind: cells.mapping.kind_of(value),
+        ignored: cells.mapping.is_ignored(value),
+    });
+    stat.count += 1;
+}
+
 pub(super) fn kind(
     cells: &Cells,
     stats: &mut BTreeMap<String, KindMapping>,

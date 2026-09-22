@@ -9,6 +9,7 @@ mod aliases;
 mod field;
 mod keywords;
 mod normalize;
+mod rules;
 mod shape;
 
 use super::securities::SecurityDraft;
@@ -24,6 +25,8 @@ pub use keywords::default_kind_aliases;
 pub(crate) use keywords::kind_from_keywords;
 pub use normalize::normalize_alias;
 pub(crate) use normalize::normalize_header;
+pub use rules::{Condition, Emit, ImportRule, Sign, Test};
+pub(crate) use rules::{first_match, resolve};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -75,6 +78,12 @@ pub struct ImportMapping {
     /// file: a broker that prints both the total and the commission says which it meant.
     #[serde(default)]
     pub amount_basis: Option<AmountBasis>,
+
+    /// What a row becomes when its wording is not the whole answer: a condition and the
+    /// operations it produces. Read before `kind_aliases`, which stays the common case
+    /// (ADR-0067).
+    #[serde(default)]
+    pub rules: Vec<ImportRule>,
 
     #[serde(default)]
     pub new_securities: BTreeMap<String, SecurityDraft>,
@@ -240,6 +249,11 @@ impl ImportMapping {
 
     pub fn with_amount_basis(mut self, basis: AmountBasis) -> Self {
         self.amount_basis = Some(basis);
+        self
+    }
+
+    pub fn with_rule(mut self, rule: ImportRule) -> Self {
+        self.rules.push(rule);
         self
     }
 

@@ -7,6 +7,7 @@ mod brokers;
 mod canonical;
 mod external;
 mod ibflex;
+mod rules;
 mod shapes;
 mod signs;
 

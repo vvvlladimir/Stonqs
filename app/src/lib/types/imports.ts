@@ -45,6 +45,8 @@ export interface ImportMapping {
   amount_sign: AmountSign | null;
   /** Whether the amount column already has the row's charges in it. */
   amount_basis: AmountBasis | null;
+  /** What a row becomes when its wording is not the whole answer. */
+  rules: ImportRule[];
   /** Normalized file symbol mapped to a security to create. */
   new_securities: Record<string, SecurityDraft>;
 }
@@ -168,8 +170,35 @@ export interface TransactionDraft {
   note: string | null;
 }
 
+/** What a field has to look like for a rule to apply. */
+export type RuleTest =
+  | { equals: string }
+  | { contains: string }
+  | { sign: "POSITIVE" | "NEGATIVE" | "ZERO" }
+  | "present"
+  | "empty";
+
+export interface RuleCondition {
+  field: ImportField;
+}
+
+/** One operation a rule produces; `set` replaces the row's own values by field. */
+export interface RuleEmit {
+  kind: TransactionKind;
+  set?: Partial<Record<ImportField, string>>;
+}
+
+/** A match and the operations it produces — an empty `emit` leaves the row out. */
+export interface ImportRule {
+  when: Array<RuleCondition & RuleTest>;
+  emit: RuleEmit[];
+  link?: boolean;
+}
+
 export interface ImportRow {
   number: number;
+  /** Which operation of that file row this is, 1-based; several share one number. */
+  part: number;
   raw: Record<string, string>;
   draft: TransactionDraft | null;
   status: RowStatus;

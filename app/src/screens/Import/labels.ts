@@ -5,6 +5,7 @@ import type { BadgeTone } from "../../components/ui";
 import type {
   AmountBasis,
   AmountSign,
+  ImportRule,
   ImportProblem,
   ImportField,
   ImportMapping,
@@ -159,21 +160,71 @@ export function assignColumn(mapping: ImportMapping, column: string, field: Impo
  */
 export const SKIP = "SKIP";
 
-export type KindChoice = TransactionKind | typeof SKIP | "";
+/**
+ * The two-operation answers. One broker line is sometimes two operations — a reinvested
+ * dividend is an income and a purchase, a wallet move is a leg out and a leg in — and the
+ * wizard offers those two beside the single kinds rather than a rule editor. Anything more
+ * elaborate is written in the layout itself.
+ */
+export const SPLITS = {
+  "SPLIT:DIVIDEND+BUY": {
+    label: msg`a dividend and a purchase`,
+    emit: [{ kind: "DIVIDEND" as const, set: { QUANTITY: "0" } }, { kind: "BUY" as const }],
+    link: false,
+  },
+  "SPLIT:TRANSFER": {
+    label: msg`two legs of one move`,
+    emit: [{ kind: "TRANSFER_OUT" as const }, { kind: "TRANSFER_IN" as const }],
+    link: true,
+  },
+};
+
+export type SplitChoice = keyof typeof SPLITS;
+
+export type KindChoice = TransactionKind | typeof SKIP | SplitChoice | "";
+
+/** Whether an answer is one of the two-operation ones. */
+export function isSplit(choice: KindChoice): choice is SplitChoice {
+  return choice in SPLITS;
+}
+
+/** The split currently answering for this file value, if a rule says so. */
+export function splitOf(mapping: ImportMapping, value: string): SplitChoice | null {
+  const rule = ruleFor(mapping, value);
+  if (!rule) return null;
+  const kinds = rule.emit.map((e) => e.kind).join("+");
+  const found = Object.entries(SPLITS).find(([, s]) => s.emit.map((e) => e.kind).join("+") === kinds);
+  return (found?.[0] as SplitChoice) ?? null;
+}
+
+function ruleFor(mapping: ImportMapping, value: string): ImportRule | undefined {
+  const key = normalizeAlias(value);
+  return mapping.rules?.find((rule) =>
+    rule.when.some((c) => c.field === "KIND" && "equals" in c && normalizeAlias(c.equals) === key),
+  );
+}
 
 /** One decision covers every file value folded into the same line. */
 export function assignKinds(mapping: ImportMapping, values: string[], kind: KindChoice): ImportMapping {
   const kind_aliases = { ...mapping.kind_aliases };
   const ignored = new Set(mapping.ignored_kinds);
+  const keys = values.map(normalizeAlias);
+  // Every answer is exclusive with the others: a value has one of them, never two.
+  const rules = (mapping.rules ?? []).filter(
+    (rule) =>
+      !rule.when.some((c) => c.field === "KIND" && "equals" in c && keys.includes(normalizeAlias(c.equals))),
+  );
   for (const value of values) {
     const key = normalizeAlias(value);
-    // The two answers are exclusive: choosing a kind takes the value off the skip list.
     ignored.delete(key);
     delete kind_aliases[key];
     if (kind === SKIP) ignored.add(key);
-    else if (kind) kind_aliases[key] = kind;
+    else if (isSplit(kind)) {
+      const split = SPLITS[kind];
+      rules.push({ when: [{ field: "KIND", equals: value }], emit: split.emit, link: split.link });
+    } else if (kind) kind_aliases[key] = kind;
   }
-  return { ...mapping, kind_aliases, ignored_kinds: [...ignored] };
+  return { ...mapping, kind_aliases, ignored_kinds: [...ignored], rules };
 }
 
 export function assignAccounts(mapping: ImportMapping, values: string[], accountId: string): ImportMapping {
