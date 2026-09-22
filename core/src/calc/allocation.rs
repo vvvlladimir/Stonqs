@@ -467,12 +467,18 @@ pub fn allocation_by_account(
                     *quantities.entry((t.account_id.clone(), sid.clone())).or_default() += sign * t.quantity;
                 }
                 let delta = t.cash_delta();
-                if !delta.is_zero() {
+                let legs = t.foreign_charge_legs();
+                if !delta.is_zero() || !legs.is_empty() {
                     let account_id = settlement
                         .get(t.account_id.as_str())
                         .map(|id| (*id).to_string())
                         .unwrap_or_else(|| t.account_id.clone());
-                    *cash.entry((account_id, t.currency.clone())).or_default() += delta;
+                    *cash.entry((account_id.clone(), t.currency.clone())).or_default() += delta;
+                    // A charge billed elsewhere is a balance of its own, so it becomes its own
+                    // cash subject rather than being smeared over the trade's currency.
+                    for (currency, amount) in legs {
+                        *cash.entry((account_id.clone(), currency)).or_default() += amount;
+                    }
                 }
             }
         }

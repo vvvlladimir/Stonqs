@@ -368,38 +368,43 @@ fn apply_transaction(
 ) -> Result<()> {
     t.validate()?;
     let rate = resolve_rate(t, base, rates)?;
+    let charges = Charges::of(t, rate, base, rates)?;
 
     // Keep cash in transaction currency; FX conversion belongs to valuation.
     let delta = t.cash_delta();
     if !delta.is_zero() {
         *h.cash.entry(t.currency.clone()).or_insert(Decimal::ZERO) += delta;
     }
+    // A charge billed in another currency leaves that currency's balance, not this one's.
+    for (currency, amount) in t.foreign_charge_legs() {
+        *h.cash.entry(currency).or_insert(Decimal::ZERO) += amount;
+    }
 
     // Any non-zero quantity reveals the broker's effective trading step.
     let observed = t.security_id.clone().filter(|_| !t.quantity.is_zero());
 
     match t.kind {
-        TransactionKind::Buy => acquire(h, t, rate, options.cost_basis),
+        TransactionKind::Buy => acquire(h, t, &charges, options.cost_basis),
         TransactionKind::Sell => {
-            let realized = dispose(h, t, rate)?;
+            let realized = dispose(h, t, rate, &charges)?;
             h.realized_pnl_base += realized;
         }
 
         // Inbound delivery is an external flow at gross value; cost includes fees and taxes.
         TransactionKind::DeliveryInbound => {
-            acquire(h, t, rate, options.cost_basis);
+            acquire(h, t, &charges, options.cost_basis);
             h.external_flows.push(CashFlow {
                 date: t.date,
-                amount_base: t.gross_in_transaction_currency() * rate,
+                amount_base: charges.gross_base,
             });
         }
         // Outbound delivery records P/L and a matching negative gross external flow.
         TransactionKind::DeliveryOutbound => {
-            let realized = dispose(h, t, rate)?;
+            let realized = dispose(h, t, rate, &charges)?;
             h.realized_pnl_base += realized;
             h.external_flows.push(CashFlow {
                 date: t.date,
-                amount_base: -t.gross_in_transaction_currency() * rate,
+                amount_base: -charges.gross_base,
             });
         }
 
@@ -431,30 +436,30 @@ fn apply_transaction(
         }
 
         TransactionKind::Dividend => {
-            let net = t.gross_in_transaction_currency() * rate;
+            let net = charges.gross_base;
             h.dividends_base += net;
             // Record every dividend; the security ID is optional.
-            h.income.push(income_record(t, rate, t.amount * rate, net));
+            h.income.push(income_record(t, &charges, t.amount * rate, net));
             if let Some(p) = t.security_id.as_ref().and_then(|sid| h.positions.get_mut(sid)) {
                 p.dividends_base += net;
             }
         }
         TransactionKind::Interest => {
-            let net = t.gross_in_transaction_currency() * rate;
+            let net = charges.gross_base;
             h.interest_base += net;
-            h.income.push(income_record(t, rate, t.amount * rate, net));
+            h.income.push(income_record(t, &charges, t.amount * rate, net));
         }
         // Cashback and rewards are income too; they carry no security, so they land in the
         // income report by kind and nowhere near a position's dividend total.
         TransactionKind::Cashback | TransactionKind::Reward => {
-            let net = t.gross_in_transaction_currency() * rate;
-            h.income.push(income_record(t, rate, t.amount * rate, net));
+            let net = charges.gross_base;
+            h.income.push(income_record(t, &charges, t.amount * rate, net));
         }
         // Interest charges are negative income events; their components are not split here.
         TransactionKind::InterestCharge => {
             let net = -(t.amount * rate);
             h.interest_base += net;
-            h.income.push(income_record(t, rate, net, net));
+            h.income.push(income_record(t, &charges, net, net));
         }
 
         // Refunds reduce accumulated expenses instead of becoming income.
@@ -497,15 +502,15 @@ fn apply_transaction(
 }
 
 /// Builds an income event from precomputed gross and net base amounts.
-fn income_record(t: &Transaction, rate: Decimal, gross_base: Decimal, net_base: Decimal) -> IncomeRecord {
+fn income_record(t: &Transaction, charges: &Charges, gross_base: Decimal, net_base: Decimal) -> IncomeRecord {
     IncomeRecord {
         date: t.date,
         account_id: t.account_id.clone(),
         security_id: t.security_id.clone(),
         kind: t.kind,
         gross_base,
-        taxes_base: t.taxes * rate,
-        fees_base: t.fees * rate,
+        taxes_base: charges.taxes_base,
+        fees_base: charges.fees_base,
         net_base,
         currency: t.currency.clone(),
         // Keep the original-currency sign aligned with the base-currency amount.
@@ -554,6 +559,66 @@ pub(crate) fn resolve_rate(t: &Transaction, base: &str, rates: &dyn RateLookup) 
         })
 }
 
+/// The rate one charge is converted at. `fx_rate_to_base` is the rate of the *transaction's*
+/// currency, so a commission or a withholding billed in another one is converted at its own
+/// pair on the same day instead of inheriting a rate that belongs elsewhere.
+pub(crate) fn charge_rate(
+    t: &Transaction,
+    currency: &str,
+    base: &str,
+    rates: &dyn RateLookup,
+) -> Result<Decimal> {
+    if currency == t.currency {
+        return resolve_rate(t, base, rates);
+    }
+    if currency == base {
+        return Ok(Decimal::ONE);
+    }
+    rates
+        .rate_as_of(currency, base, t.date)?
+        .ok_or_else(|| Error::MissingMarketData {
+            kind: "fx rate",
+            key: format!("{currency}/{base}"),
+            date: t.date,
+        })
+}
+
+/// One transaction's charges and total, each converted the way it was actually paid.
+pub(crate) struct Charges {
+    pub fees_base: Decimal,
+    pub taxes_base: Decimal,
+    /// The total in the transaction's own currency. A charge billed elsewhere is carried back
+    /// into it through the base currency — both rates are of the same day, so this is
+    /// arithmetic over what was paid rather than a market cross rate.
+    pub gross_in_currency: Decimal,
+    pub gross_base: Decimal,
+}
+
+impl Charges {
+    pub fn of(t: &Transaction, rate: Decimal, base: &str, rates: &dyn RateLookup) -> Result<Self> {
+        let fees_base = t.fees * charge_rate(t, t.fees_in(), base, rates)?;
+        let taxes_base = t.taxes * charge_rate(t, t.taxes_in(), base, rates)?;
+        let foreign = t.fee_currency.as_ref().map_or(Decimal::ZERO, |_| fees_base)
+            + t.tax_currency.as_ref().map_or(Decimal::ZERO, |_| taxes_base);
+
+        let sign = Decimal::from(t.charge_sign());
+        let mut gross_in_currency = t.gross_in_transaction_currency();
+        let mut gross_base = gross_in_currency * rate;
+        if !foreign.is_zero() {
+            gross_base += sign * foreign;
+            if !rate.is_zero() {
+                gross_in_currency += sign * foreign / rate;
+            }
+        }
+        Ok(Charges {
+            fees_base,
+            taxes_base,
+            gross_in_currency,
+            gross_base,
+        })
+    }
+}
+
 // --- Lots -------------------------------------------------------------------
 
 /// Adds a lot using FIFO or a single weighted-average lot.
@@ -580,7 +645,7 @@ fn add_lot(position: &mut Position, lot: Lot, method: CostBasisMethod) {
 }
 
 /// Acquires securities with known cost (purchase or inbound delivery).
-fn acquire(h: &mut Holdings, t: &Transaction, rate: Decimal, method: CostBasisMethod) {
+fn acquire(h: &mut Holdings, t: &Transaction, charges: &Charges, method: CostBasisMethod) {
     let sid = t
         .security_id
         .clone()
@@ -590,9 +655,9 @@ fn acquire(h: &mut Holdings, t: &Transaction, rate: Decimal, method: CostBasisMe
         .entry(sid.clone())
         .or_insert_with(|| Position::new(&sid, &t.currency));
 
-    // Total cost is trade amount plus fees and taxes.
-    let cost = t.gross_in_transaction_currency();
-    let cost_base = cost * rate;
+    // Total cost is trade amount plus fees and taxes, whichever currency each was paid in.
+    let cost = charges.gross_in_currency;
+    let cost_base = charges.gross_base;
 
     position.quantity += t.quantity;
     position.move_on_account(&t.account_id, t.quantity);
@@ -656,14 +721,14 @@ fn take_lots(h: &mut Holdings, t: &Transaction) -> Result<Vec<Lot>> {
 }
 
 /// Disposes securities and records realized P/L in base currency.
-fn dispose(h: &mut Holdings, t: &Transaction, rate: Decimal) -> Result<Decimal> {
+fn dispose(h: &mut Holdings, t: &Transaction, rate: Decimal, charges: &Charges) -> Result<Decimal> {
     let sid = t.security_id.clone().expect("validated: disposal has security");
     let cost_currency = h.positions.get(&sid).map(|p| p.cost_currency.clone());
     let taken = take_lots(h, t)?;
     let removed_cost_base: Decimal = taken.iter().map(|l| l.quantity * l.cost_per_unit_base).sum();
     let removed_cost: Decimal = taken.iter().map(|l| l.quantity * l.cost_per_unit).sum();
 
-    let proceeds_base = t.gross_in_transaction_currency() * rate;
+    let proceeds_base = charges.gross_base;
     // Realized P/L is base-currency proceeds minus historical base cost.
     let realized = proceeds_base - removed_cost_base;
 
@@ -682,8 +747,8 @@ fn dispose(h: &mut Holdings, t: &Transaction, rate: Decimal) -> Result<Decimal> 
         quantity: t.quantity,
         // Keep gross proceeds, fees, and taxes separate for reporting.
         proceeds_base: t.amount * rate,
-        fees_base: t.fees * rate,
-        taxes_base: t.taxes * rate,
+        fees_base: charges.fees_base,
+        taxes_base: charges.taxes_base,
         cost_base: removed_cost_base,
         cost_in_currency: removed_cost,
         gain_base: realized,

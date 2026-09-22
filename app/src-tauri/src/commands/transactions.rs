@@ -128,8 +128,18 @@ pub struct TransactionInput {
     pub fees: Option<String>,
     pub taxes: Option<String>,
     pub currency: String,
+    /// Only when the charge was billed somewhere other than the operation itself.
+    pub fee_currency: Option<String>,
+    pub tax_currency: Option<String>,
     pub fx_rate_to_base: Option<String>,
     pub note: Option<String>,
+}
+
+/// A charge currency is recorded only when it differs from the operation's own.
+fn charge_currency(input: Option<String>, currency: &str) -> Option<String> {
+    input
+        .map(|c| sq_core::money::normalize_currency(&c))
+        .filter(|c| !c.is_empty() && c != currency)
 }
 
 /// Parses one wire input into a transaction. Shared with the plan commit, which writes the same
@@ -157,6 +167,8 @@ pub(crate) fn from_input(input: TransactionInput) -> UiResult<Transaction> {
         amount,
         fees: decimal(input.fees.as_deref(), "commission")?.unwrap_or_default(),
         taxes: decimal(input.taxes.as_deref(), "tax")?.unwrap_or_default(),
+        fee_currency: charge_currency(input.fee_currency, &currency),
+        tax_currency: charge_currency(input.tax_currency, &currency),
         currency,
         fx_rate_to_base: decimal(input.fx_rate_to_base.as_deref(), "fx rate")?,
         link_id: None,

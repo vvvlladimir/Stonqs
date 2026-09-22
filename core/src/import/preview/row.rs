@@ -60,6 +60,8 @@ pub(super) fn read(
             amount: amounts.amount.abs(),
             fees: amounts.fees.abs(),
             taxes: amounts.taxes.abs(),
+            fee_currency: fields::charge_currency(&cells, ImportField::FeeCurrency, &currency),
+            tax_currency: fields::charge_currency(&cells, ImportField::TaxCurrency, &currency),
             currency,
             fx_rate_to_base: amounts.fx_rate,
             link_id: cells.get(ImportField::LinkId).map(|s| s.to_string()),

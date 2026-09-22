@@ -34,6 +34,9 @@ export interface Transaction {
   fees: MoneyString;
   taxes: MoneyString;
   currency: string;
+  /** Currency the commission was billed in; null when it is the operation's own. */
+  fee_currency: string | null;
+  tax_currency: string | null;
   /** Transaction-time FX rate, or null to use the rate table. */
   fx_rate_to_base: MoneyString | null;
   link_id: string | null;
@@ -93,6 +96,8 @@ export interface TransactionInput {
   fees: string | null;
   taxes: string | null;
   currency: string;
+  fee_currency: string | null;
+  tax_currency: string | null;
   fx_rate_to_base: string | null;
   note: string | null;
 }

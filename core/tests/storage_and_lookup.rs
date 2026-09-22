@@ -620,3 +620,23 @@ fn quote(security_id: &str, date: chrono::NaiveDate, close: rust_decimal::Decima
         source: "yahoo".into(),
     }
 }
+
+/// A charge billed in its own currency survives the database; one billed in the transaction's
+/// own currency is stored as absent, so a row has a single spelling of "the same currency".
+#[test]
+fn a_charge_keeps_the_currency_it_was_billed_in() {
+    let (store, _cash, depot, apple) = seeded();
+    let foreign = Transaction::buy(&depot.id, &apple.id, d(2024, 3, 1), dec!(10), dec!(100), "USD")
+        .with_fees_in(dec!(12), "EUR")
+        .with_taxes_in(dec!(3), "usd");
+    store.save_transaction(&foreign).unwrap();
+
+    let read = store.transactions_for_account(&depot.id).unwrap();
+    assert_eq!(read[0].fee_currency.as_deref(), Some("EUR"));
+    assert_eq!(read[0].fees_in(), "EUR");
+    assert_eq!(
+        read[0].tax_currency, None,
+        "the transaction's own currency is not repeated"
+    );
+    assert_eq!(read[0].taxes_in(), "USD");
+}

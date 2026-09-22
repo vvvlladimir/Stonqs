@@ -37,18 +37,22 @@ pub fn cash_balances(
             continue;
         }
         let delta = t.cash_delta();
-        if delta.is_zero() {
+        // A charge billed in another currency is taken from that currency's balance.
+        let legs = t.foreign_charge_legs();
+        if delta.is_zero() && legs.is_empty() {
             continue;
         }
         // Account not in the list: skip rather than invent a balance nobody can see.
         let Some(target) = settlement.get(t.account_id.as_str()) else {
             continue;
         };
-        *balances
-            .entry((*target).to_string())
-            .or_default()
-            .entry(t.currency.clone())
-            .or_insert(Decimal::ZERO) += delta;
+        let account = balances.entry((*target).to_string()).or_default();
+        if !delta.is_zero() {
+            *account.entry(t.currency.clone()).or_insert(Decimal::ZERO) += delta;
+        }
+        for (currency, amount) in legs {
+            *account.entry(currency).or_insert(Decimal::ZERO) += amount;
+        }
     }
 
     balances

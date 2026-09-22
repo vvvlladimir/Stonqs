@@ -8,6 +8,13 @@ fn row_to_transaction(row: &Row<'_>) -> rusqlite::Result<Transaction> {
     let kind: String = row.get("kind")?;
     let date: String = row.get("date")?;
     let fx: Option<SqlDecimal> = row.get("fx_rate_to_base")?;
+    let currency: String = row.get("currency")?;
+    // A charge in the transaction's own currency is stored as NULL; a row written before that
+    // rule existed is folded back to it here, so nothing downstream sees two spellings of one
+    // currency.
+    let charge_currency = |column| -> rusqlite::Result<Option<String>> {
+        Ok(row.get::<_, Option<String>>(column)?.filter(|c| *c != currency))
+    };
     Ok(Transaction {
         id: row.get("id")?,
         account_id: row.get("account_id")?,
@@ -21,7 +28,9 @@ fn row_to_transaction(row: &Row<'_>) -> rusqlite::Result<Transaction> {
         amount: row.get::<_, SqlDecimal>("amount")?.0,
         fees: row.get::<_, SqlDecimal>("fees")?.0,
         taxes: row.get::<_, SqlDecimal>("taxes")?.0,
-        currency: row.get("currency")?,
+        fee_currency: charge_currency("fee_currency")?,
+        tax_currency: charge_currency("tax_currency")?,
+        currency,
         fx_rate_to_base: fx.map(|d| d.0),
         link_id: row.get("link_id")?,
         note: row.get("note")?,
@@ -38,8 +47,8 @@ impl Store {
         self.conn.execute(
             "INSERT INTO transactions
                  (id, account_id, security_id, kind, date, quantity, price, amount,
-                  fees, taxes, currency, fx_rate_to_base, link_id, note)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+                  fees, taxes, currency, fee_currency, tax_currency, fx_rate_to_base, link_id, note)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
              ON CONFLICT (id) DO UPDATE SET
                  account_id = excluded.account_id,
                  security_id = excluded.security_id,
@@ -51,6 +60,8 @@ impl Store {
                  fees = excluded.fees,
                  taxes = excluded.taxes,
                  currency = excluded.currency,
+                 fee_currency = excluded.fee_currency,
+                 tax_currency = excluded.tax_currency,
                  fx_rate_to_base = excluded.fx_rate_to_base,
                  link_id = excluded.link_id,
                  note = excluded.note",
@@ -66,6 +77,8 @@ impl Store {
                 dec_to_sql(t.fees),
                 dec_to_sql(t.taxes),
                 t.currency,
+                t.fee_currency.as_ref().filter(|c| **c != t.currency),
+                t.tax_currency.as_ref().filter(|c| **c != t.currency),
                 t.fx_rate_to_base.map(dec_to_sql),
                 t.link_id,
                 t.note,

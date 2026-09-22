@@ -42,6 +42,8 @@ export const FIELDS: Array<[ImportField, MessageDescriptor]> = [
   ["FEE", msg`Commission`],
   ["TAX", msg`Tax`],
   ["CURRENCY", msg`Currency`],
+  ["FEE_CURRENCY", msg`Commission currency`],
+  ["TAX_CURRENCY", msg`Tax currency`],
   ["FX_RATE", msg`FX rate`],
   ["ACCOUNT", msg`Account`],
   ["LINK_ID", msg`Link id`],

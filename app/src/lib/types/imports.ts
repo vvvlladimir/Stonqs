@@ -24,6 +24,8 @@ export type ImportField =
   | "FEE"
   | "TAX"
   | "CURRENCY"
+  | "FEE_CURRENCY"
+  | "TAX_CURRENCY"
   | "FX_RATE"
   | "ACCOUNT"
   | "LINK_ID"
@@ -142,6 +144,9 @@ export interface TransactionDraft {
   fees: MoneyString;
   taxes: MoneyString;
   currency: string;
+  /** Currency the charge was billed in; null when it is the operation's own. */
+  fee_currency: string | null;
+  tax_currency: string | null;
   fx_rate_to_base: MoneyString | null;
   link_id: string | null;
   note: string | null;

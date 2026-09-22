@@ -12,7 +12,13 @@ failed copy is `Error::Backup` and **aborts the upgrade**. A database with nothi
 not copied, and only the three newest copies are kept. An in-memory database passes `None` for the
 path and is never copied.
 
-Latest is `0025_price_index.sql`: `price_index (region, month, value, source)` — one consumer-price
+Latest is `0026_charge_currencies.sql`: `transactions.fee_currency` and `transactions.tax_currency`,
+both nullable, `NULL` meaning "the transaction's own currency" — which is what every existing row
+is, so nothing already stored changes value. A charge equal to the transaction's currency is
+written as `NULL` and folded back to it on read, so one row never carries two spellings of one
+currency (ADR-0064).
+
+Before that, `0025_price_index.sql`: `price_index (region, month, value, source)` — one consumer-price
 level per region and month, the month stored as its first day so lexicographic order stays
 chronological, and `source` recorded because index bases differ between publishers (2015=100 vs
 2010=100), so a ratio is only meaningful inside one series. `index_coverage` mirrors

@@ -208,6 +208,23 @@ impl ImportField {
                 "waluta",
                 "валюта",
             ],
+            ImportField::FeeCurrency => &[
+                "feecurrency",
+                "feecurrencycode",
+                "commissioncurrency",
+                "feeccy",
+                "commissionccy",
+                "gebührenwährung",
+                "валютакомиссии",
+            ],
+            ImportField::TaxCurrency => &[
+                "taxcurrency",
+                "taxcurrencycode",
+                "withholdingtaxcurrency",
+                "taxccy",
+                "steuerwährung",
+                "валютаналога",
+            ],
             ImportField::FxRate => &[
                 "fxrate",
                 "exchangerate",

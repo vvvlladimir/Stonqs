@@ -168,3 +168,56 @@ fn a_cost_rate_counts_the_commission_the_cost_basis_swallowed() {
     let refunded = costs_paid(&with_refund, "EUR", d(2024, 1, 1), d(2024, 12, 31), &rates).unwrap();
     assert_eq!(refunded.fees_base, dec!(9.90));
 }
+
+/// A commission billed in another currency than the trade.
+/// Buy 10 × 100 EUR = 1000 EUR; commission 12 USD at 0.90 = 10.80 EUR.
+/// Cost basis = 1000 + 10.80 = 1010.80 EUR, i.e. 101.08 per share.
+/// Cash: 1000 EUR leave the euro balance, 12 USD leave the dollar one.
+#[test]
+fn a_commission_in_another_currency_is_converted_at_its_own_rate() {
+    let rates = FakeRates::new().with("USD", "EUR", d(2024, 3, 1), dec!(0.90));
+    let buy =
+        Transaction::buy(ACC, AAPL, d(2024, 3, 1), dec!(10), dec!(100), "EUR").with_fees_in(dec!(12), "USD");
+
+    let holdings = build_holdings(&[buy], "EUR", &rates).unwrap();
+    let position = &holdings.positions[AAPL];
+
+    assert_eq!(position.cost_basis_base, dec!(1010.80));
+    assert_eq!(position.cost_basis, dec!(1010.80));
+    assert_eq!(position.lots[0].cost_per_unit_base, dec!(101.080));
+
+    assert_eq!(holdings.cash["EUR"], dec!(-1000));
+    assert_eq!(holdings.cash["USD"], dec!(-12));
+
+    // A cost rate asks what the portfolio paid, so the buy commission counts once, in base.
+    let costs = costs_paid(
+        &[
+            Transaction::buy(ACC, AAPL, d(2024, 3, 1), dec!(10), dec!(100), "EUR")
+                .with_fees_in(dec!(12), "USD"),
+        ],
+        "EUR",
+        d(2024, 1, 1),
+        d(2024, 12, 31),
+        &rates,
+    )
+    .unwrap();
+    assert_eq!(costs.fees_base, dec!(10.80));
+}
+
+/// Withholding deducted where the issuer sits, not where the payment lands.
+/// Dividend 100 EUR, tax 15 USD at 0.90 = 13.50 EUR, so net = 100 − 13.50 = 86.50 EUR.
+#[test]
+fn withholding_in_another_currency_reduces_the_payment_at_its_own_rate() {
+    let rates = FakeRates::new().with("USD", "EUR", d(2024, 6, 3), dec!(0.90));
+    let dividend =
+        Transaction::dividend(ACC, AAPL, d(2024, 6, 3), dec!(100), "EUR").with_taxes_in(dec!(15), "USD");
+
+    let holdings = build_holdings(&[dividend], "EUR", &rates).unwrap();
+
+    assert_eq!(holdings.dividends_base, dec!(86.50));
+    assert_eq!(holdings.income[0].taxes_base, dec!(13.50));
+    assert_eq!(holdings.income[0].net_base, dec!(86.50));
+    // The euro balance receives the whole payment; the withholding leaves the dollar one.
+    assert_eq!(holdings.cash["EUR"], dec!(100));
+    assert_eq!(holdings.cash["USD"], dec!(-15));
+}

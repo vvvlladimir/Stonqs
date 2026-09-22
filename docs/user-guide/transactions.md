@@ -19,6 +19,13 @@ transaction's currency is not the portfolio's base currency the form asks for th
 that day, and that rate stays fixed on the transaction afterwards: later moves in the market do not
 rewrite history.
 
+**A commission or a tax in another currency.** Beside the commission and the tax the form has a
+currency box each, and leaving it empty means the operation's own currency — which is the usual
+case. Filling it records what the broker actually billed: a commission taken in dollars on a euro
+trade leaves the dollar balance, not the euro one, and is converted at the rate of its own
+currency on that day. It still counts as part of what the shares cost, so a purchase commission
+is never also listed among the fees paid.
+
 A whole broker export does not belong here — that is the Import screen, which reads the file,
 matches the instruments and writes the rows in one pass.
 

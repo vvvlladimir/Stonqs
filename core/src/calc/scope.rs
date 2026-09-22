@@ -142,8 +142,14 @@ fn as_external_cash(t: &Transaction) -> Transaction {
         _ => TransactionKind::Deposit,
     };
     out.amount = amount;
-    out.fees = rust_decimal::Decimal::ZERO;
-    out.taxes = rust_decimal::Decimal::ZERO;
+    // Only what `amount` just absorbed is cleared: a charge billed in another currency is not
+    // in this total and would be money the lens made disappear.
+    if out.fee_currency.is_none() {
+        out.fees = rust_decimal::Decimal::ZERO;
+    }
+    if out.tax_currency.is_none() {
+        out.taxes = rust_decimal::Decimal::ZERO;
+    }
     out.security_id = None;
     out.quantity = rust_decimal::Decimal::ZERO;
     out.price = rust_decimal::Decimal::ZERO;

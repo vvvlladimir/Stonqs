@@ -95,6 +95,8 @@ export function Transactions({ focus }: { focus?: string | null }) {
     fees: null,
     taxes: null,
     currency: firstDepot?.currency ?? accounts.data[0]?.currency ?? "EUR",
+    fee_currency: null,
+    tax_currency: null,
     fx_rate_to_base: null,
     note: null,
   });
@@ -112,6 +114,8 @@ export function Transactions({ focus }: { focus?: string | null }) {
       fees: row.fees,
       taxes: row.taxes,
       currency: row.currency,
+      fee_currency: row.fee_currency,
+      tax_currency: row.tax_currency,
       fx_rate_to_base: row.fx_rate_to_base,
       note: row.note,
     });

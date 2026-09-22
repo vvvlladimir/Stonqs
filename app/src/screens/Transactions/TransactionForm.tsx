@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import { Field, FormDialog } from "../../components/ui";
+import { Field, FieldPair, FormDialog } from "../../components/ui";
 import { EDITABLE_TRANSACTION_KINDS, transactionLabel } from "../../lib/kinds";
 import type { AccountKind, TransactionInput, TransactionKind } from "../../lib/types";
 import { QUANTITY_KINDS, SECURITY_KINDS } from "./model";
@@ -13,6 +13,11 @@ interface FormProps {
   onCancel: () => void;
   pending: boolean;
   error: Error | null;
+}
+
+/** A currency code as typed: upper case, and empty means the transaction's own. */
+function code(value: string): string | null {
+  return value.toUpperCase().trim() || null;
 }
 
 export function TransactionForm({
@@ -127,21 +132,44 @@ export function TransactionForm({
         />
       </Field>
 
-      <Field label={t`Commission`} hint={t`On a buy it joins the cost basis; on a sell it reduces proceeds`}>
-        <input
-          inputMode="decimal"
-          value={draft.fees ?? ""}
-          onChange={(e) => onChange({ ...draft, fees: e.target.value || null })}
-        />
-      </Field>
+      <FieldPair>
+        <Field
+          label={t`Commission`}
+          hint={t`On a buy it joins the cost basis; on a sell it reduces proceeds`}
+        >
+          <input
+            inputMode="decimal"
+            value={draft.fees ?? ""}
+            onChange={(e) => onChange({ ...draft, fees: e.target.value || null })}
+          />
+        </Field>
+        <Field label={t`Currency`} hint={t`Empty: the transaction's own`}>
+          <input
+            value={draft.fee_currency ?? ""}
+            maxLength={3}
+            placeholder={draft.currency}
+            onChange={(e) => onChange({ ...draft, fee_currency: code(e.target.value) })}
+          />
+        </Field>
+      </FieldPair>
 
-      <Field label={t`Tax`}>
-        <input
-          inputMode="decimal"
-          value={draft.taxes ?? ""}
-          onChange={(e) => onChange({ ...draft, taxes: e.target.value || null })}
-        />
-      </Field>
+      <FieldPair>
+        <Field label={t`Tax`}>
+          <input
+            inputMode="decimal"
+            value={draft.taxes ?? ""}
+            onChange={(e) => onChange({ ...draft, taxes: e.target.value || null })}
+          />
+        </Field>
+        <Field label={t`Currency`} hint={t`Empty: the transaction's own`}>
+          <input
+            value={draft.tax_currency ?? ""}
+            maxLength={3}
+            placeholder={draft.currency}
+            onChange={(e) => onChange({ ...draft, tax_currency: code(e.target.value) })}
+          />
+        </Field>
+      </FieldPair>
 
       <Field
         label={t`Rate to the base currency`}

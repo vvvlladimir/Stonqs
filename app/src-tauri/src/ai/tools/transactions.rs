@@ -338,6 +338,10 @@ pub(super) fn transaction_create(context: &ToolContext, args: &Value) -> AiResul
         currency: sq_core::money::normalize_currency(
             &optional(args, "currency").unwrap_or_else(|| account.currency.clone()),
         ),
+        // A charge billed in another currency is not something the model is asked for: the
+        // catalogue takes one figure per charge, in the operation's own currency.
+        fee_currency: None,
+        tax_currency: None,
         // The rate of the day is fixed on the transaction when there is one to fix; left absent,
         // valuation reads the rate on file for that date (`.claude/rules/money-and-fx.md`).
         fx_rate_to_base: None,

@@ -26,6 +26,8 @@ function toInput(draft: Transaction): TransactionInput {
     fees: draft.fees,
     taxes: draft.taxes,
     currency: draft.currency,
+    fee_currency: draft.fee_currency,
+    tax_currency: draft.tax_currency,
     fx_rate_to_base: draft.fx_rate_to_base,
     note: draft.note,
   };

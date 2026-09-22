@@ -16,6 +16,13 @@ purchase is part of what the shares cost, while a standalone fee or tax is a cha
 about fees paid over a period means charges; a question about what the portfolio costs to run means
 both, expressed as a share of the average value.
 
+A commission and a tax do not have to be in the same currency as the operation they belong to: a
+commission is charged where the trade was executed and withholding is deducted where the issuer
+sits. Each is then converted at the rate of its own currency on the operation's date, and the
+money leaves the balance held in that currency rather than the one the trade settled in. The
+figure is not an estimate made today — it is fixed at the day it was paid, like every other
+converted amount.
+
 Neither income nor costs are a return on their own. Income is *part* of total return, alongside
 price movement; a yield computed from income and value is a separate figure and should be named as
 such rather than compared to the return.

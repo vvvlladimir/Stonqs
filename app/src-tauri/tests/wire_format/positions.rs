@@ -64,6 +64,7 @@ fn flattened_rows_keep_both_halves() {
             "amount_base",
             "currency",
             "date",
+            "fee_currency",
             "fees",
             "fx_rate_to_base",
             "id",
@@ -75,6 +76,7 @@ fn flattened_rows_keep_both_halves() {
             "quantity",
             "security_id",
             "symbol",
+            "tax_currency",
             "taxes"
         ]
     );

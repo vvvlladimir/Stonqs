@@ -2081,6 +2081,10 @@ msgid "Commission and tax ({0}) exceed the transaction amount ({1}) — the colu
 msgstr "Комиссия и налог ({0}) больше суммы операции ({1}) — похоже, колонки перепутаны."
 
 #: src/screens/Import/labels.ts
+msgid "Commission currency"
+msgstr "Валюта комиссии"
+
+#: src/screens/Import/labels.ts
 msgid "Commit"
 msgstr "Запись"
 
@@ -2249,6 +2253,7 @@ msgstr "валюта"
 #: src/screens/Import/RowTable.tsx
 #: src/screens/Onboarding.tsx
 #: src/screens/Securities/SecurityForm.tsx
+#: src/screens/Transactions/TransactionForm.tsx
 msgid "Currency"
 msgstr "Валюта"
 
@@ -2934,6 +2939,10 @@ msgstr "Пусто — валюта самого инструмента"
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Empty reads ISO dates and Unix timestamps; otherwise e.g. %d.%m.%Y"
 msgstr "Пусто — даты ISO и метки времени Unix; иначе, например, %d.%m.%Y"
+
+#: src/screens/Transactions/TransactionForm.tsx
+msgid "Empty: the transaction's own"
+msgstr "Пусто — валюта операции"
 
 #: src/components/domain/AssignDialog.tsx
 msgid "Enable"
@@ -7172,6 +7181,10 @@ msgstr "Налог"
 #: src/screens/Performance/Metrics.tsx
 msgid "Tax against the capital at work, dividend withholding included."
 msgstr "Налоги к работающему капиталу, включая удержанные с дивидендов."
+
+#: src/screens/Import/labels.ts
+msgid "Tax currency"
+msgstr "Валюта налога"
 
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "Tax paid in the period against the capital at work, dividend withholding included."

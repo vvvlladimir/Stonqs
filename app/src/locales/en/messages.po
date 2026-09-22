@@ -2081,6 +2081,10 @@ msgid "Commission and tax ({0}) exceed the transaction amount ({1}) — the colu
 msgstr "Commission and tax ({0}) exceed the transaction amount ({1}) — the columns look swapped."
 
 #: src/screens/Import/labels.ts
+msgid "Commission currency"
+msgstr "Commission currency"
+
+#: src/screens/Import/labels.ts
 msgid "Commit"
 msgstr "Commit"
 
@@ -2249,6 +2253,7 @@ msgstr "currency"
 #: src/screens/Import/RowTable.tsx
 #: src/screens/Onboarding.tsx
 #: src/screens/Securities/SecurityForm.tsx
+#: src/screens/Transactions/TransactionForm.tsx
 msgid "Currency"
 msgstr "Currency"
 
@@ -2934,6 +2939,10 @@ msgstr "Empty means the instrument's own currency"
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Empty reads ISO dates and Unix timestamps; otherwise e.g. %d.%m.%Y"
 msgstr "Empty reads ISO dates and Unix timestamps; otherwise e.g. %d.%m.%Y"
+
+#: src/screens/Transactions/TransactionForm.tsx
+msgid "Empty: the transaction's own"
+msgstr "Empty: the transaction's own"
 
 #: src/components/domain/AssignDialog.tsx
 msgid "Enable"
@@ -7177,6 +7186,10 @@ msgstr "Tax"
 #: src/screens/Performance/Metrics.tsx
 msgid "Tax against the capital at work, dividend withholding included."
 msgstr "Tax against the capital at work, dividend withholding included."
+
+#: src/screens/Import/labels.ts
+msgid "Tax currency"
+msgstr "Tax currency"
 
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "Tax paid in the period against the capital at work, dividend withholding included."

@@ -442,6 +442,8 @@ mod tests {
             fees: Decimal::ZERO,
             taxes: Decimal::ZERO,
             currency: "EUR".into(),
+            fee_currency: None,
+            tax_currency: None,
             fx_rate_to_base: None,
             link_id: None,
             note: None,

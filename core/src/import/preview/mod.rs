@@ -52,6 +52,11 @@ pub struct TransactionDraft {
     #[serde(with = "rust_decimal::serde::str")]
     pub taxes: Decimal,
     pub currency: Currency,
+    /// Set only when the file bills the charge somewhere other than the operation itself.
+    #[serde(default)]
+    pub fee_currency: Option<Currency>,
+    #[serde(default)]
+    pub tax_currency: Option<Currency>,
     #[serde(default, with = "rust_decimal::serde::str_option")]
     pub fx_rate_to_base: Option<Decimal>,
     pub link_id: Option<String>,
@@ -80,6 +85,8 @@ impl TransactionDraft {
         t.price = self.price;
         t.fees = self.fees;
         t.taxes = self.taxes;
+        t.fee_currency = self.fee_currency.clone().filter(|c| *c != t.currency);
+        t.tax_currency = self.tax_currency.clone().filter(|c| *c != t.currency);
         t.fx_rate_to_base = self.fx_rate_to_base;
         t.link_id = self.link_id.clone();
         t.note = self.note.clone();

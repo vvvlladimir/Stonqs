@@ -16,6 +16,15 @@
 - FX is a chain (`FxService::ensure_rates`, ADR-0051): `sources::FX_ORDER`: ECB → Frankfurter (ECB mirror) → Yahoo `BASEQUOTE=X`; the pair's first covering source upserts, a later one only fills (`save_fx_rates_from(.., false)`). A source is skipped for a pair when `FxProvider::covers` says it does not publish one of the currencies; an **error** falls through to the next, an **empty** answer is final — a weekend must not pull a second source into the series. `ecb.rs::PUBLISHED` is today's ECB list, so RUB, ARS etc. go straight to the market source.
 - Inverse rates = `1 / rate`. Cross-rates are synthesized only inside `EcbProvider` (both legs from one source, one date) — not during DB lookup.
 - The trade's FX rate is fixed on the transaction at conversion time, not rewritten when rates move later. Doesn't apply when transaction currency == base currency (rate is 1 by definition).
+- A charge carries the currency it was billed in (`Transaction::fee_currency` / `tax_currency`,
+  absent = the transaction's own, ADR-0064). A total never mixes currencies:
+  `gross_in_transaction_currency` folds in only the charges in that currency, a foreign one is a
+  cash movement of its own (`foreign_charge_legs`) and is converted at *its* pair's rate on the
+  transaction's date (`calc::holdings::charge_rate`) — `fx_rate_to_base` belongs to the
+  transaction's currency and is never lent to another pair. `calc::holdings::Charges` carries a
+  foreign charge back into the trade's currency through the base one so the lot's cost stays
+  complete; both rates are of the same day, which is arithmetic over what was paid, not a cross
+  rate synthesized at lookup.
 - Buy commission goes into cost basis; never also counted in `Holdings::fees_base`. `Holdings::charges` records only standalone Fee/Tax operations. A cost *rate* asks the opposite question and must count that commission, so it goes through `calc::costs_paid`, never through the charges rollups — see ADR-0024.
 - `Position::accounts` values sum to `quantity`. A disposal from an account that never held the shares goes negative there rather than being smeared over other accounts — that's a data inconsistency, and hiding it forges the answer to "where is it".
 - Quotes are stored already split-adjusted; `corporate_actions` adjust lots, not quotes.

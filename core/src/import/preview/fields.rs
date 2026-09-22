@@ -273,6 +273,12 @@ pub(super) fn amounts(cells: &Cells, problems: &mut Vec<ImportProblem>) -> Amoun
     }
 }
 
+/// The currency a fee or a tax was billed in, kept only when it differs from the operation's —
+/// a file that repeats the same code in every column says nothing new.
+pub(super) fn charge_currency(cells: &Cells, field: ImportField, currency: &Currency) -> Option<Currency> {
+    cells.get(field).map(normalize_currency).filter(|c| c != currency)
+}
+
 /// The type column says *what* happened and the sign says *which way*. One wording can span both
 /// directions, so a row whose sign disagrees with its kind is flipped rather than refused.
 pub(super) fn directed(

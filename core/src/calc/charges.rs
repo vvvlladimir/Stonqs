@@ -141,7 +141,9 @@ fn cost_entries(
     let mut out = Vec::new();
     for t in transactions.iter().filter(|t| t.date >= from && t.date <= to) {
         let rate = resolve_rate(t, base, rates)?;
-        let (mut fees, mut taxes) = (t.fees * rate, t.taxes * rate);
+        // Each charge at the rate of the currency it was billed in, not of the trade's.
+        let mut fees = t.fees * super::holdings::charge_rate(t, t.fees_in(), base, rates)?;
+        let mut taxes = t.taxes * super::holdings::charge_rate(t, t.taxes_in(), base, rates)?;
         match t.kind {
             TransactionKind::Fee => fees += t.amount * rate,
             TransactionKind::FeeRefund => fees -= t.amount * rate,
