@@ -31,11 +31,10 @@ export function TransferPairs({ enabled }: { enabled: boolean }) {
     >
       <p className="muted">
         <Trans>
-          Each of these is a payment out of one account and a payment into another, of the same size
-          within days. If it is one move — a portfolio carried between brokers, money sent to your own
-          account — join the two: the app then stops reading it as money leaving the portfolio and
-          coming back, which distorts every return figure. If they are genuinely two separate payments,
-          leave them alone.
+          Each of these is a payment out of one account and a payment into another, of the same size within
+          days. If it is one move — a portfolio carried between brokers, money sent to your own account — join
+          the two: the app then stops reading it as money leaving the portfolio and coming back, which
+          distorts every return figure. If they are genuinely two separate payments, leave them alone.
         </Trans>
       </p>
       {link.error && <ErrorText>{String(link.error)}</ErrorText>}
@@ -46,11 +45,7 @@ export function TransferPairs({ enabled }: { enabled: boolean }) {
             box
             wrap
             title={`${pair.account_out_name} → ${pair.account_in_name}`}
-            sub={
-              pair.date_out === pair.date_in
-                ? pair.date_out
-                : `${pair.date_out} → ${pair.date_in}`
-            }
+            sub={pair.date_out === pair.date_in ? pair.date_out : `${pair.date_out} → ${pair.date_in}`}
             value={
               <>
                 <Money value={pair.amount_out} />
@@ -66,11 +61,7 @@ export function TransferPairs({ enabled }: { enabled: boolean }) {
             }
             end={
               <Buttons>
-                <button
-                  className="btn btn--sm"
-                  disabled={link.isPending}
-                  onClick={() => link.mutate(pair)}
-                >
+                <button className="btn btn--sm" disabled={link.isPending} onClick={() => link.mutate(pair)}>
                   <Trans>One move</Trans>
                 </button>
               </Buttons>

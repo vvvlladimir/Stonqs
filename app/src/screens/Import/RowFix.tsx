@@ -34,8 +34,10 @@ export function RowFix({
   }, [columns, row.problems]);
 
   const fields: Array<[ImportField, string | null]> = useMemo(
-    () => [...columns.map(([field, column]) => [field, column] as [ImportField, string | null]),
-           ...extra.map((field) => [field, null] as [ImportField, string | null])],
+    () => [
+      ...columns.map(([field, column]) => [field, column] as [ImportField, string | null]),
+      ...extra.map((field) => [field, null] as [ImportField, string | null]),
+    ],
     [columns, extra],
   );
 

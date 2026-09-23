@@ -83,8 +83,7 @@ export function CommitStep({
             {result.imported} written, {result.skipped} skipped.
           </Trans>
           {result.updated > 0 && t` ${result.updated} replaced a row the broker restated.`}
-          {result.similar > 0 &&
-            t` ${result.similar} left out: an operation like them is already stored.`}
+          {result.similar > 0 && t` ${result.similar} left out: an operation like them is already stored.`}
           {result.created_securities.length > 0 &&
             t` Instruments created: ${result.created_securities.join(", ")}.`}{" "}
           <Trans>The file is in the database — writing it again adds nothing.</Trans>
