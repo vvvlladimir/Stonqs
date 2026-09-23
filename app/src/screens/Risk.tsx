@@ -56,7 +56,6 @@ export function Risk() {
     <Page
       archetype="analysis"
       title={t`Risk`}
-      asOf={`${formatDay(range.from)} — ${formatDay(range.to)}`}
       controls={
         <>
           <Choice

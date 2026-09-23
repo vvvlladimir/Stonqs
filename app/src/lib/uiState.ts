@@ -49,6 +49,24 @@ export interface UiState {
   ai_briefs: Record<string, Brief>;
   /** What the updater already asked about; only the frontend acts on it. */
   updates: UpdatePrefs;
+  /** How the navigation is arranged. */
+  nav: NavPrefs;
+}
+
+/**
+ * The navigation's arrangement, stored as bare ids: which screens exist is `components/Nav`'s
+ * business, and it drops an id it does not know and appends one missing here in shipped order,
+ * so a screen added by a later build lands at the end of its section rather than nowhere.
+ */
+export interface NavPrefs {
+  /** Pinned screens after Overview, in display order; on a phone the first three are the tabs. */
+  favorites: string[];
+  /** Section ids in display order. */
+  sections: string[];
+  /** Screen ids of each section, in display order. */
+  screens: Record<string, string[]>;
+  /** The expanded section, or `null` when all are folded. */
+  open: string | null;
 }
 
 /**
@@ -111,6 +129,13 @@ export const DEFAULT_UI: UiState = {
   ai_panel_width: 420,
   ai_briefs: {},
   updates: { auto: true, skip: null, checked: null },
+  // The three screens the phone's bottom bar carried before favourites existed.
+  nav: {
+    favorites: ["positions", "transactions", "allocation"],
+    sections: [],
+    screens: {},
+    open: "portfolio",
+  },
 };
 
 /** Parses versioned or plugin-provided UI JSON with safe defaults. */
@@ -138,6 +163,23 @@ export function parseUiState(raw: unknown): UiState {
     ai_panel_width: clampPanel(value.ai_panel_width),
     ai_briefs: briefs(value.ai_briefs),
     updates: updatePrefs(value.updates),
+    nav: navPrefs(value.nav),
+  };
+}
+
+function navPrefs(value: unknown): NavPrefs {
+  const prefs = value as Partial<NavPrefs> | undefined;
+  if (!prefs || typeof prefs !== "object") return DEFAULT_UI.nav;
+  const ids = (list: unknown) =>
+    Array.isArray(list) ? list.filter((id): id is string => typeof id === "string") : [];
+  const screens: Record<string, string[]> = {};
+  if (prefs.screens && typeof prefs.screens === "object")
+    for (const [section, list] of Object.entries(prefs.screens)) screens[section] = ids(list);
+  return {
+    favorites: Array.isArray(prefs.favorites) ? ids(prefs.favorites) : DEFAULT_UI.nav.favorites,
+    sections: ids(prefs.sections),
+    screens,
+    open: typeof prefs.open === "string" || prefs.open === null ? prefs.open : DEFAULT_UI.nav.open,
   };
 }
 

@@ -1,28 +1,7 @@
-import { msg } from "@lingui/core/macro";
-import { Trans, useLingui } from "@lingui/react/macro";
-import { Fragment, useEffect, useState } from "react";
+import { useLingui } from "@lingui/react";
+import { Trans } from "@lingui/react/macro";
+import { useEffect, useState } from "react";
 
-import {
-  BankIcon,
-  BellIcon,
-  CertificateIcon,
-  ChartLineUpIcon,
-  ChartPieSliceIcon,
-  ArrowsLeftRightIcon,
-  CalendarDotsIcon,
-  CoinsIcon,
-  DotsThreeCircleIcon,
-  EyeIcon,
-  FileArrowUpIcon,
-  FileTextIcon,
-  GearIcon,
-  ListBulletsIcon,
-  ReceiptIcon,
-  ScalesIcon,
-  SquaresFourIcon,
-  WaveSineIcon,
-  type Icon,
-} from "@phosphor-icons/react";
 import { onDataChanged } from "./lib/api";
 import { affects, useAlertsUnseen, useInvalidate, useProfiles, useStatus } from "./lib/queries";
 import { needsPick } from "./lib/profiles";
@@ -33,7 +12,6 @@ import { useTheme } from "./lib/theme";
 import { useUiState } from "./lib/uiState";
 import { UpdatesProvider } from "./lib/updates";
 import { AsOfProvider } from "./lib/asOf";
-import type { MessageDescriptor } from "@lingui/core";
 import { NavProvider, type ScreenId } from "./lib/nav";
 import { noteChange } from "./lib/freshness";
 import { Dashboard } from "./screens/dashboard/Dashboard";
@@ -59,61 +37,15 @@ import { Import } from "./screens/Import";
 import { SyncChip } from "./components/domain/MarketRefresh";
 import { ScopePicker } from "./components/domain/ScopePicker";
 import { AsOfBanner, AsOfPicker } from "./components/domain/AsOfPicker";
+import { Nav } from "./components/Nav";
 import { SecurityCardProvider } from "./components/domain/SecurityCardProvider";
 import { UpdateDialog } from "./components/domain/UpdateDialog";
-import { ListRow, Modal, ToastProvider, TooltipLayer } from "./components/ui";
-
-interface ScreenDef {
-  id: string;
-  title: MessageDescriptor;
-  icon: Icon;
-  group: "portfolio" | "analysis" | "data";
-  /** Screens shown in the mobile bottom navigation. */
-  primary?: boolean;
-}
-
-const SCREENS = [
-  { id: "dashboard", title: msg`Overview`, icon: SquaresFourIcon, group: "portfolio", primary: true },
-
-  { id: "positions", title: msg`Positions`, icon: ListBulletsIcon, group: "portfolio", primary: true },
-  { id: "transactions", title: msg`Transactions`, icon: ReceiptIcon, group: "portfolio", primary: true },
-  { id: "accounts", title: msg`Accounts`, icon: BankIcon, group: "portfolio" },
-  { id: "securities", title: msg`Instruments`, icon: CertificateIcon, group: "portfolio" },
-  { id: "watchlist", title: msg`Watchlist`, icon: EyeIcon, group: "portfolio" },
-  { id: "plans", title: msg`Plans`, icon: CalendarDotsIcon, group: "portfolio" },
-  { id: "alerts", title: msg`Alerts`, icon: BellIcon, group: "portfolio" },
-
-  { id: "performance", title: msg`Performance`, icon: ChartLineUpIcon, group: "analysis" },
-  { id: "trades", title: msg`Trades`, icon: ArrowsLeftRightIcon, group: "analysis" },
-  { id: "risk", title: msg`Risk`, icon: WaveSineIcon, group: "analysis" },
-  { id: "allocation", title: msg`Allocation`, icon: ChartPieSliceIcon, group: "analysis", primary: true },
-  { id: "rebalance", title: msg`Rebalance`, icon: ScalesIcon, group: "analysis" },
-  { id: "income", title: msg`Income`, icon: CoinsIcon, group: "analysis" },
-
-  { id: "import", title: msg`Import`, icon: FileArrowUpIcon, group: "data" },
-  { id: "reports", title: msg`Reports`, icon: FileTextIcon, group: "data" },
-  { id: "settings", title: msg`Settings`, icon: GearIcon, group: "data" },
-] as const satisfies readonly {
-  id: ScreenId;
-  title: MessageDescriptor;
-  icon: Icon;
-  group: string;
-  primary?: boolean;
-}[];
-
-const NAV: readonly ScreenDef[] = SCREENS;
-
-const GROUPS: { id: ScreenDef["group"]; label: MessageDescriptor }[] = [
-  { id: "portfolio", label: msg`Portfolio` },
-  { id: "analysis", label: msg`Analysis` },
-  { id: "data", label: msg`Data` },
-];
+import { ToastProvider, TooltipLayer } from "./components/ui";
 
 export function App() {
   const invalidate = useInvalidate();
   const [screen, setScreen] = useState<ScreenId>("dashboard");
   const [focus, setFocus] = useState<string | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const status = useStatus();
   const profiles = useProfiles();
@@ -122,8 +54,8 @@ export function App() {
   // A crossing nobody looked at yet marks the Alerts item, the way a tree with gaps marks its tab.
   const unseen = useAlertsUnseen();
 
-  // Re-activates the catalog when the saved preference or the OS language changes.
-  const { t, i18n } = useLingui();
+  // Re-renders the shell when the saved preference or the OS language changes the catalog.
+  useLingui();
   useLanguage();
   useTheme(useUiState().ui.theme);
 
@@ -187,25 +119,6 @@ export function App() {
   const go = (id: ScreenId, withFocus?: string) => {
     setScreen(id);
     setFocus(withFocus ?? null);
-    setMoreOpen(false);
-  };
-
-  const navButton = (item: ScreenDef, extra = "") => {
-    const Icon = item.icon;
-    return (
-      <button
-        key={item.id}
-        type="button"
-        className={`nav__item${item.id === screen ? " nav__item--active" : ""}${extra}`}
-        onClick={() => go(item.id as ScreenId)}
-      >
-        <Icon weight={item.id === screen ? "fill" : "regular"} />
-        {i18n._(item.title)}
-        {item.id === "alerts" && (unseen.data ?? 0) > 0 && (
-          <i className="tab-dot" aria-label={t`new crossings to look at`} />
-        )}
-      </button>
-    );
   };
 
   return (
@@ -215,23 +128,7 @@ export function App() {
           <UpdatesProvider>
             <SecurityCardProvider>
               <div className="shell">
-                <nav className="nav">
-                  {navButton(NAV[0])}
-                  {GROUPS.map((group) => (
-                    <Fragment key={group.id}>
-                      <div className="nav__group-label">{i18n._(group.label)}</div>
-                      {NAV.filter((s) => s.group === group.id && s.id !== "dashboard").map((s) =>
-                        navButton(s, s.primary ? "" : " nav__more"),
-                      )}
-                    </Fragment>
-                  ))}
-                  <button type="button" className="nav__item nav__mobile" onClick={() => setMoreOpen(true)}>
-                    <DotsThreeCircleIcon />
-                    <Trans>More</Trans>
-                  </button>
-                  <AsOfPicker variant="nav" />
-                  <ScopePicker variant="nav" />
-                </nav>
+                <Nav screen={screen} go={go} alertsDot={(unseen.data ?? 0) > 0} />
 
                 <div className="main">
                   <AsOfBanner />
@@ -266,30 +163,6 @@ export function App() {
                 </div>
 
                 {aiOpen && <AiChatPanel onClose={() => setAiOpen(false)} />}
-
-                {moreOpen && (
-                  <Modal title={t`All screens`} onClose={() => setMoreOpen(false)}>
-                    <div className="smenu">
-                      {GROUPS.map((group) => (
-                        <div key={group.id}>
-                          <div className="group-label">{i18n._(group.label)}</div>
-                          {NAV.filter((s) => s.group === group.id).map((item) => {
-                            const Icon = item.icon;
-                            return (
-                              <ListRow
-                                key={item.id}
-                                lead={<Icon />}
-                                title={i18n._(item.title)}
-                                on={item.id === screen}
-                                onClick={() => go(item.id as ScreenId)}
-                              />
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </Modal>
-                )}
 
                 <TooltipLayer />
                 <AlertNotifier />

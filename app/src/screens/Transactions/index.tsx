@@ -17,7 +17,7 @@ import {
   useSelection,
   type MenuItem,
 } from "../../components/ui";
-import { formatDay, formatMoney } from "../../lib/format";
+import { formatMoney } from "../../lib/format";
 import { transactionLabel } from "../../lib/kinds";
 import { affects, useAccounts, useInvalidate, useTransactions } from "../../lib/queries";
 import type { TransactionFilter, TransactionInput, TransactionRow } from "../../lib/types";
@@ -161,7 +161,6 @@ export function Transactions({ focus }: { focus?: string | null }) {
             )}`
           : undefined
       }
-      asOf={formatDay(today())}
       actions={
         <>
           <button className="btn" onClick={exportFile} disabled={exporting}>

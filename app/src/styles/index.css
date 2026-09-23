@@ -2,6 +2,7 @@
 @import "./tokens.css";
 @import "./base.css";
 @import "./layout.css";
+@import "./nav.css";
 @import "./ui/panel.css";
 @import "./ui/table.css";
 @import "./ui/list.css";

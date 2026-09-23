@@ -14,7 +14,7 @@ import {
 } from "../../lib/queries";
 import { DEFAULT_UI, useUiState } from "../../lib/uiState";
 import { SECURITY_KIND_FILTERS } from "../../lib/kinds";
-import { formatDay, formatMoney } from "../../lib/format";
+import { formatMoney } from "../../lib/format";
 import { Page } from "../../components/Page";
 import { useSecurityCard } from "../../components/domain/SecurityCardProvider";
 import { PeriodControl } from "../../components/domain/PeriodControl";
@@ -126,7 +126,6 @@ export function Positions() {
       summary={`${plural(rows.length, { one: "# instrument", other: "# instruments" })} · ${
         current ? scopeLabel(i18n, current) : t`whole portfolio`
       } · ${formatMoney(total_value_base, base_currency)}`}
-      asOf={formatDay(positions.data.date)}
       controls={<PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />}
       actions={
         <button type="button" className="iconbtn" onClick={() => setPicking(true)}>

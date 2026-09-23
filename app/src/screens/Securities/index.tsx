@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowsClockwiseIcon, DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { useIsWide } from "../../lib/useLayout";
 import { affects, useInvalidate, useQuoteProviders, useSecurities } from "../../lib/queries";
 import { ListingPicker } from "../../components/domain/ListingPicker";
@@ -23,7 +23,6 @@ import {
   useSelection,
   type MenuItem,
 } from "../../components/ui";
-import { formatDay } from "../../lib/format";
 import type { AttributePreview, SecurityRow, SecurityInput } from "../../lib/types";
 import { AttributeImportDialog } from "./AttributeImportDialog";
 import { SecurityForm } from "./SecurityForm";
@@ -213,7 +212,6 @@ export function Securities({ focus }: { focus?: string | null }) {
       ]
         .filter(Boolean)
         .join(" · ")}
-      asOf={formatDay(today())}
       actions={
         <>
           <button className="btn btn--ghost" disabled={running} onClick={() => refresh.mutate()}>

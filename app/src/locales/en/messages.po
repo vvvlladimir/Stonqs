@@ -1180,8 +1180,8 @@ msgstr "Account for \"{value}\""
 msgid "accounts"
 msgstr "accounts"
 
-#: src/App.tsx
 #: src/components/domain/positionColumns.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Accounts/GroupForm.tsx
 #: src/screens/Accounts/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -1361,7 +1361,7 @@ msgstr "Alert"
 #~ msgid "Alert when"
 #~ msgstr "Alert when"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Alerts/index.tsx
 msgid "Alerts"
 msgstr "Alerts"
@@ -1417,8 +1417,8 @@ msgid "all on target"
 msgstr "all on target"
 
 #: src/App.tsx
-msgid "All screens"
-msgstr "All screens"
+#~ msgid "All screens"
+#~ msgstr "All screens"
 
 #: src/components/domain/SecurityPopup.tsx
 msgid "all time"
@@ -1437,7 +1437,7 @@ msgstr "All years"
 msgid "All-time high"
 msgstr "All-time high"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/index.tsx
 msgid "Allocation"
 msgstr "Allocation"
@@ -1585,7 +1585,7 @@ msgstr "an operation like it is already stored"
 msgid "An operation like it is already stored"
 msgstr "An operation like it is already stored"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 msgid "Analysis"
 msgstr "Analysis"
 
@@ -1702,8 +1702,8 @@ msgid "arrived on the account"
 msgstr "arrived on the account"
 
 #: src/components/Page.tsx
-msgid "as of {asOf}"
-msgstr "as of {asOf}"
+#~ msgid "as of {asOf}"
+#~ msgstr "as of {asOf}"
 
 #: src/components/domain/AiChatPanel.tsx
 msgid "Ask about performance, allocation, a single holding — anything on screen."
@@ -2528,8 +2528,8 @@ msgstr "Dashboard"
 msgid "Dashboards are independent: each keeps its own widgets and their settings."
 msgstr "Dashboards are independent: each keeps its own widgets and their settings."
 
-#: src/App.tsx
 #: src/components/domain/MarketRefresh.tsx
+#: src/components/Nav/model.ts
 msgid "Data"
 msgstr "Data"
 
@@ -3499,6 +3499,10 @@ msgstr "Falls below"
 msgid "Fast"
 msgstr "Fast"
 
+#: src/components/Nav/index.tsx
+msgid "Favorites"
+msgstr "Favorites"
+
 #: src/lib/kinds.ts
 msgid "Fee"
 msgstr "Fee"
@@ -4016,7 +4020,7 @@ msgstr "Identifying instruments: {progress}"
 msgid "Identifying…"
 msgstr "Identifying…"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/dashboard/EditBar.tsx
 #: src/screens/Securities/AttributeImportDialog.tsx
@@ -4098,7 +4102,7 @@ msgstr "including the dates of deposits"
 msgid "including the new money"
 msgstr "including the new money"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Income/index.tsx
 #: src/screens/Performance/CalculationSheet.tsx
 msgid "Income"
@@ -4226,7 +4230,7 @@ msgstr "Instrument, kind or note"
 msgid "instruments"
 msgstr "instruments"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/GroupDialog.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Securities/index.tsx
@@ -4785,6 +4789,10 @@ msgstr "Max drawdown"
 msgid "Maximum drawdown"
 msgstr "Maximum drawdown"
 
+#: src/components/Nav/index.tsx
+msgid "Menu"
+msgstr "Menu"
+
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Metric"
@@ -4877,8 +4885,8 @@ msgid "months ahead"
 msgstr "months ahead"
 
 #: src/App.tsx
-msgid "More"
-msgstr "More"
+#~ msgid "More"
+#~ msgstr "More"
 
 #: src/screens/Securities/index.tsx
 msgid "More actions"
@@ -4958,6 +4966,10 @@ msgstr "Name the yearly spending this portfolio should cover."
 #~ msgid "Narrower"
 #~ msgstr "Narrower"
 
+#: src/components/Nav/index.tsx
+msgid "Navigation"
+msgstr "Navigation"
+
 #: src/screens/Watchlist/columns.tsx
 msgid "Nearest level"
 msgstr "Nearest level"
@@ -5023,7 +5035,7 @@ msgstr "New classification"
 msgid "new commission"
 msgstr "new commission"
 
-#: src/App.tsx
+#: src/components/Nav/index.tsx
 #: src/screens/Alerts/index.tsx
 msgid "new crossings to look at"
 msgstr "new crossings to look at"
@@ -6025,7 +6037,7 @@ msgstr "Over the selected period the value never fell below a previous peak."
 msgid "Overrides the dashboard period for this widget alone."
 msgstr "Overrides the dashboard period for this widget alone."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 msgid "Overview"
 msgstr "Overview"
 
@@ -6145,7 +6157,7 @@ msgstr "Percentages are a share inside the parent: \"equities 42 %, of which the
 msgid "Perf. %"
 msgstr "Perf. %"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Performance/index.tsx
 msgid "Performance"
 msgstr "Performance"
@@ -6193,7 +6205,11 @@ msgstr "Pick instruments from the directory, or find one online."
 msgid "plan"
 msgstr "plan"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
+msgid "Planning"
+msgstr "Planning"
+
+#: src/components/Nav/model.ts
 #: src/screens/Plans/index.tsx
 msgid "Plans"
 msgstr "Plans"
@@ -6211,8 +6227,8 @@ msgstr "Point at these columns first: {0}"
 msgid "portfolio"
 msgstr "portfolio"
 
-#: src/App.tsx
 #: src/components/charts/BenchChart.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PortfolioPanel.tsx
@@ -6276,7 +6292,7 @@ msgstr "Portfolio yield"
 #~ msgid "Position contribution to the return as a staircase, largest first."
 #~ msgstr "Position contribution to the return as a staircase, largest first."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Positions/index.tsx
 msgid "Positions"
 msgstr "Positions"
@@ -6594,7 +6610,7 @@ msgstr "Realized"
 msgid "Realized P/L"
 msgstr "Realized P/L"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 msgid "Rebalance"
 msgstr "Rebalance"
@@ -6812,7 +6828,7 @@ msgstr "Report"
 msgid "Reported payments of the last year over today's price."
 msgstr "Reported payments of the last year over today's price."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Reports/index.tsx
 msgid "Reports"
 msgstr "Reports"
@@ -6976,8 +6992,8 @@ msgstr "Rings"
 msgid "Rises above"
 msgstr "Rises above"
 
-#: src/App.tsx
 #: src/components/domain/positionColumns.tsx
+#: src/components/Nav/model.ts
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Risk.tsx
 msgid "Risk"
@@ -7154,6 +7170,10 @@ msgstr "Section"
 msgid "Section heading"
 msgstr "Section heading"
 
+#: src/components/Nav/index.tsx
+msgid "Sections"
+msgstr "Sections"
+
 #: src/screens/Allocation/model.ts
 #~ msgid "Sector"
 #~ msgstr "Sector"
@@ -7291,7 +7311,7 @@ msgstr "Set key"
 msgid "Set password and continue"
 msgstr "Set password and continue"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Settings/index.tsx
 msgid "Settings"
 msgstr "Settings"
@@ -7623,6 +7643,10 @@ msgstr "Symbols on cash transactions"
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "System"
 msgstr "System"
+
+#: src/components/Nav/index.tsx
+msgid "Tabs"
+msgstr "Tabs"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "take an instrument out of a branch"
@@ -8863,7 +8887,7 @@ msgstr "Trade Republic"
 msgid "traded"
 msgstr "traded"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Trades/index.tsx
@@ -8888,7 +8912,7 @@ msgstr "Transaction kind"
 msgid "Transaction kind for \"{value}\""
 msgstr "Transaction kind for \"{value}\""
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -9232,7 +9256,7 @@ msgstr "Volatility, Sharpe and the maximum drawdown over the period."
 msgid "was {0}"
 msgstr "was {0}"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Watchlist/index.tsx

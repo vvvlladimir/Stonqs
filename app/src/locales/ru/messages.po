@@ -1180,8 +1180,8 @@ msgstr "Счёт для «{value}»"
 msgid "accounts"
 msgstr "счета"
 
-#: src/App.tsx
 #: src/components/domain/positionColumns.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Accounts/GroupForm.tsx
 #: src/screens/Accounts/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -1361,7 +1361,7 @@ msgstr "Оповещение"
 #~ msgid "Alert when"
 #~ msgstr "Сигнал, когда"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Alerts/index.tsx
 msgid "Alerts"
 msgstr "Оповещения"
@@ -1417,8 +1417,8 @@ msgid "all on target"
 msgstr "все на цели"
 
 #: src/App.tsx
-msgid "All screens"
-msgstr "Все экраны"
+#~ msgid "All screens"
+#~ msgstr "Все экраны"
 
 #: src/components/domain/SecurityPopup.tsx
 msgid "all time"
@@ -1437,7 +1437,7 @@ msgstr "Все годы"
 msgid "All-time high"
 msgstr "Исторический максимум"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/index.tsx
 msgid "Allocation"
 msgstr "Аллокация"
@@ -1585,7 +1585,7 @@ msgstr "похожая операция уже есть в базе"
 msgid "An operation like it is already stored"
 msgstr "Похожая операция уже есть в базе"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 msgid "Analysis"
 msgstr "Анализ"
 
@@ -1702,8 +1702,8 @@ msgid "arrived on the account"
 msgstr "пришло на счёт"
 
 #: src/components/Page.tsx
-msgid "as of {asOf}"
-msgstr "на {asOf}"
+#~ msgid "as of {asOf}"
+#~ msgstr "на {asOf}"
 
 #: src/components/domain/AiChatPanel.tsx
 msgid "Ask about performance, allocation, a single holding — anything on screen."
@@ -2528,8 +2528,8 @@ msgstr "Дашборд"
 msgid "Dashboards are independent: each keeps its own widgets and their settings."
 msgstr "Дашборды независимы: набор виджетов и их настройки хранятся у каждого свои."
 
-#: src/App.tsx
 #: src/components/domain/MarketRefresh.tsx
+#: src/components/Nav/model.ts
 msgid "Data"
 msgstr "Данные"
 
@@ -3499,6 +3499,10 @@ msgstr "Опускается ниже"
 msgid "Fast"
 msgstr "Быстро"
 
+#: src/components/Nav/index.tsx
+msgid "Favorites"
+msgstr "Избранное"
+
 #: src/lib/kinds.ts
 msgid "Fee"
 msgstr "Комиссия"
@@ -4016,7 +4020,7 @@ msgstr "Определяем инструменты: {progress}"
 msgid "Identifying…"
 msgstr "Опознаём…"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/dashboard/EditBar.tsx
 #: src/screens/Securities/AttributeImportDialog.tsx
@@ -4098,7 +4102,7 @@ msgstr "с учётом дат пополнений"
 msgid "including the new money"
 msgstr "вместе с новыми деньгами"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Income/index.tsx
 #: src/screens/Performance/CalculationSheet.tsx
 msgid "Income"
@@ -4226,7 +4230,7 @@ msgstr "Бумага, вид или заметка"
 msgid "instruments"
 msgstr "инструменты"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/GroupDialog.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Securities/index.tsx
@@ -4780,6 +4784,10 @@ msgstr "Макс. просадка"
 msgid "Maximum drawdown"
 msgstr "Максимальная просадка"
 
+#: src/components/Nav/index.tsx
+msgid "Menu"
+msgstr "Меню"
+
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Metric"
@@ -4872,8 +4880,8 @@ msgid "months ahead"
 msgstr "месяцев вперёд"
 
 #: src/App.tsx
-msgid "More"
-msgstr "Ещё"
+#~ msgid "More"
+#~ msgstr "Ещё"
 
 #: src/screens/Securities/index.tsx
 msgid "More actions"
@@ -4953,6 +4961,10 @@ msgstr "Укажите годовые расходы, которые портф�
 #~ msgid "Narrower"
 #~ msgstr "Уже"
 
+#: src/components/Nav/index.tsx
+msgid "Navigation"
+msgstr "Навигация"
+
 #: src/screens/Watchlist/columns.tsx
 msgid "Nearest level"
 msgstr "Ближайший уровень"
@@ -5018,7 +5030,7 @@ msgstr "Новая классификация"
 msgid "new commission"
 msgstr "новая комиссия"
 
-#: src/App.tsx
+#: src/components/Nav/index.tsx
 #: src/screens/Alerts/index.tsx
 msgid "new crossings to look at"
 msgstr "есть новые пересечения"
@@ -6020,7 +6032,7 @@ msgstr "За выбранный период стоимость не опуск�
 msgid "Overrides the dashboard period for this widget alone."
 msgstr "Переопределяет период дашборда только для этого виджета."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 msgid "Overview"
 msgstr "Обзор"
 
@@ -6140,7 +6152,7 @@ msgstr "Проценты — доля внутри родителя: «акци�
 msgid "Perf. %"
 msgstr "Дох. %"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Performance/index.tsx
 msgid "Performance"
 msgstr "Доходность"
@@ -6188,7 +6200,11 @@ msgstr "Выберите инструменты из справочника ил
 msgid "plan"
 msgstr "план"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
+msgid "Planning"
+msgstr "Планирование"
+
+#: src/components/Nav/model.ts
 #: src/screens/Plans/index.tsx
 msgid "Plans"
 msgstr "Планы"
@@ -6206,8 +6222,8 @@ msgstr "Сначала укажите колонки: {0}"
 msgid "portfolio"
 msgstr "портфель"
 
-#: src/App.tsx
 #: src/components/charts/BenchChart.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PortfolioPanel.tsx
@@ -6271,7 +6287,7 @@ msgstr "Доходность портфеля"
 #~ msgid "Position contribution to the return as a staircase, largest first."
 #~ msgstr "Вклад позиций в доходность лесенкой, от большего к меньшему."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Positions/index.tsx
 msgid "Positions"
 msgstr "Позиции"
@@ -6589,7 +6605,7 @@ msgstr "Реализовано"
 msgid "Realized P/L"
 msgstr "Реализованный P/L"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 msgid "Rebalance"
 msgstr "Ребалансировка"
@@ -6807,7 +6823,7 @@ msgstr "Отчёт"
 msgid "Reported payments of the last year over today's price."
 msgstr "Объявленные выплаты за год к сегодняшней цене."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Reports/index.tsx
 msgid "Reports"
 msgstr "Отчёты"
@@ -6971,8 +6987,8 @@ msgstr "Кольца"
 msgid "Rises above"
 msgstr "Поднимается выше"
 
-#: src/App.tsx
 #: src/components/domain/positionColumns.tsx
+#: src/components/Nav/model.ts
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Risk.tsx
 msgid "Risk"
@@ -7149,6 +7165,10 @@ msgstr "Раздел"
 msgid "Section heading"
 msgstr "Заголовок раздела"
 
+#: src/components/Nav/index.tsx
+msgid "Sections"
+msgstr "Разделы"
+
 #: src/screens/Allocation/model.ts
 #~ msgid "Sector"
 #~ msgstr "Отрасль"
@@ -7286,7 +7306,7 @@ msgstr "Задать ключ"
 msgid "Set password and continue"
 msgstr "Задать пароль и продолжить"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Settings/index.tsx
 msgid "Settings"
 msgstr "Настройки"
@@ -7618,6 +7638,10 @@ msgstr "Символы у денежных операций"
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "System"
 msgstr "Системный"
+
+#: src/components/Nav/index.tsx
+msgid "Tabs"
+msgstr "Вкладки"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "take an instrument out of a branch"
@@ -8858,7 +8882,7 @@ msgstr "Trade Republic"
 msgid "traded"
 msgstr "оборот"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Trades/index.tsx
@@ -8883,7 +8907,7 @@ msgstr "Вид операции"
 msgid "Transaction kind for \"{value}\""
 msgstr "Вид операции для «{value}»"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -9227,7 +9251,7 @@ msgstr "Волатильность, Sharpe и максимальная прос�
 msgid "was {0}"
 msgstr "было {0}"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Watchlist/index.tsx

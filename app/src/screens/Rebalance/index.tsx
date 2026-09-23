@@ -17,7 +17,7 @@ import {
   QueryError,
   Seg,
 } from "../../components/ui";
-import { formatDay, formatMoney } from "../../lib/format";
+import { formatMoney } from "../../lib/format";
 import { planFromTrades } from "../../lib/plans";
 import { slotOfNode } from "../../lib/taxonomy";
 import {
@@ -110,7 +110,6 @@ export function Rebalance() {
     <Page
       archetype="analysis"
       title={t`Rebalance`}
-      asOf={formatDay(date)}
       note={target?.name}
       controls={
         <>

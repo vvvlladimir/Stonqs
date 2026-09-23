@@ -84,7 +84,6 @@ export function Plans() {
         plural(rows.length, { one: "# plan", other: "# plans" }),
         t`${formatMoney(monthly_base, base_currency)} a month`,
       ].join(" · ")}
-      asOf={formatDay(today())}
       actions={
         <button className="btn" onClick={newPlan} disabled={accountRows.length === 0}>
           <PlusIcon /> <Trans>New plan</Trans>

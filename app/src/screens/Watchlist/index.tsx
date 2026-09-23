@@ -17,7 +17,6 @@ import {
   useWatchlists,
 } from "../../lib/queries";
 import { DEFAULT_UI, useUiState } from "../../lib/uiState";
-import { formatDay } from "../../lib/format";
 import { Page } from "../../components/Page";
 import { PeriodControl } from "../../components/domain/PeriodControl";
 import { useSecurityCard } from "../../components/domain/SecurityCardProvider";
@@ -183,7 +182,6 @@ export function Watchlist() {
       ]
         .filter(Boolean)
         .join(" · ")}
-      asOf={formatDay(date)}
       controls={<PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />}
       actions={
         <>

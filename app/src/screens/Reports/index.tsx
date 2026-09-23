@@ -76,7 +76,6 @@ export function Reports() {
     <Page
       archetype="analysis"
       title={t`Reports`}
-      asOf={`${formatDay(data.from)} — ${formatDay(data.to)}`}
       controls={
         <>
           <Seg label={t`Report`} value={tab} onChange={setTab} options={tabs(i18n)} />

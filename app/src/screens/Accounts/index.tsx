@@ -3,8 +3,8 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PlusIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
-import { formatDay, formatMoney } from "../../lib/format";
+import { api } from "../../lib/api";
+import { formatMoney } from "../../lib/format";
 import { affects, useAccountGroups, useAccounts, useAccountsTotal, useInvalidate } from "../../lib/queries";
 import { Page } from "../../components/Page";
 import { Empty, ErrorText, InfoHeading, List, Pending, QueryError, useMenu } from "../../components/ui";
@@ -89,7 +89,6 @@ export function Accounts() {
       ]
         .filter(Boolean)
         .join(" · ")}
-      asOf={formatDay(today())}
       actions={
         <button className="btn" onClick={newAccount}>
           <PlusIcon /> <Trans>New account</Trans>

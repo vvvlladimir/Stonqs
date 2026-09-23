@@ -23,7 +23,7 @@ import {
   QueryError,
 } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
-import { formatDay, formatMoney, formatPercent, signOf } from "../../lib/format";
+import { formatMoney, formatPercent, signOf } from "../../lib/format";
 import type { PaymentPeriod, TransactionKind } from "../../lib/types";
 import { ByTaxonomy } from "./ByTaxonomy";
 import { CalendarPanel } from "./CalendarPanel";
@@ -78,7 +78,6 @@ export function Income() {
     <Page
       archetype="analysis"
       title={t`Income`}
-      asOf={data ? `${formatDay(data.from)} — ${formatDay(data.to)}` : formatDay(asOf)}
       controls={
         <>
           <Choice

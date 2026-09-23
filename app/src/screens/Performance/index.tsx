@@ -12,7 +12,7 @@ import { Calendar, ValueChart } from "../../components/charts";
 import { Page } from "../../components/Page";
 import { Async, Choice, Empty, Panel, Pending, QueryError } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
-import { formatDay, formatPercent } from "../../lib/format";
+import { formatPercent } from "../../lib/format";
 import { CalculationSheet } from "./CalculationSheet";
 import { PerformanceMetrics } from "./Metrics";
 import { PositionReturns } from "./PositionReturns";
@@ -54,7 +54,6 @@ export function Performance() {
     <Page
       archetype="analysis"
       title={t`Performance`}
-      asOf={`${formatDay(range.from)} — ${formatDay(range.to)}`}
       controls={
         <>
           <Choice

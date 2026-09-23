@@ -60,16 +60,7 @@ export function ScopePicker({ variant }: { variant: "nav" | "dock" }) {
 
   return (
     <>
-      {variant === "nav" ? (
-        <div className="nav__scope">
-          <div className="nav__group-label">
-            <Trans>Data source</Trans>
-          </div>
-          {button}
-        </div>
-      ) : (
-        button
-      )}
+      {variant === "nav" ? <div className="nav__scope">{button}</div> : button}
 
       {open && (
         <Modal title={t`Data source`} onClose={() => setOpen(false)}>

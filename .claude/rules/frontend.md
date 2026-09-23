@@ -36,6 +36,14 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   a calendar day, `UiState::updates`), `UpdateDialog` is the only place a version is offered, and
   `api.ts` keeps the plugin's handle so nothing else holds an installer. An automatic check that
   fails is silent; one the user pressed answers. Desktop only — `useUpdates()` is null elsewhere.
+- The navigation is `components/Nav`: Favorites (Overview always first, never unpinned), sections
+  folded to one open at a time, Settings and the two lenses at the foot. One element at every
+  width — the side rail from 1000px, below that a sheet behind the tab bar's `Menu`, whose tabs are
+  Overview and the first three favourites. Its arrangement is `UiState::nav`, stored as bare ids;
+  `Nav/model.ts` owns which screens and sections exist and reads a stored order over them (unknown
+  ids dropped, missing ones appended), so a new screen only needs a place in `SECTIONS`. Rows are
+  reordered and pinned by dragging (`Nav/useReorder`, a touch must be held first); a screen moves
+  only within its own section.
 - `Settings` is a strip of categories, not one long page: `screens/Settings/model.ts` lists them, one
   panel file each, `index.tsx` only switches. `Tabs` (`components/ui`) owns that layout — one shape at
   every width, the strip scrolling sideways rather than becoming a side rail.

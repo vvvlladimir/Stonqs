@@ -6,7 +6,6 @@ import { useTrades } from "../../lib/queries";
 import { Page } from "../../components/Page";
 import { Async, Empty, Panel, Pending, QueryError } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
-import { formatDay } from "../../lib/format";
 import { TradeMetrics } from "./TradeMetrics";
 import { TradesTable } from "./TradesTable";
 import { useAsOf } from "../../lib/asOf";
@@ -40,7 +39,6 @@ export function Trades() {
     <Page
       archetype="analysis"
       title={t`Trades`}
-      asOf={`${formatDay(range.from)} — ${formatDay(range.to)}`}
       controls={<PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />}
       metrics={<TradeMetrics data={trades.data} />}
       banner={trades.isError ? <QueryError error={trades.error} /> : undefined}

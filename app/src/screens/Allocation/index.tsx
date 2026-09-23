@@ -17,7 +17,6 @@ import {
   useTargets,
   useTaxonomies,
 } from "../../lib/queries";
-import { formatDay } from "../../lib/format";
 import { slotFor } from "../../lib/plot";
 import { BreakdownPanel } from "./BreakdownPanel";
 import { useAllocationDialogs } from "./Dialogs";
@@ -130,7 +129,6 @@ export function Allocation() {
     <Page
       archetype="analysis"
       title={t`Allocation`}
-      asOf={formatDay(date)}
       controls={
         <>
           <Seg label={t`View`} value={view} onChange={setView} options={views(i18n)} />

@@ -2,9 +2,8 @@ import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { FlaskIcon, NotePencilIcon, PlusIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { alertToInput, newAlert, newNote, noteToInput } from "../../lib/alerts";
-import { formatDay } from "../../lib/format";
 import {
   keys,
   useAlertCrossings,
@@ -58,7 +57,6 @@ export function Alerts() {
         plural(rows.length, { one: "# rule", other: "# rules" }),
         plural(unseen, { one: "# new crossing", other: "# new crossings" }),
       ].join(" · ")}
-      asOf={formatDay(today())}
       actions={
         <>
           {import.meta.env.DEV && (
