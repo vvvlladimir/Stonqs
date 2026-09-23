@@ -6,6 +6,7 @@ import type {
   DateString,
   PaymentPeriod,
   PeriodRange,
+  SheetPeriod,
   TransactionFilter,
   TransactionKind,
 } from "./types";
@@ -70,6 +71,8 @@ export const keys = {
   periodSettings: () => key("period-settings"),
   performance: (from?: DateString, to?: DateString, source?: Source) =>
     key("performance", from, to, source ?? undefined),
+  performanceBreakdown: (from?: DateString, to?: DateString, period?: SheetPeriod, source?: Source) =>
+    key("performance-breakdown", from, to, period, source ?? undefined),
   trades: (from?: DateString, to?: DateString, source?: Source) =>
     key("trades", from, to, source ?? undefined),
   payments: (from?: DateString, to?: DateString, period?: PaymentPeriod, source?: Source) =>
@@ -421,6 +424,19 @@ export function usePerformance(range: PeriodRange | undefined, source?: Source) 
   });
 }
 
+/** The calculation sheet of the same period the performance screen is showing. */
+export function usePerformanceBreakdown(
+  range: PeriodRange | undefined,
+  period: SheetPeriod,
+  source?: Source,
+) {
+  return useQuery({
+    queryKey: keys.performanceBreakdown(range?.from, range?.to, period, source),
+    queryFn: () => api.performanceBreakdown(range!.from, range!.to, period, source),
+    enabled: range !== undefined,
+  });
+}
+
 /** Dividends expected over the next `months` months; the window starts today, so no period. */
 export function useExpectedDividends(months: number, source?: Source) {
   return useQuery({
@@ -641,6 +657,7 @@ const REPORTS: QueryKey[] = [
   keys.reports(),
   keys.periods(),
   keys.performance(),
+  keys.performanceBreakdown(),
   keys.trades(),
   keys.payments(),
   keys.expectedDividends(),

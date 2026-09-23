@@ -35,6 +35,8 @@ import type {
   AllocationTarget,
   BenchmarkComparison,
   PerformanceData,
+  CalculationSheet,
+  SheetPeriod,
   PeriodRange,
   PeriodSettings,
   UserPeriod,
@@ -265,6 +267,12 @@ export const api = {
   periodsRestore: () => call<PeriodSettings>("periods_restore"),
   performanceSummary: (from: DateString, to: DateString, source?: Source) =>
     call<PerformanceData>("performance_summary", { from, to, source: source ?? null }),
+  /** The calculation sheet: one row per calendar chunk of the same period. */
+  performanceBreakdown: (from: DateString, to: DateString, period: SheetPeriod, source?: Source) =>
+    call<CalculationSheet>("performance_breakdown", { from, to, period, source: source ?? null }),
+  /** Writes the same sheet as a CSV where the user points. */
+  performanceSheetSave: (from: DateString, to: DateString, period: SheetPeriod, path: string) =>
+    call<void>("performance_sheet_save", { from, to, period, path }),
   /** The payments grid: every dated line of the window on one axis. */
   paymentsGrid: (from: DateString, to: DateString, period: PaymentPeriod, source?: Source) =>
     call<PaymentsData>("payments_grid", { from, to, period, source: source ?? null }),

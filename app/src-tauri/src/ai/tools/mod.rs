@@ -100,6 +100,7 @@ pub const CATALOGUE: &[Tool] = &[
     // one instrument, then the plans and lists around it.
     portfolio::PORTFOLIO_OVERVIEW,
     portfolio::PORTFOLIO_PERFORMANCE,
+    portfolio::PORTFOLIO_BREAKDOWN,
     portfolio::PORTFOLIO_RISK,
     portfolio::PORTFOLIO_BENCHMARK,
     portfolio::POSITIONS_LIST,

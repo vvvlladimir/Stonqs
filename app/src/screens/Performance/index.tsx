@@ -13,6 +13,7 @@ import { Page } from "../../components/Page";
 import { Async, Choice, Empty, Panel, Pending, QueryError } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
 import { formatDay, formatPercent } from "../../lib/format";
+import { CalculationSheet } from "./CalculationSheet";
 import { PerformanceMetrics } from "./Metrics";
 import { PositionReturns } from "./PositionReturns";
 import { byContribution, monthCell } from "./model";
@@ -116,6 +117,8 @@ export function Performance() {
           )}
         </Async>
       </Panel>
+
+      <CalculationSheet range={range} currency={currency} />
 
       <Panel
         title={t`Return by position`}

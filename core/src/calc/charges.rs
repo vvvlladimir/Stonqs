@@ -1,6 +1,7 @@
 use super::{ChargeRecord, Holdings, resolve_rate};
 use crate::error::Result;
 use crate::fx::RateLookup;
+use crate::market::DateRange;
 use crate::model::{Transaction, TransactionKind};
 use chrono::{Datelike, NaiveDate};
 use rust_decimal::Decimal;
@@ -102,6 +103,33 @@ pub fn costs_paid(
     Ok(total)
 }
 
+/// The same costs split over consecutive windows, in one pass over the ledger. The calculation
+/// sheet asks for one summary per row, and [`costs_paid`] would walk every transaction again for
+/// each of them. Ranges are assumed not to overlap; a cost outside all of them is dropped.
+pub fn costs_paid_over(
+    transactions: &[Transaction],
+    base: &str,
+    ranges: &[DateRange],
+    rates: &dyn RateLookup,
+) -> Result<Vec<ChargeSummary>> {
+    let mut out = vec![ChargeSummary::default(); ranges.len()];
+    let (Some(first), Some(last)) = (ranges.first(), ranges.last()) else {
+        return Ok(out);
+    };
+    for entry in cost_entries(transactions, base, first.from, last.to, rates)? {
+        let Some(i) = ranges
+            .iter()
+            .position(|r| entry.date >= r.from && entry.date <= r.to)
+        else {
+            continue;
+        };
+        out[i].count += 1;
+        out[i].fees_base += entry.fees_base;
+        out[i].taxes_base += entry.taxes_base;
+    }
+    Ok(out)
+}
+
 /// The same costs attributed to the instrument that incurred them; an account-level fee has
 /// no instrument and drops out, exactly as [`charges_by_security`] drops one.
 pub fn costs_paid_by_security(
@@ -124,6 +152,7 @@ pub fn costs_paid_by_security(
 
 /// One transaction's cost side in base currency.
 struct CostEntry {
+    date: NaiveDate,
     security_id: Option<String>,
     fees_base: Decimal,
     taxes_base: Decimal,
@@ -155,6 +184,7 @@ fn cost_entries(
             continue;
         }
         out.push(CostEntry {
+            date: t.date,
             security_id: t.security_id.clone(),
             fees_base: fees,
             taxes_base: taxes,

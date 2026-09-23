@@ -4,7 +4,10 @@
 //! the timing of the deposits; XIRR answers the other question and is not comparable to it.
 
 use crate::calc::risk::metrics_from_returns;
-use crate::calc::{CashFlow, ChargeSummary, PeriodSummary, costs_paid, period_summary};
+use crate::calc::{
+    CalculationSheet, CashFlow, ChargeSummary, Period, PeriodSummary, calculation_sheet, costs_paid,
+    period_summary,
+};
 use crate::calc::{
     Holdings, HoldingsBuilder, HoldingsOptions, PortfolioValuation, TwrPoint, ValueSeries, annualize,
     build_holdings_with, costs_paid_by_security, dietz_capital, ordered_events, resolve_rate,
@@ -516,6 +519,23 @@ impl PortfolioAnalytics<'_> {
     /// The money view of a range, alongside the return view [`Self::twr`] gives.
     pub fn period_summary(&self, range: DateRange) -> Result<PeriodSummary> {
         Ok(period_summary(&self.series(range)?))
+    }
+
+    /// The calculation sheet of a range: one row per calendar chunk, showing how the opening
+    /// value, the flows and what was earned add up to the closing one.
+    pub fn calculation_sheet(&self, range: DateRange, period: Period) -> Result<CalculationSheet> {
+        let transactions = self.transactions_until(Some(range.to))?;
+        let (prices, rates) = self.market_data(range.to)?;
+        let series = value_series(
+            &transactions,
+            self.base_currency(),
+            range,
+            &prices,
+            &rates,
+            self.options(),
+        )?;
+        let holdings = build_holdings_with(&transactions, self.base_currency(), &rates, self.options())?;
+        calculation_sheet(&series, &holdings, &transactions, &rates, period)
     }
 
     /// Fees and taxes paid over a range, trade commissions included — the numerator of a

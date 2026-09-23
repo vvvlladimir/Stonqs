@@ -1854,20 +1854,37 @@ msgstr "Покупки и продажи отдельно: продажа фик
 msgid "By account"
 msgstr "По счетам"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By day"
+msgstr "По дням"
+
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Reports/Dividends.tsx
 #: src/screens/Reports/Gains.tsx
 msgid "By instrument"
 msgstr "По бумагам"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By month"
+msgstr "По месяцам"
+
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "By payer over the same axis"
 msgstr "Кто платит, по той же оси"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By quarter"
+msgstr "По кварталам"
 
 #: src/screens/Reports/Charges.tsx
 msgid "By transaction kind"
 msgstr "По видам операций"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By week"
+msgstr "По неделям"
+
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/Dividends.tsx
 #: src/screens/Reports/Gains.tsx
@@ -1969,6 +1986,10 @@ msgstr "Категорий на уровне"
 #: src/screens/Rebalance/PlanTable.tsx
 msgid "Category"
 msgstr "Категория"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Chained"
+msgstr "Накопленная"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "change an account"
@@ -2105,6 +2126,10 @@ msgstr "Закрытые сделки"
 #: src/screens/Settings/ProfileSecurity.tsx
 #~ msgid "Closes the profile until the password is entered again."
 #~ msgstr "Закрывает профиль, пока пароль не будет введён снова."
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Closing, {currency}"
+msgstr "Конец, {currency}"
 
 #: src/screens/Import/TargetSummary.tsx
 msgid "collapse"
@@ -2254,6 +2279,7 @@ msgid "Cost-basis method"
 msgstr "Метод себестоимости"
 
 #: src/components/domain/positionColumns.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/model.ts
 msgid "Costs"
 msgstr "Расходы"
@@ -2263,6 +2289,7 @@ msgid "Costs are taken off before the money is split"
 msgstr "Издержки снимаются до того, как деньги делятся"
 
 #: src/components/domain/AiChatPanel.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Could not save the file: {saveError}"
 msgstr "Не удалось сохранить файл: {saveError}"
@@ -2907,6 +2934,10 @@ msgstr "У каждого профиля свой портфель, настро
 msgid "Each rewrite is a paid request to the model, so this is off unless you ask for it. Off, the tile says when it is out of date and waits."
 msgstr "Каждое обновление — платный запрос к модели, поэтому по умолчанию выключено. Выключенный виджет просто сообщает, что сводка устарела, и ждёт."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Each row opens where the one above it closed, so the money and the return can be followed step by step."
+msgstr "Каждая строка начинается там, где закончилась предыдущая: деньги и доходность видно по шагам."
+
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "Earned"
 msgstr "Заработано"
@@ -3282,6 +3313,7 @@ msgstr "Выгрузить"
 msgid "Export as Markdown…"
 msgstr "Выгрузить в Markdown…"
 
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Export CSV"
 msgstr "Выгрузить CSV"
@@ -3446,6 +3478,10 @@ msgstr "Фиксируется на момент сделки и потом не
 #: src/components/charts/ValueChart.tsx
 msgid "flow {0}"
 msgstr "поток {0}"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Flows"
+msgstr "Потоки"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Follow the picker"
@@ -3781,6 +3817,10 @@ msgstr "как распределён портфель"
 msgid "how the portfolio performed"
 msgstr "результат портфеля"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "How the result adds up"
+msgstr "Из чего сложился результат"
+
 #: src/components/domain/positionColumns.tsx
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "Насколько сильно колеблется дневная доходность позиции, в пересчёте на год."
@@ -3888,6 +3928,7 @@ msgstr "вместе с новыми деньгами"
 
 #: src/App.tsx
 #: src/screens/Income/index.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 msgid "Income"
 msgstr "Доход"
 
@@ -4525,6 +4566,10 @@ msgstr "Соответствия"
 #~ msgid "Mark as seen; the next crossing shows up again"
 #~ msgstr "Отметить как просмотренное; следующее пересечение появится снова"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Market"
+msgstr "Рынок"
+
 #: src/screens/Settings/model.ts
 msgid "Market data"
 msgstr "Рыночные данные"
@@ -4584,6 +4629,10 @@ msgstr "Через него проходят деньги по сделкам э
 #: src/screens/Import/AccountTarget.tsx
 msgid "Money moves on"
 msgstr "Деньги двигаются по счёту"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Money paid in or taken out; it is not a gain."
+msgstr "Внесённые или выведенные деньги — это не доход."
 
 #: src/screens/Onboarding.tsx
 msgid "Money sits here: deposits, fees, interest"
@@ -5644,6 +5693,10 @@ msgstr "Открываем базу…"
 msgid "Opening value plus everything paid in since."
 msgstr "Стоимость на начало периода плюс все пополнения после."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Opening, {currency}"
+msgstr "Начало, {currency}"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "operation"
 msgstr "операция"
@@ -5827,6 +5880,7 @@ msgstr "период"
 #: src/components/domain/PeriodControl.tsx
 #: src/components/domain/PeriodEditor.tsx
 #: src/screens/dashboard/dialogs.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Risk.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "Period"
@@ -6073,6 +6127,10 @@ msgstr "Покупки, продажи, дивиденды. Инструмент
 #: src/screens/Income/model.ts
 msgid "Q{0} {short}"
 msgstr "{0} кв. {short}"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Q{quarter} {year}"
+msgstr "{quarter} кв. {year}"
 
 #: src/components/domain/positionColumns.tsx
 #: src/components/domain/SecurityPopup.tsx
@@ -6540,6 +6598,7 @@ msgid "Restore what was detected"
 msgstr "Вернуть как определилось"
 
 #: src/components/domain/positionColumns.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Result"
 msgstr "Результат"
@@ -6569,6 +6628,7 @@ msgid "return"
 msgstr "доходность"
 
 #: src/components/domain/SecurityPopup.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Trades/TradesTable.tsx
@@ -6742,6 +6802,7 @@ msgid "Save the current layout as a template"
 msgstr "Сохранить текущую раскладку как шаблон"
 
 #: src/components/ui/Form.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
@@ -7150,6 +7211,10 @@ msgstr "Расходы за год"
 #: src/screens/Allocation/MembersPanel.tsx
 msgid "Split"
 msgstr "Раскладка"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Split the period by"
+msgstr "Разбивка периода"
 
 #: src/components/domain/AssignDialog.tsx
 msgid "Split: {name}"
@@ -7570,6 +7635,10 @@ msgstr "Изменение стоимости без учёта пополнен
 #: src/screens/Performance/Metrics.tsx
 #~ msgid "The change in value with deposits and withdrawals taken out. The line beneath is the change the statement shows, which counts the money brought in as if it were a gain."
 #~ msgstr "Изменение стоимости за вычетом пополнений и изъятий. Строка ниже — изменение из выписки, где внесённые деньги засчитаны как прибыль."
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "The change with the flows taken out — what the chunk earned."
+msgstr "Изменение без учёта потоков — то, что заработано за отрезок."
 
 #: src/screens/Import/labels.ts
 msgid "the commission exceeds the amount"
@@ -8005,6 +8074,10 @@ msgstr "строка не разобрана"
 #: src/screens/Import/labels.ts
 msgid "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
 msgstr "Строка в {0}, а счёт, на который она попадёт, ведётся в {1}. Исправьте, если колонка валюты прочитана неверно; пропустите, если счёт действительно держит обе."
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "The rows so far, chained — the last one is the whole period."
+msgstr "Строки, соединённые по цепочке; последняя — весь период."
 
 #: src/screens/Import/AccountTarget.tsx
 msgid "the same account"
@@ -9189,6 +9262,10 @@ msgstr "Кто сделал результат"
 #: src/screens/Income/index.tsx
 msgid "Who pays"
 msgstr "Кто платит"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Whole period"
+msgstr "Весь период"
 
 #: src/screens/Positions/index.tsx
 msgid "whole portfolio"

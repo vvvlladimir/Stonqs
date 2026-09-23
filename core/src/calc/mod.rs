@@ -5,6 +5,7 @@ mod alerts;
 mod allocation;
 mod balances;
 mod benchmark;
+mod breakdown;
 mod capital_gains;
 mod charges;
 mod cost_basis;
@@ -42,13 +43,14 @@ pub use balances::{cash_balances, settlement_accounts};
 pub use benchmark::{
     BenchmarkComparison, benchmark_return, benchmark_series, benchmark_start, compare_to_benchmark,
 };
+pub use breakdown::{CalculationRow, CalculationSheet, calculation_sheet};
 pub use capital_gains::{
     RealizedSummary, capital_gains_by_security, capital_gains_by_year, capital_gains_by_year_and_security,
     capital_gains_total, realized_between, return_on_cost,
 };
 pub use charges::{
     ChargeSummary, charges_between, charges_by_account, charges_by_kind, charges_by_security,
-    charges_by_year, charges_total, costs_paid, costs_paid_by_security,
+    charges_by_year, charges_total, costs_paid, costs_paid_by_security, costs_paid_over,
 };
 pub use cost_basis::{CostBasisFigures, CostBasisRow, compare_cost_basis};
 pub use dividend_forecast::{ExpectedDividend, expected_dividends};

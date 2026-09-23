@@ -28,6 +28,10 @@ const REFERENCE: &[(&str, &str)] = &[
         include_str!("../../../../docs/ai-reference/benchmark.md"),
     ),
     (
+        "calculation-sheet",
+        include_str!("../../../../docs/ai-reference/calculation-sheet.md"),
+    ),
+    (
         "corporate-actions",
         include_str!("../../../../docs/ai-reference/corporate-actions.md"),
     ),

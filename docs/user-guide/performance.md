@@ -33,6 +33,15 @@ visible has simply not been unfolded.
 **Value and flows** is the chart, and the note on it is the trap it exists to avoid: a rising line
 can be a deposit rather than a gain, so contributions run as a track underneath.
 
+**How the result adds up** is the period written out row by row: opening value, money paid in or
+out, what the market did, income received, costs paid, closing value, the row's return and the
+rows so far chained together. Every row opens where the one above it closed, and the footer is the
+same return shown at the top of the screen — the panel exists so that figure can be followed
+instead of taken on trust. `Split the period by` changes the row size between day, week, month,
+quarter and year; the day and week options appear only for a period short enough for them to be
+readable. Splitting finer never changes the totals. `Export CSV` writes the sheet as it is
+currently split. See the calculation sheet topic for what each column means.
+
 **Benchmark instrument** picks what the period is compared against, and any instrument in the
 directory can be it. The comparison is two figures rather than a chart: the benchmark's own return
 over the period, and the excess — the portfolio's return minus it. A benchmark with less history

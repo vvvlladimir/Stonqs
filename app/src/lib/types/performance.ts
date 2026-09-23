@@ -50,6 +50,38 @@ export interface PerformanceData {
   annual_returns: PeriodReturn[];
 }
 
+/** Calendar granularity the calculation sheet is split by. */
+export type SheetPeriod = "DAY" | "WEEK" | "MONTH" | "QUARTER" | "YEAR";
+
+/** One chunk of the calculation sheet: `end = start + flow + delta`, and what made the delta. */
+export interface CalculationRow {
+  from: DateString;
+  to: DateString;
+  /** The previous row's close; for the first row, the value before the window opened. */
+  start_value_base: MoneyString;
+  external_flow_base: MoneyString;
+  /** Dividends and interest, gross — the tax withheld from them sits in `costs`. */
+  income_base: MoneyString;
+  costs: ChargeSummary;
+  /** Fees and taxes added up, summed in the host so the UI never adds money strings. */
+  costs_base: MoneyString;
+  /** What is left of the change once income and costs are named. */
+  market_change_base: MoneyString;
+  delta_base: MoneyString;
+  end_value_base: MoneyString;
+  twr: MoneyString;
+  /** The chunks so far, chained; the last row's value is the period's own return. */
+  cumulative_twr: MoneyString;
+}
+
+export interface CalculationSheet {
+  base_currency: string;
+  period: SheetPeriod;
+  rows: CalculationRow[];
+  total: PeriodSummary;
+  twr: MoneyString;
+}
+
 export interface Drawdown {
   peak: DateString;
   trough: DateString;

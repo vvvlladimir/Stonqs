@@ -1854,20 +1854,37 @@ msgstr "Buys and sells apart: a sale realizes a result and can be taxable."
 msgid "By account"
 msgstr "By account"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By day"
+msgstr "By day"
+
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Reports/Dividends.tsx
 #: src/screens/Reports/Gains.tsx
 msgid "By instrument"
 msgstr "By instrument"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By month"
+msgstr "By month"
+
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "By payer over the same axis"
 msgstr "By payer over the same axis"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By quarter"
+msgstr "By quarter"
 
 #: src/screens/Reports/Charges.tsx
 msgid "By transaction kind"
 msgstr "By transaction kind"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By week"
+msgstr "By week"
+
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/Dividends.tsx
 #: src/screens/Reports/Gains.tsx
@@ -1969,6 +1986,10 @@ msgstr "Categories on this level"
 #: src/screens/Rebalance/PlanTable.tsx
 msgid "Category"
 msgstr "Category"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Chained"
+msgstr "Chained"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "change an account"
@@ -2105,6 +2126,10 @@ msgstr "Closed trades"
 #: src/screens/Settings/ProfileSecurity.tsx
 #~ msgid "Closes the profile until the password is entered again."
 #~ msgstr "Closes the profile until the password is entered again."
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Closing, {currency}"
+msgstr "Closing, {currency}"
 
 #: src/screens/Import/TargetSummary.tsx
 msgid "collapse"
@@ -2254,6 +2279,7 @@ msgid "Cost-basis method"
 msgstr "Cost-basis method"
 
 #: src/components/domain/positionColumns.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/model.ts
 msgid "Costs"
 msgstr "Costs"
@@ -2263,6 +2289,7 @@ msgid "Costs are taken off before the money is split"
 msgstr "Costs are taken off before the money is split"
 
 #: src/components/domain/AiChatPanel.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Could not save the file: {saveError}"
 msgstr "Could not save the file: {saveError}"
@@ -2907,6 +2934,10 @@ msgstr "Each profile keeps its own portfolio, settings and import layouts."
 msgid "Each rewrite is a paid request to the model, so this is off unless you ask for it. Off, the tile says when it is out of date and waits."
 msgstr "Each rewrite is a paid request to the model, so this is off unless you ask for it. Off, the tile says when it is out of date and waits."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Each row opens where the one above it closed, so the money and the return can be followed step by step."
+msgstr "Each row opens where the one above it closed, so the money and the return can be followed step by step."
+
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "Earned"
 msgstr "Earned"
@@ -3282,6 +3313,7 @@ msgstr "Export"
 msgid "Export as Markdown…"
 msgstr "Export as Markdown…"
 
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Export CSV"
 msgstr "Export CSV"
@@ -3446,6 +3478,10 @@ msgstr "Fixed at the moment of the trade and never recomputed. Empty means take 
 #: src/components/charts/ValueChart.tsx
 msgid "flow {0}"
 msgstr "flow {0}"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Flows"
+msgstr "Flows"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Follow the picker"
@@ -3781,6 +3817,10 @@ msgstr "how the portfolio is allocated"
 msgid "how the portfolio performed"
 msgstr "how the portfolio performed"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "How the result adds up"
+msgstr "How the result adds up"
+
 #: src/components/domain/positionColumns.tsx
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "How widely this position's daily returns swing, stated for a year."
@@ -3888,6 +3928,7 @@ msgstr "including the new money"
 
 #: src/App.tsx
 #: src/screens/Income/index.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 msgid "Income"
 msgstr "Income"
 
@@ -4530,6 +4571,10 @@ msgstr "Mappings"
 #~ msgid "Mark as seen; the next crossing shows up again"
 #~ msgstr "Mark as seen; the next crossing shows up again"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Market"
+msgstr "Market"
+
 #: src/screens/Settings/model.ts
 msgid "Market data"
 msgstr "Market data"
@@ -4589,6 +4634,10 @@ msgstr "Money for this securities account's trades passes through it"
 #: src/screens/Import/AccountTarget.tsx
 msgid "Money moves on"
 msgstr "Money moves on"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Money paid in or taken out; it is not a gain."
+msgstr "Money paid in or taken out; it is not a gain."
 
 #: src/screens/Onboarding.tsx
 msgid "Money sits here: deposits, fees, interest"
@@ -5649,6 +5698,10 @@ msgstr "Opening the database…"
 msgid "Opening value plus everything paid in since."
 msgstr "Opening value plus everything paid in since."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Opening, {currency}"
+msgstr "Opening, {currency}"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "operation"
 msgstr "operation"
@@ -5832,6 +5885,7 @@ msgstr "period"
 #: src/components/domain/PeriodControl.tsx
 #: src/components/domain/PeriodEditor.tsx
 #: src/screens/dashboard/dialogs.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Risk.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "Period"
@@ -6078,6 +6132,10 @@ msgstr "Purchases, sales, dividends. Instruments are recorded on the brokerage a
 #: src/screens/Income/model.ts
 msgid "Q{0} {short}"
 msgstr "Q{0} {short}"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Q{quarter} {year}"
+msgstr "Q{quarter} {year}"
 
 #: src/components/domain/positionColumns.tsx
 #: src/components/domain/SecurityPopup.tsx
@@ -6545,6 +6603,7 @@ msgid "Restore what was detected"
 msgstr "Restore what was detected"
 
 #: src/components/domain/positionColumns.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Result"
 msgstr "Result"
@@ -6574,6 +6633,7 @@ msgid "return"
 msgstr "return"
 
 #: src/components/domain/SecurityPopup.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Trades/TradesTable.tsx
@@ -6747,6 +6807,7 @@ msgid "Save the current layout as a template"
 msgstr "Save the current layout as a template"
 
 #: src/components/ui/Form.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
@@ -7155,6 +7216,10 @@ msgstr "Spending to cover, a year"
 #: src/screens/Allocation/MembersPanel.tsx
 msgid "Split"
 msgstr "Split"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Split the period by"
+msgstr "Split the period by"
 
 #: src/components/domain/AssignDialog.tsx
 msgid "Split: {name}"
@@ -7575,6 +7640,10 @@ msgstr "The change in value with deposits and withdrawals taken out."
 #: src/screens/Performance/Metrics.tsx
 #~ msgid "The change in value with deposits and withdrawals taken out. The line beneath is the change the statement shows, which counts the money brought in as if it were a gain."
 #~ msgstr "The change in value with deposits and withdrawals taken out. The line beneath is the change the statement shows, which counts the money brought in as if it were a gain."
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "The change with the flows taken out — what the chunk earned."
+msgstr "The change with the flows taken out — what the chunk earned."
 
 #: src/screens/Import/labels.ts
 msgid "the commission exceeds the amount"
@@ -8010,6 +8079,10 @@ msgstr "the row could not be parsed"
 #: src/screens/Import/labels.ts
 msgid "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
 msgstr "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "The rows so far, chained — the last one is the whole period."
+msgstr "The rows so far, chained — the last one is the whole period."
 
 #: src/screens/Import/AccountTarget.tsx
 msgid "the same account"
@@ -9194,6 +9267,10 @@ msgstr "Who made the result"
 #: src/screens/Income/index.tsx
 msgid "Who pays"
 msgstr "Who pays"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Whole period"
+msgstr "Whole period"
 
 #: src/screens/Positions/index.tsx
 msgid "whole portfolio"

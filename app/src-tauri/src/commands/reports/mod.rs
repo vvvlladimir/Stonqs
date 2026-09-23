@@ -1,6 +1,6 @@
 //! The reports screen: gains, dividends, charges and income, plus their CSV exports.
 
-mod csv;
+pub(crate) mod csv;
 mod export;
 mod income;
 mod names;

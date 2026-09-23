@@ -38,6 +38,40 @@ pub fn series(args: &[String]) -> Result<()> {
     Ok(())
 }
 
+/// Print the calculation sheet: one row per month, and the identity it keeps.
+pub fn breakdown(args: &[String]) -> Result<()> {
+    let world = demo_world()?;
+    let range = parse_range(args, world.default_range())?;
+    let sheet = world.analytics()?.calculation_sheet(range, Period::Month)?;
+
+    println!(
+        "period {} — {}, base {}",
+        range.from, range.to, sheet.base_currency
+    );
+    println!("{}", "-".repeat(104));
+    println!(
+        "{:<12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>10}",
+        "month end", "start", "flows", "market", "income", "costs", "end", "return"
+    );
+    for row in &sheet.rows {
+        println!(
+            "{:<12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>12} {:>10}",
+            row.to,
+            money(row.start_value_base),
+            money(row.external_flow_base),
+            money(row.market_change_base),
+            money(row.income_base),
+            money(row.costs.total_base()),
+            money(row.end_value_base),
+            percent(row.twr),
+        );
+    }
+    println!("{}", "-".repeat(104));
+    println!("earned over the period: {}", money(sheet.total.delta_base));
+    println!("TWR over the period:    {}", percent(sheet.twr));
+    Ok(())
+}
+
 /// Print risk metrics for a date range.
 pub fn risk(args: &[String]) -> Result<()> {
     let world = demo_world()?;

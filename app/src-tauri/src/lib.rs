@@ -117,6 +117,8 @@ pub fn run() {
             commands::periods::period_delete,
             commands::periods::periods_restore,
             commands::performance::performance_summary,
+            commands::performance::performance_breakdown,
+            commands::performance::performance_sheet_save,
             commands::trades::trades_summary,
             commands::payments::payments_grid,
             commands::payments::dividends_expected,
