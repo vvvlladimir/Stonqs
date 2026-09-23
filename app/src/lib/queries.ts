@@ -6,6 +6,7 @@ import type {
   DateString,
   PaymentPeriod,
   PeriodRange,
+  SheetPeriod,
   TransactionFilter,
   TransactionKind,
 } from "./types";
@@ -29,6 +30,8 @@ export const keys = {
   status: () => key("status"),
   settings: () => key("settings"),
   profiles: () => key("profiles"),
+  plugins: () => key("plugins"),
+  pluginTheme: (key_?: string) => key("plugin-theme", key_),
   portfolio: () => key("portfolio"),
   aiKeyStatus: (provider?: string) => key("ai-key-status", provider),
   aiChats: () => key("ai-chats"),
@@ -70,6 +73,10 @@ export const keys = {
   periodSettings: () => key("period-settings"),
   performance: (from?: DateString, to?: DateString, source?: Source) =>
     key("performance", from, to, source ?? undefined),
+  performanceBreakdown: (from?: DateString, to?: DateString, period?: SheetPeriod, source?: Source) =>
+    key("performance-breakdown", from, to, period, source ?? undefined),
+  goals: (date?: DateString) => key("goals", date),
+  limits: (date?: DateString) => key("limits", date),
   trades: (from?: DateString, to?: DateString, source?: Source) =>
     key("trades", from, to, source ?? undefined),
   payments: (from?: DateString, to?: DateString, period?: PaymentPeriod, source?: Source) =>
@@ -142,6 +149,25 @@ export function useStatus() {
 
 export function useProfiles() {
   return useQuery({ queryKey: keys.profiles(), queryFn: api.profilesList });
+}
+
+/** What the app is extended with, and which of it can be used. */
+export function usePlugins() {
+  return useQuery({ queryKey: keys.plugins(), queryFn: api.pluginsList });
+}
+
+/**
+ * The stylesheet of the theme in use, if one comes from a plugin. Kept forever once read: it is
+ * a file on this machine, and re-reading it on every focus would repaint the app for nothing.
+ */
+export function usePluginTheme(theme: string | null) {
+  const [plugin, id] = (theme ?? "").split("/");
+  return useQuery({
+    queryKey: keys.pluginTheme(theme ?? undefined),
+    queryFn: () => api.pluginThemeCss(plugin, id),
+    enabled: Boolean(plugin && id),
+    staleTime: Infinity,
+  });
 }
 
 export function useSettings() {
@@ -421,6 +447,29 @@ export function usePerformance(range: PeriodRange | undefined, source?: Source) 
   });
 }
 
+/** The calculation sheet of the same period the performance screen is showing. */
+export function usePerformanceBreakdown(
+  range: PeriodRange | undefined,
+  period: SheetPeriod,
+  source?: Source,
+) {
+  return useQuery({
+    queryKey: keys.performanceBreakdown(range?.from, range?.to, period, source),
+    queryFn: () => api.performanceBreakdown(range!.from, range!.to, period, source),
+    enabled: range !== undefined,
+  });
+}
+
+/** Goals with their progress, read at `date`. Not scoped: a goal carries its own accounts. */
+export function useGoals(date: DateString) {
+  return useQuery({ queryKey: keys.goals(date), queryFn: () => api.goalsList(date) });
+}
+
+/** Contribution limits with what has been paid in over the limit year `date` falls in. */
+export function useLimits(date: DateString) {
+  return useQuery({ queryKey: keys.limits(date), queryFn: () => api.limitsList(date) });
+}
+
 /** Dividends expected over the next `months` months; the window starts today, so no period. */
 export function useExpectedDividends(months: number, source?: Source) {
   return useQuery({
@@ -641,6 +690,7 @@ const REPORTS: QueryKey[] = [
   keys.reports(),
   keys.periods(),
   keys.performance(),
+  keys.performanceBreakdown(),
   keys.trades(),
   keys.payments(),
   keys.expectedDividends(),
@@ -675,6 +725,9 @@ const ALERTS: QueryKey[] = [
 /** A plan and everything read off its schedule. Committing one also writes transactions. */
 const PLANS: QueryKey[] = [keys.plans(), keys.planDue(), keys.planProjection(), keys.fire()];
 
+/** A goal reads a valuation and a limit reads the ledger, so both move with either. */
+const GOALS: QueryKey[] = [keys.goals(), keys.limits()];
+
 /**
  * Stored lists that nonetheless carry computed fields: an account row holds its balance,
  * a security row its quote count and trade count. A write to one of them moves all three.
@@ -702,11 +755,12 @@ export const affects: Record<DataChangeKind, QueryKey[]> = {
   ai_chats: [keys.aiChats(), keys.aiGrants(), keys.aiUsage()],
   // An import writes transactions and may create securities; both rows carry counts.
   // Committing a plan writes transactions, so the occurrence it answered stops being due.
-  transactions: [...LISTS, ...REPORTS, ...PLANS, keys.transferSuggestions()],
+  transactions: [...LISTS, ...REPORTS, ...PLANS, ...GOALS, keys.transferSuggestions()],
   plans: PLANS,
+  goals: GOALS,
   alerts: ALERTS,
   watchlists: [keys.watchlists(), keys.watchlistRows()],
-  accounts: [...LISTS, keys.scope(), ...REPORTS],
+  accounts: [...LISTS, keys.scope(), ...REPORTS, ...GOALS],
   // Naming a region is a portfolio change, and it is what real returns are measured against.
   portfolio: [keys.portfolio(), keys.status(), keys.scope(), keys.inflationStatus(), ...LISTS, ...REPORTS],
   securities: [
@@ -734,6 +788,8 @@ export const affects: Record<DataChangeKind, QueryKey[]> = {
     keys.inflationStatus(),
     ...ALERTS,
     ...REPORTS,
+    // A goal's progress is a valuation, so a fresh price moves it.
+    ...GOALS,
   ],
   taxonomies: TREES,
   targets: [keys.targets(), keys.rebalance(), keys.allocation()],

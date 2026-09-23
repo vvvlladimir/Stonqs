@@ -14,7 +14,10 @@ import type { ToolParams } from "../../lib/types";
 export const TOOL_LABELS: Record<string, MessageDescriptor> = {
   portfolio_overview: msg`what the portfolio is worth`,
   portfolio_performance: msg`how the portfolio performed`,
+  portfolio_breakdown: msg`how the result adds up, step by step`,
   portfolio_risk: msg`volatility and drawdown`,
+  plans_goals: msg`your savings goals`,
+  accounts_limits: msg`your contribution limits`,
   positions_list: msg`the instruments you hold`,
   accounts_list: msg`your accounts and cash`,
   allocation_trees: msg`your classification trees`,

@@ -26,7 +26,10 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   when the result is replayed (`functionResponse` names the function, not a call); a tool result
   is said by the *user* role, because there is no third one; and thinking is counted **beside**
   the answer (`thoughtsTokenCount` outside `candidatesTokenCount`), so the two are added to keep
-  this app's rule that reasoning is part of output.
+  this app's rule that reasoning is part of output. Two 429s are also read there: a quota gone for the day or never
+  granted (`limit: 0`) is the provider's own error, not "try again shortly"; and a 429 on a request
+  carrying `googleSearch` is asked once more without it — grounding has its own free-tier quota,
+  often zero — and that model gets no search for the rest of the run.
 - Beside the two built-in providers there is **one the user configures** (`catalog::CUSTOM`,
   `AppSettings::ai_custom`): a label, a base URL, a `Wire` and a model id. It is a provider only
   once it has an address and a model, and its key is *optional* — a model served from the user's
@@ -154,10 +157,14 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   from, and leaving one behind names a model the new provider has never heard of. Every provider
   this build can talk to is offered, connected or not — one without a key is listed and cannot be
   chosen, because a picker that hides the alternative reads as no choice at all.
-- **No model is a setting.** A chat lands on the first model its provider lists *today*
-  (`commands::ai::newest_model`); `catalog::Provider::default_model` is the fallback for when that
-  list cannot be read, and the only model id a user ever types is their own server's, beside its
-  address. An id compiled into a build outlives the model it names.
+- **A new chat starts where the last choice left off** (ADR-0069). Provider, model and effort
+  switched in a footer are remembered (`AppSettings::ai_provider`, `ai_models` per provider,
+  `ai_effort`); with nothing picked, a chat starts on the provider's **smallest** tier today
+  (`commands::ai::default_model` → `models::smallest`). A remembered id is read against today's
+  list (`models::remembered`: same id, else newest of its tier), because an id outlives the model
+  it names. `catalog::Provider::default_model` (small tier) answers only when no list can be read.
+  The tool mode is **not** carried (ADR-0037), and `settings_save` never overwrites the remembered
+  picks.
 - The model list comes from the provider (`ai/models.rs`, cached per provider in
   `AppState::ai_models`, cleared for the custom one when its address changes), cut to **three**: the newest of each tier the catalogue already has
   (`gpt-…-sol / -terra / -luna` — or the older `gpt-… / -mini / -nano`, same slots — and
@@ -167,6 +174,10 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   catalogue, and the chat's own model is always an option whatever the list says. Everything else
   a catalogue carries — dated snapshots, `-codex`, `-chat-latest`, transcription — answers a
   different question than "who answers this chat".
+- The user can add ids to any provider's picker by hand (`AppSettings::ai_extra_models`, Settings →
+  a provider's row). They are joined after the shortlist in `commands::ai::models_for`, **after**
+  the cache so an edit shows at once, and they count as "on offer" for `models::remembered`. No id
+  is validated there: the first send with a misspelled one returns the provider's own error.
 - A reading is shown while it happens: `AiEvent::ToolRunning` / `ToolFinished` / `Searching` drive
   the same component the persisted blocks do, so it does not change shape once saved. Consecutive
   readings are one rail (`components/domain/aiSteps.ts` builds the same `Step` from live events and
@@ -209,5 +220,5 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   ceiling at the bare budget would truncate a thinking model before its first word. `None`
   everywhere else is `DEFAULT_MAX_OUTPUT`.
 - The tile may name its own provider and model (`cfg.provider` / `cfg.model`, the `model` field,
-  passed to `ai_brief`); absent, it follows `AppSettings::ai_provider` and `newest_model`. A model is
+  passed to `ai_brief`); absent, it follows `AppSettings::ai_provider` and `default_model`. A model is
   stored only beside the provider it was picked from — switching provider clears it.

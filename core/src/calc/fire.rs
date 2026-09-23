@@ -87,7 +87,7 @@ pub fn fire_projection(
     }
 
     let target = annual_spending / withdrawal_rate;
-    let months = months_to_reach(current_base, target, monthly_contribution, expected_return);
+    let months = months_needed(current_base, target, monthly_contribution, expected_return);
     let target_date = months.and_then(|n| as_of.checked_add_months(chrono::Months::new(n)));
 
     Ok(FireProjection {
@@ -113,7 +113,10 @@ pub fn fire_projection(
 ///
 /// `f64`: this is a horizon read off a logarithm, not money. The result is a whole month either
 /// way, so the precision `Decimal` would add lands well below what the assumptions are worth.
-fn months_to_reach(
+///
+/// Shared with [`super::goals`], which asks the same question about an amount and a date rather
+/// than about a spending and a withdrawal rate.
+pub(crate) fn months_needed(
     current: Decimal,
     target: Decimal,
     contribution: Decimal,
@@ -157,6 +160,46 @@ fn months_to_reach(
         return None;
     }
     Some(months as u32)
+}
+
+/// The monthly contribution that turns `current` into `target` in exactly `months`, compounded
+/// at `yearly_return` — the inverse of [`months_needed`].
+///
+/// `None` when the question has no answer: no months to pay over, or a rate that destroys the
+/// capital outright. A target already met needs nothing, which is zero rather than `None`.
+pub(crate) fn monthly_needed(
+    current: Decimal,
+    target: Decimal,
+    months: u32,
+    yearly_return: Decimal,
+) -> Option<Decimal> {
+    if current >= target {
+        return Some(Decimal::ZERO);
+    }
+    if months == 0 {
+        // No time left: the gap can only be closed by paying it in whole.
+        return Some(target - current);
+    }
+    let (value, goal) = (to_f64(current)?, to_f64(target)?);
+    let yearly = to_f64(yearly_return)?;
+    if yearly <= -1.0 {
+        return None;
+    }
+    let monthly = (1.0 + yearly).powf(1.0 / 12.0) - 1.0;
+    let n = f64::from(months);
+
+    let needed = if monthly.abs() < 1e-12 {
+        (goal - value) / n
+    } else {
+        let grown = (1.0 + monthly).powf(n);
+        // value·(1+i)^n + paid·((1+i)^n − 1)/i = goal, solved for paid.
+        (goal - value * grown) * monthly / (grown - 1.0)
+    };
+    if !needed.is_finite() {
+        return None;
+    }
+    // Growth alone may already carry it there; nothing a month is the answer, not a refund.
+    Decimal::from_f64(needed.max(0.0)).map(|v| v.round_dp(2))
 }
 
 fn to_f64(value: Decimal) -> Option<f64> {

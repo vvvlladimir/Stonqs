@@ -68,14 +68,14 @@ pub use error::{Error, Result};
 /// Commonly used types in one `use` — callers typically touch most modules at once.
 pub mod prelude {
     pub use crate::calc::{
-        AlertStatus, Allocation, AllocationBucket, BenchmarkComparison, Contribution, DividendProfile,
-        DividendSummary, Holdings, InstrumentMove, NearestLevel, Peak, Period, PeriodPreset, PlanOccurrence,
-        PlannedTrade, PortfolioAnalytics, PortfolioValuation, RealizedSummary, RebalanceOptions,
-        RebalancePlan, RiskMetrics, Trade, TradeStats, ValueSeries, alert_status, all_time_high,
-        build_holdings, capital_gains_by_year, closed_trades, contribution_schedule, contributions_by_month,
-        dividend_profiles, dividends_by_year, due_occurrences, investable_amount, open_trades,
-        plan_occurrence, plan_transactions, risk_metrics, trade_stats, value_holdings, value_series, xirr,
-        yield_on_cost,
+        AlertStatus, Allocation, AllocationBucket, BenchmarkComparison, CalculationSheet, Contribution,
+        DividendProfile, DividendSummary, Holdings, InstrumentMove, NearestLevel, Peak, Period, PeriodPreset,
+        PlanOccurrence, PlannedTrade, PortfolioAnalytics, PortfolioValuation, RealizedSummary,
+        RebalanceOptions, RebalancePlan, RiskMetrics, Trade, TradeStats, ValueSeries, alert_status,
+        all_time_high, build_holdings, capital_gains_by_year, closed_trades, contribution_schedule,
+        contributions_by_month, dividend_profiles, dividends_by_year, due_occurrences, investable_amount,
+        open_trades, plan_occurrence, plan_transactions, risk_metrics, trade_stats, value_holdings,
+        value_series, xirr, yield_on_cost,
     };
     pub use crate::error::{Error, Result};
     pub use crate::fx::{EcbProvider, FxRate, FxService, RateCache, RateLookup, StaticFxProvider};
@@ -85,11 +85,11 @@ pub mod prelude {
     };
     pub use crate::model::{
         Account, AccountGroup, AccountKind, AlertCrossing, AlertDirection, AlertKind, AlertSide,
-        AllocationTarget, AttributeKind, CashClassification, CorporateAction, CorporateActionKind,
-        CostBasisMethod, CrossingDirection, Interval, InvestmentPlan, PlanLeg, Portfolio, Position, Schedule,
-        Security, SecurityAlert, SecurityAttributeDef, SecurityClassification, SecurityEvent,
-        SecurityEventKind, SecurityKind, Taxonomy, TaxonomyKind, TaxonomyNode, Transaction, TransactionKind,
-        Watchlist, observed_quantity_step,
+        AllocationTarget, AttributeKind, CashClassification, ContributionLimit, CorporateAction,
+        CorporateActionKind, CostBasisMethod, CrossingDirection, Goal, Interval, InvestmentPlan, PlanLeg,
+        Portfolio, Position, Schedule, Security, SecurityAlert, SecurityAttributeDef, SecurityClassification,
+        SecurityEvent, SecurityEventKind, SecurityKind, Taxonomy, TaxonomyKind, TaxonomyNode, Transaction,
+        TransactionKind, Watchlist, observed_quantity_step,
     };
     pub use crate::money::{Currency, Money};
     pub use crate::sources;

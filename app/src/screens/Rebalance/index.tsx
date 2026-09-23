@@ -1,8 +1,9 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import { Command } from "../../lib/commands";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { CalendarDotsIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { DriftBars } from "../../components/charts";
 import { Page } from "../../components/Page";
 import {
@@ -17,7 +18,7 @@ import {
   QueryError,
   Seg,
 } from "../../components/ui";
-import { formatDay, formatMoney } from "../../lib/format";
+import { formatMoney } from "../../lib/format";
 import { planFromTrades } from "../../lib/plans";
 import { slotOfNode } from "../../lib/taxonomy";
 import {
@@ -37,10 +38,11 @@ import { CashPanel } from "./CashPanel";
 import { PlanTable } from "./PlanTable";
 import { TargetForm } from "./TargetForm";
 import { cashInPlan, formatPoints, largestDrift } from "./model";
+import { useAsOf } from "../../lib/asOf";
 
 export function Rebalance() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const invalidate = useInvalidate();
   const [targetId, setTargetId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -109,7 +111,6 @@ export function Rebalance() {
     <Page
       archetype="analysis"
       title={t`Rebalance`}
-      asOf={formatDay(date)}
       note={target?.name}
       controls={
         <>
@@ -138,6 +139,7 @@ export function Rebalance() {
           <button className="btn" onClick={() => setEditing(true)}>
             <PlusIcon /> <Trans>New target</Trans>
           </button>
+          <Command id="new" label={t`New target`} run={() => setEditing(true)} />
           {selected && (
             <button
               className="iconbtn iconbtn--danger"

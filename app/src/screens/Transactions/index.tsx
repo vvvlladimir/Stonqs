@@ -1,9 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react";
 import { save as saveFile } from "@tauri-apps/plugin-dialog";
 import { api, today } from "../../lib/api";
+import { ariaKeys, Command } from "../../lib/commands";
 import { Page } from "../../components/Page";
 import {
   Async,
@@ -17,7 +18,7 @@ import {
   useSelection,
   type MenuItem,
 } from "../../components/ui";
-import { formatDay, formatMoney } from "../../lib/format";
+import { formatMoney } from "../../lib/format";
 import { transactionLabel } from "../../lib/kinds";
 import { affects, useAccounts, useInvalidate, useTransactions } from "../../lib/queries";
 import type { TransactionFilter, TransactionInput, TransactionRow } from "../../lib/types";
@@ -29,12 +30,9 @@ export function Transactions({ focus }: { focus?: string | null }) {
   const { t, i18n } = useLingui();
   const invalidate = useInvalidate();
   const [filter, setFilter] = useState<TransactionFilter>({});
-  const [query, setQuery] = useState("");
-
-  // Navigation hints use the same visible search filter as typed input.
-  useEffect(() => {
-    if (focus) setQuery(focus);
-  }, [focus]);
+  // Navigation hints use the same visible search filter as typed input. The screen is keyed by
+  // the hint (`App`), so arriving with a new one starts here rather than syncing in an effect.
+  const [query, setQuery] = useState(focus ?? "");
   const [draft, setDraft] = useState<TransactionInput | null>(null);
   const [exporting, setExporting] = useState(false);
   const menu = useMenu();
@@ -161,15 +159,21 @@ export function Transactions({ focus }: { focus?: string | null }) {
             )}`
           : undefined
       }
-      asOf={formatDay(today())}
       actions={
         <>
           <button className="btn" onClick={exportFile} disabled={exporting}>
             <DownloadSimpleIcon /> <Trans>Export</Trans>
           </button>
-          <button className="btn" onClick={() => setDraft(blank())}>
+          <button
+            className="btn"
+            aria-keyshortcuts={ariaKeys("newTransaction")}
+            onClick={() => setDraft(blank())}
+          >
             <PlusIcon /> <Trans>New transaction</Trans>
           </button>
+          <Command id="newTransaction" run={() => setDraft(blank())} />
+          <Command id="exportTransactions" run={exportFile} disabled={exporting} />
+          <Command id="new" label={t`New transaction`} run={() => setDraft(blank())} />
         </>
       }
       filters={

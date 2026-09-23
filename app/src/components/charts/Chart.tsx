@@ -1,6 +1,9 @@
 import { useId, useState, type ReactNode } from "react";
 import { useSize } from "../../lib/useSize";
-import { CH, linearScale, niceTicks, path, slotVar, type Scale } from "../../lib/plot";
+import { CH, indexScale, path, slotVar } from "../../lib/plot";
+import type { Frame, Scale } from "../../lib/plot";
+
+export type { Frame };
 import { axisFormat, formatAxisDate } from "../../lib/format";
 
 /** Shared responsive frame for legends, axes, readouts, and chart interaction. */
@@ -11,19 +14,6 @@ export interface LegendItem {
   tone: "accent" | "ref" | "in" | "out" | "pos" | "neg";
   /** Palette slot painting a `ref` key, when several reference lines share one chart. */
   slot?: number;
-}
-
-export interface Frame {
-  width: number;
-  height: number;
-  /** Data plot bounds. */
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-  /** Optional lower lane bounds. */
-  laneTop: number;
-  laneBottom: number;
 }
 
 /**
@@ -164,23 +154,6 @@ function DateAxis({ dates, frame, x }: { dates: string[]; frame: Frame; x: Scale
       })}
     </>
   );
-}
-
-/** Maps evenly spaced series indices to the plot X axis. */
-export function indexScale(count: number, frame: Frame): Scale {
-  return linearScale([0, Math.max(count - 1, 1)], [frame.left, frame.right]);
-}
-
-/** Builds a rounded Y scale with labels aligned on the right. */
-export function valueAxis(values: number[], frame: Frame, includeZero = false) {
-  const min = Math.min(...values, includeZero ? 0 : Infinity);
-  const max = Math.max(...values, includeZero ? 0 : -Infinity);
-  const ticks = niceTicks(min, max);
-  const y = linearScale(
-    [Math.min(min, ticks[0]), Math.max(max, ticks[ticks.length - 1])],
-    [frame.bottom, frame.top],
-  );
-  return { y, ticks, min, max };
 }
 
 export function Grid({

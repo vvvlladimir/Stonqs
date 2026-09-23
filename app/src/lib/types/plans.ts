@@ -153,3 +153,87 @@ export interface FireProjection {
   expected_return: MoneyString;
   withdrawal_rate: MoneyString;
 }
+
+/** An amount the user means to have by a date, over the accounts they name. */
+export interface Goal {
+  id: string;
+  name: string;
+  target_amount: MoneyString;
+  currency: string;
+  target_date: DateString | null;
+  monthly_amount: MoneyString | null;
+  /** The user's assumption as a fraction; `0.05` is 5% a year. Never the measured return. */
+  expected_return: MoneyString;
+  note: string | null;
+  created_at: DateString;
+  /** Accounts that count towards it; empty is the whole portfolio. */
+  accounts: string[];
+}
+
+export interface GoalProgress {
+  goal_id: string;
+  name: string;
+  target_base: MoneyString;
+  current_base: MoneyString;
+  missing_base: MoneyString;
+  progress: MoneyString;
+  /** Whole months to the target date; `null` without one, never negative. */
+  months_left: number | null;
+  /** What must be paid in monthly to arrive on time; `null` when the goal names no date. */
+  required_monthly_base: MoneyString | null;
+  /** Months until the stated monthly amount arrives; `null` when none is stated. */
+  months_to_target: number | null;
+  projected_date: DateString | null;
+  /** `null` when either side of the comparison is missing — not a "no". */
+  on_track: boolean | null;
+  monthly_base: MoneyString | null;
+  expected_return: MoneyString;
+}
+
+export interface GoalRow {
+  goal: Goal;
+  account_names: string[];
+  progress: GoalProgress;
+}
+
+export interface GoalInput {
+  id: string | null;
+  name: string;
+  target_amount: string;
+  currency: string;
+  target_date: string | null;
+  monthly_amount: string | null;
+  /** Percent as typed: `5` is five percent a year. */
+  expected_return: string | null;
+  note: string | null;
+  accounts: string[];
+}
+
+/** What one account may take in one limit year, and what it has taken. */
+export interface LimitUsage {
+  limit_id: string;
+  account_id: string;
+  name: string;
+  from: DateString;
+  to: DateString;
+  allowance: MoneyString;
+  /** Paid in over the year — net of withdrawals only when they restore allowance — never below zero. */
+  used: MoneyString;
+  remaining: MoneyString;
+  share: MoneyString;
+  currency: string;
+  withdrawals_restore: boolean;
+}
+
+export interface LimitInput {
+  id: string | null;
+  account_id: string;
+  name: string;
+  amount: string;
+  currency: string;
+  /** `MM-DD`: the day the limit year opens. */
+  year_starts_on: string;
+  /** A withdrawal gives allowance back (a "flexible" ISA). */
+  withdrawals_restore: boolean;
+  note: string | null;
+}

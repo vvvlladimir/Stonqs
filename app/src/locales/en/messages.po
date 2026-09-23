@@ -91,7 +91,9 @@ msgid "…and {0} more"
 msgstr "…and {0} more"
 
 #. placeholder {0}: missing.length - 40
+#. placeholder {0}: missing.length - SHOWN
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "…and {0} more."
 msgstr "…and {0} more."
 
@@ -163,6 +165,11 @@ msgstr "{0, plural, one {# cash row} other {# cash rows}}"
 msgid "{0, plural, one {# category on this level} other {# categories on this level}}"
 msgstr "{0, plural, one {# category on this level} other {# categories on this level}}"
 
+#. placeholder {0}: errors.length
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0, plural, one {# cell} other {# cells}}"
+msgstr "{0, plural, one {# cell} other {# cells}}"
+
 #. placeholder {0}: preview.headers.length
 #: src/screens/Import/FilePreview.tsx
 msgid "{0, plural, one {# column} other {# columns}}"
@@ -225,6 +232,12 @@ msgstr "{0, plural, one {# kind} other {# kinds}}"
 msgid "{0, plural, one {# list} other {# lists}}"
 msgstr "{0, plural, one {# list} other {# lists}}"
 
+#. placeholder {0}: progress.months_left
+#: src/screens/dashboard/widgets/value.tsx
+#: src/screens/Plans/Goals.tsx
+msgid "{0, plural, one {# month left} other {# months left}}"
+msgstr "{0, plural, one {# month left} other {# months left}}"
+
 #. placeholder {0}: broken.length
 #: src/screens/Securities/index.tsx
 msgid "{0, plural, one {# not identified} other {# not identified}}"
@@ -270,6 +283,11 @@ msgstr "{0, plural, one {# quote} other {# quotes}}"
 msgid "{0, plural, one {# request} other {# requests}}"
 msgstr "{0, plural, one {# request} other {# requests}}"
 
+#. placeholder {0}: shown.length
+#: src/components/ui/Palette.tsx
+msgid "{0, plural, one {# result} other {# results}}"
+msgstr "{0, plural, one {# result} other {# results}}"
+
 #. placeholder {0}: errors.length
 #. placeholder {0}: preview.rows.length
 #. placeholder {0}: symbol.count
@@ -306,6 +324,11 @@ msgstr "{0, plural, one {# transaction} other {# transactions}}"
 #: src/screens/Import/PreviewTables.tsx
 msgid "{0, plural, one {# unique transaction} other {# unique transactions}} of {1}"
 msgstr "{0, plural, one {# unique transaction} other {# unique transactions}} of {1}"
+
+#. placeholder {0}: a.values
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0, plural, one {# value} other {# values}}"
+msgstr "{0, plural, one {# value} other {# values}}"
 
 #. placeholder {0}: thin.length
 #: src/screens/Securities/index.tsx
@@ -375,7 +398,7 @@ msgstr "{0} · {1} of {2}"
 msgid "{0} · {1} of {2} · {3} downloaded"
 msgstr "{0} · {1} of {2} · {3} downloaded"
 
-#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Bar, Money, Num, Percent, QueryError, Stat } from "../../../components/ui"; import { useDashboard, useFire, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: string; foot?: ReactNode; }) { const note = useFoot(ctx, foot); return ( <> <div className="kpiline"> <span className={`kpiline__v num ${tone ?? ""}`}>{value}</span> {delta && <span className="kpiline__d num">{delta}</span>} </div> {note && <div className="w__foot">{note}</div>} </> ); } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: string; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ export function FireWidget({ widget, date, period }: WidgetProps) { const { t, i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period) }; const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <> <Figure ctx={ctx} value={<Percent value={data.progress} digits={0} />} foot={ months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ) } /> <Bar fill={`${Math.min(Math.max(Number(data.progress) * 100, 0), 100)}%`} size="lg" /> <FireNote data={data} /> </> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; return ( <div className="w__foot"> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </div> ); } 
+#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Bar, Money, Num, Percent, QueryError, Stat } from "../../../components/ui"; import { useDashboard, useFire, useGoals, useLimits, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: string; foot?: ReactNode; }) { const note = useFoot(ctx, foot); return ( <> <div className="kpiline"> <span className={`kpiline__v num ${tone ?? ""}`}>{value}</span> {delta && <span className="kpiline__d num">{delta}</span>} </div> {note && <div className="w__foot">{note}</div>} </> ); } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: string; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ export function FireWidget({ widget, date, period }: WidgetProps) { const { t, i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period) }; const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <> <Figure ctx={ctx} value={<Percent value={data.progress} digits={0} />} foot={ months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ) } /> <Bar fill={`${Math.min(Math.max(Number(data.progress) * 100, 0), 100)}%`} size="lg" /> <FireNote data={data} /> </> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; return ( <div className="w__foot"> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </div> ); } /** * One goal as a track: where it is, and the single figure that answers "is this enough". * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean * nothing here. */ export function GoalWidget({ widget, date, period }: WidgetProps) { const { t } = useLingui(); const query = useGoals(date); const ctx = { date, period: periodOf(widget, period) }; const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : ""; return ( <Async query={query}> {(rows) => { const row = rows.find((r) => r.goal.id === wanted) ?? rows[0]; if (!row) return ( <p className="muted"> <Trans>No goals yet — one is added on the Plans screen.</Trans> </p> ); const { progress } = row; return ( <> <Figure ctx={ctx} value={<Percent value={progress.progress} digits={0} />} foot={ progress.months_left !== null ? plural(progress.months_left, { one: "# month left", other: "# months left" }) : progress.projected_date !== null ? t`at this pace, ${formatDay(progress.projected_date)}` : t`no date and no pace stated` } /> <Bar fill={`${Math.min(Math.max(Number(progress.progress) * 100, 0), 100)}%`} size="lg" tone={progress.on_track === false ? "neg" : undefined} /> <p className="w__note"> <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "} <Money value={progress.target_base} currency={row.goal.currency} /> {progress.required_monthly_base !== null && ( <> {" · "} <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "} {t`a month needed`} </> )} </p> </> ); }} </Async> ); } /** One contribution limit as a track: spent against allowed, over its own limit year. */ export function LimitWidget({ widget, date, period }: WidgetProps) { const { t } = useLingui(); const query = useLimits(date); const ctx = { date, period: periodOf(widget, period) }; const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : ""; return ( <Async query={query}> {(rows) => { const usage = rows.find((r) => r.limit_id === wanted) ?? rows[0]; if (!usage) return ( <p className="muted"> <Trans>No limits set — one is added on the Accounts screen.</Trans> </p> ); const over = Number(usage.share) > 1; return ( <> <Figure ctx={ctx} value={<Percent value={usage.share} digits={0} />} foot={t`of the allowance used`} /> <Bar fill={`${Math.min(Math.max(Number(usage.share) * 100, 0), 100)}%`} size="lg" tone={over ? "neg" : undefined} /> <p className="w__note"> <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "} <Money value={usage.allowance} currency={usage.currency} /> </p> </> ); }} </Async> ); } 
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{0} · previous period"
 msgstr "{0} · previous period"
@@ -406,6 +429,12 @@ msgstr "{0} % left"
 #: src/screens/Plans/index.tsx
 msgid "{0} a month"
 msgstr "{0} a month"
+
+#. placeholder {0}: import { plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { DataTable, ErrorText, FormDialog, Metric, Metrics, Scrolly, Tag } from "../../components/ui"; import type { AttributePreview } from "../../lib/types"; const SHOWN = 40; /** What an attribute file would fill in, shown before anything is written. */ export function AttributeImportDialog({ preview, busy, onClose, onImport, }: { preview: AttributePreview; busy: boolean; onClose: () => void; onImport: () => void; }) { const { t } = useLingui(); const matched = preview.rows.filter((r) => r.security_id !== null); const missing = preview.rows.filter((r) => r.security_id === null); const created = preview.attributes.filter((a) => a.attribute_id === null && a.values > 0); const errors = preview.problems.filter((p) => p.severity === "ERROR"); const values = matched.reduce((total, row) => total + Object.keys(row.values).length, 0); const KIND_LABEL: Record<string, string> = { TEXT: t`text`, NUMBER: t`number`, DATE: t`date`, }; return ( <FormDialog title={t`Import attributes`} onClose={onClose} onSubmit={onImport} busy={busy} busyLabel={t`Importing…`} submitLabel={t`Import`} ready={values > 0} wide > <Metrics> <Metric label={t`Instruments found`} value={String(matched.length)} hint={t`of ${preview.rows.length} in the file`} /> <Metric label={t`Not found`} value={String(missing.length)} tone={missing.length > 0 ? "negative" : "neutral"} hint={missing.length > 0 ? t`these rows are not written` : t`all matched`} /> <Metric label={t`Values`} value={String(values)} hint={t`cells that will be filled in`} /> <Metric label={t`New attributes`} value={String(created.length)} hint={created.length > 0 ? t`created on import` : t`all columns already exist`} /> </Metrics> <div> <p className="panel__note"> <Trans> Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values. </Trans> </p> <Scrolly max={160}> <DataTable card={false} rows={preview.attributes} rowKey={(a) => a.name} columns={[ { key: "name", align: "left", className: "nm", cell: (a) => a.name }, { key: "kind", align: "left", className: "sub", cell: (a) => KIND_LABEL[a.kind] ?? a.kind }, { key: "state", cell: (a) => a.attribute_id === null ? ( <Tag> <Trans>new</Trans> </Tag> ) : ( <span className="dim"> <Trans>exists</Trans> </span> ), }, { key: "values", cell: (a) => plural(a.values, { one: "# value", other: "# values" }), }, ]} /> </Scrolly> </div> {missing.length > 0 && ( <div> <p className="panel__note"> <Trans> These rows are skipped — the instrument is in the database under neither ISIN nor ticker: </Trans> </p> <Scrolly max={160}> <DataTable card={false} rows={missing.slice(0, SHOWN)} rowKey={(r) => String(r.row)} columns={[ { key: "label", align: "left", className: "nm", cell: (r) => r.label }, { key: "id", align: "left", className: "sub", cell: (r) => [r.symbol, r.isin].filter(Boolean).join(" · "), }, ]} /> </Scrolly> {missing.length > SHOWN && ( <p className="panel__note"> <Trans>…and {missing.length - SHOWN} more.</Trans> </p> )} </div> )} {errors.length > 0 && ( <ErrorText> <Trans> {plural(errors.length, { one: "# cell", other: "# cells" })} do not fit their attribute and are skipped: {errors[0].message} </Trans> </ErrorText> )} <p className="panel__note"> <Trans> A column the file does not name is left as it is — importing one column never clears the others. </Trans> </p> </FormDialog> ); } 
+#. placeholder {1}: errors[0].message
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0} do not fit their attribute and are skipped: {1}"
+msgstr "{0} do not fit their attribute and are skipped: {1}"
 
 #. placeholder {0}: p.currency
 #: src/screens/Import/labels.ts
@@ -610,6 +639,14 @@ msgstr "{from} — now"
 msgid "{hidden, plural, one {# more figure} other {# more figures}}"
 msgstr "{hidden, plural, one {# more figure} other {# more figures}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{layouts, plural, one {# import layout} other {# import layouts}}"
+msgstr "{layouts, plural, one {# import layout} other {# import layouts}}"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "{models, plural, one {# own model} other {# own models}}"
+msgstr "{models, plural, one {# own model} other {# own models}}"
+
 #: src/screens/Import/MapRow.tsx
 msgid "{occurrences, plural, one {# row} other {# rows}}"
 msgstr "{occurrences, plural, one {# row} other {# rows}}"
@@ -697,6 +734,10 @@ msgstr "{symbol}: date reached"
 #~ msgid "{symbol}: limit reached"
 #~ msgstr "{symbol}: limit reached"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{themes, plural, one {# theme} other {# themes}}"
+msgstr "{themes, plural, one {# theme} other {# themes}}"
+
 #: src/screens/Alerts/index.tsx
 #~ msgid "{unread, plural, one {# new} other {# new}}"
 #~ msgstr "{unread, plural, one {# new} other {# new}}"
@@ -722,6 +763,10 @@ msgstr "↑ crossed {level} upward"
 msgid "↓ crossed {level} downward"
 msgstr "↓ crossed {level} downward"
 
+#: src/screens/Plans/Goals.tsx
+msgid "<0/> a month to arrive on time"
+msgstr "<0/> a month to arrive on time"
+
 #: src/screens/Income/Events.tsx
 msgid "<0/> accrued"
 msgstr "<0/> accrued"
@@ -729,6 +774,10 @@ msgstr "<0/> accrued"
 #: src/components/domain/SecurityAlerts.tsx
 msgid "<0/> from now, <1/>"
 msgstr "<0/> from now, <1/>"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "<0/> left"
+msgstr "<0/> left"
 
 #: src/screens/Plans/DuePanel.tsx
 msgid "<0/> of <1/> stays as cash — it does not reach a whole unit"
@@ -873,6 +922,10 @@ msgstr "a column is not assigned"
 #~ msgid "A column marked \"over the period\" is measured between two dates rather than read off the valuation date; switching one on adds the period control to the screen."
 #~ msgstr "A column marked \"over the period\" is measured between two dates rather than read off the valuation date; switching one on adds the period control to the screen."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "A column the file does not name is left as it is — importing one column never clears the others."
+msgstr "A column the file does not name is left as it is — importing one column never clears the others."
+
 #: src/screens/Reports/Charges.tsx
 msgid "A commission inside a trade never reaches this table: it is already in the position's cost basis, and dividend tax sits next to its payment on the \"Dividends\" tab."
 msgstr "A commission inside a trade never reaches this table: it is already in the position's cost basis, and dividend tax sits next to its payment on the \"Dividends\" tab."
@@ -905,6 +958,10 @@ msgstr "A divider line: it splits the dashboard into meaningful parts."
 #~ msgid "A feed of events: date, instrument and amount as the broker saw them."
 #~ msgstr "A feed of events: date, instrument and amount as the broker saw them."
 
+#: src/screens/Plans/Goals.tsx
+msgid "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
+msgstr "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
+
 #: src/screens/Accounts/GroupsPanel.tsx
 #~ msgid "A group is a saved slice of the portfolio, not a second portfolio: groups overlap, and deleting one touches no account."
 #~ msgstr "A group is a saved slice of the portfolio, not a second portfolio: groups overlap, and deleting one touches no account."
@@ -917,9 +974,21 @@ msgstr "A group is picked as the data source at the bottom of the navigation; ev
 msgid "A key is saved"
 msgstr "A key is saved"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "A key is saved · {added}"
+msgstr "A key is saved · {added}"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
+msgstr "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
+
 #: src/screens/Import/labels.ts
 msgid "a minus means money out"
 msgstr "a minus means money out"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "a month needed"
+msgstr "a month needed"
 
 #: src/screens/Performance/index.tsx
 #~ msgid "A monthly TWR is a chain inside the month, not a ratio of two values: a deposit on the 15th would otherwise turn into a gain."
@@ -956,6 +1025,18 @@ msgstr "A plan buys instruments, so it needs a securities account"
 #: src/screens/Plans/index.tsx
 msgid "A plan is a contribution on a schedule: how much, how often, and what it buys. It proposes the transactions and you confirm them, so nothing is written behind your back."
 msgstr "A plan is a contribution on a schedule: how much, how often, and what it buys. It proposes the transactions and you confirm them, so nothing is written behind your back."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+msgstr "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
+#~ msgstr "A plugin adds to the app without changing what a figure means: for now, colour themes."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin is a folder holding a plugin.json and the files it names."
+msgstr "A plugin is a folder holding a plugin.json and the files it names."
 
 #: src/screens/Positions/index.tsx
 msgid "A position comes from transactions: add a purchase on the \"Transactions\" screen, or load a broker export under \"Import\"."
@@ -1048,6 +1129,10 @@ msgstr "a target allocation"
 msgid "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 msgstr "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
+msgstr "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
+
 #: src/screens/dashboard/dialogs.tsx
 msgid "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
 msgstr "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
@@ -1092,6 +1177,10 @@ msgstr "a year"
 msgid "a zero amount"
 msgstr "a zero amount"
 
+#: src/components/domain/menuBar/model.ts
+msgid "About {app}"
+msgstr "About {app}"
+
 #: src/components/charts/DriftBars.tsx
 msgid "above target"
 msgstr "above target"
@@ -1100,7 +1189,9 @@ msgstr "above target"
 msgid "account"
 msgstr "account"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PlanForm.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/Dividends.tsx
@@ -1131,8 +1222,8 @@ msgstr "Account for \"{value}\""
 msgid "accounts"
 msgstr "accounts"
 
-#: src/App.tsx
 #: src/components/domain/positionColumns.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Accounts/GroupForm.tsx
 #: src/screens/Accounts/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -1147,6 +1238,10 @@ msgstr "Accounts from the file"
 #: src/screens/Settings/AccountsPanel.tsx
 msgid "Accounts in the portfolio"
 msgstr "Accounts in the portfolio"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Accounts that count"
+msgstr "Accounts that count"
 
 #: src/screens/Reports/Dividends.tsx
 msgid "accrued"
@@ -1207,6 +1302,7 @@ msgid "Add demo data"
 msgstr "Add demo data"
 
 #: src/components/domain/PlanForm.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Securities/index.tsx
 msgid "Add instrument"
 msgstr "Add instrument"
@@ -1222,6 +1318,10 @@ msgstr "Add instruments…"
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Add key"
 msgstr "Add key"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Add models to the picker"
+msgstr "Add models to the picker"
 
 #: src/components/domain/SecurityPopup.tsx
 #: src/screens/Alerts/index.tsx
@@ -1295,11 +1395,14 @@ msgid "Against the target"
 msgstr "Against the target"
 
 #: src/components/domain/AiChatPanel.tsx
+#: src/components/domain/AiToggle.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/AiPanel.tsx
 #: src/screens/Settings/model.ts
 msgid "AI assistant"
 msgstr "AI assistant"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Alert"
 msgstr "Alert"
@@ -1308,7 +1411,7 @@ msgstr "Alert"
 #~ msgid "Alert when"
 #~ msgstr "Alert when"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Alerts/index.tsx
 msgid "Alerts"
 msgstr "Alerts"
@@ -1334,6 +1437,10 @@ msgstr "All"
 msgid "All {0} rows carry the same transaction kind {1} — check that the right column is assigned to the kind."
 msgstr "All {0} rows carry the same transaction kind {1} — check that the right column is assigned to the kind."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "all columns already exist"
+msgstr "all columns already exist"
+
 #: src/screens/Performance/Metrics.tsx
 msgid "All fees against the capital at work, trade commissions included."
 msgstr "All fees against the capital at work, trade commissions included."
@@ -1341,6 +1448,10 @@ msgstr "All fees against the capital at work, trade commissions included."
 #: src/screens/Income/model.ts
 msgid "All income kinds"
 msgstr "All income kinds"
+
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "All keyboard shortcuts"
+msgstr "All keyboard shortcuts"
 
 #: src/screens/Income/model.ts
 msgid "all kinds"
@@ -1351,6 +1462,7 @@ msgid "All kinds"
 msgstr "All kinds"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "all matched"
 msgstr "all matched"
 
@@ -1359,8 +1471,8 @@ msgid "all on target"
 msgstr "all on target"
 
 #: src/App.tsx
-msgid "All screens"
-msgstr "All screens"
+#~ msgid "All screens"
+#~ msgstr "All screens"
 
 #: src/components/domain/SecurityPopup.tsx
 msgid "all time"
@@ -1379,7 +1491,7 @@ msgstr "All years"
 msgid "All-time high"
 msgstr "All-time high"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/index.tsx
 msgid "Allocation"
 msgstr "Allocation"
@@ -1395,6 +1507,10 @@ msgstr "Allow in this chat"
 #: src/components/domain/AiTools.tsx
 msgid "Allow once"
 msgstr "Allow once"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Allowance"
+msgstr "Allowance"
 
 #. placeholder {0}: tools.map(name).join(", ")
 #: src/components/domain/AiTools.tsx
@@ -1417,6 +1533,11 @@ msgstr "Already in the portfolio"
 #: src/screens/dashboard/widgets/value.tsx
 msgid "already there"
 msgstr "already there"
+
+#. placeholder {0}: keyHint("help")
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Also opens with {0} anywhere in the app."
+msgstr "Also opens with {0} anywhere in the app."
 
 #: src/components/domain/aiToolLabels.ts
 msgid "amount"
@@ -1465,6 +1586,14 @@ msgstr "An alert is a price level or a day on one instrument. A close that cross
 #: src/screens/Alerts/index.tsx
 #~ msgid "An alert watches one instrument: a price it rises or falls to, or a day to look at it again. It is checked after every quote refresh and announced once per crossing."
 #~ msgstr "An alert watches one instrument: a price it rises or falls to, or a day to look at it again. It is checked after every quote refresh and announced once per crossing."
+
+#: src/screens/Plans/Goals.tsx
+msgid "An amount you mean to have by a date, measured against the accounts you name."
+msgstr "An amount you mean to have by a date, measured against the accounts you name."
+
+#: src/screens/Plans/Goals.tsx
+msgid "An assumption, never this portfolio's measured return. Leave empty for pure saving."
+msgstr "An assumption, never this portfolio's measured return. Leave empty for pure saving."
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "An assumption, never this portfolio's measured return. Subtract inflation yourself to read the answer in today's money."
@@ -1515,7 +1644,7 @@ msgstr "an operation like it is already stored"
 msgid "An operation like it is already stored"
 msgstr "An operation like it is already stored"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 msgid "Analysis"
 msgstr "Analysis"
 
@@ -1547,6 +1676,10 @@ msgstr "Annualized volatility over a sliding window of trading days."
 #: src/screens/Import/labels.ts
 msgid "another currency than the account keeps"
 msgstr "another currency than the account keeps"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "Another date"
+msgstr "Another date"
 
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Answer format"
@@ -1628,8 +1761,8 @@ msgid "arrived on the account"
 msgstr "arrived on the account"
 
 #: src/components/Page.tsx
-msgid "as of {asOf}"
-msgstr "as of {asOf}"
+#~ msgid "as of {asOf}"
+#~ msgstr "as of {asOf}"
 
 #: src/components/domain/AiChatPanel.tsx
 msgid "Ask about performance, allocation, a single holding — anything on screen."
@@ -1646,6 +1779,10 @@ msgstr "Ask about your portfolio…"
 #: src/components/domain/AiTools.tsx
 msgid "Ask first"
 msgstr "Ask first"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Ask the Assistant"
+msgstr "Ask the Assistant"
 
 #: src/components/domain/ListingPicker.tsx
 msgid "Ask the directory again"
@@ -1696,6 +1833,12 @@ msgstr "At least {MIN_PASSWORD} characters."
 msgid "At least {MIN_PASSWORD} characters. It encrypts the profile's data and keys, and it cannot be recovered: forgotten, it takes all of them with it."
 msgstr "At least {MIN_PASSWORD} characters. It encrypts the profile's data and keys, and it cannot be recovered: forgotten, it takes all of them with it."
 
+#. placeholder {0}: formatDay(progress.projected_date)
+#: src/screens/dashboard/widgets/value.tsx
+#: src/screens/Plans/Goals.tsx
+msgid "at this pace, {0}"
+msgstr "at this pace, {0}"
+
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "Attribute"
 msgstr "Attribute"
@@ -1731,6 +1874,11 @@ msgstr "Back"
 msgid "Back to the chats"
 msgstr "Back to the chats"
 
+#: src/components/domain/AsOfPicker.tsx
+#: src/lib/commands/catalog.ts
+msgid "Back to today"
+msgstr "Back to today"
+
 #: src/components/domain/AiTools.tsx
 msgid "Balanced"
 msgstr "Balanced"
@@ -1747,6 +1895,10 @@ msgstr "Base currency"
 #: src/screens/Allocation/Header.tsx
 msgid "base currency {currency}"
 msgstr "base currency {currency}"
+
+#: src/screens/Plans/Goals.tsx
+msgid "behind"
+msgstr "behind"
 
 #. placeholder {0}: formatDay(data.peak.date)
 #: src/screens/dashboard/widgets/value.tsx
@@ -1801,6 +1953,10 @@ msgstr "branch"
 msgid "Breakdown"
 msgstr "Breakdown"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Bring All to Front"
+msgstr "Bring All to Front"
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Bring back the shipped periods that were removed"
 msgstr "Bring back the shipped periods that were removed"
@@ -1842,9 +1998,17 @@ msgstr "buys"
 msgid "Buys and sells apart: a sale realizes a result and can be taxable."
 msgstr "Buys and sells apart: a sale realizes a result and can be taxable."
 
+#: src/screens/Plans/Goals.tsx
+msgid "By"
+msgstr "By"
+
 #: src/screens/Reports/Charges.tsx
 msgid "By account"
 msgstr "By account"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By day"
+msgstr "By day"
 
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Reports/Dividends.tsx
@@ -1852,14 +2016,27 @@ msgstr "By account"
 msgid "By instrument"
 msgstr "By instrument"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By month"
+msgstr "By month"
+
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "By payer over the same axis"
 msgstr "By payer over the same axis"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By quarter"
+msgstr "By quarter"
 
 #: src/screens/Reports/Charges.tsx
 msgid "By transaction kind"
 msgstr "By transaction kind"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "By week"
+msgstr "By week"
+
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/Dividends.tsx
 #: src/screens/Reports/Gains.tsx
@@ -1874,7 +2051,7 @@ msgstr "Calculating…"
 msgid "Calendar by year and month"
 msgstr "Calendar by year and month"
 
-#: src/components/ui/Form.tsx
+#: src/components/ui/formLabels.ts
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 msgid "Cancel"
@@ -1904,7 +2081,7 @@ msgid "CASH"
 msgstr "CASH"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Cash · {0}"
 msgstr "Cash · {0}"
 
@@ -1962,6 +2139,14 @@ msgstr "Categories on this level"
 msgid "Category"
 msgstr "Category"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "cells that will be filled in"
+msgstr "cells that will be filled in"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Chained"
+msgstr "Chained"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "change an account"
 msgstr "change an account"
@@ -1985,6 +2170,7 @@ msgstr "Change the split in {0}"
 msgid "Charts"
 msgstr "Charts"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Check for updates"
 msgstr "Check for updates"
@@ -1992,6 +2178,10 @@ msgstr "Check for updates"
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Check for updates automatically"
 msgstr "Check for updates automatically"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Check for Updates…"
+msgstr "Check for Updates…"
 
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Checking…"
@@ -2012,6 +2202,10 @@ msgstr "Choose a default account first: otherwise the rows have nowhere to go."
 #: src/screens/Import/FileStep.tsx
 msgid "Choose a file"
 msgstr "Choose a file"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Choose a plugin folder"
+msgstr "Choose a plugin folder"
 
 #: src/components/domain/ProfilePicker.tsx
 msgid "Choose a profile"
@@ -2067,9 +2261,17 @@ msgstr "Click to try again."
 msgid "Close"
 msgstr "Close"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Close a dialog, a menu or the assistant"
+msgstr "Close a dialog, a menu or the assistant"
+
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Close column"
 msgstr "Close column"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Close Window"
+msgstr "Close Window"
 
 #: src/screens/Accounts/AccountCard.tsx
 #: src/screens/Settings/AccountsPanel.tsx
@@ -2098,6 +2300,10 @@ msgstr "Closed trades"
 #~ msgid "Closes the profile until the password is entered again."
 #~ msgstr "Closes the profile until the password is entered again."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Closing, {currency}"
+msgstr "Closing, {currency}"
+
 #: src/screens/Import/TargetSummary.tsx
 msgid "collapse"
 msgstr "collapse"
@@ -2114,6 +2320,8 @@ msgstr "collapse to {SHOWN}"
 msgid "Colour"
 msgstr "Colour"
 
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Colour scheme"
 msgstr "Colour scheme"
@@ -2136,6 +2344,10 @@ msgstr "Column width"
 msgid "Columns"
 msgstr "Columns"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values."
+msgstr "Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values."
+
 #. placeholder {0}: preview.config.levels.join(", ") || t`not found`
 #. placeholder {1}: preview.config.weight ?? t`none`
 #. placeholder {2}: preview.config.target ?? t`none`
@@ -2144,6 +2356,15 @@ msgstr "Columns"
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "Columns were detected automatically: levels — {0}; share — {1}; target — {2}; ticker — {3}; ISIN — {4}."
 msgstr "Columns were detected automatically: levels — {0}; share — {1}; target — {2}; ticker — {3}; ISIN — {4}."
+
+#: src/components/domain/Commands.tsx
+#: src/lib/commands/catalog.ts
+msgid "Command palette"
+msgstr "Command palette"
+
+#: src/components/domain/Commands.tsx
+msgid "Commands"
+msgstr "Commands"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "commission"
@@ -2204,6 +2425,14 @@ msgstr "Contribution"
 #~ msgid "Contribution is a share, not money: dividing money by money in the frontend would bring back that very f64."
 #~ msgstr "Contribution is a share, not money: dividing money by money in the frontend would bring back that very f64."
 
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Contribution limit"
+msgstr "Contribution limit"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Contribution limits"
+msgstr "Contribution limits"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "Contributions"
 msgstr "Contributions"
@@ -2216,6 +2445,10 @@ msgstr "Contributions"
 #: src/screens/Plans/DuePanel.tsx
 msgid "Contributions due · {0}"
 msgstr "Contributions due · {0}"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Copy"
+msgstr "Copy"
 
 #: src/screens/Positions/index.tsx
 msgid "Copy ISIN"
@@ -2246,6 +2479,7 @@ msgid "Cost-basis method"
 msgstr "Cost-basis method"
 
 #: src/components/domain/positionColumns.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/model.ts
 msgid "Costs"
 msgstr "Costs"
@@ -2254,7 +2488,12 @@ msgstr "Costs"
 msgid "Costs are taken off before the money is split"
 msgstr "Costs are taken off before the money is split"
 
+#: src/screens/Securities/index.tsx
+msgid "Could not read or write the file: {fileError}"
+msgstr "Could not read or write the file: {fileError}"
+
 #: src/components/domain/AiChatPanel.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Could not save the file: {saveError}"
 msgstr "Could not save the file: {saveError}"
@@ -2275,6 +2514,7 @@ msgstr "Coverage"
 msgid "create"
 msgstr "create"
 
+#: src/components/domain/ShortcutHelp.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
@@ -2289,9 +2529,17 @@ msgstr "Create a classification"
 msgid "Create a target from the file's weights"
 msgstr "Create a target from the file's weights"
 
+#: src/lib/commands/catalog.ts
+msgid "Create on this screen"
+msgstr "Create on this screen"
+
 #: src/screens/Onboarding.tsx
 msgid "Create portfolio"
 msgstr "Create portfolio"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "created on import"
+msgstr "created on import"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/Onboarding.tsx
@@ -2331,11 +2579,13 @@ msgstr "currency"
 #: src/components/domain/ListingPicker.tsx
 #: src/components/domain/PlanForm.tsx
 #: src/screens/Accounts/AccountForm.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Import/AssetRow.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
 #: src/screens/Onboarding.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "Currency"
@@ -2371,6 +2621,11 @@ msgstr "current weight"
 #~ msgid "Custom"
 #~ msgstr "Custom"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Cut"
+msgstr "Cut"
+
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Dark"
 msgstr "Dark"
@@ -2383,8 +2638,9 @@ msgstr "Dashboard"
 msgid "Dashboards are independent: each keeps its own widgets and their settings."
 msgstr "Dashboards are independent: each keeps its own widgets and their settings."
 
-#: src/App.tsx
 #: src/components/domain/MarketRefresh.tsx
+#: src/components/domain/ShortcutHelp.tsx
+#: src/components/Nav/model.ts
 msgid "Data"
 msgstr "Data"
 
@@ -2392,6 +2648,8 @@ msgstr "Data"
 msgid "Data and storage"
 msgstr "Data and storage"
 
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/ScopePicker.tsx
 #: src/screens/dashboard/dialogs.tsx
 msgid "Data source"
@@ -2412,10 +2670,12 @@ msgid "Database error: {0}"
 msgstr "Database error: {0}"
 
 #: src/components/domain/aiToolLabels.ts
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "date"
 msgstr "date"
 
 #: src/components/domain/AlertDialogs.tsx
+#: src/components/domain/AsOfPicker.tsx
 #: src/components/domain/SecurityPopup.tsx
 #: src/lib/kinds.ts
 #: src/screens/Import/labels.ts
@@ -2522,10 +2782,12 @@ msgstr "Deepest fall from a peak inside the period."
 #: src/components/domain/SecurityAlerts.tsx
 #: src/screens/Accounts/AccountCard.tsx
 #: src/screens/Accounts/GroupsPanel.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/NodeDialog.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Plans/index.tsx
 #: src/screens/Securities/index.tsx
 #: src/screens/Settings/AttributesPanel.tsx
@@ -2603,6 +2865,16 @@ msgstr "Delete source"
 #: src/screens/Rebalance/index.tsx
 msgid "Delete target"
 msgstr "Delete target"
+
+#. placeholder {0}: row.goal.name
+#: src/screens/Plans/Goals.tsx
+msgid "Delete the goal \"{0}\"? Nothing else changes."
+msgstr "Delete the goal \"{0}\"? Nothing else changes."
+
+#. placeholder {0}: usage.name
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Delete the limit \"{0}\"? No transaction changes."
+msgstr "Delete the limit \"{0}\"? No transaction changes."
 
 #: src/screens/Watchlist/index.tsx
 #~ msgid "Delete the list"
@@ -2817,6 +3089,7 @@ msgid "down"
 msgstr "down"
 
 #: src/components/domain/MarketRefresh.tsx
+#: src/lib/commands/catalog.ts
 msgid "Download history"
 msgstr "Download history"
 
@@ -2898,6 +3171,10 @@ msgstr "Each profile keeps its own portfolio, settings and import layouts."
 msgid "Each rewrite is a paid request to the model, so this is off unless you ask for it. Off, the tile says when it is out of date and waits."
 msgstr "Each rewrite is a paid request to the model, so this is off unless you ask for it. Off, the tile says when it is out of date and waits."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Each row opens where the one above it closed, so the money and the return can be followed step by step."
+msgstr "Each row opens where the one above it closed, so the money and the return can be followed step by step."
+
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "Earned"
 msgstr "Earned"
@@ -2912,8 +3189,11 @@ msgstr "Earned over the period"
 msgid "edit"
 msgstr "edit"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/SecurityAlerts.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/dashboard/Dashboard.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Plans/index.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Edit"
@@ -2964,6 +3244,14 @@ msgstr "Edit plan"
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Edit source"
 msgstr "Edit source"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Edit the goal"
+msgstr "Edit the goal"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Edit the limit"
+msgstr "Edit the limit"
 
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "Edit transaction"
@@ -3049,6 +3337,14 @@ msgstr "Enable the AI panel"
 #~ msgid "Encrypted"
 #~ msgstr "Encrypted"
 
+#: src/components/domain/AsOfPicker.tsx
+msgid "End of last month"
+msgstr "End of last month"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "End of last year"
+msgstr "End of last year"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "End of period minus start, deposits included — the figure a statement shows."
 msgstr "End of period minus start, deposits included — the figure a statement shows."
@@ -3056,6 +3352,10 @@ msgstr "End of period minus start, deposits included — the figure a statement 
 #: src/components/domain/aiToolLabels.ts
 msgid "ends"
 msgstr "ends"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Enter Full Screen"
+msgstr "Enter Full Screen"
 
 #: src/components/domain/ProfileLock.tsx
 msgid "Enter the password to open this profile."
@@ -3203,6 +3503,10 @@ msgstr "Everything this holding has ever paid, over what the shares cost."
 msgid "Everything up to the version, with no endpoint after it — for example https://openrouter.ai/api/v1 or http://localhost:11434/v1"
 msgstr "Everything up to the version, with no endpoint after it — for example https://openrouter.ai/api/v1 or http://localhost:11434/v1"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Everywhere"
+msgstr "Everywhere"
+
 #: src/screens/Securities/Splits.tsx
 msgid "Ex-date"
 msgstr "Ex-date"
@@ -3228,6 +3532,10 @@ msgstr "exchange rates"
 msgid "Exchange rates"
 msgstr "Exchange rates"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "exists"
+msgstr "exists"
+
 #: src/screens/Trades/TradesTable.tsx
 msgid "Exit"
 msgstr "Exit"
@@ -3248,6 +3556,10 @@ msgstr "Expand"
 msgid "Expected dividends"
 msgstr "Expected dividends"
 
+#: src/screens/Plans/Goals.tsx
+msgid "Expected return, % a year"
+msgstr "Expected return, % a year"
+
 #: src/screens/dashboard/dialogs.tsx
 msgid "Expected return, a year"
 msgstr "Expected return, a year"
@@ -3265,6 +3577,11 @@ msgstr "Export"
 msgid "Export as Markdown…"
 msgstr "Export as Markdown…"
 
+#: src/screens/Securities/index.tsx
+msgid "Export attributes"
+msgstr "Export attributes"
+
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Export CSV"
 msgstr "Export CSV"
@@ -3276,6 +3593,14 @@ msgstr "Export period"
 #: src/screens/Allocation/TaxonomyDock.tsx
 msgid "Export to CSV…"
 msgstr "Export to CSV…"
+
+#: src/lib/commands/catalog.ts
+msgid "Export transactions"
+msgstr "Export transactions"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Export Transactions…"
+msgstr "Export Transactions…"
 
 #: src/components/domain/SecurityPopup.tsx
 msgid "Facts"
@@ -3304,6 +3629,10 @@ msgstr "Falls below"
 #: src/components/domain/AiTools.tsx
 msgid "Fast"
 msgstr "Fast"
+
+#: src/components/Nav/index.tsx
+msgid "Favorites"
+msgstr "Favorites"
 
 #: src/lib/kinds.ts
 msgid "Fee"
@@ -3367,6 +3696,7 @@ msgstr "FIFO — the oldest lot goes first"
 #~ msgid "Figures come from your own data. Not investment advice."
 #~ msgstr "Figures come from your own data. Not investment advice."
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Import/labels.ts
 msgid "File"
 msgstr "File"
@@ -3429,6 +3759,10 @@ msgstr "Fixed at the moment of the trade and never recomputed. Empty means take 
 #: src/components/charts/ValueChart.tsx
 msgid "flow {0}"
 msgstr "flow {0}"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Flows"
+msgstr "Flows"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Follow the picker"
@@ -3526,6 +3860,10 @@ msgstr "FX rate"
 msgid "Gemini generateContent"
 msgstr "Gemini generateContent"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "General"
+msgstr "General"
+
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category a weight: under \"Edit tree\" every category has a \"Target weight\" field. The drift and the trades that close it will appear here."
 msgstr "Give at least one category a weight: under \"Edit tree\" every category has a \"Target weight\" field. The drift and the trades that close it will appear here."
@@ -3533,6 +3871,43 @@ msgstr "Give at least one category a weight: under \"Edit tree\" every category 
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
+
+#: src/components/domain/menuBar/model.ts
+msgid "Go"
+msgstr "Go"
+
+#: src/lib/commands/catalog.ts
+msgid "Go to Accounts"
+msgstr "Go to Accounts"
+
+#: src/lib/commands/catalog.ts
+msgid "Go to Instruments"
+msgstr "Go to Instruments"
+
+#: src/lib/commands/catalog.ts
+msgid "Go to Overview"
+msgstr "Go to Overview"
+
+#: src/lib/commands/catalog.ts
+msgid "Go to Positions"
+msgstr "Go to Positions"
+
+#: src/lib/commands/catalog.ts
+msgid "Go to Transactions"
+msgstr "Go to Transactions"
+
+#: src/lib/commands/catalog.ts
+msgid "Go to Watchlist"
+msgstr "Go to Watchlist"
+
+#: src/screens/dashboard/dialogs.tsx
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Goal"
+msgstr "Goal"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Goals"
+msgstr "Goals"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "group"
@@ -3543,7 +3918,7 @@ msgid "Group"
 msgstr "Group"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Group · {0}"
 msgstr "Group · {0}"
 
@@ -3592,6 +3967,10 @@ msgstr "Held in"
 #~ msgid "Held since"
 #~ msgstr "Held since"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Help"
+msgstr "Help"
+
 #: src/screens/Allocation/MembersPanel.tsx
 msgid "Here"
 msgstr "Here"
@@ -3599,6 +3978,14 @@ msgstr "Here"
 #: src/components/ui/Form.tsx
 msgid "Hide"
 msgstr "Hide"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Hide {app}"
+msgstr "Hide {app}"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Hide Others"
+msgstr "Hide Others"
 
 #: src/screens/Import/ProblemList.tsx
 msgid "hide rows"
@@ -3654,6 +4041,10 @@ msgstr "How far below the last peak the period ends."
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "How far below the last peak the portfolio stands now — not the depth of the hole it is climbing out of."
 msgstr "How far below the last peak the portfolio stands now — not the depth of the hole it is climbing out of."
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "How far one savings goal is along, and what it would take to arrive on time."
+msgstr "How far one savings goal is along, and what it would take to arrive on time."
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "How far the portfolio is from covering a year of spending, and when this pace gets there."
@@ -3764,6 +4155,14 @@ msgstr "how the portfolio is allocated"
 msgid "how the portfolio performed"
 msgstr "how the portfolio performed"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "How the result adds up"
+msgstr "How the result adds up"
+
+#: src/components/domain/aiToolLabels.ts
+msgid "how the result adds up, step by step"
+msgstr "how the result adds up, step by step"
+
 #: src/components/domain/positionColumns.tsx
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "How widely this position's daily returns swing, stated for a year."
@@ -3797,9 +4196,10 @@ msgstr "Identifying instruments: {progress}"
 msgid "Identifying…"
 msgstr "Identifying…"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Import"
 msgstr "Import"
 
@@ -3807,9 +4207,18 @@ msgstr "Import"
 msgid "Import a classification"
 msgstr "Import a classification"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/DataPanel.tsx
 msgid "Import a file"
 msgstr "Import a file"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Import attributes"
+msgstr "Import attributes"
+
+#: src/screens/Securities/index.tsx
+msgid "Import attributes…"
+msgstr "Import attributes…"
 
 #: src/screens/Allocation/index.tsx
 #: src/screens/Allocation/TaxonomyDock.tsx
@@ -3825,11 +4234,16 @@ msgstr "Import into \"{0}\""
 msgid "Import layouts"
 msgstr "Import layouts"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Import…"
+msgstr "Import…"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "importing them is optional"
 msgstr "importing them is optional"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Importing…"
 msgstr "Importing…"
 
@@ -3869,8 +4283,9 @@ msgstr "including the dates of deposits"
 msgid "including the new money"
 msgstr "including the new money"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Income/index.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 msgid "Income"
 msgstr "Income"
 
@@ -3920,6 +4335,14 @@ msgstr "Inflation"
 msgid "inside \"{0}\""
 msgstr "inside \"{0}\""
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Install from folder…"
+msgstr "Install from folder…"
+
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "Installed theme"
+msgstr "Installed theme"
+
 #: src/components/domain/positionColumns.tsx
 msgid "Instr. gain"
 msgstr "Instr. gain"
@@ -3929,6 +4352,7 @@ msgid "instrument"
 msgstr "instrument"
 
 #: src/components/domain/AlertDialogs.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PlanForm.tsx
 #: src/components/domain/positionColumns.tsx
 #: src/screens/Allocation/MembersPanel.tsx
@@ -3996,7 +4420,8 @@ msgstr "Instrument, kind or note"
 msgid "instruments"
 msgstr "instruments"
 
-#: src/App.tsx
+#: src/components/domain/Commands.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Allocation/GroupDialog.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Securities/index.tsx
@@ -4017,6 +4442,7 @@ msgid "Instruments at their last quote plus cash, in the reporting currency."
 msgstr "Instruments at their last quote plus cash, in the reporting currency."
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Instruments found"
 msgstr "Instruments found"
 
@@ -4181,6 +4607,16 @@ msgstr "Key for {name}"
 msgid "Key for {source}"
 msgstr "Key for {source}"
 
+#: src/screens/Settings/KeyboardPanel.tsx
+#: src/screens/Settings/model.ts
+msgid "Keyboard"
+msgstr "Keyboard"
+
+#: src/components/domain/ShortcutHelp.tsx
+#: src/lib/commands/catalog.ts
+msgid "Keyboard shortcuts"
+msgstr "Keyboard shortcuts"
+
 #: src/screens/Settings/ai/KeysPanel.tsx
 #~ msgid "Keys are kept in your system keychain, never in the app's database, and are never shown again."
 #~ msgstr "Keys are kept in your system keychain, never in the app's database, and are never shown again."
@@ -4188,6 +4624,10 @@ msgstr "Key for {source}"
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "Keys are stored encrypted with this profile's password, never in its database, and are never shown again."
 msgstr "Keys are stored encrypted with this profile's password, never in its database, and are never shown again."
+
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Keys without ⌘ or Ctrl, such as N for a new item or G then P for Positions. Turn them off if they are pressed by accident or interfere with speech input."
+msgstr "Keys without ⌘ or Ctrl, such as N for a new item or G then P for Positions. Turn them off if they are pressed by accident or interfere with speech input."
 
 #: src/components/domain/aiToolLabels.ts
 msgid "kind"
@@ -4295,6 +4735,10 @@ msgstr "Layout name"
 msgid "Leave empty"
 msgstr "Leave empty"
 
+#: src/screens/Plans/Goals.tsx
+msgid "Leave empty to ask when the monthly amount would arrive instead."
+msgstr "Leave empty to ask when the monthly amount would arrive instead."
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Leave empty to run up to today."
 msgstr "Leave empty to run up to today."
@@ -4332,8 +4776,20 @@ msgid "Left empty, the widget follows the picker like every screen does; naming 
 msgstr "Left empty, the widget follows the picker like every screen does; naming one pins this tile to it."
 
 #: src/screens/dashboard/dialogs.tsx
+msgid "Left empty, the widget shows the first goal."
+msgstr "Left empty, the widget shows the first goal."
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "Left empty, the widget shows the first limit."
+msgstr "Left empty, the widget shows the first limit."
+
+#: src/screens/dashboard/dialogs.tsx
 msgid "Left empty, the widget shows the first list."
 msgstr "Left empty, the widget shows the first list."
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "left of"
+msgstr "left of"
 
 #: src/components/domain/PeriodEditor.tsx
 msgid "Length"
@@ -4372,13 +4828,14 @@ msgstr "Levels"
 msgid "levels: {0}"
 msgstr "levels: {0}"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Light"
 msgstr "Light"
 
-#: src/components/domain/AlertDialogs.tsx
-#~ msgid "Limit"
-#~ msgstr "Limit"
+#: src/screens/dashboard/dialogs.tsx
+msgid "Limit"
+msgstr "Limit"
 
 #: src/components/domain/AlertDialogs.tsx
 #~ msgid "Limit price"
@@ -4436,6 +4893,10 @@ msgstr "Loading the model list…"
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "Lock now"
 msgstr "Lock now"
+
+#: src/lib/commands/catalog.ts
+msgid "Lock profile"
+msgstr "Lock profile"
 
 #: src/screens/Settings/ProfileSecurity.tsx
 #~ msgid "Lock the profile"
@@ -4513,6 +4974,11 @@ msgstr "Mappings"
 #~ msgid "Mark as seen; the next crossing shows up again"
 #~ msgstr "Mark as seen; the next crossing shows up again"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Market"
+msgstr "Market"
+
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/model.ts
 msgid "Market data"
 msgstr "Market data"
@@ -4534,6 +5000,10 @@ msgstr "Max drawdown"
 msgid "Maximum drawdown"
 msgstr "Maximum drawdown"
 
+#: src/components/Nav/index.tsx
+msgid "Menu"
+msgstr "Menu"
+
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Metric"
@@ -4542,6 +5012,10 @@ msgstr "Metric"
 #: src/screens/dashboard/widgets/tiles.tsx
 msgid "Metric not found."
 msgstr "Metric not found."
+
+#: src/components/domain/menuBar/model.ts
+msgid "Minimize"
+msgstr "Minimize"
 
 #: src/screens/Rebalance/index.tsx
 msgid "Mode"
@@ -4552,6 +5026,14 @@ msgstr "Mode"
 #: src/screens/Settings/ai/UsagePanel.tsx
 msgid "Model"
 msgstr "Model"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Model ids"
+msgstr "Model ids"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Models for {name}"
+msgstr "Models for {name}"
 
 #: src/screens/Onboarding.tsx
 msgid "Money and instruments live on separate accounts: cash on one, securities on another that settles through it."
@@ -4572,6 +5054,10 @@ msgstr "Money for this securities account's trades passes through it"
 #: src/screens/Import/AccountTarget.tsx
 msgid "Money moves on"
 msgstr "Money moves on"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Money paid in or taken out; it is not a gain."
+msgstr "Money paid in or taken out; it is not a gain."
 
 #: src/screens/Onboarding.tsx
 msgid "Money sits here: deposits, fees, interest"
@@ -4597,6 +5083,10 @@ msgstr "Money to invest on top of the portfolio; with \"Buy only\" the drift is 
 msgid "Month"
 msgstr "Month"
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Month and day, as MM-DD. Not every allowance year is the calendar one."
+msgstr "Month and day, as MM-DD. Not every allowance year is the calendar one."
+
 #: src/lib/kinds.ts
 msgid "Monthly"
 msgstr "Monthly"
@@ -4618,8 +5108,12 @@ msgid "months ahead"
 msgstr "months ahead"
 
 #: src/App.tsx
-msgid "More"
-msgstr "More"
+#~ msgid "More"
+#~ msgstr "More"
+
+#: src/screens/Securities/index.tsx
+msgid "More actions"
+msgstr "More actions"
 
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Move"
@@ -4630,6 +5124,10 @@ msgstr "Move"
 msgid "Move \"{0}\""
 msgstr "Move \"{0}\""
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Move between rows of a table or a menu"
+msgstr "Move between rows of a table or a menu"
+
 #: src/screens/Watchlist/index.tsx
 msgid "Move down"
 msgstr "Move down"
@@ -4638,6 +5136,10 @@ msgstr "Move down"
 #: src/screens/Watchlist/columns.tsx
 msgid "Move from the previous close to the last one."
 msgstr "Move from the previous close to the last one."
+
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Move to the next or the previous control"
+msgstr "Move to the next or the previous control"
 
 #: src/screens/Watchlist/index.tsx
 msgid "Move up"
@@ -4671,11 +5173,13 @@ msgstr "name"
 #: src/components/domain/PeriodEditor.tsx
 #: src/components/domain/PlanForm.tsx
 #: src/screens/Accounts/AccountForm.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/Allocation/NodeDialog.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Import/AssetRow.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
 #: src/screens/Settings/AttributesPanel.tsx
@@ -4692,6 +5196,11 @@ msgstr "Name the yearly spending this portfolio should cover."
 #: src/screens/dashboard/WidgetTile.tsx
 #~ msgid "Narrower"
 #~ msgstr "Narrower"
+
+#: src/components/domain/ShortcutHelp.tsx
+#: src/components/Nav/index.tsx
+msgid "Navigation"
+msgstr "Navigation"
 
 #: src/screens/Watchlist/columns.tsx
 msgid "Nearest level"
@@ -4710,6 +5219,15 @@ msgstr "Needs a key"
 msgid "Network error: {0}"
 msgstr "Network error: {0}"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "new"
+msgstr "new"
+
+#: src/components/domain/menuBar/model.ts
+msgid "New"
+msgstr "New"
+
+#: src/lib/commands/catalog.ts
 #: src/screens/Accounts/AccountForm.tsx
 #: src/screens/Accounts/index.tsx
 msgid "New account"
@@ -4717,6 +5235,7 @@ msgstr "New account"
 
 #: src/components/domain/AlertDialogs.tsx
 #: src/components/domain/SecurityPopup.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Alerts/index.tsx
 msgid "New alert"
 msgstr "New alert"
@@ -4728,6 +5247,10 @@ msgstr "new amount"
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "New attribute"
 msgstr "New attribute"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "New attributes"
+msgstr "New attributes"
 
 #: src/screens/Allocation/NodeDialog.tsx
 msgid "New category"
@@ -4741,6 +5264,7 @@ msgstr "New chat"
 msgid "New chats start on"
 msgstr "New chats start on"
 
+#: src/screens/Allocation/index.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/Allocation/TaxonomyDock.tsx
 msgid "New classification"
@@ -4750,7 +5274,7 @@ msgstr "New classification"
 msgid "new commission"
 msgstr "new commission"
 
-#: src/App.tsx
+#: src/components/Nav/index.tsx
 #: src/screens/Alerts/index.tsx
 msgid "new crossings to look at"
 msgstr "new crossings to look at"
@@ -4764,6 +5288,10 @@ msgstr "New dashboard"
 msgid "new date"
 msgstr "new date"
 
+#: src/screens/Plans/Goals.tsx
+msgid "New goal"
+msgstr "New goal"
+
 #: src/screens/Accounts/GroupForm.tsx
 #: src/screens/Accounts/GroupsPanel.tsx
 msgid "New group"
@@ -4772,6 +5300,10 @@ msgstr "New group"
 #: src/screens/Securities/SecurityForm.tsx
 msgid "New instrument"
 msgstr "New instrument"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "New limit"
+msgstr "New limit"
 
 #: src/screens/Watchlist/index.tsx
 msgid "New list"
@@ -4802,6 +5334,7 @@ msgid "New period"
 msgstr "New period"
 
 #: src/components/domain/PlanForm.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Plans/index.tsx
 msgid "New plan"
 msgstr "New plan"
@@ -4839,11 +5372,13 @@ msgstr "New target"
 msgid "new tax"
 msgstr "new tax"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Transactions/index.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "New transaction"
 msgstr "New transaction"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Watchlist/ListDialog.tsx
 msgid "New watchlist"
 msgstr "New watchlist"
@@ -4860,6 +5395,10 @@ msgstr "next {0}"
 #: src/screens/Income/MonthPanel.tsx
 msgid "Next month"
 msgstr "Next month"
+
+#: src/lib/commands/catalog.ts
+msgid "Next period"
+msgstr "Next period"
 
 #: src/screens/Settings/AccountsPanel.tsx
 msgid "No account is in the portfolio, so every report comes out empty."
@@ -4933,6 +5472,10 @@ msgstr "no data"
 msgid "No data for this period."
 msgstr "No data for this period."
 
+#: src/screens/dashboard/widgets/value.tsx
+msgid "no date and no pace stated"
+msgstr "no date and no pace stated"
+
 #: src/screens/dashboard/widgets/list.tsx
 msgid "No dividends expected."
 msgstr "No dividends expected."
@@ -4965,6 +5508,14 @@ msgstr "No exchange rate for this date yet, so the contribution cannot be conver
 msgid "No file chosen yet"
 msgstr "No file chosen yet"
 
+#: src/screens/Plans/Goals.tsx
+msgid "No goals yet"
+msgstr "No goals yet"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "No goals yet — one is added on the Plans screen."
+msgstr "No goals yet — one is added on the Plans screen."
+
 #: src/screens/Accounts/GroupsPanel.tsx
 msgid "No groups"
 msgstr "No groups"
@@ -4995,6 +5546,10 @@ msgstr "No instrument of the current data source falls under this level."
 msgid "No key saved"
 msgstr "No key saved"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "No key saved · {added}"
+msgstr "No key saved · {added}"
+
 #: src/screens/Settings/DataPanel.tsx
 msgid "No layouts"
 msgstr "No layouts"
@@ -5011,11 +5566,23 @@ msgstr "No limit"
 #~ msgid "No limit is reached."
 #~ msgstr "No limit is reached."
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "No limits set"
+msgstr "No limits set"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "No limits set — one is added on the Accounts screen."
+msgstr "No limits set — one is added on the Accounts screen."
+
 #. placeholder {0}: detail.key
 #. placeholder {1}: detail.date
 #: src/components/ui/Async.tsx
 msgid "No market data for {0} on {1} or earlier"
 msgstr "No market data for {0} on {1} or earlier"
+
+#: src/screens/Plans/Goals.tsx
+msgid "no monthly amount stated"
+msgstr "no monthly amount stated"
 
 #: src/screens/Settings.tsx
 #~ msgid "No more often than once every, hours"
@@ -5205,9 +5772,17 @@ msgstr "No watchlists yet"
 msgid "none"
 msgstr "none"
 
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "None"
+msgstr "None"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "none in the file"
 msgstr "none in the file"
+
+#: src/screens/Plans/Goals.tsx
+msgid "None ticked means the whole portfolio."
+msgstr "None ticked means the whole portfolio."
 
 #: src/screens/Settings/DataPanel.tsx
 msgid "none yet"
@@ -5248,6 +5823,7 @@ msgid "not found"
 msgstr "not found"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Not found"
 msgstr "Not found"
 
@@ -5370,6 +5946,10 @@ msgstr "Nothing has crossed yet. The log fills after each quote refresh."
 msgid "Nothing here"
 msgstr "Nothing here"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Nothing installed"
+msgstr "Nothing installed"
+
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "nothing is classified yet"
 msgstr "nothing is classified yet"
@@ -5385,6 +5965,10 @@ msgstr "Nothing is held in this instrument now — what follows is its own histo
 #: src/screens/Allocation/Header.tsx
 msgid "nothing left over"
 msgstr "nothing left over"
+
+#: src/components/domain/Commands.tsx
+msgid "Nothing matches"
+msgstr "Nothing matches"
 
 #: src/screens/Plans/DuePanel.tsx
 msgid "Nothing owed"
@@ -5435,6 +6019,10 @@ msgstr "Now <0/>. Every close that crosses the level in the chosen direction is 
 #~ msgid "Now <0/>. Every close that crosses the level, up or down, is logged and announced."
 #~ msgstr "Now <0/>. Every close that crosses the level, up or down, is logged and announced."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "number"
+msgstr "number"
+
 #: src/lib/kinds.ts
 msgid "Number"
 msgstr "Number"
@@ -5447,23 +6035,35 @@ msgstr "Numbers"
 msgid "occurrence"
 msgstr "occurrence"
 
+#: src/screens/dashboard/widgets/value.tsx
+msgid "of"
+msgstr "of"
+
 #. placeholder {0}: s.total
 #: src/screens/Import/Summary.tsx
 msgid "of {0}"
 msgstr "of {0}"
 
 #. placeholder {0}: preview.assignments.length
+#. placeholder {0}: preview.rows.length
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "of {0} in the file"
 msgstr "of {0} in the file"
 
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/MembersPanel.tsx
+#: src/screens/Plans/Goals.tsx
 msgid "of <0/>"
 msgstr "of <0/>"
 
 #: src/screens/Reports/Gains.tsx
 msgid "Of it, FX"
 msgstr "Of it, FX"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "of the allowance used"
+msgstr "of the allowance used"
 
 #: src/screens/Allocation/Header.tsx
 msgid "of the portfolio (<0/>) is not classified under \"{taxonomyName}\""
@@ -5506,9 +6106,17 @@ msgstr "On {0}"
 msgid "On a buy it joins the cost basis; on a sell it reduces proceeds"
 msgstr "On a buy it joins the cost basis; on a sell it reduces proceeds"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "On a screen"
+msgstr "On a screen"
+
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "on average"
 msgstr "on average"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "On for a flexible allowance. Off, money taken out still counts as paid in."
+msgstr "On for a flexible allowance. Off, money taken out still counts as paid in."
 
 #: src/components/charts/DriftBars.tsx
 msgid "on target"
@@ -5521,6 +6129,10 @@ msgstr "on the account"
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "On the account"
 msgstr "On the account"
+
+#: src/screens/Plans/Goals.tsx
+msgid "on track"
+msgstr "on track"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Once a day"
@@ -5566,6 +6178,10 @@ msgstr "One old share becomes"
 msgid "one per distinct value"
 msgstr "one per distinct value"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "One per line, exactly as the provider spells it. They are offered in the chat's model picker after the provider's own."
+msgstr "One per line, exactly as the provider spells it. They are offered in the chat's model picker after the provider's own."
+
 #: src/screens/Import/ParseStep.tsx
 msgid "one row per unique transaction kind; \"do not import\" is a decision too"
 msgstr "one row per unique transaction kind; \"do not import\" is a decision too"
@@ -5599,6 +6215,10 @@ msgstr "Only when I ask"
 msgid "Open"
 msgstr "Open"
 
+#: src/lib/commands/catalog.ts
+msgid "Open a screen"
+msgstr "Open a screen"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "open an account"
 msgstr "open an account"
@@ -5606,6 +6226,14 @@ msgstr "open an account"
 #: src/components/domain/SecurityPopup.tsx
 msgid "Open in the directory"
 msgstr "Open in the directory"
+
+#: src/lib/commands/catalog.ts
+msgid "Open or close the AI assistant"
+msgstr "Open or close the AI assistant"
+
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Open the actions of a row"
+msgstr "Open the actions of a row"
 
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "OpenAI responses"
@@ -5632,6 +6260,10 @@ msgstr "Opening the database…"
 msgid "Opening value plus everything paid in since."
 msgstr "Opening value plus everything paid in since."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Opening, {currency}"
+msgstr "Opening, {currency}"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "operation"
 msgstr "operation"
@@ -5648,6 +6280,14 @@ msgstr "Optional, e.g. Authorization; {KEY} in its value is replaced by the save
 #: src/screens/Onboarding.tsx
 msgid "Optional: it can be created later."
 msgstr "Optional: it can be created later."
+
+#: src/screens/Plans/Goals.tsx
+msgid "Optional: what you actually put aside."
+msgstr "Optional: what you actually put aside."
+
+#: src/components/domain/Commands.tsx
+msgid "Options"
+msgstr "Options"
 
 #: src/screens/Risk.tsx
 #~ msgid "Ordered by depth, not by date: \"how much can be lost\" is answered by the worst episode, not the last one."
@@ -5687,9 +6327,13 @@ msgstr "Over the selected period the value never fell below a previous peak."
 msgid "Overrides the dashboard period for this widget alone."
 msgstr "Overrides the dashboard period for this widget alone."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 msgid "Overview"
 msgstr "Overview"
+
+#: src/lib/commands/catalog.ts
+msgid "Overview and favourites, in order"
+msgstr "Overview and favourites, in order"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "Overwrite"
@@ -5702,6 +6346,10 @@ msgstr "Paid in"
 #: src/screens/dashboard/dialogs.tsx
 msgid "Paid in a month"
 msgstr "Paid in a month"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Paid in monthly"
+msgstr "Paid in monthly"
 
 #: src/screens/dashboard/widgets/model.ts
 msgid "Paid in over the period"
@@ -5741,6 +6389,14 @@ msgstr "Password protected"
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "Password set"
 msgstr "Password set"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "Past date"
+msgstr "Past date"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Paste"
+msgstr "Paste"
 
 #: src/screens/Settings/DataPanel.tsx
 msgid "Path copied"
@@ -5799,7 +6455,7 @@ msgstr "Percentages are a share inside the parent: \"equities 42 %, of which the
 msgid "Perf. %"
 msgstr "Perf. %"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Performance/index.tsx
 msgid "Performance"
 msgstr "Performance"
@@ -5808,9 +6464,11 @@ msgstr "Performance"
 msgid "period"
 msgstr "period"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PeriodControl.tsx
 #: src/components/domain/PeriodEditor.tsx
 #: src/screens/dashboard/dialogs.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Risk.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "Period"
@@ -5846,10 +6504,23 @@ msgstr "Pick instruments from the directory, or find one online."
 msgid "plan"
 msgstr "plan"
 
-#: src/App.tsx
+#: src/components/domain/menuBar/model.ts
+msgid "Plan"
+msgstr "Plan"
+
+#: src/components/Nav/model.ts
+msgid "Planning"
+msgstr "Planning"
+
+#: src/components/Nav/model.ts
 #: src/screens/Plans/index.tsx
 msgid "Plans"
 msgstr "Plans"
+
+#: src/screens/Settings/model.ts
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Plugins"
+msgstr "Plugins"
 
 #: src/screens/Import/ParseStep.tsx
 msgid "point at the transaction-kind column in the header — only unique operations stay here then"
@@ -5864,8 +6535,8 @@ msgstr "Point at these columns first: {0}"
 msgid "portfolio"
 msgstr "portfolio"
 
-#: src/App.tsx
 #: src/components/charts/BenchChart.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PortfolioPanel.tsx
@@ -5929,7 +6600,7 @@ msgstr "Portfolio yield"
 #~ msgid "Position contribution to the return as a staircase, largest first."
 #~ msgstr "Position contribution to the return as a staircase, largest first."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Positions/index.tsx
 msgid "Positions"
 msgstr "Positions"
@@ -5945,6 +6616,10 @@ msgstr "Press Enter to search the provider."
 #: src/screens/Income/MonthPanel.tsx
 msgid "Previous month"
 msgstr "Previous month"
+
+#: src/lib/commands/catalog.ts
+msgid "Previous period"
+msgstr "Previous period"
 
 #: src/components/domain/positionColumns.tsx
 #: src/components/domain/SecurityPopup.tsx
@@ -6002,6 +6677,11 @@ msgstr "Proceeds minus cost basis, fees and taxes on disposals only."
 #~ msgid "Proceeds minus cost basis, fees and taxes over every disposal in the window. Open positions are not included."
 #~ msgstr "Proceeds minus cost basis, fees and taxes over every disposal in the window. Open positions are not included."
 
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
+msgid "Profile"
+msgstr "Profile"
+
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/ProfilesPanel.tsx
 msgid "Profiles"
@@ -6058,6 +6738,10 @@ msgstr "Purchases, sales, dividends. Instruments are recorded on the brokerage a
 msgid "Q{0} {short}"
 msgstr "Q{0} {short}"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Q{quarter} {year}"
+msgstr "Q{quarter} {year}"
+
 #: src/components/domain/positionColumns.tsx
 #: src/components/domain/SecurityPopup.tsx
 #: src/screens/Import/PreviewTables.tsx
@@ -6112,6 +6796,10 @@ msgstr "Quarterly"
 #: src/lib/periods.ts
 msgid "quarters"
 msgstr "quarters"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Quit {app}"
+msgstr "Quit {app}"
 
 #: src/screens/Watchlist/columns.tsx
 msgid "Quote date"
@@ -6243,7 +6931,7 @@ msgstr "Realized"
 msgid "Realized P/L"
 msgstr "Realized P/L"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 msgid "Rebalance"
 msgstr "Rebalance"
@@ -6319,6 +7007,10 @@ msgstr "recovery"
 msgid "Recovery"
 msgstr "Recovery"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Redo"
+msgstr "Redo"
+
 #: src/components/domain/MarketRefresh.tsx
 msgid "Refresh"
 msgstr "Refresh"
@@ -6336,6 +7028,7 @@ msgid "Refresh quotes"
 msgstr "Refresh quotes"
 
 #: src/components/domain/MarketRefresh.tsx
+#: src/lib/commands/catalog.ts
 msgid "Refresh quotes and rates"
 msgstr "Refresh quotes and rates"
 
@@ -6355,6 +7048,7 @@ msgstr "Remember on this device"
 
 #: src/screens/dashboard/WidgetTile.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
+#: src/screens/Settings/PluginsPanel.tsx
 msgid "Remove"
 msgstr "Remove"
 
@@ -6393,6 +7087,10 @@ msgstr "Remove password"
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "Remove password and keys"
 msgstr "Remove password and keys"
+
+#: src/screens/Import/TemplateBar.tsx
+msgid "Remove the plugin that brought this layout"
+msgstr "Remove the plugin that brought this layout"
 
 #: src/screens/Import/TemplateBar.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -6461,7 +7159,7 @@ msgstr "Report"
 msgid "Reported payments of the last year over today's price."
 msgstr "Reported payments of the last year over today's price."
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Reports/index.tsx
 msgid "Reports"
 msgstr "Reports"
@@ -6524,6 +7222,7 @@ msgid "Restore what was detected"
 msgstr "Restore what was detected"
 
 #: src/components/domain/positionColumns.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Result"
 msgstr "Result"
@@ -6553,6 +7252,7 @@ msgid "return"
 msgstr "return"
 
 #: src/components/domain/SecurityPopup.tsx
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Trades/TradesTable.tsx
@@ -6623,8 +7323,8 @@ msgstr "Rings"
 msgid "Rises above"
 msgstr "Rises above"
 
-#: src/App.tsx
 #: src/components/domain/positionColumns.tsx
+#: src/components/Nav/model.ts
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Risk.tsx
 msgid "Risk"
@@ -6705,12 +7405,16 @@ msgstr "same day, account, instrument and quantity — worth something else. Usu
 msgid "Same month a year ago"
 msgstr "Same month a year ago"
 
-#: src/components/ui/Form.tsx
+#: src/components/ui/formLabels.ts
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Import/TemplateBar.tsx
 msgid "Save"
 msgstr "Save"
+
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Save a dialog, also from a multi-line field"
+msgstr "Save a dialog, also from a multi-line field"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "Save as a layout"
@@ -6725,7 +7429,8 @@ msgstr "Save key"
 msgid "Save the current layout as a template"
 msgstr "Save the current layout as a template"
 
-#: src/components/ui/Form.tsx
+#: src/components/ui/formLabels.ts
+#: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
@@ -6739,6 +7444,10 @@ msgstr "Schedule read off the whole payment history, not the chosen period."
 #: src/components/domain/aiToolLabels.ts
 msgid "screen"
 msgstr "screen"
+
+#: src/components/domain/Commands.tsx
+msgid "Screens"
+msgstr "Screens"
 
 #: src/components/domain/aiToolLabels.ts
 #: src/screens/Settings/market/SourcesPanel.tsx
@@ -6756,6 +7465,10 @@ msgstr "search again"
 #: src/screens/Import/AssetsStep.tsx
 msgid "Search again"
 msgstr "Search again"
+
+#: src/lib/commands/catalog.ts
+msgid "Search on this screen"
+msgstr "Search on this screen"
 
 #: src/screens/Import/AssetSearch.tsx
 msgid "Search the directory"
@@ -6800,6 +7513,10 @@ msgstr "Section"
 msgid "Section heading"
 msgstr "Section heading"
 
+#: src/components/Nav/index.tsx
+msgid "Sections"
+msgstr "Sections"
+
 #: src/screens/Allocation/model.ts
 #~ msgid "Sector"
 #~ msgstr "Sector"
@@ -6811,13 +7528,13 @@ msgid "Securities"
 msgstr "Securities"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Securities · {0}"
 msgstr "Securities · {0}"
 
 #. placeholder {0}: option.name
 #. placeholder {1}: option.cash_name ?? ""
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Securities · {0} + {1}"
 msgstr "Securities · {0} + {1}"
 
@@ -6868,6 +7585,10 @@ msgstr "Select {0}"
 msgid "Select all"
 msgstr "Select all"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Select All"
+msgstr "Select All"
+
 #. placeholder {0}: year.year
 #: src/screens/Transactions/JournalTable.tsx
 msgid "Select all transactions of {0}"
@@ -6916,6 +7637,10 @@ msgstr "Sent"
 #~ msgid "Sent {0}, of which {1} came from the provider's cache. Received {2}, of which {3} was thinking."
 #~ msgstr "Sent {0}, of which {1} came from the provider's cache. Received {2}, of which {3} was thinking."
 
+#: src/components/domain/menuBar/model.ts
+msgid "Services"
+msgstr "Services"
+
 #: src/components/domain/PasswordDialog.tsx
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "Set a password"
@@ -6937,7 +7662,8 @@ msgstr "Set key"
 msgid "Set password and continue"
 msgstr "Set password and continue"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/index.tsx
 msgid "Settings"
 msgstr "Settings"
@@ -6945,6 +7671,10 @@ msgstr "Settings"
 #: src/screens/Settings/index.tsx
 msgid "Settings sections"
 msgstr "Settings sections"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Settings…"
+msgstr "Settings…"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "settles through"
@@ -7000,7 +7730,6 @@ msgstr "Shares of this level"
 msgid "Sharpe"
 msgstr "Sharpe"
 
-#: src/screens/Import/TemplateBar.tsx
 #: src/screens/Settings/DataPanel.tsx
 msgid "Shipped"
 msgstr "Shipped"
@@ -7013,9 +7742,18 @@ msgstr "Shipped with the app"
 msgid "short of target"
 msgstr "short of target"
 
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Shortcuts for the commands used most, and how to turn some off."
+msgstr "Shortcuts for the commands used most, and how to turn some off."
+
 #: src/components/ui/Form.tsx
+#: src/screens/Settings/KeyboardPanel.tsx
 msgid "Show"
 msgstr "Show"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Show All"
+msgstr "Show All"
 
 #. placeholder {0}: preview.rows.length
 #: src/screens/Import/FilePreview.tsx
@@ -7042,6 +7780,11 @@ msgstr "Show them"
 #: src/components/domain/SecurityPopup.tsx
 msgid "Show transactions"
 msgstr "Show transactions"
+
+#. placeholder {0}: formatDay(date)
+#: src/components/domain/AsOfPicker.tsx
+msgid "Showing the portfolio as of {0}."
+msgstr "Showing the portfolio as of {0}."
 
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "Shown after the value; never part of it"
@@ -7084,6 +7827,14 @@ msgstr "Simulate a price move"
 msgid "Since {late}: no earlier quote"
 msgstr "Since {late}: no earlier quote"
 
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Single-key shortcuts"
+msgstr "Single-key shortcuts"
+
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Single-key shortcuts are turned off in Settings, Keyboard."
+msgstr "Single-key shortcuts are turned off in Settings, Keyboard."
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Six months"
 msgstr "Six months"
@@ -7091,6 +7842,10 @@ msgstr "Six months"
 #: src/components/domain/UpdateDialog.tsx
 msgid "Skip this version"
 msgstr "Skip this version"
+
+#: src/App.tsx
+msgid "Skip to content"
+msgstr "Skip to content"
 
 #: src/screens/Import/labels.ts
 msgid "skipped"
@@ -7129,6 +7884,10 @@ msgstr "Spending to cover, a year"
 #: src/screens/Allocation/MembersPanel.tsx
 msgid "Split"
 msgstr "Split"
+
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Split the period by"
+msgstr "Split the period by"
 
 #: src/components/domain/AssignDialog.tsx
 msgid "Split: {name}"
@@ -7214,6 +7973,10 @@ msgstr "Stocks"
 msgid "Stop"
 msgstr "Stop"
 
+#: src/lib/commands/catalog.ts
+msgid "Stop the refresh"
+msgstr "Stop the refresh"
+
 #: src/components/domain/MarketRefresh.tsx
 #: src/screens/Plans/index.tsx
 msgid "Stopped"
@@ -7257,9 +8020,14 @@ msgstr "Symbol"
 msgid "Symbols on cash transactions"
 msgstr "Symbols on cash transactions"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "System"
 msgstr "System"
+
+#: src/components/Nav/index.tsx
+msgid "Tabs"
+msgstr "Tabs"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "take an instrument out of a branch"
@@ -7291,6 +8059,10 @@ msgstr "Target · {0}"
 #: src/screens/Allocation/BreakdownPanel.tsx
 msgid "target <0/>"
 msgstr "target <0/>"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Target amount"
+msgstr "Target amount"
 
 #: src/screens/Rebalance/TargetForm.tsx
 msgid "Target name"
@@ -7388,6 +8160,10 @@ msgstr "Taxonomy"
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Test"
 msgstr "Test"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "text"
+msgstr "text"
 
 #: src/lib/kinds.ts
 #: src/screens/dashboard/widgets/index.tsx
@@ -7550,6 +8326,10 @@ msgstr "The change in value with deposits and withdrawals taken out."
 #~ msgid "The change in value with deposits and withdrawals taken out. The line beneath is the change the statement shows, which counts the money brought in as if it were a gain."
 #~ msgstr "The change in value with deposits and withdrawals taken out. The line beneath is the change the statement shows, which counts the money brought in as if it were a gain."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "The change with the flows taken out — what the chunk earned."
+msgstr "The change with the flows taken out — what the chunk earned."
+
 #: src/screens/Import/labels.ts
 msgid "the commission exceeds the amount"
 msgstr "the commission exceeds the amount"
@@ -7673,6 +8453,14 @@ msgstr "The fill is the current weight and the tick the target; hatching marks a
 #: src/screens/Rebalance/index.tsx
 #~ msgid "The fill is what exists, the tick is the target, hatching past it is an overweight and a dashed run up to it is a shortfall."
 #~ msgstr "The fill is what exists, the tick is the target, hatching past it is an overweight and a dashed run up to it is a shortfall."
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "The first goal"
+msgstr "The first goal"
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "The first limit"
+msgstr "The first limit"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "The first list"
@@ -7985,6 +8773,10 @@ msgstr "the row could not be parsed"
 msgid "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
 msgstr "The row is in {0} and the account it lands on keeps {1}. Correct it if the currency column was read wrong; ignore it if the account really holds both."
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "The rows so far, chained — the last one is the whole period."
+msgstr "The rows so far, chained — the last one is the whole period."
+
 #: src/screens/Import/AccountTarget.tsx
 msgid "the same account"
 msgstr "the same account"
@@ -8159,6 +8951,10 @@ msgstr "The value of open positions without cash balances."
 msgid "The weakest trading day."
 msgstr "The weakest trading day."
 
+#: src/screens/Plans/Goals.tsx
+msgid "the whole portfolio"
+msgstr "the whole portfolio"
+
 #: src/screens/Allocation/BreakdownPanel.tsx
 msgid "the whole portfolio down to instruments, a ring is a level"
 msgstr "the whole portfolio down to instruments, a ring is a level"
@@ -8182,6 +8978,18 @@ msgstr "The write is one transaction: a half-imported file can be neither finish
 #: src/screens/Import/labels.ts
 msgid "the wrong kind of account"
 msgstr "the wrong kind of account"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "The year opens on"
+msgstr "The year opens on"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "these rows are not written"
+msgstr "these rows are not written"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "These rows are skipped — the instrument is in the database under neither ISIN nor ticker:"
+msgstr "These rows are skipped — the instrument is in the database under neither ISIN nor ticker:"
 
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "These rows create a category but no split — the instrument is in the database under neither ISIN nor ticker:"
@@ -8244,6 +9052,10 @@ msgstr "This instrument has no ISIN, so the venues were looked for under its tic
 #: src/components/domain/UpdateDialog.tsx
 msgid "This is the newest published version."
 msgstr "This is the newest published version."
+
+#: src/screens/Plans/Goals.tsx
+msgid "this pace does not arrive"
+msgstr "this pace does not arrive"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
@@ -8371,6 +9183,7 @@ msgstr "to sell {0}"
 msgid "today"
 msgstr "today"
 
+#: src/components/domain/AsOfPicker.tsx
 #: src/components/domain/positionColumns.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Watchlist/columns.tsx
@@ -8455,13 +9268,14 @@ msgstr "Trade Republic"
 msgid "traded"
 msgstr "traded"
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Rebalance/index.tsx
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Trades/index.tsx
 msgid "Trades"
 msgstr "Trades"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Reports/Gains.tsx
 msgid "Transaction"
 msgstr "Transaction"
@@ -8480,7 +9294,7 @@ msgstr "Transaction kind"
 msgid "Transaction kind for \"{value}\""
 msgstr "Transaction kind for \"{value}\""
 
-#: src/App.tsx
+#: src/components/Nav/model.ts
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -8602,6 +9416,10 @@ msgstr "TWR a year"
 msgid "TWR since the first purchase"
 msgstr "TWR since the first purchase"
 
+#: src/components/domain/Commands.tsx
+msgid "Type a command, a screen or an instrument"
+msgstr "Type a command, a screen or an instrument"
+
 #: src/screens/Import/AssetRow.tsx
 msgid "Type its ticker — the file's rows go to the existing instrument and no new one is created"
 msgstr "Type its ticker — the file's rows go to the existing instrument and no new one is created"
@@ -8625,6 +9443,10 @@ msgstr "under"
 #: src/screens/Risk.tsx
 msgid "under the peak of {0}"
 msgstr "under the peak of {0}"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Undo"
+msgstr "Undo"
 
 #: src/screens/Import/PreviewTables.tsx
 msgid "unique only"
@@ -8727,6 +9549,14 @@ msgstr "Value today less what the shares cost under this method."
 msgid "Value, {currency}"
 msgstr "Value, {currency}"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Values"
+msgstr "Values"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "Values, holdings and periods are read as of this day."
+msgstr "Values, holdings and periods are read as of this day."
+
 #: src/components/domain/aiToolLabels.ts
 msgid "venue"
 msgstr "venue"
@@ -8771,6 +9601,7 @@ msgstr "Version {skipped} was skipped and is not offered again."
 msgid "Vibe"
 msgstr "Vibe"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Allocation/index.tsx
 msgid "View"
 msgstr "View"
@@ -8816,7 +9647,8 @@ msgstr "Volatility, Sharpe and the maximum drawdown over the period."
 msgid "was {0}"
 msgstr "was {0}"
 
-#: src/App.tsx
+#: src/components/domain/menuBar/model.ts
+#: src/components/Nav/model.ts
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Watchlist/index.tsx
@@ -8930,6 +9762,14 @@ msgstr "What it is made of"
 #: src/screens/dashboard/dialogs.tsx
 msgid "What moved the portfolio this period"
 msgstr "What moved the portfolio this period"
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "What one account has paid in this limit year against what it is allowed."
+msgstr "What one account has paid in this limit year against what it is allowed."
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "What one account may take in a year, against what it has taken. Nothing is blocked."
+msgstr "What one account may take in a year, against what it has taken. Nothing is blocked."
 
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "What open trades would make if closed at the last price."
@@ -9164,6 +10004,10 @@ msgstr "Who made the result"
 msgid "Who pays"
 msgstr "Who pays"
 
+#: src/screens/Performance/CalculationSheet.tsx
+msgid "Whole period"
+msgstr "Whole period"
+
 #: src/screens/Positions/index.tsx
 msgid "whole portfolio"
 msgstr "whole portfolio"
@@ -9173,7 +10017,7 @@ msgid "Whole portfolio"
 msgstr "Whole portfolio"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Whole portfolio · {0}"
 msgstr "Whole portfolio · {0}"
 
@@ -9203,6 +10047,7 @@ msgstr "will be created: {0}"
 msgid "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 msgstr "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Risk.tsx
 msgid "Window"
 msgstr "Window"
@@ -9246,6 +10091,10 @@ msgstr "Withdrawal rate"
 #: src/components/charts/ValueChart.tsx
 msgid "Withdrawals"
 msgstr "Withdrawals"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Withdrawals give allowance back"
+msgstr "Withdrawals give allowance back"
 
 #: src/screens/Income/index.tsx
 msgid "Withheld at the source, so it is not in what was received."
@@ -9326,6 +10175,12 @@ msgstr "Yahoo and the ECB. Startup fetches the tail only — from the last known
 msgid "Year"
 msgstr "Year"
 
+#. placeholder {0}: formatDay(usage.from)
+#. placeholder {1}: formatDay(usage.to)
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "year {0} — {1}"
+msgstr "year {0} — {1}"
+
 #: src/lib/periods.ts
 msgid "Year to date"
 msgstr "Year to date"
@@ -9380,6 +10235,10 @@ msgid "your classification trees"
 msgstr "your classification trees"
 
 #: src/components/domain/aiToolLabels.ts
+msgid "your contribution limits"
+msgstr "your contribution limits"
+
+#: src/components/domain/aiToolLabels.ts
 msgid "your investment plans"
 msgstr "your investment plans"
 
@@ -9428,6 +10287,10 @@ msgid "your return against an instrument's"
 msgstr "your return against an instrument's"
 
 #: src/components/domain/aiToolLabels.ts
+msgid "your savings goals"
+msgstr "your savings goals"
+
+#: src/components/domain/aiToolLabels.ts
 msgid "your target allocations"
 msgstr "your target allocations"
 
@@ -9450,3 +10313,7 @@ msgstr "YTD"
 #: src/screens/Risk.tsx
 msgid "zero volatility — nothing to divide by"
 msgstr "zero volatility — nothing to divide by"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Zoom"
+msgstr "Zoom"

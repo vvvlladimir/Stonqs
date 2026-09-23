@@ -2,6 +2,7 @@ import { CaretDownIcon, CaretUpDownIcon, CaretUpIcon } from "@phosphor-icons/rea
 import { Fragment, useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
 import { currentLocale } from "../../lib/i18n";
 import { useIsWide } from "../../lib/useLayout";
+import { FIELDS, focusables } from "./focus";
 import { List, ListRow } from "./List";
 
 /**
@@ -257,7 +258,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
           })}
         </tr>
       </thead>
-      <tbody>
+      <tbody onKeyDown={moveInRows}>
         {sections.map((section) => (
           <SectionRows
             key={section.key}
@@ -294,6 +295,34 @@ export function DataTable<T>(props: DataTableProps<T>) {
       {table}
     </div>
   );
+}
+
+/**
+ * ↑/↓ from a control in a row moves to the same column of the next row that has one — a ticker
+ * to the ticker below, a row's actions to the next row's — so a long table is not a hundred Tabs.
+ * An input keeps its own arrows.
+ */
+function moveInRows(e: React.KeyboardEvent<HTMLElement>) {
+  if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+  if (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || e.defaultPrevented) return;
+  const from = e.target as HTMLElement;
+  if (from.matches(FIELDS)) return;
+  const row = from.closest("tr");
+  const cell = from.closest("td");
+  if (!row || !cell) return;
+  const column = [...row.children].indexOf(cell);
+  const down = e.key === "ArrowDown";
+  for (let next = down ? row.nextElementSibling : row.previousElementSibling; next;) {
+    const target =
+      focusables((next.children[column] as HTMLElement) ?? next)[0] ?? focusables(next as HTMLElement)[0];
+    if (target) {
+      e.preventDefault();
+      target.focus();
+      target.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    next = down ? next.nextElementSibling : next.previousElementSibling;
+  }
 }
 
 const ARIA_SORT: Record<SortDir, "ascending" | "descending"> = {

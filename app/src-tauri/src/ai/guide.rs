@@ -16,12 +16,20 @@
 const REFERENCE: &[(&str, &str)] = &[
     ("alerts", include_str!("../../../../docs/ai-reference/alerts.md")),
     (
+        "as-of-date",
+        include_str!("../../../../docs/ai-reference/as-of-date.md"),
+    ),
+    (
         "allocation-and-taxonomy",
         include_str!("../../../../docs/ai-reference/allocation-and-taxonomy.md"),
     ),
     (
         "benchmark",
         include_str!("../../../../docs/ai-reference/benchmark.md"),
+    ),
+    (
+        "calculation-sheet",
+        include_str!("../../../../docs/ai-reference/calculation-sheet.md"),
     ),
     (
         "corporate-actions",
@@ -42,6 +50,10 @@ const REFERENCE: &[(&str, &str)] = &[
     (
         "data-scope",
         include_str!("../../../../docs/ai-reference/data-scope.md"),
+    ),
+    (
+        "goals-and-limits",
+        include_str!("../../../../docs/ai-reference/goals-and-limits.md"),
     ),
     (
         "importing-data",

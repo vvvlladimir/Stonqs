@@ -1,6 +1,7 @@
 /** Everything the host persists about how the app is set up. */
 
 import type { UserPeriod } from "./periods";
+import type { AiEffort } from "./ai";
 export interface AppSettings {
   auto_refresh_on_start: boolean;
   refresh_min_interval_hours: number;
@@ -18,9 +19,16 @@ export interface AppSettings {
   ai_web_search: boolean;
   /** Whether the panel shows the model's summary of its own reasoning. Off by default. */
   ai_reasoning: boolean;
-  /** Selected provider id (e.g. `"openai"`) — also the keychain account name. There is no
-   * model beside it: a chat lands on whatever its provider offers first today. */
+  /** Where a new chat starts (e.g. `"openai"`), also the keychain account name. The chat
+   * footer's provider switch writes it too. */
   ai_provider: string;
+  /** The model last picked in a chat, per provider. Absent, a chat starts on the smallest tier.
+   * Written by the chat commands only; `settings_save` keeps what is stored. */
+  ai_models: Record<string, string>;
+  /** Model ids the user added per provider, offered in the chat's picker after the provider's own. */
+  ai_extra_models: Record<string, string[]>;
+  /** The thinking effort last picked in a chat, where the next chat starts. */
+  ai_effort: AiEffort;
   /** The server the user points the app at themselves. Empty until configured. */
   ai_custom: AiCustomProvider;
   /** Market-data sources switched away from their default; edited through `market_source_switch`. */

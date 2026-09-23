@@ -111,7 +111,7 @@ pub fn generate(
         system: with_instructions(options.instructions.as_deref(), options.max_tokens),
         context: format!(
             "{} {}",
-            super::session::context_line(context.store, context.scope, None, context.today),
+            super::session::context_line(context.store, context.scope, None, context.today, None),
             language_line(&options.language),
         ),
         model: model.to_string(),

@@ -16,6 +16,7 @@ import { api } from "../../lib/api";
 import { useChatSend, useProviderName } from "../../lib/ai";
 import { formatDateTime } from "../../lib/format";
 import { usePointerDrag } from "../../lib/pointerDrag";
+import { useLayer, type CommandId } from "../../lib/commands";
 import { AI_PANEL_MAX, AI_PANEL_MIN, useUiState } from "../../lib/uiState";
 import {
   keys,
@@ -25,7 +26,6 @@ import {
   useAiModels,
   useAiProviders,
   useInvalidate,
-  useSettings,
 } from "../../lib/queries";
 import type { AiBlock, AiChat, AiEffort, AiToolMode, ChatMessage, UiError } from "../../lib/types";
 import {
@@ -41,7 +41,6 @@ import {
 import { liveSteps, storedSteps, type Step } from "./aiSteps";
 import {
   Banner,
-  Empty,
   ErrorText,
   Field,
   FormDialog,
@@ -49,22 +48,13 @@ import {
   Markdown,
   Pending,
   QueryError,
+  useDialogFocus,
   useMenu,
   useUiErrorText,
   type MenuItem,
 } from "../ui";
 
-/** Dock button that opens the panel; hidden entirely when the panel is disabled in Settings. */
-export function AiToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
-  const { t } = useLingui();
-  const settings = useSettings();
-  if (!settings.data?.ai_enabled) return null;
-  return (
-    <button type="button" className="iconbtn" data-tip={t`AI assistant`} onClick={onToggle}>
-      <SparkleIcon weight={open ? "fill" : "regular"} />
-    </button>
-  );
-}
+const AI_PASS: readonly CommandId[] = ["ai"];
 
 /**
  * A global drawer, not a screen — mounted once at the shell level next to `TooltipLayer`.
@@ -82,17 +72,15 @@ export function AiChatPanel({ onClose }: { onClose: () => void }) {
   const providers = useAiProviders();
   const name = useProviderName();
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const panel = useRef<HTMLDivElement>(null);
+  // `mod+j` passes through so the key that opened the panel also closes it.
+  useLayer(onClose, { pass: AI_PASS });
+  useDialogFocus(panel);
 
   return createPortal(
     <div className="ai-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
+        ref={panel}
         className="ai-panel"
         role="dialog"
         aria-modal="true"
@@ -133,7 +121,12 @@ export function AiChatPanel({ onClose }: { onClose: () => void }) {
               )}
             </span>
           </div>
-          <button type="button" className="iconbtn iconbtn--sm" aria-label={t`Close`} onClick={onClose}>
+          <button
+            type="button"
+            className="iconbtn iconbtn--sm ai-head__close"
+            aria-label={t`Close`}
+            onClick={onClose}
+          >
             <XIcon />
           </button>
         </header>
@@ -246,9 +239,17 @@ function ChatList({ onOpen }: { onOpen: (id: string) => void }) {
           </Banner>
         )}
         {chats.data.length === 0 ? (
-          <Empty title={t`No chats yet`}>
-            <Trans>Ask about performance, allocation, a single holding — anything on screen.</Trans>
-          </Empty>
+          <div className="ai-opener">
+            <span className="ai-mark ai-mark--big" aria-hidden>
+              <SparkleIcon weight="fill" />
+            </span>
+            <h3>
+              <Trans>No chats yet</Trans>
+            </h3>
+            <p className="muted">
+              <Trans>Ask about performance, allocation, a single holding — anything on screen.</Trans>
+            </p>
+          </div>
         ) : (
           <div className="ai-chats">
             {chats.data.map((chat: AiChat) => (
@@ -295,11 +296,11 @@ function ChatList({ onOpen }: { onOpen: (id: string) => void }) {
       <button
         type="button"
         className="ai-fab"
-        aria-label={t`New chat`}
         disabled={create.isPending || !connected}
         onClick={() => create.mutate()}
       >
         <PlusIcon weight="bold" />
+        <Trans>New chat</Trans>
       </button>
     </>
   );
@@ -330,15 +331,15 @@ function ActiveChat({ chatId }: { chatId: string }) {
   });
   const setEffort = useMutation({
     mutationFn: (next: AiEffort) => api.aiChatSetEffort(chatId, next),
-    onSuccess: () => invalidate(keys.aiChats()),
+    onSuccess: () => invalidate(keys.aiChats(), keys.settings()),
   });
   const setModel = useMutation({
     mutationFn: (next: string) => api.aiChatSetModel(chatId, next),
-    onSuccess: () => invalidate(keys.aiChats()),
+    onSuccess: () => invalidate(keys.aiChats(), keys.settings()),
   });
   const setProvider = useMutation({
     mutationFn: (next: string) => api.aiChatSetProvider(chatId, next),
-    onSuccess: () => invalidate(keys.aiChats()),
+    onSuccess: () => invalidate(keys.aiChats(), keys.settings()),
   });
   const { pending, thinking, busy, live, request, error, usage, send, decide, stop } = useChatSend(chatId);
   const [text, setText] = useState("");
@@ -376,6 +377,7 @@ function ActiveChat({ chatId }: { chatId: string }) {
         {grants.data && grants.data.length > 0 && <GrantedTools tools={grants.data} />}
       </div>
       <div className="ai-compose">
+        <TokenCount usage={usage} busy={busy} />
         <Composer
           text={text}
           busy={busy}
@@ -402,7 +404,6 @@ function ActiveChat({ chatId }: { chatId: string }) {
               onChange={(next) => setModel.mutate(next)}
             />
           )}
-          <TokenCount usage={usage} busy={busy} />
         </div>
       </div>
     </>

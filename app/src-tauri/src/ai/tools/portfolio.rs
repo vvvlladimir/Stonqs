@@ -27,6 +27,18 @@ pub(super) const PORTFOLIO_PERFORMANCE: Tool = Tool {
     run: portfolio_performance,
 };
 
+pub(super) const PORTFOLIO_BREAKDOWN: Tool = Tool {
+    name: "portfolio_breakdown",
+    description: "The calculation sheet of one period: for each month (or year, for a long \
+                  period) the opening value, money paid in or out, what the market did, income \
+                  received, costs paid, the closing value and the return. Use this to explain \
+                  where a return came from, or why a value rose while the return did not.",
+    access: Access::Ask,
+    schema: period_argument,
+    summary: period_summary,
+    run: portfolio_breakdown,
+};
+
 pub(super) const PORTFOLIO_RISK: Tool = Tool {
     name: "portfolio_risk",
     description: "Volatility, Sharpe ratio and maximum drawdown over one period.",
@@ -136,6 +148,51 @@ pub(in crate::ai) fn portfolio_overview(context: &ToolContext, _args: &Value) ->
 
 pub(super) fn portfolio_performance(context: &ToolContext, args: &Value) -> AiResult<Value> {
     performance_over(context, resolve_period(context, args)?)
+}
+
+/// One row per calendar chunk, chosen from the length of the period: a sheet of four hundred
+/// daily rows answers nothing and costs the whole context window.
+pub(super) fn portfolio_breakdown(context: &ToolContext, args: &Value) -> AiResult<Value> {
+    let range = resolve_period(context, args)?;
+    let period = if (range.to - range.from).num_days() > 365 * 3 {
+        Period::Year
+    } else {
+        Period::Month
+    };
+    let analytics = context.scope.analytics(context.store).map_err(tool)?;
+    let sheet = analytics.calculation_sheet(range, period).map_err(tool)?;
+
+    let rows: Vec<Value> = sheet
+        .rows
+        .iter()
+        .map(|r| {
+            json!({
+                "from": r.from.to_string(),
+                "to": r.to.to_string(),
+                "opening_value": money(r.start_value_base),
+                "external_flow": money(r.external_flow_base),
+                "market_change": money(r.market_change_base),
+                "income": money(r.income_base),
+                "costs": money(r.costs_base),
+                "earned": money(r.delta_base),
+                "closing_value": money(r.end_value_base),
+                "return_percent": percent(r.twr),
+                "chained_return_percent": percent(r.cumulative_twr),
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "from": range.from.to_string(),
+        "to": range.to.to_string(),
+        "base_currency": sheet.base_currency,
+        "split_by": if period == Period::Year { "year" } else { "month" },
+        // Each row opens where the previous closed, so the reader can add them up and check.
+        "rows": rows,
+        "total_earned": money(sheet.total.delta_base),
+        "total_flow": money(sheet.total.net_flow_base),
+        "twr_percent": percent(sheet.twr),
+    }))
 }
 
 /// The window arrives resolved here: the model names a period, but the dashboard brief already

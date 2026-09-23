@@ -279,6 +279,13 @@ export function formatDay(date: string): string {
   return formatDate(new Date(year, month - 1, day), { day: "numeric", month: "short", year: "numeric" });
 }
 
+/** A calendar day in the locale's all-digit form (`23.09.2026`, `9/23/2026`), for a tight slot. */
+export function formatDayNumeric(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  if (!year || !month || !day) return date;
+  return formatDate(new Date(year, month - 1, day), { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 /** Maps a signed value to the shared positive/negative CSS classes. */
 /** A decimal string as a number to order rows by: an absent value stays absent, never 0. */
 export function toNumber(value: string | number | null | undefined): number | null {

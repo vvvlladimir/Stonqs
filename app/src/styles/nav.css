@@ -1,0 +1,421 @@
+/* The navigation (components/Nav). Narrow first: a tab bar, and the rail as a sheet behind Menu.
+   From 1000px the same element is the side rail. */
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: var(--sp-3) var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+}
+.tabbar__tab {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-1);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+  border-radius: var(--r-input);
+}
+.tabbar__tab svg {
+  font-size: var(--fs-xl);
+}
+.tabbar__tab[aria-current],
+.tabbar__tab[data-on] {
+  color: var(--accent);
+}
+.tabbar__tab .tab-dot {
+  position: absolute;
+  top: var(--sp-2);
+  left: calc(50% + 8px);
+  margin: 0;
+}
+
+.nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Above the dock and the tab bar, below a modal opened from inside it (a picker). */
+  z-index: 46;
+  max-height: calc(100dvh - 48px - env(safe-area-inset-top, 0px));
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-3) var(--sp-5) calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border-strong);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: var(--shadow-pop);
+  transform: translateY(calc(100% + 24px));
+  visibility: hidden;
+  user-select: none;
+}
+.nav--sheet {
+  transform: translateY(var(--pull, 0));
+  visibility: visible;
+}
+.nav__grab {
+  flex: none;
+  height: 20px;
+  margin-bottom: var(--sp-2);
+  touch-action: none;
+  cursor: grab;
+}
+.nav__grab::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: var(--r-chip);
+  background: var(--border-strong);
+}
+.nav__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(8, 9, 12, 0.44);
+  opacity: 0;
+  pointer-events: none;
+}
+.nav--sheet + .nav__scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* In the sheet the whole thing scrolls and no list is squeezed: a finger scrolls cheaply. */
+.nav__inner {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.nav__inner > * {
+  flex: none;
+}
+.nav__block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+}
+.nav__label {
+  flex: none;
+  padding: 0 var(--sp-4) var(--sp-2);
+  font-size: var(--fs-micro);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.nav__list {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  border-radius: var(--r-input);
+}
+/* Favorites as a drop target: the frame says "this is where it lands". */
+.nav__list[data-over] {
+  outline: 1px dashed var(--accent);
+  outline-offset: 2px;
+  background: var(--accent-softer);
+}
+.nav__row {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  min-height: 42px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  background: none;
+  border-radius: var(--r-input);
+  font-size: var(--fs-base);
+  color: var(--text-2);
+  text-align: left;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+}
+.nav__row svg {
+  flex: none;
+  font-size: var(--fs-lg);
+}
+.nav__row[aria-current] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: var(--fw-med);
+}
+.nav__row[data-carried] {
+  opacity: 0.35;
+}
+.nav__row .tab-dot {
+  margin-left: auto;
+}
+.nav__lbl {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav__caret {
+  margin-left: auto;
+  color: var(--text-3);
+}
+.nav__row .tab-dot + .nav__caret {
+  margin-left: var(--sp-3);
+}
+.nav__head[aria-expanded="true"] .nav__caret {
+  transform: rotate(90deg);
+}
+.nav__head[aria-expanded="true"] .tab-dot {
+  opacity: 0;
+}
+.nav__row--sub {
+  min-height: 40px;
+}
+
+/* The insertion line sits in the 2px gap between rows. */
+.nav__row[data-drop]::before,
+.nav__end[data-drop]::before {
+  content: "";
+  position: absolute;
+  left: var(--sp-4);
+  right: var(--sp-4);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  pointer-events: none;
+}
+.nav__row[data-drop="before"]::before,
+.nav__end[data-drop]::before {
+  top: -2px;
+}
+.nav__row[data-drop="after"]::before {
+  bottom: -2px;
+}
+.nav__end {
+  position: relative;
+  flex: none;
+  height: 0;
+}
+
+/* Folding: 0fr -> 1fr animates to the content's height without knowing it. */
+.nav__fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-height: 0;
+}
+.nav__fold[data-open] {
+  grid-template-rows: 1fr;
+}
+.nav__clip {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+.nav__sub {
+  flex: 1;
+  min-height: 0;
+  margin: var(--sp-2) 0 var(--sp-3) var(--sp-7);
+  padding-left: var(--sp-2);
+  border-left: 1px solid var(--border);
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  opacity: 0;
+}
+.nav__fold[data-open] .nav__sub {
+  opacity: 1;
+}
+
+.nav__foot {
+  display: grid;
+  gap: var(--sp-3);
+}
+/* The two lenses as one box: rows split by a hairline, the value set flush right. */
+.nav__lenses {
+  display: grid;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-input);
+  background: var(--surface);
+  overflow: hidden;
+}
+.nav__lenses .scope {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.nav__lenses .scope + .scope {
+  border-top: 1px solid var(--border);
+}
+.nav__lenses .scope:hover {
+  background: var(--surface-2);
+}
+
+.nav__ghost {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: 34px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-input);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-base);
+  box-shadow: var(--shadow-pop);
+  pointer-events: none;
+}
+.nav__ghost svg {
+  flex: none;
+  font-size: var(--fs-lg);
+}
+.nav__ghost[data-remove] {
+  opacity: 0.6;
+  color: var(--neg);
+}
+.nav__ghost[data-remove] .nav__lbl {
+  text-decoration: line-through;
+}
+
+@media (min-width: 1000px) {
+  .tabbar,
+  .nav__scrim,
+  .nav__grab {
+    display: none;
+  }
+  /* Section heads never scroll: only the favourites and the open section's list may shrink,
+     each scrolling inside its own frame. */
+  .nav {
+    position: static;
+    z-index: auto;
+    width: 230px;
+    height: 100%;
+    max-height: none;
+    flex: none;
+    padding: var(--sp-6) var(--sp-5);
+    border-top: 0;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+  }
+  .nav__inner {
+    flex: 1;
+    gap: var(--sp-5);
+    overflow: hidden;
+  }
+  .nav__inner > .nav__favs,
+  .nav__inner > .nav__sections,
+  .nav__sections > .nav__fold {
+    flex: 0 1 auto;
+  }
+  .nav__favs > .nav__list,
+  .nav__sub {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .nav__foot {
+    margin-top: auto;
+  }
+  .nav__row {
+    min-height: 30px;
+  }
+  .nav__row--sub {
+    min-height: 28px;
+    font-size: var(--fs-sm);
+  }
+  .nav__row:hover {
+    background: var(--surface-3);
+    color: var(--text);
+  }
+  .nav__row[aria-current]:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nav__row,
+  .tabbar__tab {
+    transition:
+      background-color var(--dur) var(--ease),
+      color var(--dur) var(--ease);
+  }
+  .nav__caret {
+    transition: transform 0.22s var(--ease);
+  }
+  .tab-dot {
+    transition: opacity var(--dur) var(--ease);
+  }
+  /* Folding is quicker than opening: what leaves must not hold the eye. */
+  .nav__fold {
+    transition: grid-template-rows 0.2s var(--ease);
+  }
+  .nav__fold[data-open] {
+    transition-duration: 0.32s;
+  }
+  .nav__sub {
+    transition: opacity 0.14s linear;
+  }
+  .nav__fold[data-open] .nav__sub {
+    transition: opacity 0.24s var(--ease) 0.04s;
+  }
+  /* Rows step in only as their section opens, not on every render. */
+  .nav__fold[data-opening] .nav__row--sub {
+    animation: nav-row-in 0.3s var(--ease) backwards;
+    animation-delay: calc(40ms + var(--i, 0) * 18ms);
+  }
+  .nav {
+    transition:
+      transform 0.24s var(--ease),
+      visibility 0s linear 0.24s;
+  }
+  .nav--sheet {
+    transition: transform 0.38s var(--ease);
+  }
+  .nav--pulled {
+    transition: none;
+  }
+  .nav__scrim {
+    transition: opacity 0.24s var(--ease);
+  }
+  .nav__ghost {
+    animation: nav-lift 0.14s var(--ease);
+  }
+}
+
+@keyframes nav-row-in {
+  from {
+    opacity: 0;
+    transform: translate(-4px, -3px);
+  }
+}
+@keyframes nav-lift {
+  from {
+    transform: scale(0.97);
+    box-shadow: none;
+  }
+}

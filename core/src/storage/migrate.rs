@@ -127,6 +127,16 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
         "external_id",
         include_str!("../../migrations/0027_external_id.sql"),
     ),
+    (
+        28,
+        "goals_and_limits",
+        include_str!("../../migrations/0028_goals_and_limits.sql"),
+    ),
+    (
+        29,
+        "limit_withdrawals",
+        include_str!("../../migrations/0029_limit_withdrawals.sql"),
+    ),
 ];
 
 /// Applies all pending migrations.

@@ -52,6 +52,8 @@ export type Field =
   | "inflation"
   | "target"
   | "watchlist"
+  | "goal"
+  | "limit"
   | "prompt"
   | "refresh"
   | "length"

@@ -4,6 +4,10 @@ A board of tiles the user arranges themselves. Nothing here is fixed: the shippe
 starting point, and a user who has rearranged it is not looking at the same screen as one who has
 not — never describe a tile as being "in the top right" or "on the dashboard by default".
 
+**Tiles follow both lenses.** A tile reads the accounts in view unless it names a data source of
+its own, and every tile is read at the date the app is set to — a board looked at with the date
+moved back is that board as it stood then.
+
 **Several boards.** The tabs across the controls switch between boards; each keeps its own tiles.
 A board can be renamed, duplicated, deleted, exported to a file and imported from one — which is
 also how the shipped board was authored.
@@ -57,7 +61,8 @@ If the answer still runs past the ceiling, the tile reports that it was cut off 
 previous text.
 
 The tile's settings also choose who writes it: **Provider** and **Model**. Left empty, it uses the
-provider a new chat starts on and the newest model that provider offers. Every built-in provider is
+provider and model a new chat starts on: the ones last picked in a chat, or that provider's
+smallest model if none was picked. Every built-in provider is
 listed, plus the user's own server once it is configured in Settings; one without a saved key is
 shown as "no key saved" and cannot be picked. If the model refuses to answer or runs out of room mid-answer, the tile
 says so and keeps its previous text.

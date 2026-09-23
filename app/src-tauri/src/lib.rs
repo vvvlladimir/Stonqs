@@ -11,6 +11,7 @@ pub mod error;
 pub mod events;
 pub mod import_templates;
 pub mod jobs;
+pub mod plugins;
 pub mod profiles;
 pub mod scope;
 pub mod secrets;
@@ -58,6 +59,10 @@ pub fn run() {
             commands::portfolio::portfolio_get,
             commands::portfolio::portfolio_save,
             commands::portfolio::setup_portfolio,
+            commands::plugins::plugins_list,
+            commands::plugins::plugin_install,
+            commands::plugins::plugin_remove,
+            commands::plugins::plugin_theme_css,
             commands::profiles::profiles_list,
             commands::profiles::profile_create,
             commands::profiles::profile_rename,
@@ -81,6 +86,12 @@ pub fn run() {
             commands::attributes::attribute_defs_list,
             commands::attributes::attribute_def_save,
             commands::attributes::attribute_def_delete,
+            commands::attributes::attributes_import_preview,
+            commands::attributes::attributes_import_preview_path,
+            commands::attributes::attributes_import_commit,
+            commands::attributes::attributes_import_commit_path,
+            commands::attributes::attributes_export_csv,
+            commands::attributes::attributes_export_save,
             commands::securities::security_save,
             commands::securities::security_delete,
             commands::corporate_actions::corporate_actions_list,
@@ -117,6 +128,8 @@ pub fn run() {
             commands::periods::period_delete,
             commands::periods::periods_restore,
             commands::performance::performance_summary,
+            commands::performance::performance_breakdown,
+            commands::performance::performance_sheet_save,
             commands::trades::trades_summary,
             commands::payments::payments_grid,
             commands::payments::dividends_expected,
@@ -185,6 +198,12 @@ pub fn run() {
             commands::plans::plan_commit,
             commands::plans::plan_projection,
             commands::plans::fire_projection,
+            commands::goals::goals_list,
+            commands::goals::goal_save,
+            commands::goals::goal_delete,
+            commands::goals::limits_list,
+            commands::goals::limit_save,
+            commands::goals::limit_delete,
             commands::watchlists::watchlists_list,
             commands::watchlists::watchlist_save,
             commands::watchlists::watchlist_delete,

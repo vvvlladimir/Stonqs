@@ -2,7 +2,8 @@
 
 Compares the portfolio against a **target** — a set of weights over the nodes of one classification
 tree — and proposes trades that would close the gap. It proposes: nothing is written by this screen
-except when the user explicitly turns the result into a savings plan.
+except when the user explicitly turns the result into a savings plan. The comparison is made at the
+date in view, so a proposal read at a past date is what the portfolio needed *then*.
 
 Without a target there is nothing to compare against, and the screen says so rather than inventing
 one. A portfolio can have several targets over different trees; the control picks between them.

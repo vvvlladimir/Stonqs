@@ -16,6 +16,7 @@ fn main() {
     let result = match command {
         "demo" => demo::run(),
         "series" => report::series(&args[1..]),
+        "breakdown" => report::breakdown(&args[1..]),
         "risk" => report::risk(&args[1..]),
         "allocation" => report::allocation(&args[1..]),
         "benchmark" => report::benchmark(&args[1..]),
@@ -48,6 +49,7 @@ fn print_help() {
          commands over demo data (in-memory database, no network):\n  \
          demo                             valuation, TWR, XIRR\n  \
          series [from] [to]               daily value series, monthly totals\n  \
+         breakdown [from] [to]            the calculation sheet, month by month\n  \
          risk [from] [to]                 volatility, drawdown, Sharpe\n  \
          allocation [taxonomy|currency|account|security]\n  \
          {:33}breakdowns of the current valuation\n  \

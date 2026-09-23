@@ -629,7 +629,7 @@ fn percent(weight: Decimal) -> String {
         .to_string()
 }
 
-fn quote(value: &str) -> String {
+pub(super) fn quote(value: &str) -> String {
     if value.contains([',', '"', '\n']) {
         format!("\"{}\"", value.replace('"', "\"\""))
     } else {
@@ -637,7 +637,10 @@ fn quote(value: &str) -> String {
     }
 }
 
-fn match_security<'a>(
+/// ISIN identifies the instrument, a ticker only a listing, so a foreign file printing another
+/// venue's ticker still lands on the right row. Shared with the attribute import, which must
+/// join instruments by the same rule.
+pub(super) fn match_security<'a>(
     symbol: &str,
     isin: &str,
     label: &str,

@@ -1,13 +1,14 @@
 # Positions
 
-Every instrument currently held, one row each, largest by value first. Value is read as of today;
-anything that is a *return* is measured over the period chosen in the controls, because a return
-needs a window and a holding does not.
+Every instrument currently held, one row each, largest by value first. Value is read as of the
+date the app is set to — today unless the user moved the date picker back; anything that is a
+*return* is measured over the period chosen in the controls, because a return needs a window and a
+holding does not.
 
 The account picker applies: the rows are the instruments held in the accounts currently in view.
 
 **The period control changes the return columns only.** Quantity, price, value and weight are as of
-today no matter what the period says. A user comparing "value" against "return" across two periods
+the date in view, no matter what the period says. A user comparing "value" against "return" across two periods
 is comparing one fixed number with one moving one.
 
 **Columns are chosen by the user** and there are many — quantity, price, FX rate, value, weight,

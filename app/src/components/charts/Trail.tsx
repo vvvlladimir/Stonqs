@@ -1,4 +1,5 @@
 import { Trans } from "@lingui/react/macro";
+import { fullLabel } from "./labels";
 import { formatMoney, formatPercent } from "../../lib/format";
 import type { AllocationBucket } from "../../lib/types";
 
@@ -33,9 +34,4 @@ export function Trail({
       )}
     </div>
   );
-}
-
-/** Places the ticker before the optional full security name. */
-export function fullLabel(short: string, full?: string): string {
-  return full && full !== short ? `${short} — ${full}` : short;
 }

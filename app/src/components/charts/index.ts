@@ -1,5 +1,6 @@
 /** Shared chart components and geometry helpers. */
-export { Area, Chart, Grid, Marker, indexScale, valueAxis, type Frame, type LegendItem } from "./Chart";
+export { Area, Chart, Grid, Marker, type Frame, type LegendItem } from "./Chart";
+export { indexScale, valueAxis } from "../../lib/plot";
 export { ValueChart } from "./ValueChart";
 export { BenchChart } from "./BenchChart";
 export { Underwater } from "./Underwater";

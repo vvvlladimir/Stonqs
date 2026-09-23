@@ -126,4 +126,5 @@ you to sign it once, on your first pull request.
 
 ## Security
 
-Do not open a public issue for a vulnerability. See [SECURITY.md](SECURITY.md).
+Do not open a public issue for a vulnerability. Write to security@stonqs.app or see
+[SECURITY.md](SECURITY.md).

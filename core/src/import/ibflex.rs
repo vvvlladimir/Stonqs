@@ -17,22 +17,13 @@ use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::collections::BTreeMap;
 
-/// The flattened columns. Names are shown in the wizard's raw table, so they read as a file's.
-const DATE: &str = "Date";
-const KIND: &str = "Type";
-const SYMBOL: &str = "Symbol";
-const ISIN: &str = "ISIN";
-const NAME: &str = "Description";
-const QUANTITY: &str = "Quantity";
-const PRICE: &str = "Price";
-const AMOUNT: &str = "Amount";
-const FEE: &str = "Commission";
-const TAX: &str = "Tax";
-const CURRENCY: &str = "Currency";
-const FX_RATE: &str = "FX rate";
-const ACCOUNT: &str = "Account";
-const LINK: &str = "Link";
-const NOTE: &str = "Note";
+/// The flattened columns are the canonical format's own (ADR-0066), not this reader's invention:
+/// one table shape means one vocabulary in the wizard's raw view, and a statement exported back
+/// out is spelled the way it was read in.
+use super::canonical::{
+    ACCOUNT, AMOUNT, CURRENCY, DATE, FEE, FX_RATE, ISIN, KIND, LINK_ID as LINK, NAME, NOTE, PRICE, QUANTITY,
+    SYMBOL, TAX,
+};
 
 const COLUMNS: &[&str] = &[
     DATE, KIND, SYMBOL, ISIN, NAME, QUANTITY, PRICE, AMOUNT, FEE, TAX, CURRENCY, FX_RATE, ACCOUNT, LINK, NOTE,

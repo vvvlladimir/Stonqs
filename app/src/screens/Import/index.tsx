@@ -1,4 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import { Command } from "../../lib/commands";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -109,10 +110,10 @@ export function Import() {
   const current = mapping ?? preview?.mapping ?? null;
   const account = current?.account_id ?? null;
 
-  /** Lay the file out by a saved template, or — with no name — by what the core detected. */
-  const applyTemplate = (name: string) => {
-    setTemplate(name);
-    const found = templates.data?.find((t) => t.name === name);
+  /** Lay the file out by a saved template, or — with no id — by what the core detected. */
+  const applyTemplate = (id: string) => {
+    setTemplate(id);
+    const found = templates.data?.find((t) => t.id === id);
     if (!found) {
       if (detected) apply(detected.config, { ...detected.mapping, account_id: account }, overrides);
       else apply(BLANK_CONFIG, null, overrides);
@@ -198,6 +199,7 @@ export function Import() {
     >
       {blocked && <Banner>{blockedWhy}</Banner>}
 
+      <Command id="importFile" run={pickFile} disabled={step !== 0 || load.isPending} />
       {step === 0 && (
         <FileStep
           loading={load.isPending}

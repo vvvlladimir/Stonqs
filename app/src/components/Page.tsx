@@ -1,6 +1,5 @@
 /* eslint-disable lingui/no-unlocalized-strings -- the archetype rules below are developer
    diagnostics printed to the console in dev builds; they never reach a user. */
-import { Trans } from "@lingui/react/macro";
 import type { ReactNode } from "react";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
 
@@ -66,8 +65,6 @@ export interface PageProps {
   back?: { label: string; onClick: () => void };
   /** One-line registry summary. */
   summary?: ReactNode;
-  /** Valuation date shown by registry and as-of analysis pages. */
-  asOf?: string;
   note?: ReactNode;
   actions?: ReactNode;
   lead?: ReactNode;
@@ -107,13 +104,13 @@ function violationsOf(props: PageProps): string[] {
 }
 
 export function Page(props: PageProps) {
-  const { archetype, title, back, summary, asOf, note, actions, lead, steps } = props;
+  const { archetype, title, back, summary, note, actions, lead, steps } = props;
   const { controls, filters, banner, metrics, foot, children } = props;
 
   // Validate only in development; production builds pay no runtime cost.
   const violations = import.meta.env.DEV ? violationsOf(props) : [];
 
-  const meta = summary || asOf || note;
+  const meta = summary || note;
 
   return (
     <div className="page" data-archetype={archetype}>
@@ -137,11 +134,6 @@ export function Page(props: PageProps) {
             {meta && (
               <div className="inline">
                 {summary && <span className="page__summary num">{summary}</span>}
-                {asOf && (
-                  <span className="page__meta">
-                    <Trans>as of {asOf}</Trans>
-                  </span>
-                )}
                 {note && <span className="page__meta">{note}</span>}
               </div>
             )}

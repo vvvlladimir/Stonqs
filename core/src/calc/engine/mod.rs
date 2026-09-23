@@ -6,6 +6,7 @@
 //! is, which transactions it admits, and where the prices and rates come from.
 
 mod allocation;
+mod goals;
 mod inflation;
 mod reports;
 mod returns;

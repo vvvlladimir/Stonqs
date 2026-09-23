@@ -10,13 +10,14 @@ import {
   useTargets,
   useTaxonomies,
   useWatchlists,
+  useGoals,
+  useLimits,
 } from "../../lib/queries";
 import { useProviderName } from "../../lib/ai";
 import { CheckField, Field, FormDialog, List, ListRow, Modal } from "../../components/ui";
 import type { Dashboard as Board, Widget } from "../../lib/uiState";
 import type { Security } from "../../lib/types";
 import { periodLabel, usePeriodRanges } from "../../lib/periods";
-import { today } from "../../lib/api";
 import { METRICS } from "./widgets/metrics";
 
 import { WIDGETS, type Field as WidgetField } from "./widgets";
@@ -32,7 +33,8 @@ import {
   sourceKey,
   sourceOf,
 } from "./widgets/model";
-import { scopeLabel } from "../../components/domain/ScopePicker";
+import { scopeLabel } from "../../components/domain/scopeLabel";
+import { useAsOf } from "../../lib/asOf";
 
 /** Widget catalog grouped for visual browsing. */
 export function Palette({ onClose, onPick }: { onClose: () => void; onPick: (type: string) => void }) {
@@ -89,9 +91,11 @@ export function Config({
   const securities = useSecurities();
   const targets = useTargets();
   const watchlists = useWatchlists();
+  const goals = useGoals(useAsOf().date);
+  const limits = useLimits(useAsOf().date);
   const scope = useScope();
   // The whole axis, user periods included — a widget may override the dashboard with any of them.
-  const ranges = usePeriodRanges(today());
+  const ranges = usePeriodRanges(useAsOf().date);
 
   const has = (field: WidgetField) => def.fields.includes(field);
   const set = (key: string, value: unknown) => setDraft({ ...draft, cfg: { ...draft.cfg, [key]: value } });
@@ -291,6 +295,28 @@ export function Config({
           options={(watchlists.data ?? []).map((list) => ({ value: list.id, label: list.name }))}
           value={text("watchlist")}
           onChange={(watchlist) => set("watchlist", watchlist)}
+        />
+      )}
+
+      {has("goal") && (
+        <Field
+          label={t`Goal`}
+          hint={t`Left empty, the widget shows the first goal.`}
+          placeholder={t`The first goal`}
+          options={(goals.data ?? []).map((row) => ({ value: row.goal.id, label: row.goal.name }))}
+          value={text("goal")}
+          onChange={(goal) => set("goal", goal)}
+        />
+      )}
+
+      {has("limit") && (
+        <Field
+          label={t`Limit`}
+          hint={t`Left empty, the widget shows the first limit.`}
+          placeholder={t`The first limit`}
+          options={(limits.data ?? []).map((usage) => ({ value: usage.limit_id, label: usage.name }))}
+          value={text("limit")}
+          onChange={(limit) => set("limit", limit)}
         />
       )}
 

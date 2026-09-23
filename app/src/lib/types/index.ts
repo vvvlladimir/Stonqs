@@ -23,6 +23,7 @@ export type * from "./reports";
 export type * from "./scope";
 export type * from "./securities";
 export type * from "./settings";
+export type * from "./plugins";
 export type * from "./profiles";
 export type * from "./transactions";
 export type * from "./watchlist";

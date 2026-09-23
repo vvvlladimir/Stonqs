@@ -434,42 +434,7 @@
     }
   },
   {
-    "name": "Finpension 3a",
-    "config": {
-      "delimiter": ";",
-      "skip_top_rows": 0,
-      "skip_bottom_rows": 0,
-      "has_header": true,
-      "date_format": "%Y-%m-%d",
-      "decimal_separator": "."
-    },
-    "mapping": {
-      "account_id": null,
-      "columns": {
-        "DATE": "Date",
-        "KIND": "Category",
-        "ISIN": "ISIN",
-        "NAME": "Asset Name",
-        "QUANTITY": "Number of Shares",
-        "PRICE": "Asset Price in CHF",
-        "AMOUNT": "Cash Flow",
-        "CURRENCY": "Asset Currency",
-        "FX_RATE": "Currency Rate"
-      },
-      "kind_aliases": {
-        "FLATRATEADMINISTRATIVEFEE": "FEE",
-        "INTERESTS": "INTEREST"
-      },
-      "ignored_kinds": [],
-      "symbol_aliases": {},
-      "account_aliases": {},
-      "default_currency": null,
-      "amount_sign": null,
-      "new_securities": {}
-    }
-  },
-  {
-    "name": "Finpension BVG",
+    "name": "Finpension",
     "config": {
       "delimiter": ";",
       "skip_top_rows": 0,
@@ -494,6 +459,7 @@
       "kind_aliases": {
         "DIVIDENDANDINTERESTDISTRIBUTIONS": "INTEREST",
         "FLATRATEADMINISTRATIONFEE": "FEE",
+        "FLATRATEADMINISTRATIVEFEE": "FEE",
         "INTERESTS": "INTEREST",
         "PORTFOLIOTRANSACTION": "BUY",
         "TRANSFERVESTEDBENEFITS": "TRANSFER_IN"

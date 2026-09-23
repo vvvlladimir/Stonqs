@@ -6,8 +6,10 @@
 //!
 //! Every entry is written by hand from a broker's published column documentation or from a
 //! redacted sample — nothing here is copied from another project, and no broker endorses it.
-//! Not all of them have been tried against a real export yet, which is why a preset is only ever
-//! a starting point: the import wizard lets the user override every part of it (`import.md`).
+//! Which of them have been tried against a real export is not a matter of opinion: a layout with
+//! a fixture under `core/tests/fixtures/presets/` is checked end to end, and the rest are named in
+//! `WITHOUT_A_FIXTURE` in that harness. Either way a preset is only ever a starting point — the
+//! import wizard lets the user override every part of it (`import.md`).
 
 use super::mapping::{ImportMapping, default_kind_aliases, normalize_header};
 use super::parse::ParseConfig;

@@ -1,10 +1,11 @@
 import { plural } from "@lingui/core/macro";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PlusIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
-import { formatDay, formatMoney } from "../../lib/format";
+import { api } from "../../lib/api";
+import { formatMoney } from "../../lib/format";
 import { affects, useAccountGroups, useAccounts, useAccountsTotal, useInvalidate } from "../../lib/queries";
 import { Page } from "../../components/Page";
 import { Empty, ErrorText, InfoHeading, List, Pending, QueryError, useMenu } from "../../components/ui";
@@ -12,6 +13,7 @@ import type { AccountInput, AccountRow } from "../../lib/types";
 import { AccountCard } from "./AccountCard";
 import { AccountForm } from "./AccountForm";
 import { GroupsPanel } from "./GroupsPanel";
+import { LimitsPanel } from "./LimitsPanel";
 import { EMPTY_ACCOUNT } from "./model";
 
 export function Accounts() {
@@ -88,11 +90,14 @@ export function Accounts() {
       ]
         .filter(Boolean)
         .join(" · ")}
-      asOf={formatDay(today())}
       actions={
-        <button className="btn" onClick={newAccount}>
-          <PlusIcon /> <Trans>New account</Trans>
-        </button>
+        <>
+          <button className="btn" onClick={newAccount}>
+            <PlusIcon /> <Trans>New account</Trans>
+          </button>
+          <Command id="new" label={t`New account`} run={newAccount} />
+          <Command id="newAccount" run={newAccount} />
+        </>
       }
     >
       <ErrorText error={remove.error} />
@@ -145,6 +150,8 @@ export function Accounts() {
       </section>
 
       <GroupsPanel accounts={accounts.data} base={base} />
+
+      <LimitsPanel accounts={accounts.data} base={base} />
 
       {menu.node}
     </Page>

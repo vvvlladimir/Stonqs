@@ -137,7 +137,7 @@ impl YahooProvider {
             .get(url)
             .header(
                 "User-Agent",
-                "stonqs/0.1 (+https://github.com/vvvlladimir/stonqs)",
+                concat!("stonqs/", env!("CARGO_PKG_VERSION"), " (+https://stonqs.app)"),
             )
             .call()?
             .body_mut()

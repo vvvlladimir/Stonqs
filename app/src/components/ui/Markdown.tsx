@@ -1,5 +1,6 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { Suspense, lazy } from "react";
+
+const MarkdownBody = lazy(() => import("./MarkdownBody"));
 
 /**
  * Markdown as the app renders it: GitHub flavour (tables, strikethrough, task lists) and
@@ -8,25 +9,16 @@ import remarkGfm from "remark-gfm";
  * came out of somebody else's CSV.
  *
  * A primitive, so it knows nothing about who wrote the text: the chat uses it for both sides of
- * the conversation, and anything else with authored prose can too.
+ * the conversation, and anything else with authored prose can too. The renderer arrives with the
+ * first prose on screen rather than with the app; until it does the text is shown as it is,
+ * because unrendered markdown reads, while a spinner in place of a paragraph does not.
  */
 export function Markdown({ children }: { children: string }) {
   return (
     <div className="md">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          // Every link leaves the app, so it opens where links from this app open, and never
-          // in place — a navigation would drop the whole session.
-          a: ({ children, ...props }) => (
-            <a {...props} target="_blank" rel="noreferrer noopener">
-              {children}
-            </a>
-          ),
-        }}
-      >
-        {children}
-      </ReactMarkdown>
+      <Suspense fallback={<p>{children}</p>}>
+        <MarkdownBody>{children}</MarkdownBody>
+      </Suspense>
     </div>
   );
 }

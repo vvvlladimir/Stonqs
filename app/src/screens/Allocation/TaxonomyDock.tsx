@@ -1,8 +1,8 @@
 import { useLingui } from "@lingui/react/macro";
-import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { PlusIcon } from "@phosphor-icons/react";
 import { useMenu, type MenuItem } from "../../components/ui";
+import { useDockSlot } from "../../lib/dock";
 import type { TaxonomyData } from "../../lib/types";
 import { hasGaps } from "./model";
 
@@ -34,9 +34,7 @@ export function TaxonomyDock({
 }) {
   const { t } = useLingui();
   const menu = useMenu();
-  // The portal target is created by App after mount, so resolve it in an effect.
-  const [dockSlot, setDockSlot] = useState<HTMLElement | null>(null);
-  useEffect(() => setDockSlot(document.getElementById("dock-slot")), []);
+  const dockSlot = useDockSlot();
 
   if (!dockSlot) return null;
 

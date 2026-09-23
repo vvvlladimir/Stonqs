@@ -1,8 +1,8 @@
 import { bucketLabel } from "../../lib/taxonomy";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { CheckIcon, TreeStructureIcon } from "@phosphor-icons/react";
-import { today } from "../../lib/api";
 import { Page } from "../../components/Page";
 import { Async, Empty, Pending, QueryError, Seg } from "../../components/ui";
 import {
@@ -18,7 +18,6 @@ import {
   useTargets,
   useTaxonomies,
 } from "../../lib/queries";
-import { formatDay } from "../../lib/format";
 import { slotFor } from "../../lib/plot";
 import { BreakdownPanel } from "./BreakdownPanel";
 import { useAllocationDialogs } from "./Dialogs";
@@ -26,10 +25,11 @@ import { AllocationMetrics, UnclassifiedBanner } from "./Header";
 import { MembersPanel } from "./MembersPanel";
 import { TaxonomyDock } from "./TaxonomyDock";
 import { UNCLASSIFIED, views, bucketAt, descend, levelShare, nodeSlot, type LevelRow } from "./model";
+import { useAsOf } from "../../lib/asOf";
 
 export function Allocation() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const invalidate = useInvalidate();
   const [view, setView] = useState("map");
   const [taxonomyId, setTaxonomyId] = useState<string | null>(null);
@@ -130,7 +130,6 @@ export function Allocation() {
     <Page
       archetype="analysis"
       title={t`Allocation`}
-      asOf={formatDay(date)}
       controls={
         <>
           <Seg label={t`View`} value={view} onChange={setView} options={views(i18n)} />
@@ -238,6 +237,7 @@ export function Allocation() {
         </Async>
       )}
 
+      <Command id="new" label={t`New classification`} run={() => dialogs.openTaxonomy(null)} />
       <TaxonomyDock
         taxonomies={taxonomies.data}
         selected={selected}

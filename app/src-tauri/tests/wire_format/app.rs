@@ -93,7 +93,10 @@ fn settings_keys_match_the_typescript_types() {
         keys(&json),
         [
             "ai_custom",
+            "ai_effort",
             "ai_enabled",
+            "ai_extra_models",
+            "ai_models",
             "ai_provider",
             "ai_reasoning",
             "ai_web_search",
@@ -112,8 +115,10 @@ fn settings_keys_match_the_typescript_types() {
     assert_eq!(json["language"], "system");
     assert_eq!(json["ai_enabled"], false);
     assert_eq!(json["ai_provider"], "openai");
-    // The model is not a setting at all: a chat lands on what its provider offers today, and a
-    // custom server is the only place an id is written down — by the user, with its address.
+    // No model is chosen up front: a chat lands on its provider's smallest tier today until the
+    // user picks one in a chat, which is then remembered per provider (ADR-0069).
+    assert_eq!(json["ai_models"], serde_json::json!({}));
+    assert_eq!(json["ai_effort"], "MEDIUM");
     assert_eq!(keys(&json["ai_custom"]), ["base_url", "label", "model", "wire"]);
     assert_eq!(json["ai_custom"]["wire"], "OPENAI_CHAT");
 
@@ -132,6 +137,7 @@ fn settings_keys_match_the_typescript_types() {
         "an older file has no AI panel, so it must not turn on by itself"
     );
     assert_eq!(old.ai_provider, "openai");
+    assert!(old.ai_models.is_empty());
 }
 
 /// A user period's spec is tagged, so the two kinds are told apart by a field, not by shape.
@@ -214,6 +220,9 @@ fn auto_refresh_respects_the_interval() {
         ui: serde_json::Value::Null,
         ai_enabled: false,
         ai_provider: "openai".into(),
+        ai_models: Default::default(),
+        ai_extra_models: Default::default(),
+        ai_effort: Default::default(),
         ai_web_search: true,
         ai_reasoning: false,
         ai_custom: Default::default(),
@@ -331,4 +340,35 @@ fn profile_list_keys_match_the_typescript_types() {
         keys(&json["profiles"][0]),
         ["created_at", "id", "name", "protected"]
     );
+}
+
+#[test]
+fn a_plugin_carries_its_status_flattened_beside_its_name() {
+    use sq_app_lib::plugins::{Base, PluginInfo, Status, ThemeDef};
+
+    let json = serde_json::to_value(PluginInfo {
+        id: "com.example.midnight".into(),
+        name: "Midnight".into(),
+        version: "1.0.0".into(),
+        themes: vec![ThemeDef {
+            id: "midnight".into(),
+            name: "Midnight".into(),
+            file: "midnight.css".into(),
+            base: Base::Dark,
+        }],
+        layouts: Vec::new(),
+        status: Status::Api { wants: 2, speaks: 1 },
+    })
+    .unwrap();
+
+    // The status is a discriminated union on `status`, the way `UiError` is on `code`: the
+    // frontend writes the sentence, the host says which one and with what values.
+    assert_eq!(
+        keys(&json),
+        [
+            "id", "layouts", "name", "speaks", "status", "themes", "version", "wants"
+        ]
+    );
+    assert_eq!(json["status"], "api");
+    assert_eq!(json["themes"][0]["base"], "dark");
 }

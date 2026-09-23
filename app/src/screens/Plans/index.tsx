@@ -1,4 +1,5 @@
 import { plural } from "@lingui/core/macro";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ import {
 } from "../../components/ui";
 import type { PlanInput, PlanRow } from "../../lib/types";
 import { DuePanel } from "./DuePanel";
+import { GoalsPanel } from "./Goals";
 
 export function Plans() {
   const { t, i18n } = useLingui();
@@ -83,11 +85,14 @@ export function Plans() {
         plural(rows.length, { one: "# plan", other: "# plans" }),
         t`${formatMoney(monthly_base, base_currency)} a month`,
       ].join(" · ")}
-      asOf={formatDay(today())}
       actions={
-        <button className="btn" onClick={newPlan} disabled={accountRows.length === 0}>
-          <PlusIcon /> <Trans>New plan</Trans>
-        </button>
+        <>
+          <button className="btn" onClick={newPlan} disabled={accountRows.length === 0}>
+            <PlusIcon /> <Trans>New plan</Trans>
+          </button>
+          <Command id="new" label={t`New plan`} run={newPlan} disabled={accountRows.length === 0} />
+          <Command id="newPlan" run={newPlan} disabled={accountRows.length === 0} />
+        </>
       }
       banner={
         owedTotal > 0 ? (
@@ -152,6 +157,8 @@ export function Plans() {
           ))}
         </List>
       )}
+
+      <GoalsPanel baseCurrency={base_currency} />
     </Page>
   );
 }

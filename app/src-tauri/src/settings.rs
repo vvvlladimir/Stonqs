@@ -51,8 +51,23 @@ pub struct AppSettings {
     #[serde(default)]
     pub ai_enabled: bool,
     /// Selected provider id (e.g. `"openai"`); keychain account name and command argument.
+    /// Also what the chat footer was last switched to: a new chat starts where the last choice
+    /// left off (ADR-0069).
     #[serde(default = "ai_provider_default")]
     pub ai_provider: String,
+    /// The model last picked in a chat, per provider (`provider -> model id`). Absent, a chat
+    /// starts on that provider's smallest tier. Read through `ai::models::remembered`, so an id
+    /// the provider has since retired gives way to the newest of its tier.
+    #[serde(default)]
+    pub ai_models: std::collections::BTreeMap<String, String>,
+    /// Model ids the user typed in per provider (`provider -> ids`), offered in the chat's picker
+    /// after the provider's own shortlist: a model the shortlist leaves out, or one the
+    /// provider's catalogue does not list at all, is still reachable.
+    #[serde(default)]
+    pub ai_extra_models: std::collections::BTreeMap<String, Vec<String>>,
+    /// The thinking effort last picked in a chat; where the next chat starts.
+    #[serde(default)]
+    pub ai_effort: sq_core::model::AiEffort,
     /// Whether the provider may search the web on the user's behalf. A question typed here
     /// leaves the machine when this is on, so it is a setting rather than a default.
     #[serde(default = "ai_web_search_default")]
@@ -91,6 +106,9 @@ impl Default for AppSettings {
             ui: serde_json::Value::Null,
             ai_enabled: false,
             ai_provider: ai_provider_default(),
+            ai_models: Default::default(),
+            ai_extra_models: Default::default(),
+            ai_effort: Default::default(),
             ai_web_search: ai_web_search_default(),
             ai_reasoning: false,
             ai_custom: crate::ai::catalog::CustomProvider::default(),
@@ -155,14 +173,15 @@ pub fn settings_get(state: State<AppState>) -> UiResult<AppSettings> {
     Ok(state.settings()?.clone())
 }
 
-/// Save settings without overwriting the active scope, the period axis, or frontend UI state:
-/// each of those has its own command, and this one must not roll them back.
+/// Save settings without overwriting the active scope, the period axis, frontend UI state or the
+/// chat footer's last picks: each of those has its own command, and this one must not roll them
+/// back.
 #[tauri::command]
 pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<AppSettings> {
     let scope = state.scope()?.clone();
     // One guard for the whole read: the settings Mutex is not reentrant, and guards taken inside
     // a struct literal all live until the end of that statement, so locking twice deadlocks.
-    let (periods, hidden_presets, ui, custom, market_sources, market_custom) = {
+    let (periods, hidden_presets, ui, custom, market_sources, market_custom, ai_models, ai_effort) = {
         let current = state.settings()?;
         (
             current.periods.clone(),
@@ -171,6 +190,8 @@ pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<
             current.ai_custom.clone(),
             current.market_sources.clone(),
             current.market_custom.clone(),
+            current.ai_models.clone(),
+            current.ai_effort,
         )
     };
     // The custom provider's model list was fetched from the address that just changed, so the
@@ -187,6 +208,8 @@ pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<
         ui,
         market_sources,
         market_custom,
+        ai_models,
+        ai_effort,
         ..settings
     };
     store(&state.db_path()?, &settings)?;

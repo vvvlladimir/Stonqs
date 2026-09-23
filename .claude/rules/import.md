@@ -11,8 +11,9 @@
   or a plan is not in it.
 - A broker file is not always a CSV: `import::parse_file` picks the reader off the bytes, and an
   Interactive Brokers Flex statement (XML, ADR-0061) goes to `import::ibflex`, which flattens its
-  sections into the same `ParsedCsv` and carries its own fixed `ImportMapping` — the columns are
-  that module's invention, so there is nothing for a `brokers.json` preset to lay out. Everything
+  sections into the same `ParsedCsv` and carries its own fixed `ImportMapping` — laid out in the
+  **canonical format's own column names** (`import::canonical`, public for exactly this), so
+  there is nothing for a `brokers.json` preset to lay out and no second spelling of one table. Everything
   after the reader is shared. Four things it resolves and nothing downstream could: an `ORDER` row
   supersedes the `EXECUTION` rows of the same purchase (asking for both prints it twice); a forex
   trade (`assetCategory="CASH"`) becomes two linked `TransferIn` legs so it is not read as leaving
@@ -56,6 +57,24 @@
   `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
   `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
   wrong pair erases a real deposit and a real withdrawal from every return figure at once.
+- A layout can arrive as a **plugin** (ADR-0070), and then it is identity that keeps it apart from
+  the shipped ones: every layout in the wizard's list carries an `id` (`user:<name>`,
+  `builtin:<name>`, or a plugin's `<plugin id>/<layout id>`), and the commands take that, never the
+  name — two sources may print one name, and deleting by name would let a stranger's package
+  decide which layout goes. One name is listed once, the user's own winning over a plugin's and a
+  plugin's over a shipped one. A plugin's layout is **not** deletable from the wizard; the plugin
+  is. Installing one runs `import_templates::check_layout` against the sample the package is
+  obliged to carry — recognised, every wording mapped, no invalid row — and a package failing it
+  installs nothing at all.
+- A shipped layout is only as good as the file it was tried against: `core/tests/fixtures/presets/`
+  holds one folder per layout — the redacted export, what it must be recognised as, and the
+  operations it must produce, written in the canonical format so the expectation needs no second
+  vocabulary. `core/tests/phase3_import/conformance.rs` is the harness, `UPDATE_FIXTURES=1`
+  regenerates an expectation and then fails on purpose so the diff is read. Two more checks run
+  without any fixture: every shipped layout must answer to its own header row (two layouts fitting
+  one file equally well recognise **nothing**, which is how the two Finpension entries turned out
+  to be one), and the layouts with no fixture yet are a list in the harness — the debt is named,
+  never counted.
 - `build_preview` is pure (takes securities + fingerprints as slices); only `ImportService` touches `Store` (same rule for `commit_taxonomy`). Re-importing the same file must be a no-op — `import::fingerprint` guarantees it.
 - Detection is per *language*, never per broker: a rule keyed to one broker's file helps only that broker's customers. Header aliases (`mapping::aliases`) and operation wording (`mapping::keywords`) are dictionaries and live apart from the matching that reads them (`mapping::shape`, `mapping::normalize`); both are ordered canonical-first because the index breaks ties, and sell keywords precede buy ones (`Verkoop` contains `Koop`).
 - Headers lie, values do not. `ImportMapping::detect_with_values` ranks a header match exact > whole word > substring, drops a claim on a column another field names better ("Asset type" is a kind, so it is not a symbol), and lets `ValueShape` veto a weak match — a currency or ISIN column is required to look like one, a date is not, because its format may simply be unknown to us. A column that is empty in every row is not a mapping.
@@ -107,4 +126,16 @@
 - Value that moves *inside* the portfolio — a currency exchange, a crypto conversion, a stake, a wallet-to-wallet move — is one wording on two rows (`Balance Conversion`, `USDT -> EUR`), and only the sign tells the legs apart. The keyword maps it to `TransferIn`, the reversible side, and `resolve_direction` turns the negative leg into `TransferOut`. Such a row therefore **flips but never votes** in `checks::count_vote` — the mirror of Buy/Sell, which vote but never flip. Counting it would be counting a direction we invented: half the legs of a crypto file are negative by construction, and the file would judge itself unsigned and credit both legs.
 - A value the user marks "do not import" lands in `ImportMapping::ignored_kinds` and its rows get `RowStatus::Ignored` — counted in `summary.ignored`, out of `unknown_kinds()`, never written. A broker prints lines that are not operations (`Name Change`, `Monthly statement`); refusing the file over them is not an answer, and neither is importing them as something else. The choice is exclusive with a kind alias and stays visible in `preview.kinds` (`ignored: true`) so it can be taken back.
 - Row problems carry a `Severity` and a `ProblemCode`. Only `Error` makes a row `Invalid` — a direction-corrected row is `summary.warnings`, not `summary.invalid`. `checks::check_row`/`check_file` are heuristics and only ever emit warnings; a false positive must not block an import.
+- Instrument attributes have a CSV of their own (`import::attributes`): one row per instrument,
+  one column per attribute, `attributes_to_csv` writing what `build_attribute_preview` reads back.
+  The preview is pure like every other (securities and attribute defs as slices; only
+  `commit_attributes` touches `Store`), and it joins instruments through
+  `taxonomy::match_security` rather than a second matcher — ISIN before ticker, stated once. A
+  column that already exists **keeps its kind** (ADR-0031), so a cell failing `AttributeKind::normalize`
+  is an `Error` on that cell alone and the row's other values are still written; a column nobody
+  defined is inferred from its own values (every cell a number → `Number`, every cell an ISO date →
+  `Date`, else `Text`). A **blank cell is absent, not a clear**: the commit merges into what the
+  instrument already carries, because a file naming three attributes must not wipe the other
+  twelve. Re-running the same file is a no-op — a name already defined is reused rather than
+  duplicated.
 - Taxonomy CSV is read by meaning, not template: level columns found by header name (`Levels 2`, `Уровень 2`, `Category`), a security row identified by having a ticker/ISIN, the security's own name one level deeper than its category. The first level (tree's name, repeated every row) is detected and dropped. Securities are matched by ISIN first (ISIN = instrument, ticker = listing — a foreign file may print a different one). `commit_taxonomy(into)` extends the tree it's invoked on; a node already present under the same name/place is reused (case-insensitive match), so re-importing doesn't double the tree, and a security's split is overwritten by the newer file.

@@ -1,129 +1,107 @@
-import { msg } from "@lingui/core/macro";
-import { Trans, useLingui } from "@lingui/react/macro";
-import { Fragment, useEffect, useState } from "react";
+import { useLingui } from "@lingui/react";
+import { Trans } from "@lingui/react/macro";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 
-import {
-  BankIcon,
-  BellIcon,
-  CertificateIcon,
-  ChartLineUpIcon,
-  ChartPieSliceIcon,
-  ArrowsLeftRightIcon,
-  CalendarDotsIcon,
-  CoinsIcon,
-  DotsThreeCircleIcon,
-  EyeIcon,
-  FileArrowUpIcon,
-  FileTextIcon,
-  GearIcon,
-  ListBulletsIcon,
-  ReceiptIcon,
-  ScalesIcon,
-  SquaresFourIcon,
-  WaveSineIcon,
-  type Icon,
-} from "@phosphor-icons/react";
 import { onDataChanged } from "./lib/api";
-import { affects, useAlertsUnseen, useInvalidate, useProfiles, useStatus } from "./lib/queries";
+import {
+  affects,
+  useAlertsUnseen,
+  useInvalidate,
+  usePluginTheme,
+  usePlugins,
+  useProfiles,
+  useStatus,
+} from "./lib/queries";
 import { needsPick } from "./lib/profiles";
 import { ProfilePicker } from "./components/domain/ProfilePicker";
 import { ProfileLock } from "./components/domain/ProfileLock";
 import { useLanguage } from "./lib/i18n";
-import { useTheme } from "./lib/theme";
+import { pluginTheme, useTheme } from "./lib/theme";
 import { useUiState } from "./lib/uiState";
 import { UpdatesProvider } from "./lib/updates";
-import type { MessageDescriptor } from "@lingui/core";
+import { AsOfProvider } from "./lib/asOf";
+import { DockProvider, DockSlot } from "./lib/dock";
 import { NavProvider, type ScreenId } from "./lib/nav";
 import { noteChange } from "./lib/freshness";
-import { Dashboard } from "./screens/dashboard/Dashboard";
 import { Onboarding } from "./screens/Onboarding";
-import { Accounts } from "./screens/Accounts";
-import { Securities } from "./screens/Securities";
-import { Settings } from "./screens/Settings";
-import { Positions } from "./screens/Positions";
-import { Transactions } from "./screens/Transactions";
-import { Performance } from "./screens/Performance";
-import { Trades } from "./screens/Trades";
-import { Risk } from "./screens/Risk";
-import { Income } from "./screens/Income";
-import { Allocation } from "./screens/Allocation";
-import { Rebalance } from "./screens/Rebalance";
-import { Plans } from "./screens/Plans";
-import { Watchlist } from "./screens/Watchlist";
-import { Alerts } from "./screens/Alerts";
-import { AiChatPanel, AiToggle } from "./components/domain/AiChatPanel";
+import { AiToggle } from "./components/domain/AiToggle";
 import { AlertNotifier } from "./components/domain/AlertNotifier";
-import { Reports } from "./screens/Reports";
-import { Import } from "./screens/Import";
 import { SyncChip } from "./components/domain/MarketRefresh";
 import { ScopePicker } from "./components/domain/ScopePicker";
+import { AsOfBanner, AsOfPicker } from "./components/domain/AsOfPicker";
+import { Nav } from "./components/Nav";
+import { SCREENS } from "./components/Nav/model";
+import { Commands } from "./components/domain/Commands";
 import { SecurityCardProvider } from "./components/domain/SecurityCardProvider";
 import { UpdateDialog } from "./components/domain/UpdateDialog";
-import { ListRow, Modal, ToastProvider, TooltipLayer } from "./components/ui";
+import { Pending, ToastProvider, TooltipLayer } from "./components/ui";
 
-interface ScreenDef {
-  id: string;
-  title: MessageDescriptor;
-  icon: Icon;
-  group: "portfolio" | "analysis" | "data";
-  /** Screens shown in the mobile bottom navigation. */
-  primary?: boolean;
-}
+// One screen is one chunk: the shell is what has to be on screen first, and nobody opens
+// seventeen screens in a session. `Onboarding` stays eager — it is what an empty database shows
+// before any screen exists — and so does the dock, which draws while a screen is still loading.
+const Dashboard = lazy(() => import("./screens/dashboard/Dashboard").then((m) => ({ default: m.Dashboard })));
+const Accounts = lazy(() => import("./screens/Accounts").then((m) => ({ default: m.Accounts })));
+const Securities = lazy(() => import("./screens/Securities").then((m) => ({ default: m.Securities })));
+const Settings = lazy(() => import("./screens/Settings").then((m) => ({ default: m.Settings })));
+const Positions = lazy(() => import("./screens/Positions").then((m) => ({ default: m.Positions })));
+const Transactions = lazy(() => import("./screens/Transactions").then((m) => ({ default: m.Transactions })));
+const Performance = lazy(() => import("./screens/Performance").then((m) => ({ default: m.Performance })));
+const Trades = lazy(() => import("./screens/Trades").then((m) => ({ default: m.Trades })));
+const Risk = lazy(() => import("./screens/Risk").then((m) => ({ default: m.Risk })));
+const Income = lazy(() => import("./screens/Income").then((m) => ({ default: m.Income })));
+const Allocation = lazy(() => import("./screens/Allocation").then((m) => ({ default: m.Allocation })));
+const Rebalance = lazy(() => import("./screens/Rebalance").then((m) => ({ default: m.Rebalance })));
+const Plans = lazy(() => import("./screens/Plans").then((m) => ({ default: m.Plans })));
+const Watchlist = lazy(() => import("./screens/Watchlist").then((m) => ({ default: m.Watchlist })));
+const Alerts = lazy(() => import("./screens/Alerts").then((m) => ({ default: m.Alerts })));
+const Reports = lazy(() => import("./screens/Reports").then((m) => ({ default: m.Reports })));
+const Import = lazy(() => import("./screens/Import").then((m) => ({ default: m.Import })));
 
-const SCREENS = [
-  { id: "dashboard", title: msg`Overview`, icon: SquaresFourIcon, group: "portfolio", primary: true },
-
-  { id: "positions", title: msg`Positions`, icon: ListBulletsIcon, group: "portfolio", primary: true },
-  { id: "transactions", title: msg`Transactions`, icon: ReceiptIcon, group: "portfolio", primary: true },
-  { id: "accounts", title: msg`Accounts`, icon: BankIcon, group: "portfolio" },
-  { id: "securities", title: msg`Instruments`, icon: CertificateIcon, group: "portfolio" },
-  { id: "watchlist", title: msg`Watchlist`, icon: EyeIcon, group: "portfolio" },
-  { id: "plans", title: msg`Plans`, icon: CalendarDotsIcon, group: "portfolio" },
-  { id: "alerts", title: msg`Alerts`, icon: BellIcon, group: "portfolio" },
-
-  { id: "performance", title: msg`Performance`, icon: ChartLineUpIcon, group: "analysis" },
-  { id: "trades", title: msg`Trades`, icon: ArrowsLeftRightIcon, group: "analysis" },
-  { id: "risk", title: msg`Risk`, icon: WaveSineIcon, group: "analysis" },
-  { id: "allocation", title: msg`Allocation`, icon: ChartPieSliceIcon, group: "analysis", primary: true },
-  { id: "rebalance", title: msg`Rebalance`, icon: ScalesIcon, group: "analysis" },
-  { id: "income", title: msg`Income`, icon: CoinsIcon, group: "analysis" },
-
-  { id: "import", title: msg`Import`, icon: FileArrowUpIcon, group: "data" },
-  { id: "reports", title: msg`Reports`, icon: FileTextIcon, group: "data" },
-  { id: "settings", title: msg`Settings`, icon: GearIcon, group: "data" },
-] as const satisfies readonly {
-  id: ScreenId;
-  title: MessageDescriptor;
-  icon: Icon;
-  group: string;
-  primary?: boolean;
-}[];
-
-const NAV: readonly ScreenDef[] = SCREENS;
-
-const GROUPS: { id: ScreenDef["group"]; label: MessageDescriptor }[] = [
-  { id: "portfolio", label: msg`Portfolio` },
-  { id: "analysis", label: msg`Analysis` },
-  { id: "data", label: msg`Data` },
-];
+// The panel carries the markdown renderer, and it is mounted only once it is opened.
+const AiChatPanel = lazy(() =>
+  import("./components/domain/AiChatPanel").then((m) => ({ default: m.AiChatPanel })),
+);
 
 export function App() {
   const invalidate = useInvalidate();
   const [screen, setScreen] = useState<ScreenId>("dashboard");
   const [focus, setFocus] = useState<string | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const status = useStatus();
   const profiles = useProfiles();
+  const plugins = usePlugins();
   // Asked once per window, before anything else: with one profile there is nobody to ask about.
   const [picked, setPicked] = useState(false);
   // A crossing nobody looked at yet marks the Alerts item, the way a tree with gaps marks its tab.
   const unseen = useAlertsUnseen();
 
-  // Re-activates the catalog when the saved preference or the OS language changes.
-  const { t, i18n } = useLingui();
+  // Re-renders the shell when the saved preference or the OS language changes the catalog.
+  const { i18n } = useLingui();
   useLanguage();
-  useTheme(useUiState().ui.theme);
+  // A theme installed as a plugin is a stylesheet on this machine plus the built-in scheme it
+  // varies; both arrive a moment after the shell, which is why `useTheme` takes them separately.
+  const theme = useUiState().ui.theme;
+  const themeKey = pluginTheme(theme);
+  const installed = usePluginTheme(themeKey);
+  const base = plugins.data?.themes.find((t) => t.key === themeKey)?.base;
+  useTheme(theme, installed.data, base);
+
+  // The window's title names the screen, so a screen reader and the OS window list say where
+  // the user is; after a switch focus lands on the new screen instead of staying in the nav.
+  const main = useRef<HTMLElement>(null);
+  const arrived = useRef(false);
+  useEffect(() => {
+    document.title = `${i18n._(SCREENS[screen].title)} · Stonqs`;
+  }, [screen, i18n]);
+  useEffect(() => {
+    if (!arrived.current) {
+      arrived.current = true;
+      return;
+    }
+    // A dialog the command opened on arrival (`mod+n`) keeps the focus it took.
+    if (document.activeElement?.closest('[role="dialog"]')) return;
+    main.current?.focus({ preventScroll: true });
+  }, [screen]);
 
   // A host-side write refreshes the screens that depend on what it touched.
   useEffect(() => {
@@ -182,115 +160,88 @@ export function App() {
     );
   }
 
+  // A screen reached with a navigation hint is keyed by it: arriving at one already open, with a
+  // different instrument to look at, starts the screen over instead of leaving it to notice.
   const go = (id: ScreenId, withFocus?: string) => {
     setScreen(id);
     setFocus(withFocus ?? null);
-    setMoreOpen(false);
-  };
-
-  const navButton = (item: ScreenDef, extra = "") => {
-    const Icon = item.icon;
-    return (
-      <button
-        key={item.id}
-        type="button"
-        className={`nav__item${item.id === screen ? " nav__item--active" : ""}${extra}`}
-        onClick={() => go(item.id as ScreenId)}
-      >
-        <Icon weight={item.id === screen ? "fill" : "regular"} />
-        {i18n._(item.title)}
-        {item.id === "alerts" && (unseen.data ?? 0) > 0 && (
-          <i className="tab-dot" aria-label={t`new crossings to look at`} />
-        )}
-      </button>
-    );
   };
 
   return (
     <ToastProvider>
       <NavProvider value={{ screen, go }}>
-        <UpdatesProvider>
-          <SecurityCardProvider>
-            <div className="shell">
-              <nav className="nav">
-                {navButton(NAV[0])}
-                {GROUPS.map((group) => (
-                  <Fragment key={group.id}>
-                    <div className="nav__group-label">{i18n._(group.label)}</div>
-                    {NAV.filter((s) => s.group === group.id && s.id !== "dashboard").map((s) =>
-                      navButton(s, s.primary ? "" : " nav__more"),
-                    )}
-                  </Fragment>
-                ))}
-                <button type="button" className="nav__item nav__mobile" onClick={() => setMoreOpen(true)}>
-                  <DotsThreeCircleIcon />
-                  <Trans>More</Trans>
-                </button>
-                <ScopePicker variant="nav" />
-              </nav>
+        <AsOfProvider>
+          <UpdatesProvider>
+            <SecurityCardProvider>
+              <DockProvider>
+                <div className="shell">
+                  <a
+                    className="skip"
+                    href="#main"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      main.current?.focus();
+                    }}
+                  >
+                    <Trans>Skip to content</Trans>
+                  </a>
+                  <Nav screen={screen} go={go} alertsDot={(unseen.data ?? 0) > 0} />
 
-              <div className="main">
-                <main className="app">
-                  {screen === "dashboard" && <Dashboard />}
-                  {screen === "positions" && <Positions />}
-                  {screen === "transactions" && <Transactions focus={focus} />}
-                  {screen === "performance" && <Performance />}
-                  {screen === "trades" && <Trades />}
-                  {screen === "risk" && <Risk />}
-                  {screen === "income" && <Income />}
-                  {screen === "allocation" && <Allocation />}
-                  {screen === "rebalance" && <Rebalance />}
-                  {screen === "plans" && <Plans />}
-                  {screen === "alerts" && <Alerts />}
-                  {screen === "watchlist" && <Watchlist />}
-                  {screen === "reports" && <Reports />}
-                  {screen === "import" && <Import />}
-                  {screen === "accounts" && <Accounts />}
-                  {screen === "securities" && <Securities focus={focus} />}
-                  {screen === "settings" && <Settings status={status.data} />}
-                </main>
-              </div>
-
-              <div className="dock">
-                {/* Screens portal dock controls here without changing page layout. */}
-                <div id="dock-slot" className="dock__slot" />
-                <ScopePicker variant="dock" />
-                <SyncChip />
-                <AiToggle open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />
-              </div>
-
-              {aiOpen && <AiChatPanel onClose={() => setAiOpen(false)} />}
-
-              {moreOpen && (
-                <Modal title={t`All screens`} onClose={() => setMoreOpen(false)}>
-                  <div className="smenu">
-                    {GROUPS.map((group) => (
-                      <div key={group.id}>
-                        <div className="group-label">{i18n._(group.label)}</div>
-                        {NAV.filter((s) => s.group === group.id).map((item) => {
-                          const Icon = item.icon;
-                          return (
-                            <ListRow
-                              key={item.id}
-                              lead={<Icon />}
-                              title={i18n._(item.title)}
-                              on={item.id === screen}
-                              onClick={() => go(item.id as ScreenId)}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
+                  <div className="main">
+                    <AsOfBanner />
+                    <main
+                      ref={main}
+                      id="main"
+                      className="app"
+                      tabIndex={-1}
+                      aria-label={i18n._(SCREENS[screen].title)}
+                    >
+                      <Suspense fallback={<Pending />}>
+                        {screen === "dashboard" && <Dashboard />}
+                        {screen === "positions" && <Positions />}
+                        {screen === "transactions" && <Transactions key={focus} focus={focus} />}
+                        {screen === "performance" && <Performance />}
+                        {screen === "trades" && <Trades />}
+                        {screen === "risk" && <Risk />}
+                        {screen === "income" && <Income />}
+                        {screen === "allocation" && <Allocation />}
+                        {screen === "rebalance" && <Rebalance />}
+                        {screen === "plans" && <Plans />}
+                        {screen === "alerts" && <Alerts />}
+                        {screen === "watchlist" && <Watchlist />}
+                        {screen === "reports" && <Reports />}
+                        {screen === "import" && <Import />}
+                        {screen === "accounts" && <Accounts />}
+                        {screen === "securities" && <Securities key={focus} focus={focus} />}
+                        {screen === "settings" && <Settings status={status.data} />}
+                      </Suspense>
+                    </main>
                   </div>
-                </Modal>
-              )}
 
-              <TooltipLayer />
-              <AlertNotifier />
-              <UpdateDialog />
-            </div>
-          </SecurityCardProvider>
-        </UpdatesProvider>
+                  <div className="dock">
+                    {/* Screens portal dock controls here without changing page layout. */}
+                    <DockSlot />
+                    <AsOfPicker variant="dock" />
+                    <ScopePicker variant="dock" />
+                    <SyncChip />
+                    <AiToggle open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />
+                  </div>
+
+                  {aiOpen && (
+                    <Suspense fallback={null}>
+                      <AiChatPanel onClose={() => setAiOpen(false)} />
+                    </Suspense>
+                  )}
+
+                  <Commands aiOpen={aiOpen} onAi={() => setAiOpen((v) => !v)} />
+                  <TooltipLayer />
+                  <AlertNotifier />
+                  <UpdateDialog />
+                </div>
+              </DockProvider>
+            </SecurityCardProvider>
+          </UpdatesProvider>
+        </AsOfProvider>
       </NavProvider>
     </ToastProvider>
   );

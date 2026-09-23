@@ -1,7 +1,7 @@
 # Settings
 
 A strip of categories, one panel each: Portfolio, Accounts, Attributes, Market data, AI assistant,
-Appearance, Profiles, Data and storage, Updates.
+Appearance, Keyboard, Profiles, Data and storage, Updates.
 
 **Portfolio** — its name, the base currency every report converts into, and the **cost-basis
 method** (how a sale decides which lots it consumed). The method is what determines every realised
@@ -35,8 +35,10 @@ sources are chosen and combined is the `data-sources` topic.
 
 **AI assistant** — whether the panel exists at all, which provider new chats start on, whether the
 assistant may use the provider's web search, and whether it shows a summary of its own reasoning.
-There is no model to choose here: a chat starts on whatever its provider offers today, and the chat
-itself can switch to one of the others that provider serves.
+There is no model to choose here. A new chat starts on the provider, model and thinking effort last
+picked in a chat; before anything was picked, on the provider's smallest (cheapest) model. Choosing
+a provider inside a chat also changes the provider shown here. Whether tools may run without asking
+is never carried over: every new chat asks first.
 
 Below that, **Provider keys** lists every provider with whether a key is saved for it. A key belongs
 to the open profile and is kept only behind that profile's password: in a profile without one,
@@ -44,6 +46,12 @@ to the open profile and is kept only behind that profile's password: in a profil
 read back: the row can say a key is saved, and nothing more. `Connect` and `Replace` open a field for a new one; the old key is
 overwritten, never shown. Connecting several providers is normal — an individual chat picks which
 one answers it, and the choice above only decides where a fresh chat begins.
+
+A chat's model list shows three models per provider: the newest of each size. The chip button on
+a provider's row (`Add models to the picker`) adds more by hand, one model id per line, spelled
+exactly as the provider spells it. They appear in the chat's model list after the provider's own,
+immediately, including a model the provider's catalogue does not list. A misspelled id is not
+checked here; the first message sent with it returns the provider's error.
 
 **Your own provider** points the app at a server of your choosing: a gateway, another vendor, or a
 model running on this machine. It needs an address ending at the version (for example
@@ -59,6 +67,13 @@ app never prices them — that is the provider's bill.
 
 **Appearance** — interface language and colour scheme, each of which can simply follow the
 operating system.
+
+**Keyboard** — `Single-key shortcuts` switches off every shortcut that is one plain key or a
+sequence of plain keys (a letter to create an item, a letter pair to jump to a screen, a question
+mark for the list). It is for people who press them by accident or dictate with speech input,
+where a spoken word can arrive as those keys. Shortcuts held with ⌘ or Ctrl keep working either
+way. `All keyboard shortcuts` opens the full list; that list is the app's own answer to "which key
+does what" and changes with the platform, so it is not repeated here.
 
 **Profiles** — independent sets of data on this device: each has its own portfolio, accounts,
 transactions, quotes, settings (language and theme included), import layouts, dashboards, AI chats

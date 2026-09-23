@@ -41,9 +41,10 @@ pub fn ai_chats_list(state: State<AppState>) -> UiResult<Vec<AiChat>> {
 /// in which case it starts on a provider that has one. The alternative is a chat that cannot
 /// answer until the user finds the picker, and the picker is not where they are looking.
 ///
-/// The model is not a setting: it is whatever that provider offers first today. An id written
-/// down a year ago is an id its provider has since retired, and the first send is a poor place
-/// to discover that.
+/// The model and the effort are the ones last picked in a chat (ADR-0069), the model read against
+/// what the provider offers today so a retired id is never replayed; nothing picked yet starts on
+/// the smallest tier. The tool mode is deliberately not carried: a chat opened permissively must
+/// not make the next one permissive (ADR-0037).
 #[tauri::command]
 pub fn ai_chat_create(app: AppHandle, state: State<AppState>, title: String) -> UiResult<AiChat> {
     let settings = state.settings()?.clone();
@@ -53,8 +54,14 @@ pub fn ai_chat_create(app: AppHandle, state: State<AppState>, title: String) -> 
         // the first send says what is missing. Refusing here would be a second way to say it.
         _ => connected_provider(&state, &settings).unwrap_or_else(|| settings.ai_provider.clone()),
     };
-    let (provider, model) = (starts_on.clone(), newest_model(&state, &starts_on));
-    let chat = state.store()?.ai_chat_create(&title, &provider, &model)?;
+    let (provider, model) = (starts_on.clone(), default_model(&state, &starts_on));
+    let store = state.store()?;
+    let mut chat = store.ai_chat_create(&title, &provider, &model)?;
+    if settings.ai_effort != chat.effort {
+        store.ai_chat_set_effort(&chat.id, settings.ai_effort)?;
+        chat = store.ai_chat_get(&chat.id)?;
+    }
+    drop(store);
     emit_changed(&app, "ai_chats")?;
     Ok(chat)
 }
@@ -124,7 +131,8 @@ pub fn ai_chat_set_mode(
     emit_changed(&app, "ai_chats")
 }
 
-/// How hard this chat asks the model to think, switched from inside the chat.
+/// How hard this chat asks the model to think, switched from inside the chat — and remembered
+/// as where the next chat starts.
 #[tauri::command]
 pub fn ai_chat_set_effort(
     app: AppHandle,
@@ -133,20 +141,28 @@ pub fn ai_chat_set_effort(
     effort: AiEffort,
 ) -> UiResult<()> {
     state.store()?.ai_chat_set_effort(&id, effort)?;
+    state.settings()?.ai_effort = effort;
+    state.persist_settings()?;
     emit_changed(&app, "ai_chats")
 }
 
 /// Which model answers this chat from here on. The history replays into any adapter, so a chat
-/// is never tied to the model it was started with.
+/// is never tied to the model it was started with. Remembered per provider for the next chat.
 #[tauri::command]
 pub fn ai_chat_set_model(app: AppHandle, state: State<AppState>, id: String, model: String) -> UiResult<()> {
-    state.store()?.ai_chat_set_model(&id, &model)?;
+    let provider = {
+        let store = state.store()?;
+        store.ai_chat_set_model(&id, &model)?;
+        store.ai_chat_get(&id)?.provider
+    };
+    state.settings()?.ai_models.insert(provider, model);
+    state.persist_settings()?;
     emit_changed(&app, "ai_chats")
 }
 
 /// Which provider answers this chat from here on. The model moves with it: a model id belongs
-/// to the catalogue it came from, so the chat lands on the new provider's default and the user
-/// picks from there.
+/// to the catalogue it came from, so the chat lands on the model last picked there (or its
+/// smallest tier). The provider becomes where the next chat starts.
 #[tauri::command]
 pub fn ai_chat_set_provider(
     app: AppHandle,
@@ -158,8 +174,10 @@ pub fn ai_chat_set_provider(
     if !catalog::is_known(&provider, &custom) {
         return Err(UiError::invalid("unknown provider"));
     }
-    let model = newest_model(&state, &provider);
+    let model = default_model(&state, &provider);
     state.store()?.ai_chat_set_provider(&id, &provider, &model)?;
+    state.settings()?.ai_provider = provider;
+    state.persist_settings()?;
     emit_changed(&app, "ai_chats")
 }
 
@@ -214,28 +232,70 @@ pub fn ai_models_list(state: State<AppState>, provider: Option<String>) -> UiRes
     models_for(&state, &provider)
 }
 
-/// The provider's shortlist, asked for once per run. Every caller goes through here, so the
-/// picker and the model a new chat lands on can never disagree about what is on offer.
+/// The provider's shortlist, asked for once per run, then the ids the user added for it. Every
+/// caller goes through here, so the picker and the model a new chat lands on can never disagree
+/// about what is on offer. The added ids are joined after the cache, so an edit in Settings
+/// shows at once.
 fn models_for(state: &AppState, provider: &str) -> UiResult<Vec<String>> {
-    if let Some(cached) = state.ai_models.lock().ok().and_then(|c| c.get(provider).cloned()) {
-        return Ok(cached);
-    }
-    let custom = state.settings()?.ai_custom.clone();
-    let key = state.key_for_call(provider)?;
-    let listed = models::list(provider, &key, &custom)?;
-    if let Ok(mut cache) = state.ai_models.lock() {
-        cache.insert(provider.to_string(), listed.clone());
+    let (custom, extra) = {
+        let settings = state.settings()?;
+        let extra = settings
+            .ai_extra_models
+            .get(provider)
+            .cloned()
+            .unwrap_or_default();
+        (settings.ai_custom.clone(), extra)
+    };
+    let cached = state.ai_models.lock().ok().and_then(|c| c.get(provider).cloned());
+    let mut listed = match cached {
+        Some(listed) => listed,
+        None => {
+            let listed = state
+                .key_for_call(provider)
+                .and_then(|key| Ok(models::list(provider, &key, &custom)?));
+            match listed {
+                Ok(listed) => {
+                    if let Ok(mut cache) = state.ai_models.lock() {
+                        cache.insert(provider.to_string(), listed.clone());
+                    }
+                    listed
+                }
+                // A catalogue that cannot be read still leaves the user's own ids to pick from.
+                Err(_) if !extra.is_empty() => Vec::new(),
+                Err(error) => return Err(error),
+            }
+        }
+    };
+    for id in extra.iter().map(|id| id.trim()).filter(|id| !id.is_empty()) {
+        if !listed.iter().any(|listed| listed == id) {
+            listed.push(id.to_string());
+        }
     }
     Ok(listed)
 }
 
-/// What a chat lands on at this provider: the first model it offers today, which is the newest
-/// of its flagship tier. The compiled-in default answers only when the catalogue cannot be read
-/// — an id written into this build is out of date the day the provider retires it.
-fn newest_model(state: &AppState, provider: &str) -> String {
-    models_for(state, provider)
+/// What a chat lands on at this provider: the model last picked there, as the list stands today,
+/// else the smallest tier on offer. The compiled-in default answers only when the catalogue
+/// cannot be read — an id written into this build is out of date the day the provider retires it.
+fn default_model(state: &AppState, provider: &str) -> String {
+    let chosen = state
+        .settings()
         .ok()
-        .and_then(|listed| listed.first().cloned())
+        .and_then(|settings| settings.ai_models.get(provider).cloned());
+    let listed = models_for(state, provider).ok();
+    if let Some(chosen) = chosen {
+        match &listed {
+            Some(listed) => {
+                if let Some(model) = models::remembered(provider, &chosen, listed) {
+                    return model;
+                }
+            }
+            // No catalogue to check it against: the user's own pick beats a compiled-in guess.
+            None => return chosen,
+        }
+    }
+    listed
+        .and_then(|listed| models::smallest(provider, &listed))
         .or_else(|| catalog::default_model(provider).map(str::to_string))
         // The custom provider has no compiled-in default — the model *is* what the user typed.
         .or_else(|| {
@@ -384,6 +444,8 @@ pub fn ai_send(
     chat_id: String,
     text: String,
     screen: Option<String>,
+    // The date the screens are set to, when the user moved that lens off today.
+    as_of: Option<String>,
     on_event: Channel<AiStreamEvent>,
 ) -> UiResult<()> {
     let settings = state.settings()?.clone();
@@ -403,6 +465,7 @@ pub fn ai_send(
         state.scope_selection(&store)?
     };
     let today = chrono::Local::now().date_naive();
+    let as_of = as_of.as_deref().map(crate::commands::parse_date).transpose()?;
     let access = state.db_access()?;
 
     state.ai_cancel.store(false, Ordering::Relaxed);
@@ -439,6 +502,7 @@ pub fn ai_send(
                 store: &store,
                 scope: &scope,
                 today,
+                as_of,
                 screen,
                 chat_id: &chat_id,
                 web_search: settings.ai_web_search,
@@ -486,8 +550,8 @@ pub fn ai_brief(
     // and it answers in the language of the app it sits in, not of the data.
     instructions: Option<String>,
     language: String,
-    // The tile's own choice, from its settings. Absent, it follows where a new chat begins; a
-    // provider without a model lands on the newest that provider serves.
+    // The tile's own choice, from its settings. Absent, it follows where a new chat begins, model
+    // included.
     provider: Option<String>,
     model: Option<String>,
     // The tile's answer length in output tokens; absent, the adapters' own ceiling.
@@ -503,7 +567,7 @@ pub fn ai_brief(
     let key = state.key_for_call(&provider_id)?;
     // Resolved before the thread starts, for the reason a chat resolves it at creation: the tile
     // asks the provider what it serves today rather than replaying an id from a settings file.
-    let model = chosen(model).unwrap_or_else(|| newest_model(&state, &provider_id));
+    let model = chosen(model).unwrap_or_else(|| default_model(&state, &provider_id));
     let range = crate::commands::performance::date_range(&from, &to)?;
 
     let scope = {

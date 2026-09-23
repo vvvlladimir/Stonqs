@@ -277,20 +277,24 @@ export interface ImportPreview {
 }
 
 /** Where a saved layout came from: the user made it, or the app ships it. */
-export type TemplateSource = "USER" | "BUILTIN";
+export type TemplateSource = "USER" | "BUILTIN" | "PLUGIN";
 
 /** Saved import mapping for one broker. */
 export interface ImportTemplate {
+  /** What names this layout everywhere but on screen: two sources may print one name. */
+  id: string;
   name: string;
   config: ParseConfig;
   mapping: ImportMapping;
   source: TemplateSource;
+  /** The plugin a `PLUGIN` layout came from: it is removed by removing that. */
+  plugin?: string;
 }
 
 /** Preview plus file headers for column mapping. */
 export interface ImportPreviewData extends ImportPreview {
   headers: string[];
-  /** Layout the file was recognised as when it was loaded; absent when nothing fitted. */
+  /** Id of the layout the file was recognised as; absent when nothing fitted. */
   applied_template?: string;
 }
 

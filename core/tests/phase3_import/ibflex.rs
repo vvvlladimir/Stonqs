@@ -115,7 +115,9 @@ fn a_flex_statement_lays_itself_out() {
         "{:?}",
         preview.unknown_kinds()
     );
-    assert_eq!(preview.mapping.column(ImportField::Date), Some("Date"));
+    // The reader lays the statement out in the canonical format's columns (ADR-0066), so the
+    // wizard shows one vocabulary whatever the file was.
+    assert_eq!(preview.mapping.column(ImportField::Date), Some("date"));
     assert_eq!(preview.config.date_format.as_deref(), Some("%Y-%m-%d"));
     assert_eq!(preview.amount_sign, AmountSign::Signed);
 

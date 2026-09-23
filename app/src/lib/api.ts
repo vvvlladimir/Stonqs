@@ -3,6 +3,7 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
@@ -35,6 +36,8 @@ import type {
   AllocationTarget,
   BenchmarkComparison,
   PerformanceData,
+  CalculationSheet,
+  SheetPeriod,
   PeriodRange,
   PeriodSettings,
   UserPeriod,
@@ -53,6 +56,8 @@ import type {
   RebalancePlan,
   AppSettings,
   Profile,
+  Plugin,
+  PluginList,
   ProfileList,
   DataCoverage,
   Progress,
@@ -75,6 +80,13 @@ import type {
   TaxonomyData,
   TransactionKind,
   TaxonomyPreview,
+  Goal,
+  GoalInput,
+  GoalRow,
+  LimitInput,
+  LimitUsage,
+  AttributePreview,
+  AttributeImportResult,
   Transaction,
   TransactionFilter,
   TransactionInput,
@@ -265,6 +277,12 @@ export const api = {
   periodsRestore: () => call<PeriodSettings>("periods_restore"),
   performanceSummary: (from: DateString, to: DateString, source?: Source) =>
     call<PerformanceData>("performance_summary", { from, to, source: source ?? null }),
+  /** The calculation sheet: one row per calendar chunk of the same period. */
+  performanceBreakdown: (from: DateString, to: DateString, period: SheetPeriod, source?: Source) =>
+    call<CalculationSheet>("performance_breakdown", { from, to, period, source: source ?? null }),
+  /** Writes the same sheet as a CSV where the user points. */
+  performanceSheetSave: (from: DateString, to: DateString, period: SheetPeriod, path: string) =>
+    call<void>("performance_sheet_save", { from, to, period, path }),
   /** The payments grid: every dated line of the window on one axis. */
   paymentsGrid: (from: DateString, to: DateString, period: PaymentPeriod, source?: Source) =>
     call<PaymentsData>("payments_grid", { from, to, period, source: source ?? null }),
@@ -324,6 +342,14 @@ export const api = {
   allocationTree: (taxonomy_id: string, date: DateString, source?: Source) =>
     call<Allocation>("allocation_tree", { taxonomyId: taxonomy_id, date, source: source ?? null }),
 
+  /** Goals with their progress. Not scoped: a goal carries the accounts it counts. */
+  goalsList: (date: DateString) => call<GoalRow[]>("goals_list", { date }),
+  goalSave: (input: GoalInput) => call<Goal>("goal_save", { input }),
+  goalDelete: (id: string) => call<void>("goal_delete", { id }),
+  /** Contribution limits with what the limit year `date` falls in has taken. */
+  limitsList: (date: DateString) => call<LimitUsage[]>("limits_list", { date }),
+  limitSave: (input: LimitInput) => call<unknown>("limit_save", { input }),
+  limitDelete: (id: string) => call<void>("limit_delete", { id }),
   taxonomiesList: () => call<TaxonomyData[]>("taxonomies_list"),
   /** The kind is not asked for: absent keeps what a tree has and makes a new one custom. */
   taxonomySave: (input: { id: string | null; name: string }) => call<unknown>("taxonomy_save", { input }),
@@ -345,6 +371,13 @@ export const api = {
     call<Taxonomy>("taxonomy_group_commit", { attributeId: attribute_id, into, name }),
   taxonomyExportSave: (taxonomy_id: string, path: string) =>
     call<void>("taxonomy_export_save", { taxonomyId: taxonomy_id, path }),
+  /** What an attribute CSV would fill in, before it fills anything in. */
+  attributesImportPreviewPath: (path: string) =>
+    call<AttributePreview>("attributes_import_preview_path", { path, config: null }),
+  attributesImportCommitPath: (path: string) =>
+    call<AttributeImportResult>("attributes_import_commit_path", { path, config: null }),
+  /** Writes every instrument's attributes as the CSV this same import reads back. */
+  attributesExportSave: (path: string) => call<void>("attributes_export_save", { path }),
   taxonomyNodeSave: (input: {
     color?: number | null;
     id: string | null;
@@ -435,7 +468,7 @@ export const api = {
   importTemplates: () => call<ImportTemplate[]>("import_templates_list"),
   importTemplateSave: (name: string, config: ParseConfig, mapping: ImportMapping) =>
     call<ImportTemplate[]>("import_template_save", { name, config, mapping }),
-  importTemplateDelete: (name: string) => call<ImportTemplate[]>("import_template_delete", { name }),
+  importTemplateDelete: (id: string) => call<ImportTemplate[]>("import_template_delete", { id }),
   importPresetsRestore: () => call<ImportTemplate[]>("import_presets_restore"),
 
   importPricesLoadPath: (path: string) => call<PriceImport>("import_prices_load_path", { path }),
@@ -461,6 +494,12 @@ export const api = {
     call<CustomTestRow[]>("market_custom_test", { source, symbol, currency }),
 
   settingsGet: () => call<AppSettings>("settings_get"),
+
+  pluginsList: () => call<PluginList>("plugins_list"),
+  /** Installs the folder the user picked; a path, because a plugin is a folder, not a file. */
+  pluginInstall: (path: string) => call<Plugin>("plugin_install", { path }),
+  pluginRemove: (id: string) => call<void>("plugin_remove", { id }),
+  pluginThemeCss: (plugin: string, theme: string) => call<string>("plugin_theme_css", { plugin, theme }),
 
   profilesList: () => call<ProfileList>("profiles_list"),
   profileCreate: (name: string) => call<Profile>("profile_create", { name }),
@@ -547,10 +586,16 @@ export const api = {
     });
   },
 
-  aiSend: (chatId: string, text: string, screen: string | null, onEvent: (event: AiEvent) => void) => {
+  aiSend: (
+    chatId: string,
+    text: string,
+    screen: string | null,
+    asOf: string | null,
+    onEvent: (event: AiEvent) => void,
+  ) => {
     const channel = new Channel<AiEvent>();
     channel.onmessage = onEvent;
-    return call<void>("ai_send", { chatId, text, screen, onEvent: channel });
+    return call<void>("ai_send", { chatId, text, screen, asOf, onEvent: channel });
   },
 
   /** Fills an empty portfolio with the sample history; refuses once it holds an account. */
@@ -631,6 +676,140 @@ export async function installUpdate(onProgress: (done: number | null) => void): 
 /** Restarts into the version just installed. */
 export function restart(): Promise<void> {
   return relaunch();
+}
+
+/** A native item whose behaviour belongs to the OS: copy and paste, hide, quit. */
+export type NativeMenuKind =
+  | "About"
+  | "Services"
+  | "Hide"
+  | "HideOthers"
+  | "ShowAll"
+  | "Quit"
+  | "Undo"
+  | "Redo"
+  | "Cut"
+  | "Copy"
+  | "Paste"
+  | "SelectAll"
+  | "Minimize"
+  | "Maximize"
+  | "Fullscreen"
+  | "CloseWindow"
+  | "BringAllToFront";
+
+/** An item that can be picked; `checked` present makes it a check item. */
+export interface AppMenuItem {
+  id: string;
+  text: string;
+  accelerator?: string;
+  enabled?: boolean;
+  checked?: boolean;
+}
+
+export interface AppMenuSubmenu {
+  id: string;
+  submenu: string;
+  items: AppMenuEntry[];
+  enabled?: boolean;
+}
+
+export type AppMenuEntry =
+  "separator" | AppMenuItem | AppMenuSubmenu | { native: NativeMenuKind; text: string };
+
+export interface AppMenuSection {
+  text: string;
+  items: AppMenuEntry[];
+}
+
+type Handle = MenuItem | CheckMenuItem | Submenu;
+
+/** What the menu bar was last built from: its shape, and a handle for every item that can change. */
+let built: { shape: string; handles: Map<string, Handle>; state: Map<string, string> } | null = null;
+let queue: Promise<void> = Promise.resolve();
+
+/** The spec without what changes in place, so a toggled check or a disabled item is not a rebuild. */
+function shapeOf(sections: AppMenuSection[]): string {
+  return JSON.stringify(sections, (key, value) =>
+    key === "enabled" ? undefined : key === "checked" ? true : value,
+  );
+}
+
+function stateOf(entry: AppMenuItem | AppMenuSubmenu): string {
+  return `${entry.enabled !== false}|${"checked" in entry ? entry.checked : ""}`;
+}
+
+/**
+ * Sets the macOS menu bar. Every text is the frontend's, already translated; a picked item comes
+ * back as its id. The first section is the application menu, titled by the OS. A spec of the same
+ * shape as the last one only updates `enabled` / `checked` on the items it already has, so
+ * opening a dialog or changing the period does not rebuild the whole bar. Calls are serialised.
+ */
+export function setAppMenu(sections: AppMenuSection[], onPick: (id: string) => void): Promise<void> {
+  // A failed build must not wedge every later one behind it.
+  queue = queue.catch(() => {}).then(() => applyMenu(sections, onPick));
+  return queue;
+}
+
+async function applyMenu(sections: AppMenuSection[], onPick: (id: string) => void): Promise<void> {
+  const shape = shapeOf(sections);
+  if (built && built.shape === shape) {
+    const updates: Promise<void>[] = [];
+    const walk = (entries: AppMenuEntry[]) => {
+      for (const entry of entries) {
+        if (entry === "separator" || "native" in entry) continue;
+        const state = stateOf(entry);
+        const handle = built!.handles.get(entry.id);
+        if (handle && built!.state.get(entry.id) !== state) {
+          built!.state.set(entry.id, state);
+          updates.push(handle.setEnabled(entry.enabled !== false));
+          if ("checked" in entry && handle instanceof CheckMenuItem)
+            updates.push(handle.setChecked(!!entry.checked));
+        }
+        if ("submenu" in entry) walk(entry.items);
+      }
+    };
+    sections.forEach((section) => walk(section.items));
+    await Promise.all(updates);
+    return;
+  }
+
+  const handles = new Map<string, Handle>();
+  const state = new Map<string, string>();
+  const build = async (entry: AppMenuEntry): Promise<Handle | PredefinedMenuItem> => {
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- a native item kind
+    if (entry === "separator") return PredefinedMenuItem.new({ item: "Separator" });
+    if ("native" in entry) {
+      const kind = entry.native === "About" ? { About: null } : entry.native;
+      return PredefinedMenuItem.new({ item: kind, text: entry.text });
+    }
+    let handle: Handle;
+    if ("submenu" in entry) {
+      const items = await Promise.all(entry.items.map(build));
+      handle = await Submenu.new({
+        id: entry.id,
+        text: entry.submenu,
+        enabled: entry.enabled !== false,
+        items,
+      });
+    } else if ("checked" in entry) {
+      const { checked, ...rest } = entry;
+      handle = await CheckMenuItem.new({ ...rest, checked: !!checked, action: onPick });
+    } else {
+      handle = await MenuItem.new({ ...entry, action: onPick });
+    }
+    handles.set(entry.id, handle);
+    state.set(entry.id, stateOf(entry));
+    return handle;
+  };
+  const submenus = await Promise.all(
+    sections.map(async (section) =>
+      Submenu.new({ text: section.text, items: await Promise.all(section.items.map(build)) }),
+    ),
+  );
+  const menu = await Menu.new({ items: submenus });
+  await menu.setAsAppMenu();
+  built = { shape, handles, state };
 }
 
 /** Returns today's local calendar date without timezone shifting. */

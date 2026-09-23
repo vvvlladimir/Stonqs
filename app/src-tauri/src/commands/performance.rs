@@ -6,8 +6,8 @@ use crate::state::AppState;
 use rust_decimal::Decimal;
 use serde::Serialize;
 use sq_core::calc::{
-    ChargeSummary, GrowthSeries, Peak, Period, PeriodReturn, PeriodSummary, RiskReport, TradingVolume,
-    ValueSeries, all_time_high,
+    CalculationSheet, ChargeSummary, GrowthSeries, Peak, Period, PeriodReturn, PeriodSummary, RiskReport,
+    TradingVolume, ValueSeries, all_time_high,
 };
 use sq_core::market::DateRange;
 use tauri::State;
@@ -92,6 +92,97 @@ pub fn performance_summary(
         annual_returns,
         series,
     })
+}
+
+/// The calculation sheet of the period: one row per calendar chunk, showing how the opening
+/// value, the flows and what was earned add up to the closing one. The granularity is the
+/// screen's, not the core's — a decade reads by year and a month by day.
+#[tauri::command]
+pub fn performance_breakdown(
+    state: State<AppState>,
+    from: String,
+    to: String,
+    period: Period,
+    source: Option<DataScope>,
+) -> UiResult<CalculationSheet> {
+    let range = date_range(&from, &to)?;
+    let store = state.store()?;
+    let scope = state.scope_selection_in(&store, source.as_ref())?;
+    scope
+        .analytics(&store)?
+        .calculation_sheet(range, period)
+        .map_err(|e| named(&store, e))
+}
+
+/// The calculation sheet as a CSV of what the panel shows, written where the user points.
+#[tauri::command]
+pub fn performance_sheet_save(
+    state: State<AppState>,
+    from: String,
+    to: String,
+    period: Period,
+    path: String,
+) -> UiResult<()> {
+    use crate::commands::reports::csv::{money, row};
+
+    let sheet = performance_breakdown(state, from, to, period, None)?;
+    let c = &sheet.base_currency;
+    let mut csv = row([
+        "from",
+        "to",
+        &format!("opening {c}"),
+        &format!("flows {c}"),
+        &format!("market {c}"),
+        &format!("income {c}"),
+        &format!("costs {c}"),
+        &format!("result {c}"),
+        &format!("closing {c}"),
+        "return",
+        "chained return",
+    ]);
+    for r in &sheet.rows {
+        csv.push_str(&row([
+            r.from.to_string().as_str(),
+            r.to.to_string().as_str(),
+            money(r.start_value_base).as_str(),
+            money(r.external_flow_base).as_str(),
+            money(r.market_change_base).as_str(),
+            money(r.income_base).as_str(),
+            money(r.costs_base).as_str(),
+            money(r.delta_base).as_str(),
+            money(r.end_value_base).as_str(),
+            money(r.twr).as_str(),
+            money(r.cumulative_twr).as_str(),
+        ]));
+    }
+    csv.push_str(&row([
+        sheet
+            .rows
+            .first()
+            .map(|r| r.from.to_string())
+            .unwrap_or_default()
+            .as_str(),
+        sheet
+            .rows
+            .last()
+            .map(|r| r.to.to_string())
+            .unwrap_or_default()
+            .as_str(),
+        money(sheet.total.start_value_base).as_str(),
+        money(sheet.total.net_flow_base).as_str(),
+        "",
+        "",
+        "",
+        money(sheet.total.delta_base).as_str(),
+        money(sheet.total.end_value_base).as_str(),
+        "",
+        money(sheet.twr).as_str(),
+    ]));
+
+    // Excel reads a semicolon-separated file as UTF-8 only when it opens with a BOM.
+    let mut bytes = vec![0xEF, 0xBB, 0xBF];
+    bytes.extend_from_slice(csv.as_bytes());
+    std::fs::write(&path, bytes).map_err(|e| UiError::invalid(format!("cannot write {path}: {e}")))
 }
 
 #[tauri::command]

@@ -4,7 +4,7 @@
 
 Please do **not** open a public issue. Use GitHub's
 [private vulnerability reporting](https://github.com/vvvlladimir/stonqs/security/advisories/new)
-on this repository. You will get an acknowledgement within a few days; this is a spare-time
+on this repository, or write to [security@stonqs.app](mailto:security@stonqs.app). You will get an acknowledgement within a few days; this is a spare-time
 project, so please allow reasonable time for a fix before disclosing.
 
 In scope: anything that exposes a user's portfolio or provider keys to another user, another

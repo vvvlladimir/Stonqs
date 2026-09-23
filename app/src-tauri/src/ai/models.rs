@@ -106,13 +106,16 @@ fn rank_gemini(id: &str) -> u8 {
 }
 
 /// Pro, Flash, Flash-Lite — the three tiers Google sells. `-lite` is checked by matching the
-/// whole suffix, because it also contains `flash`; anything else after the version (`-preview`,
-/// `-thinking`, `-latest`) is a variant for a different job and is not offered here.
+/// whole suffix, because it also contains `flash`. A `-preview` counts: Google ships a new
+/// generation as a preview for months and retires the old stable id meanwhile, so skipping
+/// previews offered a model the API already refuses. Other suffixes (`-thinking`, `-tts`, `-image`)
+/// are a variant for a different job and are not offered here.
 fn tier_gemini(id: &str) -> Option<u8> {
     let rest = dated(id).unwrap_or(id).strip_prefix("gemini-")?;
     if !rest.starts_with(|c: char| c.is_ascii_digit()) {
         return None;
     }
+    let rest = rest.split("-preview").next().unwrap_or(rest);
     match rest.trim_start_matches(|c: char| c.is_ascii_digit() || c == '.') {
         "-pro" => Some(0),
         "-flash" => Some(1),
@@ -160,6 +163,43 @@ fn ranked(body: &serde_json::Value, rank: fn(&str) -> u8) -> Vec<String> {
     ids
 }
 
+/// How this provider's ids map to tiers; `None` for the custom provider, whose list begins with
+/// the model the user typed rather than with a flagship.
+fn tiers(provider: &str) -> Option<fn(&str) -> Option<u8>> {
+    match provider {
+        "openai" => Some(tier_openai),
+        "anthropic" => Some(tier_anthropic),
+        "gemini" => Some(tier_gemini),
+        _ => None,
+    }
+}
+
+/// The smallest tier on offer, which is where a chat starts until the user picks otherwise. A
+/// list that names no tier (or the custom provider's) starts on its first entry.
+pub fn smallest(provider: &str, listed: &[String]) -> Option<String> {
+    tiers(provider)
+        .and_then(|tier| {
+            listed
+                .iter()
+                .filter_map(|id| tier(id).map(|slot| (slot, id)))
+                .max_by_key(|(slot, _)| *slot)
+                .map(|(_, id)| id.clone())
+        })
+        .or_else(|| listed.first().cloned())
+}
+
+/// A remembered choice as the list stands today: the id itself while it is still offered,
+/// otherwise the newest model of the same tier — a release must not quietly move the user from
+/// the small model they chose to the flagship, or back.
+pub fn remembered(provider: &str, chosen: &str, listed: &[String]) -> Option<String> {
+    if listed.iter().any(|id| id == chosen) {
+        return Some(chosen.to_string());
+    }
+    let tier = tiers(provider)?;
+    let slot = tier(chosen)?;
+    listed.iter().find(|id| tier(id) == Some(slot)).cloned()
+}
+
 /// The newest id of each tier, in tier order. `tier` returns `None` for everything that is not a
 /// plain chat model of a known family — a dated snapshot still counts, it simply loses to the
 /// undated id of the same version.
@@ -200,13 +240,20 @@ fn shortlist(ids: Vec<String>, tier: fn(&str) -> Option<u8>) -> Vec<String> {
 /// Version first, then the undated id: `gpt-5.4` beats `gpt-5`, and `gpt-5` beats
 /// `gpt-5-2025-08-07`, which is the same model pinned to a day.
 fn newer(id: &str, than: &str) -> bool {
-    (version(id), dateless(id)) > (version(than), dateless(than))
+    (version(id), dateless(id), stable(id)) > (version(than), dateless(than), stable(than))
+}
+
+/// A preview loses to the released id of the same version, and wins over an older generation.
+fn stable(id: &str) -> bool {
+    !id.contains("-preview")
 }
 
 /// The numbers in an id, with a trailing release date removed first: `claude-opus-4-1-20250805`
 /// is version 4.1, and comparing 20250805 against a minor number would rank it above 4.5.
 fn version(id: &str) -> Vec<u64> {
     let stem = dated(id).unwrap_or(id);
+    // `-preview-09-2025` is a date spelled Google's way, not part of the version.
+    let stem = stem.split("-preview").next().unwrap_or(stem);
     let mut numbers = Vec::new();
     let mut digits = String::new();
     for ch in stem.chars() {
@@ -313,6 +360,41 @@ mod tests {
     }
 
     #[test]
+    fn a_chat_starts_on_the_smallest_tier() {
+        let listed: Vec<String> = ["gpt-6-astra", "gpt-6-terra", "gpt-6-luna"]
+            .map(String::from)
+            .into();
+        assert_eq!(smallest("openai", &listed).as_deref(), Some("gpt-6-luna"));
+        let listed: Vec<String> = ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"]
+            .map(String::from)
+            .into();
+        assert_eq!(
+            smallest("anthropic", &listed).as_deref(),
+            Some("claude-haiku-4-5")
+        );
+        // The custom list begins with the model the user typed, and that is where it starts.
+        let listed: Vec<String> = ["my-local-model", "gpt-6-luna"].map(String::from).into();
+        assert_eq!(smallest(CUSTOM, &listed).as_deref(), Some("my-local-model"));
+    }
+
+    #[test]
+    fn a_remembered_model_survives_a_release_in_its_own_tier() {
+        let listed: Vec<String> = ["gpt-6.1-astra", "gpt-6.1-terra", "gpt-6.1-luna"]
+            .map(String::from)
+            .into();
+        assert_eq!(
+            remembered("openai", "gpt-6.1-terra", &listed).as_deref(),
+            Some("gpt-6.1-terra")
+        );
+        // Retired: the newest model of the same tier, not the flagship.
+        assert_eq!(
+            remembered("openai", "gpt-6-terra", &listed).as_deref(),
+            Some("gpt-6.1-terra")
+        );
+        assert_eq!(remembered("openai", "some-unknown-id", &listed), None);
+    }
+
+    #[test]
     fn chat_models_rank_above_anything_else() {
         let mut ids = vec![
             "text-embedding-3-large".to_string(),
@@ -405,6 +487,30 @@ mod tests {
         assert_eq!(
             picked,
             ["gemini-3.1-pro", "gemini-3.8-flash", "gemini-3.1-flash-lite"]
+        );
+    }
+
+    #[test]
+    fn gemini_offers_a_preview_when_the_new_generation_has_no_stable_id_yet() {
+        // What Google listed when `gemini-2.5-pro` was already refused to new keys.
+        let picked = pick(
+            &[
+                "gemini-2.5-flash-preview-09-2025",
+                "gemini-2.5-pro",
+                "gemini-3.1-pro-preview",
+                "gemini-3.5-flash-lite",
+                "gemini-3.8-flash",
+                "gemini-3.8-flash-preview",
+            ],
+            tier_gemini,
+        );
+        assert_eq!(
+            picked,
+            [
+                "gemini-3.1-pro-preview",
+                "gemini-3.8-flash",
+                "gemini-3.5-flash-lite"
+            ]
         );
     }
 

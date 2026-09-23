@@ -5,6 +5,7 @@ mod alerts;
 mod allocation;
 mod balances;
 mod benchmark;
+mod breakdown;
 mod capital_gains;
 mod charges;
 mod cost_basis;
@@ -12,10 +13,12 @@ mod dividend_forecast;
 mod dividends;
 mod engine;
 mod fire;
+mod goals;
 mod holdings;
 mod income;
 mod inflation;
 mod journal;
+mod limits;
 mod payments;
 mod peak;
 mod periods;
@@ -42,13 +45,14 @@ pub use balances::{cash_balances, settlement_accounts};
 pub use benchmark::{
     BenchmarkComparison, benchmark_return, benchmark_series, benchmark_start, compare_to_benchmark,
 };
+pub use breakdown::{CalculationRow, CalculationSheet, calculation_sheet};
 pub use capital_gains::{
     RealizedSummary, capital_gains_by_security, capital_gains_by_year, capital_gains_by_year_and_security,
     capital_gains_total, realized_between, return_on_cost,
 };
 pub use charges::{
     ChargeSummary, charges_between, charges_by_account, charges_by_kind, charges_by_security,
-    charges_by_year, charges_total, costs_paid, costs_paid_by_security,
+    charges_by_year, charges_total, costs_paid, costs_paid_by_security, costs_paid_over,
 };
 pub use cost_basis::{CostBasisFigures, CostBasisRow, compare_cost_basis};
 pub use dividend_forecast::{ExpectedDividend, expected_dividends};
@@ -62,6 +66,7 @@ pub use engine::{
     position_twr_between, position_xirr, twr_between, twr_between_with, valuation_at, valuation_at_with,
 };
 pub use fire::{FireAssumptions, FireProjection, fire_projection, percent_to_rate};
+pub use goals::{GoalProgress, goal_progress};
 pub use holdings::{
     CashFlow, ChargeRecord, Holdings, HoldingsOptions, IncomeRecord, RealizedGain, build_holdings,
     build_holdings_with,
@@ -79,6 +84,7 @@ pub use journal::{
     MonthlyNet, YearlyNet, transaction_amount_base, transaction_net_base, transactions_net_by_month,
     transactions_net_by_year,
 };
+pub use limits::{LimitUsage, contributions_between, limit_usage};
 pub use payments::{
     PaymentBucket, PaymentGrid, PaymentLine, PaymentPeriod, PaymentRow, SecurityPaymentRow, payment_grid,
 };

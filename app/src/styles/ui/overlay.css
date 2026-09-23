@@ -15,6 +15,14 @@
 .scope:hover {
   background: var(--surface-2);
 }
+/* One line, the value flush right: the icon already says which lens this is. */
+.scope--row {
+  padding: var(--sp-4) var(--sp-5);
+}
+.scope--row .scope__label {
+  text-align: right;
+  font-weight: var(--fw-bold);
+}
 .scope__icon {
   font-size: var(--fs-lg);
   color: var(--text-3);

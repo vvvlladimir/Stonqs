@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { i18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
 import { App } from "./App";
+import { ShortcutsProvider } from "./lib/commands";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { applyTheme } from "./lib/theme";
 import { activateLocale, resolveLocale } from "./lib/i18n";
@@ -30,7 +31,9 @@ void activateLocale(resolveLocale("system", null)).then(() => {
       <I18nProvider i18n={i18n}>
         <QueryClientProvider client={queryClient}>
           <ErrorBoundary>
-            <App />
+            <ShortcutsProvider>
+              <App />
+            </ShortcutsProvider>
           </ErrorBoundary>
         </QueryClientProvider>
       </I18nProvider>

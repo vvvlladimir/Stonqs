@@ -1,9 +1,10 @@
 import { plural } from "@lingui/core/macro";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { ColumnsIcon, PlusIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import {
   affects,
@@ -17,7 +18,6 @@ import {
   useWatchlists,
 } from "../../lib/queries";
 import { DEFAULT_UI, useUiState } from "../../lib/uiState";
-import { formatDay } from "../../lib/format";
 import { Page } from "../../components/Page";
 import { PeriodControl } from "../../components/domain/PeriodControl";
 import { useSecurityCard } from "../../components/domain/SecurityCardProvider";
@@ -44,10 +44,11 @@ import {
   orderColumns,
   resolveColumnIds,
 } from "../../components/domain/positionColumns";
+import { useAsOf } from "../../lib/asOf";
 
 export function Watchlist() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const invalidate = useInvalidate();
   const menu = useMenu();
   const card = useSecurityCard();
@@ -182,7 +183,6 @@ export function Watchlist() {
       ]
         .filter(Boolean)
         .join(" · ")}
-      asOf={formatDay(date)}
       controls={<PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />}
       actions={
         <>
@@ -193,6 +193,12 @@ export function Watchlist() {
           <button type="button" className="btn" onClick={newList}>
             <PlusIcon /> <Trans>New list</Trans>
           </button>
+          {active ? (
+            <Command id="new" label={t`Add instruments`} run={() => setAdding(true)} />
+          ) : (
+            <Command id="new" label={t`New list`} run={newList} />
+          )}
+          <Command id="newWatchlist" run={newList} />
         </>
       }
     >

@@ -1,0 +1,16 @@
+{
+  "id": "app.stonqs.midnight",
+  "api": 1,
+  "name": "Midnight",
+  "version": "1.0.0",
+  "provides": {
+    "themes": [
+      {
+        "id": "midnight",
+        "name": "Midnight",
+        "file": "midnight.css",
+        "base": "dark"
+      }
+    ]
+  }
+}

@@ -1,0 +1,119 @@
+/* Key caps and the command palette. */
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+}
+.kbd kbd {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-meta);
+  line-height: 1;
+}
+.kbd__then {
+  width: 4px;
+}
+.kbd-list {
+  display: inline-flex;
+  gap: var(--sp-4);
+}
+
+.backdrop--top {
+  place-items: start center;
+  padding: var(--sp-8) var(--sp-4) 0;
+}
+.palette {
+  width: min(600px, 100%);
+  max-height: min(70dvh, 520px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+.palette__field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 0 var(--sp-6);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-3);
+}
+.palette__field input {
+  flex: 1;
+  height: 48px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-base);
+  box-shadow: none;
+}
+.palette__field input:focus {
+  outline: none;
+  box-shadow: none;
+}
+.palette__list {
+  overflow: auto;
+  padding: var(--sp-2);
+}
+.palette__group {
+  padding: var(--sp-4) var(--sp-4) var(--sp-2);
+  color: var(--text-3);
+  font-size: var(--fs-meta);
+}
+.palette__item {
+  min-height: var(--h-ctl);
+  padding: 0 var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.palette__item[aria-selected="true"] {
+  background: var(--surface-3);
+  /* Not colour alone: the highlighted option also carries an edge (WCAG 1.4.1). */
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.palette__icon {
+  display: inline-grid;
+  color: var(--text-3);
+}
+.palette__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette__empty {
+  padding: var(--sp-6);
+  color: var(--text-3);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .palette {
+    animation: palette-in 0.14s ease-out;
+  }
+  @keyframes palette-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+}

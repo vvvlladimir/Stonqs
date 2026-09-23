@@ -29,6 +29,9 @@ export { Skeleton, SkeletonRows } from "./Skeleton";
 export { Tabs, type TabItem } from "./Tabs";
 export { List, ListRow, type ListProps, type ListRowProps } from "./List";
 export { Modal } from "./Modal";
+export { Kbd } from "./Kbd";
+export { Palette, type PaletteItem } from "./Palette";
+export { focusables, useDialogFocus } from "./focus";
 export { ColumnPicker, type ColumnChoice, type ColumnGroup } from "./ColumnPicker";
 export {
   Actions,

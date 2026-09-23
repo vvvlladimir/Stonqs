@@ -1,0 +1,56 @@
+{
+  "format": "stonqs.transactions",
+  "version": 1,
+  "rows": [
+    {
+      "date": "2025-06-13",
+      "kind": "BUY",
+      "account": "Trade Republic",
+      "symbol": "IE00B5BMR087",
+      "isin": "IE00B5BMR087",
+      "name": "Core S&P 500 USD (Acc)",
+      "quantity": "0.361938",
+      "price": "552.56",
+      "amount": "199.99",
+      "fee": "1",
+      "currency": "EUR",
+      "note": "Buy trade"
+    },
+    {
+      "date": "2025-06-13",
+      "kind": "DEPOSIT",
+      "account": "Trade Republic · cash",
+      "amount": "1750",
+      "currency": "EUR",
+      "note": "Incoming transfer"
+    },
+    {
+      "date": "2025-06-17",
+      "kind": "SELL",
+      "account": "Trade Republic",
+      "symbol": "IE00B5BMR087",
+      "isin": "IE00B5BMR087",
+      "name": "Core S&P 500 USD (Acc)",
+      "quantity": "0.361938",
+      "price": "554.54",
+      "amount": "200.71",
+      "fee": "1",
+      "currency": "EUR",
+      "note": "Sell trade"
+    },
+    {
+      "date": "2025-08-14",
+      "kind": "DIVIDEND",
+      "account": "Trade Republic",
+      "symbol": "US0378331005",
+      "isin": "US0378331005",
+      "name": "Apple",
+      "quantity": "1",
+      "amount": "0.22",
+      "tax": "0.03",
+      "currency": "EUR",
+      "fx_rate": "0.853898",
+      "note": "Cash Dividend"
+    }
+  ]
+}

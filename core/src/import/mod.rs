@@ -1,6 +1,7 @@
 //! CSV import for transactions, quotes, and taxonomies.
 //! Detection stays overridable and preview remains deterministic until commit.
 
+mod attributes;
 mod canonical;
 mod checks;
 mod dedupe;
@@ -16,6 +17,10 @@ mod securities;
 mod service;
 mod taxonomy;
 
+pub use attributes::{
+    AttributeCsvConfig, AttributeImportResult, AttributePreview, AttributeRow, PreviewAttribute,
+    attributes_to_csv, build_attribute_preview, commit_attributes, detect_attribute_config,
+};
 pub use canonical::{CanonicalFile, CanonicalRow, canonical_to_file, is_canonical, parse_canonical};
 pub use checks::{
     BasisVote, CheckContext, Direction, SignVote, decide_amount_basis, decide_amount_sign, resolve_direction,

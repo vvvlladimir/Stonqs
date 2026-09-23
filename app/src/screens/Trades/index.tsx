@@ -1,15 +1,14 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { today } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import { useTrades } from "../../lib/queries";
 import { Page } from "../../components/Page";
 import { Async, Empty, Panel, Pending, QueryError } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
-import { formatDay } from "../../lib/format";
 import { TradeMetrics } from "./TradeMetrics";
 import { TradesTable } from "./TradesTable";
+import { useAsOf } from "../../lib/asOf";
 
 /**
  * A trade is one purchase and the sales that emptied it — not an instrument and not a
@@ -18,7 +17,7 @@ import { TradesTable } from "./TradesTable";
  */
 export function Trades() {
   const { t } = useLingui();
-  const asOf = today();
+  const asOf = useAsOf().date;
   const [period, setPeriod] = useState<PeriodId>("SINCE_INCEPTION");
 
   const ranges = usePeriodRanges(asOf);
@@ -40,7 +39,6 @@ export function Trades() {
     <Page
       archetype="analysis"
       title={t`Trades`}
-      asOf={`${formatDay(range.from)} — ${formatDay(range.to)}`}
       controls={<PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />}
       metrics={<TradeMetrics data={trades.data} />}
       banner={trades.isError ? <QueryError error={trades.error} /> : undefined}

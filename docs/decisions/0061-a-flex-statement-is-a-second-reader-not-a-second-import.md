@@ -33,8 +33,12 @@ to; `import::parse_file` picks the reader off the bytes, so the file decides and
 Everything downstream — `build_preview`, the wizard, the commit — is unchanged.
 
 The layout for those columns is a function in that module rather than a row in
-`presets/brokers.json`: the columns are this module's own invention, so there is nothing for a
-user to lay out differently. `ImportService::preview` uses it when no mapping was given.
+`presets/brokers.json`: the layout is fixed by the reader, so there is nothing for a user to lay
+out differently. `ImportService::preview` uses it when no mapping was given.
+
+The column *names* were this module's own invention until ADR-0066 gave the app a transaction
+format of its own; they are now that format's names (`import::canonical`), which changes nothing
+about this decision and means the wizard's raw view shows one vocabulary whatever the file was.
 
 The four traps are answered in the reader:
 

@@ -15,6 +15,18 @@
   padding: calc(var(--sp-6) + env(safe-area-inset-top, 0px)) var(--sp-6)
     calc(120px + env(safe-area-inset-bottom, 0px));
 }
+/* The time lens sits above every screen, not inside one: it says the whole page is historical. */
+.timelens {
+  padding: calc(var(--sp-4) + env(safe-area-inset-top, 0px)) var(--sp-6) 0;
+}
+@media (min-width: 700px) {
+  .timelens {
+    padding: var(--sp-5) var(--sp-8) 0;
+  }
+}
+.timelens + .app {
+  padding-top: var(--sp-4);
+}
 /* Fixed mobile controls stay clear of safe-area insets via surrounding padding. */
 .dock {
   position: fixed;
@@ -67,53 +79,6 @@
 .taxdock .seg button {
   white-space: nowrap;
 }
-.nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 30;
-  display: flex;
-  justify-content: space-around;
-  padding: var(--sp-3) var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-}
-.nav__item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-1);
-  padding: var(--sp-3) var(--sp-1);
-  border: 0;
-  background: none;
-  cursor: pointer;
-  font-size: var(--fs-micro);
-  color: var(--text-3);
-  border-radius: var(--r-input);
-  transition: color 0.15s ease;
-}
-.nav__item svg {
-  font-size: var(--fs-xl);
-}
-.nav__item--active {
-  color: var(--accent);
-}
-.nav__item[disabled] {
-  opacity: 0.4;
-  cursor: default;
-}
-.nav__more,
-.nav__group-label,
-.nav__scope {
-  display: none;
-}
-.nav__mobile {
-  display: flex;
-}
-
 .page {
   max-width: 1400px;
   margin: 0 auto;
@@ -302,66 +267,6 @@
   }
   .main {
     overflow-y: auto;
-  }
-  .nav {
-    position: static;
-    height: 100%;
-    width: 230px;
-    flex: none;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 1px;
-    padding: var(--sp-6) var(--sp-5);
-    border-top: 0;
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    backdrop-filter: none;
-    overflow-y: auto;
-    /* A nav taller than the window still scrolls, but never bounces or chains to the page. */
-    overscroll-behavior: none;
-  }
-  .nav__group-label {
-    display: block;
-    padding: var(--sp-6) var(--sp-4) var(--sp-2);
-    font-size: var(--fs-micro);
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-  }
-  .nav__more {
-    display: flex;
-  }
-  .nav__mobile {
-    display: none;
-  }
-  .nav__item {
-    flex: none;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: var(--sp-4);
-    padding: var(--sp-3) var(--sp-4);
-    font-size: var(--fs-base);
-    color: var(--text-2);
-    width: 100%;
-  }
-  .nav__item:hover:not([disabled]) {
-    background: var(--surface-3);
-    color: var(--text);
-  }
-  .nav__item--active,
-  .nav__item--active:hover {
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: var(--fw-med);
-  }
-  .nav__scope {
-    display: block;
-    margin-top: auto;
-    padding-top: var(--sp-6);
-  }
-  .nav__scope .scope {
-    width: 100%;
-    justify-content: flex-start;
   }
   .app {
     /* Bottom clears the fixed dock (its offset plus one control) so the last row stays readable. */

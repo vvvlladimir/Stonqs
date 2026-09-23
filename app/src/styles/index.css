@@ -2,6 +2,7 @@
 @import "./tokens.css";
 @import "./base.css";
 @import "./layout.css";
+@import "./nav.css";
 @import "./ui/panel.css";
 @import "./ui/table.css";
 @import "./ui/list.css";
@@ -14,6 +15,7 @@
 @import "./ui/calendar.css";
 @import "./ui/chart.css";
 @import "./ui/overlay.css";
+@import "./ui/palette.css";
 @import "./ui/ai.css";
 @import "./ui/markdown.css";
 @import "./ui/skeleton.css";

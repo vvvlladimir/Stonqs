@@ -1,5 +1,6 @@
 /** Instruments: what identifies one, what a listing is, and what happened to it. */
 
+import type { ImportProblem } from "./imports";
 import type { DateString, MoneyString } from "./primitives";
 export type SecurityKind = "STOCK" | "ETF" | "BOND" | "FUND" | "CRYPTO" | "OTHER";
 
@@ -33,6 +34,48 @@ export interface SecurityAttributeDef {
   /** Shown after the value ("%", "bp"); never parsed. */
   unit: string | null;
   position: number;
+}
+
+/** What an attribute CSV would do, before it does it. */
+export interface AttributeCsvConfig {
+  symbol: string | null;
+  isin: string | null;
+  name: string | null;
+  /** Every other column of the file, by header. */
+  attributes: string[];
+}
+
+export interface PreviewAttribute {
+  name: string;
+  kind: AttributeKind;
+  /** The attribute this column already is; `null` means the commit would create it. */
+  attribute_id: string | null;
+  values: number;
+}
+
+export interface AttributeImportRow {
+  row: number;
+  label: string;
+  symbol: string;
+  isin: string;
+  security_id: string | null;
+  /** `isin`, `symbol`, `symbol_base` or `name` — a code, not a label. */
+  matched_by: string | null;
+  /** Attribute name to the value it would be given; a blank cell is absent. */
+  values: Record<string, string>;
+}
+
+export interface AttributePreview {
+  config: AttributeCsvConfig;
+  attributes: PreviewAttribute[];
+  rows: AttributeImportRow[];
+  problems: ImportProblem[];
+}
+
+export interface AttributeImportResult {
+  attributes_created: number;
+  instruments: number;
+  values: number;
 }
 
 export interface AttributeDefInput {

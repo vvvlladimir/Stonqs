@@ -30,9 +30,12 @@
   content: "";
   position: absolute;
   inset: 0 0 auto;
-  height: 180px;
+  height: 240px;
   pointer-events: none;
-  background: linear-gradient(180deg, var(--accent-softer), transparent);
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 100% at 0% 0%, var(--accent-soft), transparent 60%),
+    linear-gradient(180deg, var(--accent-softer), transparent);
 }
 /* Only a side panel has an edge to drag: full-screen, there is nothing to resize against. */
 .ai-panel__grip {
@@ -64,8 +67,12 @@
   display: flex;
   align-items: center;
   gap: var(--sp-4);
-  padding: var(--sp-5) var(--sp-5) var(--sp-4);
-  border-bottom: 1px solid var(--border);
+  padding: var(--sp-6) var(--sp-6) var(--sp-4);
+}
+/* Close sits quietly: the panel's one loud control is the one that starts a chat. */
+.ai-head__close {
+  border-color: transparent;
+  background: none;
 }
 .ai-head__text {
   flex: 1;
@@ -76,13 +83,14 @@
 }
 .ai-head__title {
   font-weight: var(--fw-bold);
-  font-size: var(--fs-base);
+  font-size: var(--fs-lg);
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .ai-head__sub {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-meta);
   color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;
@@ -95,23 +103,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--h-ctl-sm);
-  height: var(--h-ctl-sm);
-  border-radius: var(--r-input);
-  background: linear-gradient(
-    140deg,
-    var(--accent-line),
-    color-mix(in srgb, var(--slot-7) 70%, var(--accent))
-  );
-  color: #fff;
+  width: var(--h-ctl);
+  height: var(--h-ctl);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--accent);
   font-size: var(--fs-lg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .ai-mark--big {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: var(--r-lg);
-  font-size: var(--fs-2xl);
-  box-shadow: 0 8px 24px var(--accent-soft);
+  font-size: var(--fs-3xl);
 }
 
 /* Body --------------------------------------------------------------------------------- */
@@ -120,15 +125,15 @@
   position: relative;
   flex: 1;
   overflow: auto;
-  padding: var(--sp-5);
+  padding: var(--sp-5) var(--sp-6);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--sp-6);
 }
 .ai-body--list {
   gap: var(--sp-4);
   /* Room for the floating button, so the last chat in the list is never under it. */
-  padding-bottom: calc(46px + var(--sp-8));
+  padding-bottom: calc(var(--h-ctl) + var(--sp-9) + var(--sp-6));
 }
 .ai-chats {
   display: flex;
@@ -145,15 +150,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
+  gap: var(--sp-3);
+  height: calc(var(--h-ctl) + var(--sp-3));
+  padding: 0 var(--sp-7) 0 var(--sp-6);
   border: 0;
   border-radius: var(--r-chip);
   background: var(--accent);
   color: var(--ink-on);
-  font-size: var(--fs-xl);
-  box-shadow: var(--shadow-pop);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    var(--shadow-pop);
   cursor: pointer;
+}
+.ai-fab svg {
+  font-size: var(--fs-lg);
 }
 .ai-fab:hover:not(:disabled) {
   background: var(--accent-line);
@@ -164,7 +176,7 @@
 .ai-fab:disabled {
   background: var(--surface-3);
   color: var(--text-3);
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
   cursor: default;
 }
 
@@ -180,12 +192,10 @@
   align-self: flex-end;
   max-width: 85%;
   padding: var(--sp-3) var(--sp-5);
+  border: 1px solid var(--border);
   border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-lg);
-  background: var(--accent);
-  color: var(--ink-on);
-}
-.ai-said--user .md code {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--surface-3);
+  color: var(--text);
 }
 .ai-said--model {
   align-self: stretch;
@@ -208,7 +218,7 @@
   align-self: stretch;
   border: 1px solid var(--border);
   border-radius: var(--r);
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
   overflow: hidden;
 }
 .ai-steps__fold,
@@ -380,12 +390,16 @@
   align-items: center;
   gap: var(--sp-4);
   text-align: center;
-  padding: var(--sp-6) 0;
+  padding: var(--sp-8) 0;
+}
+.ai-opener .ai-mark {
+  margin-bottom: var(--sp-3);
 }
 .ai-opener h3 {
   margin: 0;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
 }
 .ai-opener p {
   margin: 0;
@@ -400,9 +414,9 @@
   margin-top: var(--sp-3);
 }
 .ai-ask-chip {
-  padding: var(--sp-3) var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
   border: 1px solid var(--border);
-  border-radius: var(--r-input);
+  border-radius: var(--r);
   background: var(--surface-2);
   color: var(--text-2);
   font-size: var(--fs-sm);
@@ -422,8 +436,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-5) var(--sp-5);
-  border-top: 1px solid var(--border);
+  padding: var(--sp-3) var(--sp-6) var(--sp-6);
   background: var(--surface);
 }
 .ai-input {
@@ -434,13 +447,16 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--r-lg);
   background: var(--surface-2);
+  box-shadow: var(--shadow);
   transition:
     border-color var(--dur) var(--ease),
     box-shadow var(--dur) var(--ease);
 }
 .ai-input:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-softer);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    var(--shadow);
 }
 .ai-input textarea {
   flex: 1;
@@ -522,13 +538,14 @@
   flex: none;
   opacity: 0.6;
 }
-/* Sits in the footer beside the pickers and gives way first: the count is the least important
-   thing there, and a long model name must not push it onto a line of its own. */
+/* Above the input, flush right: what the last answer cost reads beside the conversation it
+   belongs to, and the pickers below keep the whole row. */
 .ai-usage {
+  align-self: flex-end;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  margin-inline-start: auto;
+  padding-inline-end: var(--sp-3);
   font-size: var(--fs-micro);
   color: var(--text-3);
   white-space: nowrap;
@@ -551,11 +568,14 @@
 
 @media (min-width: 700px) {
   .ai-panel {
-    inset: 0 0 0 auto;
+    /* Floating a gap inside the window, like every other sheet in the app. */
+    inset: var(--sp-4) var(--sp-4) var(--sp-4) auto;
     /* The stored width, bounded here too so a blob from another machine with a wider screen
        cannot leave the app with no room beside the panel. */
     width: clamp(320px, var(--ai-panel-w, 420px), min(900px, 90vw));
-    border-left: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    overflow: hidden;
     --ai-from-x: 16px;
     --ai-from-y: 0;
   }
@@ -599,9 +619,6 @@
   }
   .ai-said--streaming .md > :last-child::after {
     animation: ai-blink 1s steps(2, start) infinite;
-  }
-  .ai-mark--big {
-    animation: ai-breathe 4s ease-in-out infinite;
   }
   /* A reading in progress pulses rather than spins twice: the spinner in its icon already
      turns, and two motions in one row read as an error. */
@@ -653,11 +670,6 @@
       opacity: 0;
     }
   }
-  @keyframes ai-breathe {
-    50% {
-      transform: translateY(-3px);
-    }
-  }
   @keyframes ai-dim {
     50% {
       opacity: 0.55;
@@ -675,4 +687,14 @@
       opacity: 1;
     }
   }
+}
+
+/* The dock button that opens the panel wears the accent, so the assistant is findable at a glance. */
+.ai-toggle {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+.ai-toggle:hover {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface));
 }

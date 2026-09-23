@@ -1,9 +1,8 @@
-import { scopeLabel } from "../../components/domain/ScopePicker";
+import { scopeLabel } from "../../components/domain/scopeLabel";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { ColumnsIcon } from "@phosphor-icons/react";
-import { today } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import {
   usePortfolio,
@@ -15,7 +14,7 @@ import {
 } from "../../lib/queries";
 import { DEFAULT_UI, useUiState } from "../../lib/uiState";
 import { SECURITY_KIND_FILTERS } from "../../lib/kinds";
-import { formatDay, formatMoney } from "../../lib/format";
+import { formatMoney } from "../../lib/format";
 import { Page } from "../../components/Page";
 import { useSecurityCard } from "../../components/domain/SecurityCardProvider";
 import { PeriodControl } from "../../components/domain/PeriodControl";
@@ -40,10 +39,11 @@ import {
   resolveColumnIds,
   useAllColumns,
 } from "../../components/domain/positionColumns";
+import { useAsOf } from "../../lib/asOf";
 
 export function Positions() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<string>("ALL");
   const [picking, setPicking] = useState(false);
@@ -126,7 +126,6 @@ export function Positions() {
       summary={`${plural(rows.length, { one: "# instrument", other: "# instruments" })} · ${
         current ? scopeLabel(i18n, current) : t`whole portfolio`
       } · ${formatMoney(total_value_base, base_currency)}`}
-      asOf={formatDay(positions.data.date)}
       controls={<PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />}
       actions={
         <button type="button" className="iconbtn" onClick={() => setPicking(true)}>

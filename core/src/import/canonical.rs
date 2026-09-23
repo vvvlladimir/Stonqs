@@ -27,25 +27,27 @@ pub const FORMAT: &str = "stonqs.transactions";
 pub const VERSION: u32 = 1;
 
 /// Column names, which are also the canonical header aliases — the first alias of each field,
-/// so a CSV written with these headers is understood by plain detection.
-const DATE: &str = "date";
-const KIND: &str = "type";
-const ACCOUNT: &str = "account";
-const SYMBOL: &str = "symbol";
-const ISIN: &str = "isin";
-const NAME: &str = "name";
-const QUANTITY: &str = "quantity";
-const PRICE: &str = "price";
-const AMOUNT: &str = "amount";
-const FEE: &str = "fee";
-const FEE_CURRENCY: &str = "fee currency";
-const TAX: &str = "tax";
-const TAX_CURRENCY: &str = "tax currency";
-const CURRENCY: &str = "currency";
-const FX_RATE: &str = "fx rate";
-const LINK_ID: &str = "link id";
-const EXTERNAL_ID: &str = "external id";
-const NOTE: &str = "note";
+/// so a CSV written with these headers is understood by plain detection. Public because they are
+/// the format's own vocabulary: a reader that flattens something else into this table
+/// (`ibflex`) names its columns from here rather than inventing a second spelling.
+pub const DATE: &str = "date";
+pub const KIND: &str = "type";
+pub const ACCOUNT: &str = "account";
+pub const SYMBOL: &str = "symbol";
+pub const ISIN: &str = "isin";
+pub const NAME: &str = "name";
+pub const QUANTITY: &str = "quantity";
+pub const PRICE: &str = "price";
+pub const AMOUNT: &str = "amount";
+pub const FEE: &str = "fee";
+pub const FEE_CURRENCY: &str = "fee currency";
+pub const TAX: &str = "tax";
+pub const TAX_CURRENCY: &str = "tax currency";
+pub const CURRENCY: &str = "currency";
+pub const FX_RATE: &str = "fx rate";
+pub const LINK_ID: &str = "link id";
+pub const EXTERNAL_ID: &str = "external id";
+pub const NOTE: &str = "note";
 
 const COLUMNS: &[&str] = &[
     DATE,

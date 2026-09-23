@@ -2,7 +2,8 @@
 
 The tax-and-accounting view of a period: what selling realised, what was paid out, and what it all
 cost. Three reports behind one control — gains, dividends, charges — each over the chosen period
-and under the account picker.
+and under the account picker. Periods end at the date the app is set to, which is today unless the
+date picker was moved back.
 
 Every table here is a CSV away from a tax return, and the export follows the report on screen: it
 writes what is being looked at, for the window being looked at, to a file the user picks.

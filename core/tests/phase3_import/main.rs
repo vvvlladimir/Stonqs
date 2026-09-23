@@ -5,6 +5,7 @@ mod basics;
 mod basis;
 mod brokers;
 mod canonical;
+mod conformance;
 mod external;
 mod ibflex;
 mod rules;
@@ -16,8 +17,9 @@ use rust_decimal_macros::dec;
 use sq_core::calc::{build_holdings, income_by_kind};
 use sq_core::fx::FxRate;
 use sq_core::import::{
-    AmountBasis, AmountSign, ImportField, ImportMapping, ImportOptions, ImportService, ParseConfig,
-    PriceMapping, ProblemCode, RowOverride, RowStatus, SecurityDraft, Severity, canonical_to_file,
+    AmountBasis, AmountSign, BrokerPreset, ImportField, ImportMapping, ImportOptions, ImportPreview,
+    ImportService, ParseConfig, PriceMapping, ProblemCode, RowOverride, RowStatus, SecurityDraft, Severity,
+    canonical_to_file, parse_file,
 };
 use sq_core::model::{Account, Security, SecurityKind, Transaction, TransactionKind};
 use sq_core::storage::Store;

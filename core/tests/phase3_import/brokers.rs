@@ -1,17 +1,16 @@
 use super::*;
 
-/// Real Trade Republic headers with one row of each operation type.
-/// Edge cases: ISIN in `symbol`, negative sales, `DEFAULT` account, source-currency `fx_rate`.
-const TRADE_REPUBLIC: &str = "\
-datetime,date,account_type,category,type,asset_class,name,symbol,shares,price,amount,fee,tax,currency,original_amount,original_currency,fx_rate,description,transaction_id
-2025-06-13T02:04:30.750598Z,2025-06-13,DEFAULT,CASH,TRANSFER_INBOUND,,,,,,1750.000000,,,EUR,,,,Incoming transfer,7b1a3660
-2025-06-13T08:13:23.849Z,2025-06-13,DEFAULT,TRADING,BUY,FUND,Core S&P 500 USD (Acc),IE00B5BMR087,0.3619380000,552.560000,-199.99,-1.00,,EUR,,,,Buy trade,18a93e2f
-2025-06-17T20:53:46.890Z,2025-06-17,DEFAULT,TRADING,SELL,FUND,Core S&P 500 USD (Acc),IE00B5BMR087,-0.3619380000,554.540000,200.71,-1.00,,EUR,,,,Sell trade,1f975274
-2025-08-14T07:24:21.511262Z,2025-08-14,DEFAULT,CASH,DIVIDEND,STOCK,Apple,US0378331005,1.0000000000,,0.220000,,-0.03,EUR,0.26,USD,0.853898,Cash Dividend,498959bd
-";
+/// Real Trade Republic headers with one row of each operation type — the conformance fixture,
+/// read from disk so the sample these tests reason about is the one the expectation was
+/// generated from. Edge cases: ISIN in `symbol`, negative sales, `DEFAULT` account,
+/// source-currency `fx_rate`.
+fn trade_republic() -> String {
+    conformance::sample("trade-republic", "export.csv")
+}
 
 fn trade_republic_mapping(account: &Account) -> ImportMapping {
-    let headers: Vec<String> = TRADE_REPUBLIC
+    let file = trade_republic();
+    let headers: Vec<String> = file
         .lines()
         .next()
         .unwrap()
@@ -32,7 +31,7 @@ fn trade_republic_export_needs_only_the_account() {
     let mapping = trade_republic_mapping(&account);
     let preview = service
         .preview(
-            TRADE_REPUBLIC.as_bytes(),
+            trade_republic().as_bytes(),
             &ParseConfig::default(),
             Some(&mapping),
             &[],
@@ -87,7 +86,7 @@ fn a_resolved_isin_becomes_a_security_with_a_real_ticker() {
     let service = ImportService::new(&store);
     let preview = service
         .preview(
-            TRADE_REPUBLIC.as_bytes(),
+            trade_republic().as_bytes(),
             &ParseConfig::default(),
             Some(&mapping),
             &[],
@@ -135,7 +134,7 @@ fn an_unresolved_isin_is_created_without_a_quote_source() {
     let mapping = trade_republic_mapping(&account);
     let preview = service
         .preview(
-            TRADE_REPUBLIC.as_bytes(),
+            trade_republic().as_bytes(),
             &ParseConfig::default(),
             Some(&mapping),
             &[],
@@ -168,7 +167,7 @@ fn the_brokers_fx_column_does_not_shrink_amounts_in_the_base_currency() {
     let mapping = trade_republic_mapping(&account);
     let preview = service
         .preview(
-            TRADE_REPUBLIC.as_bytes(),
+            trade_republic().as_bytes(),
             &ParseConfig::default(),
             Some(&mapping),
             &[],

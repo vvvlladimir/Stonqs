@@ -1,7 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { Chart } from "./Chart";
-import { Trail, fullLabel } from "./Trail";
+import { Trail } from "./Trail";
+import { fullLabel } from "./labels";
 import { ringArc, slotClass, slotFor } from "../../lib/plot";
 import { useSize } from "../../lib/useSize";
 import { formatMoney, formatPercent } from "../../lib/format";

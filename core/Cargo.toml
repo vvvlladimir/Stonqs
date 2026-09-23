@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 description = "Core engine for an investment portfolio tracker: model, storage, quotes, FX, performance math"
 
 [lib]

@@ -203,3 +203,149 @@ fn performance_payload_carries_the_curve_and_the_period_returns() {
     // Period returns are strings because they participate in decimal chaining.
     assert!(json["monthly_returns"][0]["twr"].is_string());
 }
+
+/// The calculation sheet keeps money as strings and names its chunk by two dates, so the
+/// frontend never derives a month from an index.
+#[test]
+fn calculation_sheet_rows_carry_their_own_window_and_string_money() {
+    use sq_core::calc::{CalculationRow, CalculationSheet, ChargeSummary, Period, PeriodSummary};
+
+    let row = CalculationRow {
+        from: chrono::NaiveDate::from_ymd_opt(2024, 2, 1).unwrap(),
+        to: chrono::NaiveDate::from_ymd_opt(2024, 2, 29).unwrap(),
+        start_value_base: dec!(1100),
+        external_flow_base: dec!(0),
+        income_base: dec!(50),
+        costs: ChargeSummary {
+            count: 1,
+            fees_base: dec!(0),
+            taxes_base: dec!(5),
+        },
+        costs_base: dec!(5),
+        market_change_base: dec!(0),
+        delta_base: dec!(45),
+        end_value_base: dec!(1145),
+        twr: dec!(0.040909),
+        cumulative_twr: dec!(0.145),
+    };
+    let sheet = CalculationSheet {
+        base_currency: "EUR".into(),
+        period: Period::Month,
+        rows: vec![row],
+        total: PeriodSummary {
+            start_value_base: dec!(0),
+            end_value_base: dec!(1145),
+            net_flow_base: dec!(1000),
+            absolute_change_base: dec!(1145),
+            delta_base: dec!(145),
+            invested_capital_base: dec!(1000),
+            average_capital_base: dec!(1000),
+        },
+        twr: dec!(0.145),
+    };
+
+    let json = serde_json::to_value(&sheet).unwrap();
+    assert_eq!(keys(&json), ["base_currency", "period", "rows", "total", "twr"]);
+    // The granularity crosses as the core's own enum spelling, not as a frontend word.
+    assert_eq!(json["period"], Value::String("MONTH".into()));
+    assert_eq!(json["twr"], Value::String("0.145".into()));
+
+    let row = &json["rows"][0];
+    assert_eq!(
+        keys(row),
+        [
+            "costs",
+            "costs_base",
+            "cumulative_twr",
+            "delta_base",
+            "end_value_base",
+            "external_flow_base",
+            "from",
+            "income_base",
+            "market_change_base",
+            "start_value_base",
+            "to",
+            "twr",
+        ]
+    );
+    assert_eq!(row["from"], Value::String("2024-02-01".into()));
+    assert_eq!(row["to"], Value::String("2024-02-29".into()));
+    assert_eq!(row["start_value_base"], Value::String("1100".into()));
+    assert_eq!(row["costs"]["taxes_base"], Value::String("5".into()));
+    assert_eq!(row["costs_base"], Value::String("5".into()));
+    // The count of charges is a number; the money beside it is not.
+    assert!(row["costs"]["count"].is_number());
+}
+
+/// A goal's reading crosses with money as strings and its unanswerable questions as `null` —
+/// "cannot tell" is not "behind", and the frontend must be able to tell them apart.
+#[test]
+fn goal_progress_keeps_its_absent_answers_null() {
+    use sq_core::calc::GoalProgress;
+
+    let json = serde_json::to_value(GoalProgress {
+        goal_id: "goal-1".into(),
+        name: "House".into(),
+        target_base: dec!(40000),
+        current_base: dec!(17000),
+        missing_base: dec!(23000),
+        progress: dec!(0.425),
+        months_left: Some(18),
+        required_monthly_base: Some(dec!(1277.78)),
+        months_to_target: None,
+        projected_date: None,
+        on_track: None,
+        monthly_base: None,
+        expected_return: dec!(0),
+    })
+    .unwrap();
+
+    assert_eq!(json["target_base"], Value::String("40000".into()));
+    assert_eq!(json["progress"], Value::String("0.425".into()));
+    // A month count is a number, not money.
+    assert!(json["months_left"].is_number());
+    assert_eq!(json["on_track"], Value::Null);
+    assert_eq!(json["monthly_base"], Value::Null);
+    assert_eq!(json["required_monthly_base"], Value::String("1277.78".into()));
+}
+
+/// A limit's year is two dates it carries, so the frontend never derives one from the other.
+#[test]
+fn limit_usage_carries_its_own_year() {
+    use sq_core::calc::LimitUsage;
+
+    let json = serde_json::to_value(LimitUsage {
+        limit_id: "limit-1".into(),
+        account_id: "acc-1".into(),
+        name: "ISA".into(),
+        from: chrono::NaiveDate::from_ymd_opt(2025, 4, 6).unwrap(),
+        to: chrono::NaiveDate::from_ymd_opt(2026, 4, 5).unwrap(),
+        allowance: dec!(20000),
+        used: dec!(12000),
+        remaining: dec!(8000),
+        share: dec!(0.6),
+        currency: "GBP".into(),
+        withdrawals_restore: false,
+    })
+    .unwrap();
+
+    assert_eq!(
+        keys(&json),
+        [
+            "account_id",
+            "allowance",
+            "currency",
+            "from",
+            "limit_id",
+            "name",
+            "remaining",
+            "share",
+            "to",
+            "used",
+            "withdrawals_restore",
+        ]
+    );
+    assert_eq!(json["from"], Value::String("2025-04-06".into()));
+    assert_eq!(json["to"], Value::String("2026-04-05".into()));
+    assert_eq!(json["used"], Value::String("12000".into()));
+}

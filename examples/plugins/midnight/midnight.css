@@ -1,0 +1,23 @@
+/*
+ * Midnight — a darker, bluer variation of the built-in dark scheme.
+ *
+ * A theme redefines the app's custom properties and nothing else. It is loaded only while it is
+ * the chosen theme, so plain `:root` rules are enough and no selector of the app's is needed;
+ * everything left alone keeps the value from `base` ("dark" here).
+ */
+:root {
+  --bg: #06080f;
+  --surface: #0d1019;
+  --surface-2: #121621;
+  --surface-3: #171c29;
+  --border: #1d2331;
+  --border-strong: #2a3143;
+  --text: #e8ecf6;
+  --text-2: #98a1b8;
+  --text-3: #7b839a;
+  --accent: #5b9dff;
+  --accent-line: #4a8cf5;
+  --accent-soft: rgba(74, 140, 245, 0.18);
+  --accent-softer: rgba(74, 140, 245, 0.08);
+  --grid: #1a2030;
+}

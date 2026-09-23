@@ -1,7 +1,9 @@
 import { useId, type ReactNode } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { Modal } from "./Modal";
-import { CANCEL, ErrorText, SUBMIT, SUBMITTING, Submit } from "./Form";
+import { ErrorText, Submit } from "./Form";
+import { CANCEL, SUBMIT, SUBMITTING } from "./formLabels";
+import { IS_MAC } from "../../lib/commands";
 
 export interface FormDialogProps {
   title: ReactNode;
@@ -67,6 +69,13 @@ export function FormDialog({
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit();
+        }}
+        // `mod+Enter` saves from anywhere in the form, a multi-line note included, where Enter
+        // is a new line. It asks what the Save button would: nothing while blocked or busy.
+        onKeyDown={(e) => {
+          if (e.key !== "Enter" || !(IS_MAC ? e.metaKey : e.ctrlKey) || e.nativeEvent.isComposing) return;
+          e.preventDefault();
+          if (ready !== false && !busy) e.currentTarget.requestSubmit();
         }}
       >
         {children}
