@@ -634,6 +634,10 @@ msgstr "{from} — сейчас"
 msgid "{hidden, plural, one {# more figure} other {# more figures}}"
 msgstr "{hidden, plural, one {ещё # показатель} few {ещё # показателя} many {ещё # показателей} other {ещё # показателя}}"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "{models, plural, one {# own model} other {# own models}}"
+msgstr "{models, plural, one {# своя модель} few {# свои модели} many {# своих моделей} other {# своих моделей}}"
+
 #: src/screens/Import/MapRow.tsx
 msgid "{occurrences, plural, one {# row} other {# rows}}"
 msgstr "{occurrences, plural, one {# строка} few {# строки} many {# строк} other {# строк}}"
@@ -957,6 +961,10 @@ msgstr "Группа выбирается источником данных вн
 msgid "A key is saved"
 msgstr "Ключ сохранён"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "A key is saved · {added}"
+msgstr "Ключ сохранён · {added}"
+
 #: src/screens/Accounts/LimitsPanel.tsx
 msgid "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
 msgstr "Лимит — годовой потолок пополнений одного счёта: ISA, 401(k), ИИС. Вы задаёте сумму и день начала года; приложение считает внесённое и ничего не блокирует."
@@ -1275,6 +1283,10 @@ msgstr "Добавить инструменты…"
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Add key"
 msgstr "Добавить ключ"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Add models to the picker"
+msgstr "Добавить модели в список"
 
 #: src/components/domain/SecurityPopup.tsx
 #: src/screens/Alerts/index.tsx
@@ -4807,6 +4819,14 @@ msgstr "Режим"
 msgid "Model"
 msgstr "Модель"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Model ids"
+msgstr "Идентификаторы моделей"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Models for {name}"
+msgstr "Модели {name}"
+
 #: src/screens/Onboarding.tsx
 msgid "Money and instruments live on separate accounts: cash on one, securities on another that settles through it."
 msgstr "Деньги и инструменты живут на разных счетах: наличные на одном, бумаги на другом, расчёты по которому идут через первый."
@@ -5294,6 +5314,10 @@ msgstr "Под этот уровень не попадает ни одна бу�
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "No key saved"
 msgstr "Ключ не сохранён"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "No key saved · {added}"
+msgstr "Ключ не сохранён · {added}"
 
 #: src/screens/Settings/DataPanel.tsx
 msgid "No layouts"
@@ -5902,6 +5926,10 @@ msgstr "Одна старая бумага становится"
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "one per distinct value"
 msgstr "по одной на каждое значение"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "One per line, exactly as the provider spells it. They are offered in the chat's model picker after the provider's own."
+msgstr "По одному в строке, в точности как пишет провайдер. Они появятся в списке моделей чата после моделей самого провайдера."
 
 #: src/screens/Import/ParseStep.tsx
 msgid "one row per unique transaction kind; \"do not import\" is a decision too"

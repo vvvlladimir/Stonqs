@@ -34,14 +34,32 @@ impl GeminiProvider {
     }
 }
 
-impl AiProvider for GeminiProvider {
-    fn stream(
-        &self,
-        request: &AiRequest,
-        sink: &mut dyn FnMut(AiEvent),
-        cancelled: &dyn Fn() -> bool,
-    ) -> AiResult<AiTurn> {
-        let body = build_request(request);
+/// One request's outcome before the stream is read: an answer, or Google's 429.
+enum Attempt {
+    Answered(ureq::http::Response<ureq::Body>),
+    Throttled(AiError),
+}
+
+/// Models whose search grounding Google refused with a 429 during this run.
+static NO_SEARCH: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
+fn search_refused(model: &str) -> bool {
+    NO_SEARCH
+        .lock()
+        .is_ok_and(|models| models.iter().any(|m| m == model))
+}
+
+fn refuse_search(model: &str) {
+    if let Ok(mut models) = NO_SEARCH.lock()
+        && !models.iter().any(|m| m == model)
+    {
+        models.push(model.to_string());
+    }
+}
+
+impl GeminiProvider {
+    fn post(&self, request: &AiRequest, search: bool) -> AiResult<Attempt> {
+        let body = build_request(request, search);
         let bytes = serde_json::to_vec(&body).map_err(|e| AiError::Storage(e.to_string()))?;
 
         let agent = ureq::Agent::config_builder()
@@ -69,22 +87,77 @@ impl AiProvider for GeminiProvider {
             return Err(AiError::Auth("the provider rejected this key".into()));
         }
         if status == 429 {
-            let retry_after = response
+            let header = response
                 .headers()
                 .get("retry-after")
                 .and_then(|v| v.to_str().ok())
                 .and_then(|s| s.parse().ok());
-            return Err(AiError::RateLimit {
-                message: "rate limited by the provider".into(),
-                retry_after,
-            });
+            let text = response.body_mut().read_to_string().unwrap_or_default();
+            return Ok(Attempt::Throttled(throttled(&text, header)));
         }
         if status >= 400 {
             let text = response.body_mut().read_to_string().unwrap_or_default();
             return Err(super::http_error(status, &text));
         }
+        Ok(Attempt::Answered(response))
+    }
+}
+
+impl AiProvider for GeminiProvider {
+    fn stream(
+        &self,
+        request: &AiRequest,
+        sink: &mut dyn FnMut(AiEvent),
+        cancelled: &dyn Fn() -> bool,
+    ) -> AiResult<AiTurn> {
+        let search = request.web_search && !search_refused(&request.model);
+        let mut response = match self.post(request, search)? {
+            Attempt::Answered(response) => response,
+            // Grounding has a quota of its own, and on the free tier it can be zero for a model
+            // whose plain requests are allowed — so a 429 with search on is asked once more
+            // without it, and the model is not offered search again for the rest of the run.
+            Attempt::Throttled(_) if search => {
+                refuse_search(&request.model);
+                match self.post(request, false)? {
+                    Attempt::Answered(response) => response,
+                    Attempt::Throttled(error) => return Err(error),
+                }
+            }
+            Attempt::Throttled(error) => return Err(error),
+        };
 
         read_stream(BufReader::new(response.body_mut().as_reader()), sink, cancelled)
+    }
+}
+
+/// Google answers 429 for two different things: a per-minute throttle, which passes, and a quota
+/// that will not come back today (`PerDay`) or was never granted to this key (`limit: 0`, a model
+/// the free tier does not include). "Try again shortly" is wrong for the second, so it goes out as
+/// the provider's own error, with Google's message saying which quota ran out.
+fn throttled(body: &str, header: Option<u64>) -> AiError {
+    let parsed: serde_json::Value = serde_json::from_str(body).unwrap_or_default();
+    let message = parsed["error"]["message"].as_str().unwrap_or_default();
+    let details = parsed["error"]["details"].as_array().cloned().unwrap_or_default();
+    let exhausted = message.contains("limit: 0")
+        || details.iter().any(|detail| {
+            detail["violations"].as_array().is_some_and(|violations| {
+                violations
+                    .iter()
+                    .any(|v| v["quotaId"].as_str().is_some_and(|id| id.contains("PerDay")))
+            })
+        });
+    if exhausted {
+        return super::http_error(429, body);
+    }
+    // `RetryInfo.retryDelay` is `"37s"`; the header, when present, says the same.
+    let delay = details
+        .iter()
+        .find_map(|detail| detail["retryDelay"].as_str())
+        .and_then(|delay| delay.trim_end_matches('s').parse::<f64>().ok())
+        .map(|seconds| seconds.ceil() as u64);
+    AiError::RateLimit {
+        message: "rate limited by the provider".into(),
+        retry_after: header.or(delay),
     }
 }
 
@@ -263,7 +336,7 @@ fn usage_of(usage: &Value) -> Option<Usage> {
     })
 }
 
-fn build_request(request: &AiRequest) -> Value {
+fn build_request(request: &AiRequest, search: bool) -> Value {
     let contents: Vec<Value> = request
         .messages
         .iter()
@@ -296,7 +369,7 @@ fn build_request(request: &AiRequest) -> Value {
     }
     // Google runs this one itself and puts what it found in the model's own context; the queries
     // it ran come back as grounding metadata.
-    if request.web_search {
+    if search {
         tools.push(json!({ "googleSearch": {} }));
     }
 
@@ -504,6 +577,24 @@ fn tool_of(call_id: &str) -> &str {
 mod tests {
     use super::*;
 
+    #[test]
+    fn a_quota_that_is_gone_for_the_day_is_not_a_throttle() {
+        let body = r#"{"error":{"code":429,"message":"You exceeded your current quota. Quota exceeded for metric: generate_content_free_tier_requests, limit: 0, model: gemini-3.8-flash","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}]}}"#;
+        match throttled(body, None) {
+            AiError::Provider(message) => assert!(message.contains("limit: 0"), "{message}"),
+            other => panic!("expected the provider's own error, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_per_minute_throttle_says_when_to_come_back() {
+        let body = r#"{"error":{"code":429,"message":"Resource exhausted","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaId":"GenerateRequestsPerMinutePerProjectPerModel"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"36.4s"}]}}"#;
+        match throttled(body, None) {
+            AiError::RateLimit { retry_after, .. } => assert_eq!(retry_after, Some(37)),
+            other => panic!("expected a rate limit, got {other:?}"),
+        }
+    }
+
     fn request() -> AiRequest {
         AiRequest {
             system: "be terse".into(),
@@ -520,7 +611,7 @@ mod tests {
 
     #[test]
     fn the_system_text_is_its_own_field_and_the_moving_part_goes_last() {
-        let body = build_request(&request());
+        let body = build_request(&request(), request().web_search);
         assert_eq!(
             body["systemInstruction"]["parts"][0]["text"],
             "be terse\n\nToday is 2026-09-18."
@@ -586,7 +677,7 @@ mod tests {
             }],
             ..request()
         };
-        let body = build_request(&request);
+        let body = build_request(&request, request.web_search);
         let declaration = &body["tools"][0]["functionDeclarations"][0];
         assert_eq!(declaration["name"], "portfolio_overview");
         assert!(declaration.get("parameters").is_none());

@@ -26,7 +26,10 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   when the result is replayed (`functionResponse` names the function, not a call); a tool result
   is said by the *user* role, because there is no third one; and thinking is counted **beside**
   the answer (`thoughtsTokenCount` outside `candidatesTokenCount`), so the two are added to keep
-  this app's rule that reasoning is part of output.
+  this app's rule that reasoning is part of output. Two 429s are also read there: a quota gone for the day or never
+  granted (`limit: 0`) is the provider's own error, not "try again shortly"; and a 429 on a request
+  carrying `googleSearch` is asked once more without it — grounding has its own free-tier quota,
+  often zero — and that model gets no search for the rest of the run.
 - Beside the two built-in providers there is **one the user configures** (`catalog::CUSTOM`,
   `AppSettings::ai_custom`): a label, a base URL, a `Wire` and a model id. It is a provider only
   once it has an address and a model, and its key is *optional* — a model served from the user's
@@ -171,6 +174,10 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   catalogue, and the chat's own model is always an option whatever the list says. Everything else
   a catalogue carries — dated snapshots, `-codex`, `-chat-latest`, transcription — answers a
   different question than "who answers this chat".
+- The user can add ids to any provider's picker by hand (`AppSettings::ai_extra_models`, Settings →
+  a provider's row). They are joined after the shortlist in `commands::ai::models_for`, **after**
+  the cache so an edit shows at once, and they count as "on offer" for `models::remembered`. No id
+  is validated there: the first send with a misspelled one returns the provider's own error.
 - A reading is shown while it happens: `AiEvent::ToolRunning` / `ToolFinished` / `Searching` drive
   the same component the persisted blocks do, so it does not change shape once saved. Consecutive
   readings are one rail (`components/domain/aiSteps.ts` builds the same `Step` from live events and

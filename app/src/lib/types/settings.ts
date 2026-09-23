@@ -25,6 +25,8 @@ export interface AppSettings {
   /** The model last picked in a chat, per provider. Absent, a chat starts on the smallest tier.
    * Written by the chat commands only; `settings_save` keeps what is stored. */
   ai_models: Record<string, string>;
+  /** Model ids the user added per provider, offered in the chat's picker after the provider's own. */
+  ai_extra_models: Record<string, string[]>;
   /** The thinking effort last picked in a chat, where the next chat starts. */
   ai_effort: AiEffort;
   /** The server the user points the app at themselves. Empty until configured. */

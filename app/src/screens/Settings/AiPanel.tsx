@@ -13,9 +13,9 @@ import { UsagePanel } from "./ai/UsagePanel";
 /**
  * BYOK only: the key is saved straight to the OS keychain and never comes back to this screen.
  *
- * There is no model here. A chat lands on whatever its provider offers first today, and the one
- * place a model id is written down is the custom server, where the user supplies both the
- * address and what to ask it for.
+ * There is no model to start on here: a new chat starts where the last chat's choice left off
+ * (ADR-0069). What the user can add is ids to a provider's picker (`KeysPanel`), for a model the
+ * shortlist leaves out.
  */
 export function AiPanel() {
   const { t } = useLingui();
@@ -29,6 +29,13 @@ export function AiPanel() {
     // The model list is the custom server's own, and this screen can change which server that
     // is; the built-in providers' lists are untouched by anything here.
     onSuccess: () => invalidate(keys.settings(), keys.aiProviders(), keys.aiModels(CUSTOM_PROVIDER)),
+  });
+
+  // The picker's list is the provider's shortlist plus these, so it is refetched for every
+  // provider rather than only the custom one.
+  const saveModels = useMutation({
+    mutationFn: api.settingsSave,
+    onSuccess: () => invalidate(keys.settings(), keys.aiModels()),
   });
 
   if (settings.isError) return <QueryError error={settings.error} />;
@@ -84,7 +91,13 @@ export function AiPanel() {
         </Form>
       </Panel>
 
-      <KeysPanel providers={listed} />
+      <KeysPanel
+        providers={listed}
+        extraModels={current.ai_extra_models}
+        onSaveModels={(provider, ids) =>
+          saveModels.mutate({ ...current, ai_extra_models: { ...current.ai_extra_models, [provider]: ids } })
+        }
+      />
       <CustomPanel
         key={JSON.stringify(current.ai_custom)}
         settings={current}

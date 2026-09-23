@@ -106,13 +106,16 @@ fn rank_gemini(id: &str) -> u8 {
 }
 
 /// Pro, Flash, Flash-Lite — the three tiers Google sells. `-lite` is checked by matching the
-/// whole suffix, because it also contains `flash`; anything else after the version (`-preview`,
-/// `-thinking`, `-latest`) is a variant for a different job and is not offered here.
+/// whole suffix, because it also contains `flash`. A `-preview` counts: Google ships a new
+/// generation as a preview for months and retires the old stable id meanwhile, so skipping
+/// previews offered a model the API already refuses. Other suffixes (`-thinking`, `-tts`, `-image`)
+/// are a variant for a different job and are not offered here.
 fn tier_gemini(id: &str) -> Option<u8> {
     let rest = dated(id).unwrap_or(id).strip_prefix("gemini-")?;
     if !rest.starts_with(|c: char| c.is_ascii_digit()) {
         return None;
     }
+    let rest = rest.split("-preview").next().unwrap_or(rest);
     match rest.trim_start_matches(|c: char| c.is_ascii_digit() || c == '.') {
         "-pro" => Some(0),
         "-flash" => Some(1),
@@ -237,13 +240,20 @@ fn shortlist(ids: Vec<String>, tier: fn(&str) -> Option<u8>) -> Vec<String> {
 /// Version first, then the undated id: `gpt-5.4` beats `gpt-5`, and `gpt-5` beats
 /// `gpt-5-2025-08-07`, which is the same model pinned to a day.
 fn newer(id: &str, than: &str) -> bool {
-    (version(id), dateless(id)) > (version(than), dateless(than))
+    (version(id), dateless(id), stable(id)) > (version(than), dateless(than), stable(than))
+}
+
+/// A preview loses to the released id of the same version, and wins over an older generation.
+fn stable(id: &str) -> bool {
+    !id.contains("-preview")
 }
 
 /// The numbers in an id, with a trailing release date removed first: `claude-opus-4-1-20250805`
 /// is version 4.1, and comparing 20250805 against a minor number would rank it above 4.5.
 fn version(id: &str) -> Vec<u64> {
     let stem = dated(id).unwrap_or(id);
+    // `-preview-09-2025` is a date spelled Google's way, not part of the version.
+    let stem = stem.split("-preview").next().unwrap_or(stem);
     let mut numbers = Vec::new();
     let mut digits = String::new();
     for ch in stem.chars() {
@@ -477,6 +487,30 @@ mod tests {
         assert_eq!(
             picked,
             ["gemini-3.1-pro", "gemini-3.8-flash", "gemini-3.1-flash-lite"]
+        );
+    }
+
+    #[test]
+    fn gemini_offers_a_preview_when_the_new_generation_has_no_stable_id_yet() {
+        // What Google listed when `gemini-2.5-pro` was already refused to new keys.
+        let picked = pick(
+            &[
+                "gemini-2.5-flash-preview-09-2025",
+                "gemini-2.5-pro",
+                "gemini-3.1-pro-preview",
+                "gemini-3.5-flash-lite",
+                "gemini-3.8-flash",
+                "gemini-3.8-flash-preview",
+            ],
+            tier_gemini,
+        );
+        assert_eq!(
+            picked,
+            [
+                "gemini-3.1-pro-preview",
+                "gemini-3.8-flash",
+                "gemini-3.5-flash-lite"
+            ]
         );
     }
 

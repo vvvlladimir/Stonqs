@@ -47,6 +47,12 @@ read back: the row can say a key is saved, and nothing more. `Connect` and `Repl
 overwritten, never shown. Connecting several providers is normal — an individual chat picks which
 one answers it, and the choice above only decides where a fresh chat begins.
 
+A chat's model list shows three models per provider: the newest of each size. The chip button on
+a provider's row (`Add models to the picker`) adds more by hand, one model id per line, spelled
+exactly as the provider spells it. They appear in the chat's model list after the provider's own,
+immediately, including a model the provider's catalogue does not list. A misspelled id is not
+checked here; the first message sent with it returns the provider's error.
+
 **Your own provider** points the app at a server of your choosing: a gateway, another vendor, or a
 model running on this machine. It needs an address ending at the version (for example
 `https://openrouter.ai/api/v1`), the API format that server speaks, and the exact model id to ask

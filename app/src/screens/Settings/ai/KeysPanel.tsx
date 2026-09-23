@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { KeyIcon } from "@phosphor-icons/react";
+import { plural } from "@lingui/core/macro";
+import { CpuIcon, KeyIcon } from "@phosphor-icons/react";
 import { api } from "../../../lib/api";
 import { useProviderName } from "../../../lib/ai";
 import { keys, useAiKeyStatus, useInvalidate, useProfiles } from "../../../lib/queries";
@@ -17,10 +18,20 @@ import { Badge, Field, FormDialog, ListRow, Panel, SecretInput } from "../../../
  * The key never comes back: `ai_key_status` reports whether one is saved and nothing more, so
  * the field is always empty and always a replacement.
  */
-export function KeysPanel({ providers }: { providers: AiProvider[] }) {
+export function KeysPanel({
+  providers,
+  extraModels,
+  onSaveModels,
+}: {
+  providers: AiProvider[];
+  /** Ids the user added per provider, offered in the chat's model picker. */
+  extraModels: Record<string, string[]>;
+  onSaveModels: (provider: string, ids: string[]) => void;
+}) {
   const { t } = useLingui();
   const name = useProviderName();
   const [editing, setEditing] = useState<string | null>(null);
+  const [models, setModels] = useState<string | null>(null);
   // A key is kept only behind the profile's password, so the first one asks for that first and
   // then carries on to the key it was opened for.
   const [protecting, setProtecting] = useState<string | null>(null);
@@ -38,9 +49,22 @@ export function KeysPanel({ providers }: { providers: AiProvider[] }) {
           key={provider.id}
           provider={provider.id}
           name={name(provider.id, provider.label)}
+          models={extraModels[provider.id]?.length ?? 0}
           onEdit={() => edit(provider.id)}
+          onModels={() => setModels(provider.id)}
         />
       ))}
+      {models && (
+        <ModelsDialog
+          name={name(models, providers.find((p) => p.id === models)?.label)}
+          ids={extraModels[models] ?? []}
+          onSave={(ids) => {
+            onSaveModels(models, ids);
+            setModels(null);
+          }}
+          onClose={() => setModels(null)}
+        />
+      )}
       {protecting && (
         <PasswordDialog
           change={false}
@@ -60,26 +84,101 @@ export function KeysPanel({ providers }: { providers: AiProvider[] }) {
   );
 }
 
-function KeyRow({ provider, name, onEdit }: { provider: string; name: string; onEdit: () => void }) {
+function KeyRow({
+  provider,
+  name,
+  models,
+  onEdit,
+  onModels,
+}: {
+  provider: string;
+  name: string;
+  /** How many model ids the user added for this provider. */
+  models: number;
+  onEdit: () => void;
+  onModels: () => void;
+}) {
   const { t } = useLingui();
   const status = useAiKeyStatus(provider);
   const saved = status.data ?? false;
+  const added = plural(models, { one: "# own model", other: "# own models" });
 
   return (
     <ListRow
       box
       lead={<KeyIcon />}
       title={name}
-      sub={saved ? t`A key is saved` : t`No key saved`}
+      sub={
+        models > 0
+          ? saved
+            ? t`A key is saved · ${added}`
+            : t`No key saved · ${added}`
+          : saved
+            ? t`A key is saved`
+            : t`No key saved`
+      }
       end={
         <>
           <Badge tone={saved ? "in" : "neutral"}>{saved ? t`Connected` : t`Not connected`}</Badge>
+          <button
+            type="button"
+            className="iconbtn iconbtn--sm"
+            aria-label={t`Models for ${name}`}
+            data-tip={t`Add models to the picker`}
+            onClick={onModels}
+          >
+            <CpuIcon />
+          </button>
           <button type="button" className="btn btn--sm btn--ghost" onClick={onEdit}>
             {saved ? <Trans>Replace</Trans> : <Trans>Connect</Trans>}
           </button>
         </>
       }
     />
+  );
+}
+
+/** Model ids typed in by hand, one per line. They join the chat's picker after the provider's own
+ * shortlist, so a model the shortlist leaves out (or the catalogue does not list) is reachable. */
+function ModelsDialog({
+  name,
+  ids,
+  onSave,
+  onClose,
+}: {
+  name: string;
+  ids: string[];
+  onSave: (ids: string[]) => void;
+  onClose: () => void;
+}) {
+  const { t } = useLingui();
+  const [text, setText] = useState(ids.join("\n"));
+  const parsed = [
+    ...new Set(
+      text
+        .split(/[\n,]/)
+        .map((id) => id.trim())
+        .filter((id) => id !== ""),
+    ),
+  ];
+
+  return (
+    <FormDialog title={t`Models for ${name}`} onClose={onClose} onSubmit={() => onSave(parsed)} ready>
+      <Field
+        label={t`Model ids`}
+        hint={t`One per line, exactly as the provider spells it. They are offered in the chat's model picker after the provider's own.`}
+      >
+        <textarea
+          autoFocus
+          rows={5}
+          spellCheck={false}
+          // eslint-disable-next-line lingui/no-unlocalized-strings -- a model id, not text
+          placeholder="gemini-3.1-pro-preview"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+      </Field>
+    </FormDialog>
   );
 }
 

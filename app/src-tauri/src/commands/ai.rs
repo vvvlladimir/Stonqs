@@ -232,17 +232,44 @@ pub fn ai_models_list(state: State<AppState>, provider: Option<String>) -> UiRes
     models_for(&state, &provider)
 }
 
-/// The provider's shortlist, asked for once per run. Every caller goes through here, so the
-/// picker and the model a new chat lands on can never disagree about what is on offer.
+/// The provider's shortlist, asked for once per run, then the ids the user added for it. Every
+/// caller goes through here, so the picker and the model a new chat lands on can never disagree
+/// about what is on offer. The added ids are joined after the cache, so an edit in Settings
+/// shows at once.
 fn models_for(state: &AppState, provider: &str) -> UiResult<Vec<String>> {
-    if let Some(cached) = state.ai_models.lock().ok().and_then(|c| c.get(provider).cloned()) {
-        return Ok(cached);
-    }
-    let custom = state.settings()?.ai_custom.clone();
-    let key = state.key_for_call(provider)?;
-    let listed = models::list(provider, &key, &custom)?;
-    if let Ok(mut cache) = state.ai_models.lock() {
-        cache.insert(provider.to_string(), listed.clone());
+    let (custom, extra) = {
+        let settings = state.settings()?;
+        let extra = settings
+            .ai_extra_models
+            .get(provider)
+            .cloned()
+            .unwrap_or_default();
+        (settings.ai_custom.clone(), extra)
+    };
+    let cached = state.ai_models.lock().ok().and_then(|c| c.get(provider).cloned());
+    let mut listed = match cached {
+        Some(listed) => listed,
+        None => {
+            let listed = state
+                .key_for_call(provider)
+                .and_then(|key| Ok(models::list(provider, &key, &custom)?));
+            match listed {
+                Ok(listed) => {
+                    if let Ok(mut cache) = state.ai_models.lock() {
+                        cache.insert(provider.to_string(), listed.clone());
+                    }
+                    listed
+                }
+                // A catalogue that cannot be read still leaves the user's own ids to pick from.
+                Err(_) if !extra.is_empty() => Vec::new(),
+                Err(error) => return Err(error),
+            }
+        }
+    };
+    for id in extra.iter().map(|id| id.trim()).filter(|id| !id.is_empty()) {
+        if !listed.iter().any(|listed| listed == id) {
+            listed.push(id.to_string());
+        }
     }
     Ok(listed)
 }

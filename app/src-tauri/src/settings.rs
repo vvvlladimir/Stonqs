@@ -60,6 +60,11 @@ pub struct AppSettings {
     /// the provider has since retired gives way to the newest of its tier.
     #[serde(default)]
     pub ai_models: std::collections::BTreeMap<String, String>,
+    /// Model ids the user typed in per provider (`provider -> ids`), offered in the chat's picker
+    /// after the provider's own shortlist: a model the shortlist leaves out, or one the
+    /// provider's catalogue does not list at all, is still reachable.
+    #[serde(default)]
+    pub ai_extra_models: std::collections::BTreeMap<String, Vec<String>>,
     /// The thinking effort last picked in a chat; where the next chat starts.
     #[serde(default)]
     pub ai_effort: sq_core::model::AiEffort,
@@ -102,6 +107,7 @@ impl Default for AppSettings {
             ai_enabled: false,
             ai_provider: ai_provider_default(),
             ai_models: Default::default(),
+            ai_extra_models: Default::default(),
             ai_effort: Default::default(),
             ai_web_search: ai_web_search_default(),
             ai_reasoning: false,

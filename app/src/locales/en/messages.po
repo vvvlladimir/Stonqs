@@ -634,6 +634,10 @@ msgstr "{from} — now"
 msgid "{hidden, plural, one {# more figure} other {# more figures}}"
 msgstr "{hidden, plural, one {# more figure} other {# more figures}}"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "{models, plural, one {# own model} other {# own models}}"
+msgstr "{models, plural, one {# own model} other {# own models}}"
+
 #: src/screens/Import/MapRow.tsx
 msgid "{occurrences, plural, one {# row} other {# rows}}"
 msgstr "{occurrences, plural, one {# row} other {# rows}}"
@@ -957,6 +961,10 @@ msgstr "A group is picked as the data source at the bottom of the navigation; ev
 msgid "A key is saved"
 msgstr "A key is saved"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "A key is saved · {added}"
+msgstr "A key is saved · {added}"
+
 #: src/screens/Accounts/LimitsPanel.tsx
 msgid "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
 msgstr "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
@@ -1275,6 +1283,10 @@ msgstr "Add instruments…"
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Add key"
 msgstr "Add key"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Add models to the picker"
+msgstr "Add models to the picker"
 
 #: src/components/domain/SecurityPopup.tsx
 #: src/screens/Alerts/index.tsx
@@ -4812,6 +4824,14 @@ msgstr "Mode"
 msgid "Model"
 msgstr "Model"
 
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Model ids"
+msgstr "Model ids"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "Models for {name}"
+msgstr "Models for {name}"
+
 #: src/screens/Onboarding.tsx
 msgid "Money and instruments live on separate accounts: cash on one, securities on another that settles through it."
 msgstr "Money and instruments live on separate accounts: cash on one, securities on another that settles through it."
@@ -5299,6 +5319,10 @@ msgstr "No instrument of the current data source falls under this level."
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "No key saved"
 msgstr "No key saved"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "No key saved · {added}"
+msgstr "No key saved · {added}"
 
 #: src/screens/Settings/DataPanel.tsx
 msgid "No layouts"
@@ -5907,6 +5931,10 @@ msgstr "One old share becomes"
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "one per distinct value"
 msgstr "one per distinct value"
+
+#: src/screens/Settings/ai/KeysPanel.tsx
+msgid "One per line, exactly as the provider spells it. They are offered in the chat's model picker after the provider's own."
+msgstr "One per line, exactly as the provider spells it. They are offered in the chat's model picker after the provider's own."
 
 #: src/screens/Import/ParseStep.tsx
 msgid "one row per unique transaction kind; \"do not import\" is a decision too"
