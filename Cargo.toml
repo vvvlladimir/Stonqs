@@ -11,6 +11,8 @@ edition = "2024"
 # CI and a clone actually use; this is the floor a dependency is resolved against.
 rust-version = "1.87"
 license = "AGPL-3.0-only"
+homepage = "https://stonqs.app"
+repository = "https://github.com/vvvlladimir/stonqs"
 
 [workspace.dependencies]
 rust_decimal = { version = "1", features = ["serde-with-str", "maths"] }

@@ -35,10 +35,8 @@ reporting](https://github.com/contact/report-abuse) and the fork rights the lice
 
 If it can be discussed in public, open an issue or a discussion and say so plainly.
 
-If it cannot, use the
-[private vulnerability report form](https://github.com/vvvlladimir/stonqs/security/advisories/new).
-It is named for security reports because that is the only private channel GitHub gives a repository,
-but a conduct report sent there is read the same way and stays between you and the maintainer.
+If it cannot, write to [hello@stonqs.app](mailto:hello@stonqs.app). It reaches the maintainer
+alone and stays between the two of you.
 
 ## Scope
 

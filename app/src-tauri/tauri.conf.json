@@ -24,6 +24,7 @@
   },
   "bundle": {
     "active": true,
+    "homepage": "https://stonqs.app",
     "targets": "all",
     "createUpdaterArtifacts": true,
     "icon": [
