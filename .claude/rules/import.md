@@ -11,8 +11,9 @@
   or a plan is not in it.
 - A broker file is not always a CSV: `import::parse_file` picks the reader off the bytes, and an
   Interactive Brokers Flex statement (XML, ADR-0061) goes to `import::ibflex`, which flattens its
-  sections into the same `ParsedCsv` and carries its own fixed `ImportMapping` — the columns are
-  that module's invention, so there is nothing for a `brokers.json` preset to lay out. Everything
+  sections into the same `ParsedCsv` and carries its own fixed `ImportMapping` — laid out in the
+  **canonical format's own column names** (`import::canonical`, public for exactly this), so
+  there is nothing for a `brokers.json` preset to lay out and no second spelling of one table. Everything
   after the reader is shared. Four things it resolves and nothing downstream could: an `ORDER` row
   supersedes the `EXECUTION` rows of the same purchase (asking for both prints it twice); a forex
   trade (`assetCategory="CASH"`) becomes two linked `TransferIn` legs so it is not read as leaving
@@ -56,6 +57,15 @@
   `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
   `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
   wrong pair erases a real deposit and a real withdrawal from every return figure at once.
+- A shipped layout is only as good as the file it was tried against: `core/tests/fixtures/presets/`
+  holds one folder per layout — the redacted export, what it must be recognised as, and the
+  operations it must produce, written in the canonical format so the expectation needs no second
+  vocabulary. `core/tests/phase3_import/conformance.rs` is the harness, `UPDATE_FIXTURES=1`
+  regenerates an expectation and then fails on purpose so the diff is read. Two more checks run
+  without any fixture: every shipped layout must answer to its own header row (two layouts fitting
+  one file equally well recognise **nothing**, which is how the two Finpension entries turned out
+  to be one), and the layouts with no fixture yet are a list in the harness — the debt is named,
+  never counted.
 - `build_preview` is pure (takes securities + fingerprints as slices); only `ImportService` touches `Store` (same rule for `commit_taxonomy`). Re-importing the same file must be a no-op — `import::fingerprint` guarantees it.
 - Detection is per *language*, never per broker: a rule keyed to one broker's file helps only that broker's customers. Header aliases (`mapping::aliases`) and operation wording (`mapping::keywords`) are dictionaries and live apart from the matching that reads them (`mapping::shape`, `mapping::normalize`); both are ordered canonical-first because the index breaks ties, and sell keywords precede buy ones (`Verkoop` contains `Koop`).
 - Headers lie, values do not. `ImportMapping::detect_with_values` ranks a header match exact > whole word > substring, drops a claim on a column another field names better ("Asset type" is a kind, so it is not a symbol), and lets `ValueShape` veto a weak match — a currency or ISIN column is required to look like one, a date is not, because its format may simply be unknown to us. A column that is empty in every row is not a mapping.
