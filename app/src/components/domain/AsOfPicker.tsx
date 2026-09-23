@@ -4,7 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 
 import { endOfPreviousMonth, endOfPreviousYear, useAsOf } from "../../lib/asOf";
 import { today } from "../../lib/api";
-import { formatDay } from "../../lib/format";
+import { formatDay, formatDayNumeric } from "../../lib/format";
 import { Banner, Field, ListRow, Modal } from "../ui";
 import type { DateString } from "../../lib/types";
 
@@ -24,20 +24,32 @@ export function AsOfPicker({ variant }: { variant: "nav" | "dock" }) {
   };
 
   const Icon = isToday ? CalendarBlankIcon : ClockCounterClockwiseIcon;
-  const button = (
-    <button type="button" className="scope" onClick={() => setOpen(true)}>
-      <Icon className="scope__icon" />
-      <span className="min0">
-        <span className="scope__label">{isToday ? t`Today` : formatDay(date)}</span>
-        <span className="scope__sub">{isToday ? formatDay(date) : t`Past date`}</span>
-      </span>
-      <CaretUpDownIcon className="scope__caret" />
-    </button>
-  );
+  const button =
+    variant === "nav" ? (
+      <button
+        type="button"
+        className="scope scope--row"
+        data-tip={isToday ? t`Today` : t`Past date`}
+        onClick={() => setOpen(true)}
+      >
+        <Icon className="scope__icon" />
+        <span className="scope__label">{formatDayNumeric(date)}</span>
+        <CaretUpDownIcon className="scope__caret" />
+      </button>
+    ) : (
+      <button type="button" className="scope" onClick={() => setOpen(true)}>
+        <Icon className="scope__icon" />
+        <span className="min0">
+          <span className="scope__label">{isToday ? t`Today` : formatDay(date)}</span>
+          <span className="scope__sub">{isToday ? formatDay(date) : t`Past date`}</span>
+        </span>
+        <CaretUpDownIcon className="scope__caret" />
+      </button>
+    );
 
   return (
     <>
-      {variant === "nav" ? <div className="nav__scope">{button}</div> : button}
+      {button}
 
       {open && (
         <Modal title={t`Date`} onClose={() => setOpen(false)}>

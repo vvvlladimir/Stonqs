@@ -61,7 +61,8 @@ If the answer still runs past the ceiling, the tile reports that it was cut off 
 previous text.
 
 The tile's settings also choose who writes it: **Provider** and **Model**. Left empty, it uses the
-provider a new chat starts on and the newest model that provider offers. Every built-in provider is
+provider and model a new chat starts on: the ones last picked in a chat, or that provider's
+smallest model if none was picked. Every built-in provider is
 listed, plus the user's own server once it is configured in Settings; one without a saved key is
 shown as "no key saved" and cannot be picked. If the model refuses to answer or runs out of room mid-answer, the tile
 says so and keeps its previous text.

@@ -249,9 +249,25 @@
   display: grid;
   gap: var(--sp-3);
 }
-.nav__scope .scope {
+/* The two lenses as one box: rows split by a hairline, the value set flush right. */
+.nav__lenses {
+  display: grid;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-input);
+  background: var(--surface);
+  overflow: hidden;
+}
+.nav__lenses .scope {
   width: 100%;
-  justify-content: flex-start;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.nav__lenses .scope + .scope {
+  border-top: 1px solid var(--border);
+}
+.nav__lenses .scope:hover {
+  background: var(--surface-2);
 }
 
 .nav__ghost {

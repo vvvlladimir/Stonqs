@@ -35,8 +35,10 @@ sources are chosen and combined is the `data-sources` topic.
 
 **AI assistant** — whether the panel exists at all, which provider new chats start on, whether the
 assistant may use the provider's web search, and whether it shows a summary of its own reasoning.
-There is no model to choose here: a chat starts on whatever its provider offers today, and the chat
-itself can switch to one of the others that provider serves.
+There is no model to choose here. A new chat starts on the provider, model and thinking effort last
+picked in a chat; before anything was picked, on the provider's smallest (cheapest) model. Choosing
+a provider inside a chat also changes the provider shown here. Whether tools may run without asking
+is never carried over: every new chat asks first.
 
 Below that, **Provider keys** lists every provider with whether a key is saved for it. A key belongs
 to the open profile and is kept only behind that profile's password: in a profile without one,

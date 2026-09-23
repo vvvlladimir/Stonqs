@@ -160,6 +160,43 @@ fn ranked(body: &serde_json::Value, rank: fn(&str) -> u8) -> Vec<String> {
     ids
 }
 
+/// How this provider's ids map to tiers; `None` for the custom provider, whose list begins with
+/// the model the user typed rather than with a flagship.
+fn tiers(provider: &str) -> Option<fn(&str) -> Option<u8>> {
+    match provider {
+        "openai" => Some(tier_openai),
+        "anthropic" => Some(tier_anthropic),
+        "gemini" => Some(tier_gemini),
+        _ => None,
+    }
+}
+
+/// The smallest tier on offer, which is where a chat starts until the user picks otherwise. A
+/// list that names no tier (or the custom provider's) starts on its first entry.
+pub fn smallest(provider: &str, listed: &[String]) -> Option<String> {
+    tiers(provider)
+        .and_then(|tier| {
+            listed
+                .iter()
+                .filter_map(|id| tier(id).map(|slot| (slot, id)))
+                .max_by_key(|(slot, _)| *slot)
+                .map(|(_, id)| id.clone())
+        })
+        .or_else(|| listed.first().cloned())
+}
+
+/// A remembered choice as the list stands today: the id itself while it is still offered,
+/// otherwise the newest model of the same tier — a release must not quietly move the user from
+/// the small model they chose to the flagship, or back.
+pub fn remembered(provider: &str, chosen: &str, listed: &[String]) -> Option<String> {
+    if listed.iter().any(|id| id == chosen) {
+        return Some(chosen.to_string());
+    }
+    let tier = tiers(provider)?;
+    let slot = tier(chosen)?;
+    listed.iter().find(|id| tier(id) == Some(slot)).cloned()
+}
+
 /// The newest id of each tier, in tier order. `tier` returns `None` for everything that is not a
 /// plain chat model of a known family — a dated snapshot still counts, it simply loses to the
 /// undated id of the same version.
@@ -310,6 +347,41 @@ mod tests {
         let mut ids: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
         ids.sort_by_key(|id| (rank(id), id.clone()));
         shortlist(ids, tier)
+    }
+
+    #[test]
+    fn a_chat_starts_on_the_smallest_tier() {
+        let listed: Vec<String> = ["gpt-6-astra", "gpt-6-terra", "gpt-6-luna"]
+            .map(String::from)
+            .into();
+        assert_eq!(smallest("openai", &listed).as_deref(), Some("gpt-6-luna"));
+        let listed: Vec<String> = ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"]
+            .map(String::from)
+            .into();
+        assert_eq!(
+            smallest("anthropic", &listed).as_deref(),
+            Some("claude-haiku-4-5")
+        );
+        // The custom list begins with the model the user typed, and that is where it starts.
+        let listed: Vec<String> = ["my-local-model", "gpt-6-luna"].map(String::from).into();
+        assert_eq!(smallest(CUSTOM, &listed).as_deref(), Some("my-local-model"));
+    }
+
+    #[test]
+    fn a_remembered_model_survives_a_release_in_its_own_tier() {
+        let listed: Vec<String> = ["gpt-6.1-astra", "gpt-6.1-terra", "gpt-6.1-luna"]
+            .map(String::from)
+            .into();
+        assert_eq!(
+            remembered("openai", "gpt-6.1-terra", &listed).as_deref(),
+            Some("gpt-6.1-terra")
+        );
+        // Retired: the newest model of the same tier, not the flagship.
+        assert_eq!(
+            remembered("openai", "gpt-6-terra", &listed).as_deref(),
+            Some("gpt-6.1-terra")
+        );
+        assert_eq!(remembered("openai", "some-unknown-id", &listed), None);
     }
 
     #[test]

@@ -1,6 +1,6 @@
 # 42: A provider the user configures
 
-- Status: Accepted
+- Status: Accepted; the model a new chat starts on superseded by ADR-0069
 
 ## Context
 

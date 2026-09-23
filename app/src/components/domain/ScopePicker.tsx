@@ -45,22 +45,38 @@ export function ScopePicker({ variant }: { variant: "nav" | "dock" }) {
   const current = scope.data.options.find((o) => keyOf(o) === keyOf(scope.data.scope));
   const CurrentIcon = ICONS[scope.data.scope.kind] ?? DatabaseIcon;
 
-  const button = (
-    <button type="button" className="scope" onClick={() => setOpen(true)} disabled={set.isPending}>
-      <CurrentIcon className="scope__icon" />
-      <span className="min0">
-        <span className="scope__label">{current ? scopeLabel(i18n, current) : t`Whole portfolio`}</span>
-        <span className="scope__sub">
-          <Subtitle option={current} />
+  const label = current ? scopeLabel(i18n, current) : t`Whole portfolio`;
+  const button =
+    variant === "nav" ? (
+      <button
+        type="button"
+        className="scope scope--row"
+        data-tip={label}
+        onClick={() => setOpen(true)}
+        disabled={set.isPending}
+      >
+        <CurrentIcon className="scope__icon" />
+        <span className="scope__label">
+          {current?.kind === "PORTFOLIO" || !current ? t`Whole portfolio` : label}
         </span>
-      </span>
-      <CaretUpDownIcon className="scope__caret" />
-    </button>
-  );
+        <CaretUpDownIcon className="scope__caret" />
+      </button>
+    ) : (
+      <button type="button" className="scope" onClick={() => setOpen(true)} disabled={set.isPending}>
+        <CurrentIcon className="scope__icon" />
+        <span className="min0">
+          <span className="scope__label">{label}</span>
+          <span className="scope__sub">
+            <Subtitle option={current} />
+          </span>
+        </span>
+        <CaretUpDownIcon className="scope__caret" />
+      </button>
+    );
 
   return (
     <>
-      {variant === "nav" ? <div className="nav__scope">{button}</div> : button}
+      {button}
 
       {open && (
         <Modal title={t`Data source`} onClose={() => setOpen(false)}>

@@ -14,8 +14,9 @@ use serde::{Deserialize, Serialize};
 
 /// One entry per provider the app can reach without being configured. `default_model` is the
 /// **fallback** a chat starts on when the provider's own catalogue cannot be read (no key yet,
-/// no network): what a chat normally lands on is the newest model that catalogue offers, so a
-/// build older than a model release does not pin every new chat to a retired id.
+/// no network): what a chat normally lands on is the smallest tier that catalogue offers today
+/// (`models::smallest`), so a build older than a model release does not pin every new chat to a
+/// retired id. The fallback is the small tier too, for the same reason.
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct Provider {
     pub id: &'static str,
@@ -26,15 +27,15 @@ pub struct Provider {
 pub const PROVIDERS: &[Provider] = &[
     Provider {
         id: "openai",
-        default_model: "gpt-5.6-sol",
+        default_model: "gpt-5.6-luna",
     },
     Provider {
         id: "anthropic",
-        default_model: "claude-opus-5",
+        default_model: "claude-haiku-4-5",
     },
     Provider {
         id: "gemini",
-        default_model: "gemini-3.1-pro",
+        default_model: "gemini-3.1-flash-lite",
     },
 ];
 

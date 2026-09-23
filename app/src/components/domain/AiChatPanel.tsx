@@ -41,7 +41,6 @@ import {
 import { liveSteps, storedSteps, type Step } from "./aiSteps";
 import {
   Banner,
-  Empty,
   ErrorText,
   Field,
   FormDialog,
@@ -60,7 +59,7 @@ export function AiToggle({ open, onToggle }: { open: boolean; onToggle: () => vo
   const settings = useSettings();
   if (!settings.data?.ai_enabled) return null;
   return (
-    <button type="button" className="iconbtn" data-tip={t`AI assistant`} onClick={onToggle}>
+    <button type="button" className="iconbtn ai-toggle" data-tip={t`AI assistant`} onClick={onToggle}>
       <SparkleIcon weight={open ? "fill" : "regular"} />
     </button>
   );
@@ -133,7 +132,12 @@ export function AiChatPanel({ onClose }: { onClose: () => void }) {
               )}
             </span>
           </div>
-          <button type="button" className="iconbtn iconbtn--sm" aria-label={t`Close`} onClick={onClose}>
+          <button
+            type="button"
+            className="iconbtn iconbtn--sm ai-head__close"
+            aria-label={t`Close`}
+            onClick={onClose}
+          >
             <XIcon />
           </button>
         </header>
@@ -246,9 +250,17 @@ function ChatList({ onOpen }: { onOpen: (id: string) => void }) {
           </Banner>
         )}
         {chats.data.length === 0 ? (
-          <Empty title={t`No chats yet`}>
-            <Trans>Ask about performance, allocation, a single holding — anything on screen.</Trans>
-          </Empty>
+          <div className="ai-opener">
+            <span className="ai-mark ai-mark--big" aria-hidden>
+              <SparkleIcon weight="fill" />
+            </span>
+            <h3>
+              <Trans>No chats yet</Trans>
+            </h3>
+            <p className="muted">
+              <Trans>Ask about performance, allocation, a single holding — anything on screen.</Trans>
+            </p>
+          </div>
         ) : (
           <div className="ai-chats">
             {chats.data.map((chat: AiChat) => (
@@ -295,11 +307,11 @@ function ChatList({ onOpen }: { onOpen: (id: string) => void }) {
       <button
         type="button"
         className="ai-fab"
-        aria-label={t`New chat`}
         disabled={create.isPending || !connected}
         onClick={() => create.mutate()}
       >
         <PlusIcon weight="bold" />
+        <Trans>New chat</Trans>
       </button>
     </>
   );
@@ -330,15 +342,15 @@ function ActiveChat({ chatId }: { chatId: string }) {
   });
   const setEffort = useMutation({
     mutationFn: (next: AiEffort) => api.aiChatSetEffort(chatId, next),
-    onSuccess: () => invalidate(keys.aiChats()),
+    onSuccess: () => invalidate(keys.aiChats(), keys.settings()),
   });
   const setModel = useMutation({
     mutationFn: (next: string) => api.aiChatSetModel(chatId, next),
-    onSuccess: () => invalidate(keys.aiChats()),
+    onSuccess: () => invalidate(keys.aiChats(), keys.settings()),
   });
   const setProvider = useMutation({
     mutationFn: (next: string) => api.aiChatSetProvider(chatId, next),
-    onSuccess: () => invalidate(keys.aiChats()),
+    onSuccess: () => invalidate(keys.aiChats(), keys.settings()),
   });
   const { pending, thinking, busy, live, request, error, usage, send, decide, stop } = useChatSend(chatId);
   const [text, setText] = useState("");
@@ -376,6 +388,7 @@ function ActiveChat({ chatId }: { chatId: string }) {
         {grants.data && grants.data.length > 0 && <GrantedTools tools={grants.data} />}
       </div>
       <div className="ai-compose">
+        <TokenCount usage={usage} busy={busy} />
         <Composer
           text={text}
           busy={busy}
@@ -402,7 +415,6 @@ function ActiveChat({ chatId }: { chatId: string }) {
               onChange={(next) => setModel.mutate(next)}
             />
           )}
-          <TokenCount usage={usage} busy={busy} />
         </div>
       </div>
     </>
