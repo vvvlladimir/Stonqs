@@ -43,7 +43,13 @@ export function TooltipLayer() {
     document.addEventListener("pointerdown", clear);
     document.addEventListener("focusin", onOver);
     document.addEventListener("scroll", clear, true);
+    // A bubble must be dismissible without moving the pointer or the focus (WCAG 1.4.13).
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAnchor(null);
+    };
+    document.addEventListener("keydown", onKey);
     return () => {
+      document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerover", onOver);
       document.removeEventListener("pointerleave", clear);
       document.removeEventListener("pointerdown", clear);

@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react";
 import { Trans } from "@lingui/react/macro";
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 
 import { onDataChanged } from "./lib/api";
 import {
@@ -30,6 +30,8 @@ import { SyncChip } from "./components/domain/MarketRefresh";
 import { ScopePicker } from "./components/domain/ScopePicker";
 import { AsOfBanner, AsOfPicker } from "./components/domain/AsOfPicker";
 import { Nav } from "./components/Nav";
+import { SCREENS } from "./components/Nav/model";
+import { Commands } from "./components/domain/Commands";
 import { SecurityCardProvider } from "./components/domain/SecurityCardProvider";
 import { UpdateDialog } from "./components/domain/UpdateDialog";
 import { Pending, ToastProvider, TooltipLayer } from "./components/ui";
@@ -74,7 +76,7 @@ export function App() {
   const unseen = useAlertsUnseen();
 
   // Re-renders the shell when the saved preference or the OS language changes the catalog.
-  useLingui();
+  const { i18n } = useLingui();
   useLanguage();
   // A theme installed as a plugin is a stylesheet on this machine plus the built-in scheme it
   // varies; both arrive a moment after the shell, which is why `useTheme` takes them separately.
@@ -83,6 +85,23 @@ export function App() {
   const installed = usePluginTheme(themeKey);
   const base = plugins.data?.themes.find((t) => t.key === themeKey)?.base;
   useTheme(theme, installed.data, base);
+
+  // The window's title names the screen, so a screen reader and the OS window list say where
+  // the user is; after a switch focus lands on the new screen instead of staying in the nav.
+  const main = useRef<HTMLElement>(null);
+  const arrived = useRef(false);
+  useEffect(() => {
+    document.title = `${i18n._(SCREENS[screen].title)} · Stonqs`;
+  }, [screen, i18n]);
+  useEffect(() => {
+    if (!arrived.current) {
+      arrived.current = true;
+      return;
+    }
+    // A dialog the command opened on arrival (`mod+n`) keeps the focus it took.
+    if (document.activeElement?.closest('[role="dialog"]')) return;
+    main.current?.focus({ preventScroll: true });
+  }, [screen]);
 
   // A host-side write refreshes the screens that depend on what it touched.
   useEffect(() => {
@@ -156,11 +175,27 @@ export function App() {
             <SecurityCardProvider>
               <DockProvider>
                 <div className="shell">
+                  <a
+                    className="skip"
+                    href="#main"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      main.current?.focus();
+                    }}
+                  >
+                    <Trans>Skip to content</Trans>
+                  </a>
                   <Nav screen={screen} go={go} alertsDot={(unseen.data ?? 0) > 0} />
 
                   <div className="main">
                     <AsOfBanner />
-                    <main className="app">
+                    <main
+                      ref={main}
+                      id="main"
+                      className="app"
+                      tabIndex={-1}
+                      aria-label={i18n._(SCREENS[screen].title)}
+                    >
                       <Suspense fallback={<Pending />}>
                         {screen === "dashboard" && <Dashboard />}
                         {screen === "positions" && <Positions />}
@@ -198,6 +233,7 @@ export function App() {
                     </Suspense>
                   )}
 
+                  <Commands aiOpen={aiOpen} onAi={() => setAiOpen((v) => !v)} />
                   <TooltipLayer />
                   <AlertNotifier />
                   <UpdateDialog />

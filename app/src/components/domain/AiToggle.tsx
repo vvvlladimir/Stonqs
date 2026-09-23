@@ -2,6 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import { SparkleIcon } from "@phosphor-icons/react";
 
 import { useSettings } from "../../lib/queries";
+import { ariaKeys, keyHint } from "../../lib/shortcuts";
 
 /**
  * Dock button that opens the panel; hidden entirely when the panel is disabled in Settings.
@@ -15,7 +16,15 @@ export function AiToggle({ open, onToggle }: { open: boolean; onToggle: () => vo
   const settings = useSettings();
   if (!settings.data?.ai_enabled) return null;
   return (
-    <button type="button" className="iconbtn ai-toggle" data-tip={t`AI assistant`} onClick={onToggle}>
+    <button
+      type="button"
+      className="iconbtn ai-toggle"
+      aria-label={t`AI assistant`}
+      aria-expanded={open}
+      aria-keyshortcuts={ariaKeys("ai")}
+      data-tip={`${t`AI assistant`} · ${keyHint("ai")}`}
+      onClick={onToggle}
+    >
       <SparkleIcon weight={open ? "fill" : "regular"} />
     </button>
   );

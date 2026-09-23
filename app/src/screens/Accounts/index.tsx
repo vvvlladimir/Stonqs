@@ -1,4 +1,5 @@
 import { plural } from "@lingui/core/macro";
+import { Command } from "../../lib/shortcuts";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -90,9 +91,12 @@ export function Accounts() {
         .filter(Boolean)
         .join(" · ")}
       actions={
-        <button className="btn" onClick={newAccount}>
-          <PlusIcon /> <Trans>New account</Trans>
-        </button>
+        <>
+          <button className="btn" onClick={newAccount}>
+            <PlusIcon /> <Trans>New account</Trans>
+          </button>
+          <Command id="new" label={t`New account`} run={newAccount} />
+        </>
       }
     >
       <ErrorText error={remove.error} />

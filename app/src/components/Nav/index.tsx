@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { CaretRightIcon, ListIcon } from "@phosphor-icons/react";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -6,6 +6,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { ScreenId } from "../../lib/nav";
 import { useUiState, type NavPrefs } from "../../lib/uiState";
 import { usePointerDrag } from "../../lib/pointerDrag";
+import { ariaBinding, COMMANDS, useLayer } from "../../lib/shortcuts";
 import { AsOfPicker } from "../domain/AsOfPicker";
 import { ScopePicker } from "../domain/ScopePicker";
 import { arrange, HOME, moveBefore, SCREENS, SETTINGS, TABS, type NavSection } from "./model";
@@ -73,15 +74,7 @@ export function Nav({ screen, go, alertsDot }: Props) {
     },
   });
 
-  useEffect(() => {
-    if (!sheet) return;
-    // A keyboard name, not text; an object key keeps it out of the catalogue.
-    const onKey = (e: KeyboardEvent) => {
-      if ({ Escape: true }[e.key as "Escape"]) setSheet(false);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [sheet]);
+  useLayer(() => setSheet(false), { active: sheet });
 
   const pick = (id: ScreenId) => {
     go(id);
@@ -107,12 +100,15 @@ export function Nav({ screen, go, alertsDot }: Props) {
     const s = SCREENS[id];
     const Icon = s.icon;
     const on = id === screen;
+    const fav = key === "home" || key.startsWith("fav:") ? [HOME, ...layout.favorites].indexOf(id) : -1;
+    const shortcut = COMMANDS.fav.keys[fav];
     return (
       <button
         key={key}
         type="button"
         className={`nav__row${extra}`}
         aria-current={on ? "page" : undefined}
+        aria-keyshortcuts={shortcut ? ariaBinding(shortcut) : undefined}
         data-nav-fav={item?.kind === "fav" ? "" : undefined}
         data-nav-screen={item?.kind === "screen" ? "" : undefined}
         data-id={id}

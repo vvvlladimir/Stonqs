@@ -51,6 +51,16 @@ export interface UiState {
   updates: UpdatePrefs;
   /** How the navigation is arranged. */
   nav: NavPrefs;
+  /** Keyboard preferences; `lib/shortcuts.tsx` is the only reader. */
+  shortcuts: ShortcutPrefs;
+}
+
+/**
+ * A bare-key shortcut (`n`, `g p`, `?`) can be fired by a speech-input user saying a word, so it
+ * must be possible to turn them off (WCAG 2.1.4). `mod` shortcuts are not affected.
+ */
+export interface ShortcutPrefs {
+  single_keys: boolean;
 }
 
 /**
@@ -136,6 +146,7 @@ export const DEFAULT_UI: UiState = {
     screens: {},
     open: "portfolio",
   },
+  shortcuts: { single_keys: true },
 };
 
 /** Parses versioned or plugin-provided UI JSON with safe defaults. */
@@ -164,6 +175,12 @@ export function parseUiState(raw: unknown): UiState {
     ai_briefs: briefs(value.ai_briefs),
     updates: updatePrefs(value.updates),
     nav: navPrefs(value.nav),
+    shortcuts: {
+      single_keys:
+        typeof value.shortcuts?.single_keys === "boolean"
+          ? value.shortcuts.single_keys
+          : DEFAULT_UI.shortcuts.single_keys,
+    },
   };
 }
 

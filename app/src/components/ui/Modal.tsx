@@ -1,7 +1,9 @@
-import { useEffect, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { XIcon } from "@phosphor-icons/react";
 import { useLingui } from "@lingui/react/macro";
+import { useLayer } from "../../lib/shortcuts";
+import { useDialogFocus } from "./focus";
 
 /** Responsive modal rendered in a body portal so ancestor overflow cannot clip it. */
 interface Props {
@@ -15,19 +17,24 @@ interface Props {
 
 export function Modal({ title, onClose, foot, wide, children }: Props) {
   const { t } = useLingui();
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const box = useRef<HTMLDivElement>(null);
+  const heading = useId();
+  // One `Escape` closes the top dialog only, not every layer under it.
+  useLayer(onClose);
+  useDialogFocus(box);
 
   return createPortal(
     <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal${wide ? " modal--wide" : ""}`} role="dialog" aria-modal="true">
+      <div
+        ref={box}
+        className={`modal${wide ? " modal--wide" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={heading}
+        tabIndex={-1}
+      >
         <div className="modal__head">
-          <h2>{title}</h2>
+          <h2 id={heading}>{title}</h2>
           <span className="spacer" />
           <button type="button" className="iconbtn" aria-label={t`Close`} onClick={onClose}>
             <XIcon />

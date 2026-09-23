@@ -283,6 +283,11 @@ msgstr "{0, plural, one {# quote} other {# quotes}}"
 msgid "{0, plural, one {# request} other {# requests}}"
 msgstr "{0, plural, one {# request} other {# requests}}"
 
+#. placeholder {0}: shown.length
+#: src/components/ui/Palette.tsx
+msgid "{0, plural, one {# result} other {# results}}"
+msgstr "{0, plural, one {# result} other {# results}}"
+
 #. placeholder {0}: errors.length
 #. placeholder {0}: preview.rows.length
 #. placeholder {0}: symbol.count
@@ -1160,6 +1165,10 @@ msgstr "a year"
 msgid "a zero amount"
 msgstr "a zero amount"
 
+#: src/components/domain/Commands.tsx
+msgid "About {app}"
+msgstr "About {app}"
+
 #: src/components/charts/DriftBars.tsx
 msgid "above target"
 msgstr "above target"
@@ -1373,6 +1382,7 @@ msgstr "Against the target"
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/AiToggle.tsx
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AiPanel.tsx
 #: src/screens/Settings/model.ts
 msgid "AI assistant"
@@ -1423,6 +1433,10 @@ msgstr "All fees against the capital at work, trade commissions included."
 #: src/screens/Income/model.ts
 msgid "All income kinds"
 msgstr "All income kinds"
+
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "All keyboard shortcuts"
+msgstr "All keyboard shortcuts"
 
 #: src/screens/Income/model.ts
 msgid "all kinds"
@@ -1504,6 +1518,11 @@ msgstr "Already in the portfolio"
 #: src/screens/dashboard/widgets/value.tsx
 msgid "already there"
 msgstr "already there"
+
+#. placeholder {0}: keyHint("help")
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Also opens with {0} anywhere in the app."
+msgstr "Also opens with {0} anywhere in the app."
 
 #: src/components/domain/aiToolLabels.ts
 msgid "amount"
@@ -1914,6 +1933,10 @@ msgstr "branch"
 msgid "Breakdown"
 msgstr "Breakdown"
 
+#: src/components/domain/Commands.tsx
+msgid "Bring All to Front"
+msgstr "Bring All to Front"
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Bring back the shipped periods that were removed"
 msgstr "Bring back the shipped periods that were removed"
@@ -2213,9 +2236,17 @@ msgstr "Click to try again."
 msgid "Close"
 msgstr "Close"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Close a dialog, a menu or the assistant"
+msgstr "Close a dialog, a menu or the assistant"
+
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Close column"
 msgstr "Close column"
+
+#: src/components/domain/Commands.tsx
+msgid "Close Window"
+msgstr "Close Window"
 
 #: src/screens/Accounts/AccountCard.tsx
 #: src/screens/Settings/AccountsPanel.tsx
@@ -2299,6 +2330,15 @@ msgstr "Columns of the file. An attribute that already exists keeps the kind it 
 msgid "Columns were detected automatically: levels — {0}; share — {1}; target — {2}; ticker — {3}; ISIN — {4}."
 msgstr "Columns were detected automatically: levels — {0}; share — {1}; target — {2}; ticker — {3}; ISIN — {4}."
 
+#: src/components/domain/Commands.tsx
+#: src/lib/shortcuts.tsx
+msgid "Command palette"
+msgstr "Command palette"
+
+#: src/components/domain/Commands.tsx
+msgid "Commands"
+msgstr "Commands"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "commission"
 msgstr "commission"
@@ -2379,6 +2419,10 @@ msgstr "Contributions"
 msgid "Contributions due · {0}"
 msgstr "Contributions due · {0}"
 
+#: src/components/domain/Commands.tsx
+msgid "Copy"
+msgstr "Copy"
+
 #: src/screens/Positions/index.tsx
 msgid "Copy ISIN"
 msgstr "Copy ISIN"
@@ -2456,6 +2500,10 @@ msgstr "Create a classification"
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "Create a target from the file's weights"
 msgstr "Create a target from the file's weights"
+
+#: src/lib/shortcuts.tsx
+msgid "Create on this screen"
+msgstr "Create on this screen"
 
 #: src/screens/Onboarding.tsx
 msgid "Create portfolio"
@@ -2544,6 +2592,10 @@ msgstr "current weight"
 #: src/screens/Allocation/model.ts
 #~ msgid "Custom"
 #~ msgstr "Custom"
+
+#: src/components/domain/Commands.tsx
+msgid "Cut"
+msgstr "Cut"
 
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Dark"
@@ -3104,6 +3156,7 @@ msgstr "Earned over the period"
 msgid "edit"
 msgstr "edit"
 
+#: src/components/domain/Commands.tsx
 #: src/components/domain/SecurityAlerts.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/dashboard/Dashboard.tsx
@@ -3413,6 +3466,10 @@ msgstr "Everything this holding has ever paid, over what the shares cost."
 msgid "Everything up to the version, with no endpoint after it — for example https://openrouter.ai/api/v1 or http://localhost:11434/v1"
 msgstr "Everything up to the version, with no endpoint after it — for example https://openrouter.ai/api/v1 or http://localhost:11434/v1"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Everywhere"
+msgstr "Everywhere"
+
 #: src/screens/Securities/Splits.tsx
 msgid "Ex-date"
 msgstr "Ex-date"
@@ -3594,6 +3651,7 @@ msgstr "FIFO — the oldest lot goes first"
 #~ msgid "Figures come from your own data. Not investment advice."
 #~ msgstr "Figures come from your own data. Not investment advice."
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Import/labels.ts
 msgid "File"
 msgstr "File"
@@ -3757,6 +3815,10 @@ msgstr "FX rate"
 msgid "Gemini generateContent"
 msgstr "Gemini generateContent"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "General"
+msgstr "General"
+
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category a weight: under \"Edit tree\" every category has a \"Target weight\" field. The drift and the trades that close it will appear here."
 msgstr "Give at least one category a weight: under \"Edit tree\" every category has a \"Target weight\" field. The drift and the trades that close it will appear here."
@@ -3764,6 +3826,30 @@ msgstr "Give at least one category a weight: under \"Edit tree\" every category 
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
+
+#: src/lib/shortcuts.tsx
+msgid "Go to Accounts"
+msgstr "Go to Accounts"
+
+#: src/lib/shortcuts.tsx
+msgid "Go to Instruments"
+msgstr "Go to Instruments"
+
+#: src/lib/shortcuts.tsx
+msgid "Go to Overview"
+msgstr "Go to Overview"
+
+#: src/lib/shortcuts.tsx
+msgid "Go to Positions"
+msgstr "Go to Positions"
+
+#: src/lib/shortcuts.tsx
+msgid "Go to Transactions"
+msgstr "Go to Transactions"
+
+#: src/lib/shortcuts.tsx
+msgid "Go to Watchlist"
+msgstr "Go to Watchlist"
 
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
@@ -3832,6 +3918,10 @@ msgstr "Held in"
 #~ msgid "Held since"
 #~ msgstr "Held since"
 
+#: src/components/domain/Commands.tsx
+msgid "Help"
+msgstr "Help"
+
 #: src/screens/Allocation/MembersPanel.tsx
 msgid "Here"
 msgstr "Here"
@@ -3839,6 +3929,14 @@ msgstr "Here"
 #: src/components/ui/Form.tsx
 msgid "Hide"
 msgstr "Hide"
+
+#: src/components/domain/Commands.tsx
+msgid "Hide {app}"
+msgstr "Hide {app}"
+
+#: src/components/domain/Commands.tsx
+msgid "Hide Others"
+msgstr "Hide Others"
 
 #: src/screens/Import/ProblemList.tsx
 msgid "hide rows"
@@ -4267,6 +4365,7 @@ msgstr "Instrument, kind or note"
 msgid "instruments"
 msgstr "instruments"
 
+#: src/components/domain/Commands.tsx
 #: src/components/Nav/model.ts
 #: src/screens/Allocation/GroupDialog.tsx
 #: src/screens/Import/labels.ts
@@ -4453,6 +4552,16 @@ msgstr "Key for {name}"
 msgid "Key for {source}"
 msgstr "Key for {source}"
 
+#: src/screens/Settings/KeyboardPanel.tsx
+#: src/screens/Settings/model.ts
+msgid "Keyboard"
+msgstr "Keyboard"
+
+#: src/components/domain/ShortcutHelp.tsx
+#: src/lib/shortcuts.tsx
+msgid "Keyboard shortcuts"
+msgstr "Keyboard shortcuts"
+
 #: src/screens/Settings/ai/KeysPanel.tsx
 #~ msgid "Keys are kept in your system keychain, never in the app's database, and are never shown again."
 #~ msgstr "Keys are kept in your system keychain, never in the app's database, and are never shown again."
@@ -4460,6 +4569,10 @@ msgstr "Key for {source}"
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "Keys are stored encrypted with this profile's password, never in its database, and are never shown again."
 msgstr "Keys are stored encrypted with this profile's password, never in its database, and are never shown again."
+
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Keys without ⌘ or Ctrl, such as N for a new item or G then P for Positions. Turn them off if they are pressed by accident or interfere with speech input."
+msgstr "Keys without ⌘ or Ctrl, such as N for a new item or G then P for Positions. Turn them off if they are pressed by accident or interfere with speech input."
 
 #: src/components/domain/aiToolLabels.ts
 msgid "kind"
@@ -4725,6 +4838,10 @@ msgstr "Loading the model list…"
 msgid "Lock now"
 msgstr "Lock now"
 
+#: src/lib/shortcuts.tsx
+msgid "Lock profile"
+msgstr "Lock profile"
+
 #: src/screens/Settings/ProfileSecurity.tsx
 #~ msgid "Lock the profile"
 #~ msgstr "Lock the profile"
@@ -4839,6 +4956,10 @@ msgstr "Metric"
 msgid "Metric not found."
 msgstr "Metric not found."
 
+#: src/components/domain/Commands.tsx
+msgid "Minimize"
+msgstr "Minimize"
+
 #: src/screens/Rebalance/index.tsx
 msgid "Mode"
 msgstr "Mode"
@@ -4946,6 +5067,10 @@ msgstr "Move"
 msgid "Move \"{0}\""
 msgstr "Move \"{0}\""
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Move between rows of a table or a menu"
+msgstr "Move between rows of a table or a menu"
+
 #: src/screens/Watchlist/index.tsx
 msgid "Move down"
 msgstr "Move down"
@@ -4954,6 +5079,10 @@ msgstr "Move down"
 #: src/screens/Watchlist/columns.tsx
 msgid "Move from the previous close to the last one."
 msgstr "Move from the previous close to the last one."
+
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Move to the next or the previous control"
+msgstr "Move to the next or the previous control"
 
 #: src/screens/Watchlist/index.tsx
 msgid "Move up"
@@ -5011,6 +5140,7 @@ msgstr "Name the yearly spending this portfolio should cover."
 #~ msgid "Narrower"
 #~ msgstr "Narrower"
 
+#: src/components/domain/ShortcutHelp.tsx
 #: src/components/Nav/index.tsx
 msgid "Navigation"
 msgstr "Navigation"
@@ -5071,6 +5201,7 @@ msgstr "New chat"
 msgid "New chats start on"
 msgstr "New chats start on"
 
+#: src/screens/Allocation/index.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/Allocation/TaxonomyDock.tsx
 msgid "New classification"
@@ -5177,6 +5308,7 @@ msgstr "New target"
 msgid "new tax"
 msgstr "new tax"
 
+#: src/lib/shortcuts.tsx
 #: src/screens/Transactions/index.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "New transaction"
@@ -5198,6 +5330,10 @@ msgstr "next {0}"
 #: src/screens/Income/MonthPanel.tsx
 msgid "Next month"
 msgstr "Next month"
+
+#: src/lib/shortcuts.tsx
+msgid "Next period"
+msgstr "Next period"
 
 #: src/screens/Settings/AccountsPanel.tsx
 msgid "No account is in the portfolio, so every report comes out empty."
@@ -5765,6 +5901,10 @@ msgstr "Nothing is held in this instrument now — what follows is its own histo
 msgid "nothing left over"
 msgstr "nothing left over"
 
+#: src/components/domain/Commands.tsx
+msgid "Nothing matches"
+msgstr "Nothing matches"
+
 #: src/screens/Plans/DuePanel.tsx
 msgid "Nothing owed"
 msgstr "Nothing owed"
@@ -5901,6 +6041,10 @@ msgstr "On {0}"
 msgid "On a buy it joins the cost basis; on a sell it reduces proceeds"
 msgstr "On a buy it joins the cost basis; on a sell it reduces proceeds"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "On a screen"
+msgstr "On a screen"
+
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "on average"
 msgstr "on average"
@@ -6014,6 +6158,14 @@ msgstr "open an account"
 msgid "Open in the directory"
 msgstr "Open in the directory"
 
+#: src/lib/shortcuts.tsx
+msgid "Open or close the AI assistant"
+msgstr "Open or close the AI assistant"
+
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Open the actions of a row"
+msgstr "Open the actions of a row"
+
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "OpenAI responses"
 msgstr "OpenAI responses"
@@ -6106,6 +6258,10 @@ msgstr "Overrides the dashboard period for this widget alone."
 msgid "Overview"
 msgstr "Overview"
 
+#: src/lib/shortcuts.tsx
+msgid "Overview and favourites, in order"
+msgstr "Overview and favourites, in order"
+
 #: src/screens/Import/TemplateBar.tsx
 msgid "Overwrite"
 msgstr "Overwrite"
@@ -6164,6 +6320,10 @@ msgstr "Password set"
 #: src/components/domain/AsOfPicker.tsx
 msgid "Past date"
 msgstr "Past date"
+
+#: src/components/domain/Commands.tsx
+msgid "Paste"
+msgstr "Paste"
 
 #: src/screens/Settings/DataPanel.tsx
 msgid "Path copied"
@@ -6379,6 +6539,10 @@ msgstr "Press Enter to search the provider."
 msgid "Previous month"
 msgstr "Previous month"
 
+#: src/lib/shortcuts.tsx
+msgid "Previous period"
+msgstr "Previous period"
+
 #: src/components/domain/positionColumns.tsx
 #: src/components/domain/SecurityPopup.tsx
 #: src/screens/Import/labels.ts
@@ -6549,6 +6713,10 @@ msgstr "Quarterly"
 #: src/lib/periods.ts
 msgid "quarters"
 msgstr "quarters"
+
+#: src/components/domain/Commands.tsx
+msgid "Quit {app}"
+msgstr "Quit {app}"
 
 #: src/screens/Watchlist/columns.tsx
 msgid "Quote date"
@@ -6756,6 +6924,10 @@ msgstr "recovery"
 msgid "Recovery"
 msgstr "Recovery"
 
+#: src/components/domain/Commands.tsx
+msgid "Redo"
+msgstr "Redo"
+
 #: src/components/domain/MarketRefresh.tsx
 msgid "Refresh"
 msgstr "Refresh"
@@ -6773,6 +6945,7 @@ msgid "Refresh quotes"
 msgstr "Refresh quotes"
 
 #: src/components/domain/MarketRefresh.tsx
+#: src/lib/shortcuts.tsx
 msgid "Refresh quotes and rates"
 msgstr "Refresh quotes and rates"
 
@@ -7152,6 +7325,10 @@ msgstr "Same month a year ago"
 msgid "Save"
 msgstr "Save"
 
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Save a dialog, also from a multi-line field"
+msgstr "Save a dialog, also from a multi-line field"
+
 #: src/screens/Import/TemplateBar.tsx
 msgid "Save as a layout"
 msgstr "Save as a layout"
@@ -7181,6 +7358,10 @@ msgstr "Schedule read off the whole payment history, not the chosen period."
 msgid "screen"
 msgstr "screen"
 
+#: src/components/domain/Commands.tsx
+msgid "Screens"
+msgstr "Screens"
+
 #: src/components/domain/aiToolLabels.ts
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "search"
@@ -7197,6 +7378,10 @@ msgstr "search again"
 #: src/screens/Import/AssetsStep.tsx
 msgid "Search again"
 msgstr "Search again"
+
+#: src/lib/shortcuts.tsx
+msgid "Search on this screen"
+msgstr "Search on this screen"
 
 #: src/screens/Import/AssetSearch.tsx
 msgid "Search the directory"
@@ -7313,6 +7498,10 @@ msgstr "Select {0}"
 msgid "Select all"
 msgstr "Select all"
 
+#: src/components/domain/Commands.tsx
+msgid "Select All"
+msgstr "Select All"
+
 #. placeholder {0}: year.year
 #: src/screens/Transactions/JournalTable.tsx
 msgid "Select all transactions of {0}"
@@ -7361,6 +7550,10 @@ msgstr "Sent"
 #~ msgid "Sent {0}, of which {1} came from the provider's cache. Received {2}, of which {3} was thinking."
 #~ msgstr "Sent {0}, of which {1} came from the provider's cache. Received {2}, of which {3} was thinking."
 
+#: src/components/domain/Commands.tsx
+msgid "Services"
+msgstr "Services"
+
 #: src/components/domain/PasswordDialog.tsx
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "Set a password"
@@ -7383,6 +7576,7 @@ msgid "Set password and continue"
 msgstr "Set password and continue"
 
 #: src/components/Nav/model.ts
+#: src/lib/shortcuts.tsx
 #: src/screens/Settings/index.tsx
 msgid "Settings"
 msgstr "Settings"
@@ -7390,6 +7584,10 @@ msgstr "Settings"
 #: src/screens/Settings/index.tsx
 msgid "Settings sections"
 msgstr "Settings sections"
+
+#: src/components/domain/Commands.tsx
+msgid "Settings…"
+msgstr "Settings…"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "settles through"
@@ -7458,9 +7656,18 @@ msgstr "Shipped with the app"
 msgid "short of target"
 msgstr "short of target"
 
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Shortcuts for the commands used most, and how to turn some off."
+msgstr "Shortcuts for the commands used most, and how to turn some off."
+
 #: src/components/ui/Form.tsx
+#: src/screens/Settings/KeyboardPanel.tsx
 msgid "Show"
 msgstr "Show"
+
+#: src/components/domain/Commands.tsx
+msgid "Show All"
+msgstr "Show All"
 
 #. placeholder {0}: preview.rows.length
 #: src/screens/Import/FilePreview.tsx
@@ -7534,6 +7741,14 @@ msgstr "Simulate a price move"
 msgid "Since {late}: no earlier quote"
 msgstr "Since {late}: no earlier quote"
 
+#: src/screens/Settings/KeyboardPanel.tsx
+msgid "Single-key shortcuts"
+msgstr "Single-key shortcuts"
+
+#: src/components/domain/ShortcutHelp.tsx
+msgid "Single-key shortcuts are turned off in Settings, Keyboard."
+msgstr "Single-key shortcuts are turned off in Settings, Keyboard."
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Six months"
 msgstr "Six months"
@@ -7541,6 +7756,10 @@ msgstr "Six months"
 #: src/components/domain/UpdateDialog.tsx
 msgid "Skip this version"
 msgstr "Skip this version"
+
+#: src/App.tsx
+msgid "Skip to content"
+msgstr "Skip to content"
 
 #: src/screens/Import/labels.ts
 msgid "skipped"
@@ -9105,6 +9324,10 @@ msgstr "TWR a year"
 msgid "TWR since the first purchase"
 msgstr "TWR since the first purchase"
 
+#: src/components/domain/Commands.tsx
+msgid "Type a command, a screen or an instrument"
+msgstr "Type a command, a screen or an instrument"
+
 #: src/screens/Import/AssetRow.tsx
 msgid "Type its ticker — the file's rows go to the existing instrument and no new one is created"
 msgstr "Type its ticker — the file's rows go to the existing instrument and no new one is created"
@@ -9128,6 +9351,10 @@ msgstr "under"
 #: src/screens/Risk.tsx
 msgid "under the peak of {0}"
 msgstr "under the peak of {0}"
+
+#: src/components/domain/Commands.tsx
+msgid "Undo"
+msgstr "Undo"
 
 #: src/screens/Import/PreviewTables.tsx
 msgid "unique only"
@@ -9282,6 +9509,7 @@ msgstr "Version {skipped} was skipped and is not offered again."
 msgid "Vibe"
 msgstr "Vibe"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Allocation/index.tsx
 msgid "View"
 msgstr "View"
@@ -9726,6 +9954,7 @@ msgstr "will be created: {0}"
 msgid "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 msgstr "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Risk.tsx
 msgid "Window"
 msgstr "Window"
@@ -9991,3 +10220,7 @@ msgstr "YTD"
 #: src/screens/Risk.tsx
 msgid "zero volatility — nothing to divide by"
 msgstr "zero volatility — nothing to divide by"
+
+#: src/components/domain/Commands.tsx
+msgid "Zoom"
+msgstr "Zoom"

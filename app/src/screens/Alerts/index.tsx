@@ -1,4 +1,5 @@
 import { plural } from "@lingui/core/macro";
+import { Command } from "../../lib/shortcuts";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { FlaskIcon, NotePencilIcon, PlusIcon } from "@phosphor-icons/react";
@@ -78,6 +79,12 @@ export function Alerts() {
           <button className="btn" disabled={!first} onClick={() => first && setDraft(newAlert(first))}>
             <PlusIcon /> <Trans>New alert</Trans>
           </button>
+          <Command
+            id="new"
+            label={t`New alert`}
+            disabled={!first}
+            run={() => first && setDraft(newAlert(first))}
+          />
         </>
       }
     >

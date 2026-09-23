@@ -41,6 +41,37 @@ h3 {
   outline-offset: 2px;
   border-radius: var(--r-sm);
 }
+/* A container that takes focus to be announced (a screen, a dialog) is not a control to ring. */
+main:focus,
+[role="dialog"]:focus {
+  outline: none;
+}
+/* Read by a screen reader, not drawn. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* The first Tab of a window: straight past the navigation to the screen (WCAG 2.4.1). */
+.skip {
+  position: fixed;
+  top: var(--sp-4);
+  left: var(--sp-4);
+  z-index: 100;
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-pop);
+  transform: translateY(-200%);
+}
+.skip:focus-visible {
+  transform: none;
+}
 .pos {
   color: var(--pos);
 }

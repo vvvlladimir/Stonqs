@@ -11,6 +11,7 @@ import { AttributesPanel } from "./AttributesPanel";
 import { CATEGORIES, type CategoryId } from "./model";
 import { DataPanel } from "./DataPanel";
 import { InflationPanel } from "./InflationPanel";
+import { KeyboardPanel } from "./KeyboardPanel";
 import { MarketDataPanel } from "./MarketDataPanel";
 import { PortfolioPanel } from "./PortfolioPanel";
 import { ProfilesPanel } from "./ProfilesPanel";
@@ -43,6 +44,7 @@ export function Settings({ status }: { status: AppStatus }) {
         {category === "market" && <MarketDataPanel />}
         {category === "ai" && <AiPanel />}
         {category === "appearance" && <AppearancePanel />}
+        {category === "keyboard" && <KeyboardPanel />}
         {category === "plugins" && <PluginsPanel />}
         {category === "profiles" && <ProfilesPanel />}
         {category === "data" && <DataPanel status={status} />}

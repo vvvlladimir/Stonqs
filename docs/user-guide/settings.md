@@ -1,7 +1,7 @@
 # Settings
 
 A strip of categories, one panel each: Portfolio, Accounts, Attributes, Market data, AI assistant,
-Appearance, Profiles, Data and storage, Updates.
+Appearance, Keyboard, Profiles, Data and storage, Updates.
 
 **Portfolio** — its name, the base currency every report converts into, and the **cost-basis
 method** (how a sale decides which lots it consumed). The method is what determines every realised
@@ -67,6 +67,13 @@ app never prices them — that is the provider's bill.
 
 **Appearance** — interface language and colour scheme, each of which can simply follow the
 operating system.
+
+**Keyboard** — `Single-key shortcuts` switches off every shortcut that is one plain key or a
+sequence of plain keys (a letter to create an item, a letter pair to jump to a screen, a question
+mark for the list). It is for people who press them by accident or dictate with speech input,
+where a spoken word can arrive as those keys. Shortcuts held with ⌘ or Ctrl keep working either
+way. `All keyboard shortcuts` opens the full list; that list is the app's own answer to "which key
+does what" and changes with the platform, so it is not repeated here.
 
 **Profiles** — independent sets of data on this device: each has its own portfolio, accounts,
 transactions, quotes, settings (language and theme included), import layouts, dashboards, AI chats

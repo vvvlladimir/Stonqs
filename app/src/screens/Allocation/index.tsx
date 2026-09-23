@@ -1,4 +1,5 @@
 import { bucketLabel } from "../../lib/taxonomy";
+import { Command } from "../../lib/shortcuts";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { CheckIcon, TreeStructureIcon } from "@phosphor-icons/react";
@@ -236,6 +237,7 @@ export function Allocation() {
         </Async>
       )}
 
+      <Command id="new" label={t`New classification`} run={() => dialogs.openTaxonomy(null)} />
       <TaxonomyDock
         taxonomies={taxonomies.data}
         selected={selected}

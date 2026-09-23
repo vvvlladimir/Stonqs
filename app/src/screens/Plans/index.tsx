@@ -1,4 +1,5 @@
 import { plural } from "@lingui/core/macro";
+import { Command } from "../../lib/shortcuts";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -85,9 +86,12 @@ export function Plans() {
         t`${formatMoney(monthly_base, base_currency)} a month`,
       ].join(" · ")}
       actions={
-        <button className="btn" onClick={newPlan} disabled={accountRows.length === 0}>
-          <PlusIcon /> <Trans>New plan</Trans>
-        </button>
+        <>
+          <button className="btn" onClick={newPlan} disabled={accountRows.length === 0}>
+            <PlusIcon /> <Trans>New plan</Trans>
+          </button>
+          <Command id="new" label={t`New plan`} run={newPlan} disabled={accountRows.length === 0} />
+        </>
       }
       banner={
         owedTotal > 0 ? (

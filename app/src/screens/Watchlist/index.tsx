@@ -1,4 +1,5 @@
 import { plural } from "@lingui/core/macro";
+import { Command } from "../../lib/shortcuts";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -192,6 +193,11 @@ export function Watchlist() {
           <button type="button" className="btn" onClick={newList}>
             <PlusIcon /> <Trans>New list</Trans>
           </button>
+          {active ? (
+            <Command id="new" label={t`Add instruments`} run={() => setAdding(true)} />
+          ) : (
+            <Command id="new" label={t`New list`} run={newList} />
+          )}
         </>
       }
     >

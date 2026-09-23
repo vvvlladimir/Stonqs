@@ -1,4 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import { Command } from "../../lib/shortcuts";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { CalendarDotsIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
@@ -138,6 +139,7 @@ export function Rebalance() {
           <button className="btn" onClick={() => setEditing(true)}>
             <PlusIcon /> <Trans>New target</Trans>
           </button>
+          <Command id="new" label={t`New target`} run={() => setEditing(true)} />
           {selected && (
             <button
               className="iconbtn iconbtn--danger"

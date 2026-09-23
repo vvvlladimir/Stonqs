@@ -65,6 +65,22 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 - CSS lives one file per primitive under `styles/ui/`; `tokens.css` holds variables only. A screen does not declare its own classes: if a look is missing, the primitive gains a prop, never a copy.
 - Enum labels live in `lib/kinds.ts` alone — a screen never declares its own `KIND_LABELS`; counted nouns go through Lingui's `<Plural>`/`plural()`, never a per-screen form table.
 
+## Keyboard
+
+- One `keydown` listener for the window, in `lib/shortcuts.tsx` (ADR-0072). A shortcut is a row in
+  `COMMANDS` answered with `useCommand` / `<Command>`, never a `keydown` listener of a screen's own.
+  Palette, `?` list, tooltips, `aria-keyshortcuts` and the macOS menu bar read the catalogue.
+- An overlay takes the keyboard with `useLayer` (`Modal` does it for you): `Escape` closes the
+  newest layer only, and commands are off under a layer unless it lets them `pass`. A modal also
+  gets `useDialogFocus` (focus in, `Tab` trapped, focus returned); under a coarse pointer it focuses
+  the dialog, not a field, so no on-screen keyboard appears unasked.
+- A bare key (`n`, `g p`, `[`, `?`) never fires in a field, a menu or a list box, and
+  `UiState::shortcuts.single_keys` turns them all off (WCAG 2.1.4). Letters match by what they type
+  on a Latin layout, by position on any other, so a Cyrillic layout still has ⌘K.
+- A screen's primary "create" answers `new` with its own label. A search box is found by
+  `data-search` (`SearchBox` sets it), and a period strip answers `[` / `]`. `mod+Enter` saves a
+  `FormDialog`, and ↑/↓ move between rows of a `DataTable` in the same column.
+
 ## The primitives own their shape
 
 - A screen does not hand-write `<table>`, `<form>`, a loading string, or `className="err"` — those are `DataTable`, `FormDialog`, `Async`.

@@ -24,7 +24,8 @@ export function SearchBox({
       <MagnifyingGlassIcon />
       <input
         type="text"
-        aria-label={label}
+        data-search=""
+        aria-label={label ?? placeholder}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}

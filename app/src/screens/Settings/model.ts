@@ -6,6 +6,7 @@ import {
   BriefcaseIcon,
   CloudArrowDownIcon,
   DatabaseIcon,
+  KeyboardIcon,
   PaletteIcon,
   PuzzlePieceIcon,
   SparkleIcon,
@@ -23,6 +24,7 @@ export type CategoryId =
   | "market"
   | "ai"
   | "appearance"
+  | "keyboard"
   | "plugins"
   | "profiles"
   | "data"
@@ -35,6 +37,7 @@ export const CATEGORIES: { id: CategoryId; label: MessageDescriptor; icon: Icon 
   { id: "market", label: msg`Market data`, icon: CloudArrowDownIcon },
   { id: "ai", label: msg`AI assistant`, icon: SparkleIcon },
   { id: "appearance", label: msg`Appearance`, icon: PaletteIcon },
+  { id: "keyboard", label: msg`Keyboard`, icon: KeyboardIcon },
   { id: "plugins", label: msg`Plugins`, icon: PuzzlePieceIcon },
   { id: "profiles", label: msg`Profiles`, icon: UsersIcon },
   { id: "data", label: msg`Data and storage`, icon: DatabaseIcon },

@@ -3,6 +3,7 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
@@ -675,6 +676,58 @@ export async function installUpdate(onProgress: (done: number | null) => void): 
 /** Restarts into the version just installed. */
 export function restart(): Promise<void> {
   return relaunch();
+}
+
+/** A native item whose behaviour belongs to the OS: copy and paste, hide, quit. */
+export type NativeMenuKind =
+  | "About"
+  | "Services"
+  | "Hide"
+  | "HideOthers"
+  | "ShowAll"
+  | "Quit"
+  | "Undo"
+  | "Redo"
+  | "Cut"
+  | "Copy"
+  | "Paste"
+  | "SelectAll"
+  | "Minimize"
+  | "Maximize"
+  | "CloseWindow"
+  | "BringAllToFront";
+
+export type AppMenuEntry =
+  | "separator"
+  | { id: string; text: string; accelerator?: string; enabled?: boolean }
+  | { native: NativeMenuKind; text: string };
+
+export interface AppMenuSection {
+  text: string;
+  items: AppMenuEntry[];
+}
+
+/**
+ * Replaces the macOS menu bar. Every text is the frontend's, already translated; a picked item
+ * comes back as its id. The first section is the application menu, titled by the OS.
+ */
+export async function setAppMenu(sections: AppMenuSection[], onPick: (id: string) => void): Promise<void> {
+  const entry = (item: AppMenuEntry) => {
+    // eslint-disable-next-line lingui/no-unlocalized-strings -- a native item kind
+    if (item === "separator") return PredefinedMenuItem.new({ item: "Separator" });
+    if ("native" in item) {
+      const kind = item.native === "About" ? { About: null } : item.native;
+      return PredefinedMenuItem.new({ item: kind, text: item.text });
+    }
+    return MenuItem.new({ ...item, action: onPick });
+  };
+  const submenus = await Promise.all(
+    sections.map(async (section) =>
+      Submenu.new({ text: section.text, items: await Promise.all(section.items.map(entry)) }),
+    ),
+  );
+  const menu = await Menu.new({ items: submenus });
+  await menu.setAsAppMenu();
 }
 
 /** Returns today's local calendar date without timezone shifting. */

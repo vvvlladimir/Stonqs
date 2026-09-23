@@ -16,6 +16,7 @@ import { api } from "../../lib/api";
 import { useChatSend, useProviderName } from "../../lib/ai";
 import { formatDateTime } from "../../lib/format";
 import { usePointerDrag } from "../../lib/pointerDrag";
+import { useLayer, type CommandId } from "../../lib/shortcuts";
 import { AI_PANEL_MAX, AI_PANEL_MIN, useUiState } from "../../lib/uiState";
 import {
   keys,
@@ -47,10 +48,13 @@ import {
   Markdown,
   Pending,
   QueryError,
+  useDialogFocus,
   useMenu,
   useUiErrorText,
   type MenuItem,
 } from "../ui";
+
+const AI_PASS: readonly CommandId[] = ["ai"];
 
 /**
  * A global drawer, not a screen — mounted once at the shell level next to `TooltipLayer`.
@@ -68,17 +72,15 @@ export function AiChatPanel({ onClose }: { onClose: () => void }) {
   const providers = useAiProviders();
   const name = useProviderName();
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const panel = useRef<HTMLDivElement>(null);
+  // `mod+j` passes through so the key that opened the panel also closes it.
+  useLayer(onClose, { pass: AI_PASS });
+  useDialogFocus(panel);
 
   return createPortal(
     <div className="ai-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
+        ref={panel}
         className="ai-panel"
         role="dialog"
         aria-modal="true"
