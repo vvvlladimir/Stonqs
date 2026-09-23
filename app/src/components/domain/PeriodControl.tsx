@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PlusIcon } from "@phosphor-icons/react";
 import { useLingui } from "@lingui/react/macro";
 import { Seg } from "../ui";
-import { useCommand } from "../../lib/shortcuts";
+import { useChoice, useCommand } from "../../lib/commands";
 import { BUILTIN_PRESETS, periodLabel, type PeriodId } from "../../lib/periods";
 import { PeriodEditor } from "./PeriodEditor";
 import type { PeriodRange } from "../../lib/types";
@@ -32,6 +32,12 @@ export function PeriodControl({
   };
   useCommand("periodPrev", () => step(-1));
   useCommand("periodNext", () => step(1));
+  useChoice("period", {
+    label: t`Period`,
+    options: options.map((range) => ({ value: range.id, label: periodLabel(i18n, range, false) })),
+    value,
+    pick: (id) => onChange(id as PeriodId),
+  });
 
   return (
     // A box of its own: the strip sits at the end of the controls row on every screen, and it

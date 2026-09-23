@@ -2,7 +2,7 @@ import { useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Plural } from "@lingui/react/macro";
-import { useLayer } from "../../lib/shortcuts";
+import { useLayer } from "../../lib/commands";
 import { useDialogFocus } from "./focus";
 import { Kbd } from "./Kbd";
 

@@ -1,5 +1,5 @@
 import { bucketLabel } from "../../lib/taxonomy";
-import { Command } from "../../lib/shortcuts";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { CheckIcon, TreeStructureIcon } from "@phosphor-icons/react";

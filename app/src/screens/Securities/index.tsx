@@ -1,5 +1,5 @@
 import { plural } from "@lingui/core/macro";
-import { Command } from "../../lib/shortcuts";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
@@ -242,6 +242,10 @@ export function Securities({ focus }: { focus?: string | null }) {
           <Command
             id="new"
             label={t`Add instrument`}
+            run={() => setDraft({ ...EMPTY, data_source: providers.data?.[0] ?? null })}
+          />
+          <Command
+            id="newInstrument"
             run={() => setDraft({ ...EMPTY, data_source: providers.data?.[0] ?? null })}
           />
         </>

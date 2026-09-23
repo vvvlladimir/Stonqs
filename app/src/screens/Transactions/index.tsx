@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react";
 import { save as saveFile } from "@tauri-apps/plugin-dialog";
 import { api, today } from "../../lib/api";
-import { ariaKeys, Command, takeIntent } from "../../lib/shortcuts";
+import { ariaKeys, Command } from "../../lib/commands";
 import { Page } from "../../components/Page";
 import {
   Async,
@@ -34,8 +34,6 @@ export function Transactions({ focus }: { focus?: string | null }) {
   // the hint (`App`), so arriving with a new one starts here rather than syncing in an effect.
   const [query, setQuery] = useState(focus ?? "");
   const [draft, setDraft] = useState<TransactionInput | null>(null);
-  // `mod+n` pressed on another screen: the form opens once the accounts it defaults from are here.
-  const [opening, setOpening] = useState(() => takeIntent("newTransaction"));
   const [exporting, setExporting] = useState(false);
   const menu = useMenu();
 
@@ -102,10 +100,6 @@ export function Transactions({ focus }: { focus?: string | null }) {
     fx_rate_to_base: null,
     note: null,
   });
-  if (opening) {
-    setOpening(false);
-    setDraft(blank());
-  }
 
   const edit = (row: TransactionRow) =>
     setDraft({
@@ -178,6 +172,7 @@ export function Transactions({ focus }: { focus?: string | null }) {
             <PlusIcon /> <Trans>New transaction</Trans>
           </button>
           <Command id="newTransaction" run={() => setDraft(blank())} />
+          <Command id="exportTransactions" run={exportFile} disabled={exporting} />
           <Command id="new" label={t`New transaction`} run={() => setDraft(blank())} />
         </>
       }

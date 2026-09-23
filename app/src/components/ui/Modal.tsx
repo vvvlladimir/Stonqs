@@ -2,7 +2,7 @@ import { useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { XIcon } from "@phosphor-icons/react";
 import { useLingui } from "@lingui/react/macro";
-import { useLayer } from "../../lib/shortcuts";
+import { useLayer } from "../../lib/commands";
 import { useDialogFocus } from "./focus";
 
 /** Responsive modal rendered in a body portal so ancestor overflow cannot clip it. */

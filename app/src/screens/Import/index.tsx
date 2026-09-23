@@ -1,4 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import { Command } from "../../lib/commands";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -198,6 +199,7 @@ export function Import() {
     >
       {blocked && <Banner>{blockedWhy}</Banner>}
 
+      <Command id="importFile" run={pickFile} disabled={step !== 0 || load.isPending} />
       {step === 0 && (
         <FileStep
           loading={load.isPending}

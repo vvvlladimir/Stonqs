@@ -1165,7 +1165,7 @@ msgstr "a year"
 msgid "a zero amount"
 msgstr "a zero amount"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "About {app}"
 msgstr "About {app}"
 
@@ -1177,6 +1177,7 @@ msgstr "above target"
 msgid "account"
 msgstr "account"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PlanForm.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Import/labels.ts
@@ -1289,6 +1290,7 @@ msgid "Add demo data"
 msgstr "Add demo data"
 
 #: src/components/domain/PlanForm.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Securities/index.tsx
 msgid "Add instrument"
 msgstr "Add instrument"
@@ -1382,12 +1384,13 @@ msgstr "Against the target"
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/AiToggle.tsx
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/AiPanel.tsx
 #: src/screens/Settings/model.ts
 msgid "AI assistant"
 msgstr "AI assistant"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Alert"
 msgstr "Alert"
@@ -1765,6 +1768,10 @@ msgstr "Ask about your portfolio…"
 msgid "Ask first"
 msgstr "Ask first"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Ask the Assistant"
+msgstr "Ask the Assistant"
+
 #: src/components/domain/ListingPicker.tsx
 msgid "Ask the directory again"
 msgstr "Ask the directory again"
@@ -1856,6 +1863,7 @@ msgid "Back to the chats"
 msgstr "Back to the chats"
 
 #: src/components/domain/AsOfPicker.tsx
+#: src/lib/commands/catalog.ts
 msgid "Back to today"
 msgstr "Back to today"
 
@@ -1933,7 +1941,7 @@ msgstr "branch"
 msgid "Breakdown"
 msgstr "Breakdown"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Bring All to Front"
 msgstr "Bring All to Front"
 
@@ -2150,6 +2158,7 @@ msgstr "Change the split in {0}"
 msgid "Charts"
 msgstr "Charts"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Check for updates"
 msgstr "Check for updates"
@@ -2157,6 +2166,10 @@ msgstr "Check for updates"
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Check for updates automatically"
 msgstr "Check for updates automatically"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Check for Updates…"
+msgstr "Check for Updates…"
 
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Checking…"
@@ -2244,7 +2257,7 @@ msgstr "Close a dialog, a menu or the assistant"
 msgid "Close column"
 msgstr "Close column"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Close Window"
 msgstr "Close Window"
 
@@ -2295,6 +2308,8 @@ msgstr "collapse to {SHOWN}"
 msgid "Colour"
 msgstr "Colour"
 
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Colour scheme"
 msgstr "Colour scheme"
@@ -2331,7 +2346,7 @@ msgid "Columns were detected automatically: levels — {0}; share — {1}; targe
 msgstr "Columns were detected automatically: levels — {0}; share — {1}; target — {2}; ticker — {3}; ISIN — {4}."
 
 #: src/components/domain/Commands.tsx
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Command palette"
 msgstr "Command palette"
 
@@ -2419,7 +2434,7 @@ msgstr "Contributions"
 msgid "Contributions due · {0}"
 msgstr "Contributions due · {0}"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Copy"
 msgstr "Copy"
 
@@ -2487,6 +2502,7 @@ msgstr "Coverage"
 msgid "create"
 msgstr "create"
 
+#: src/components/domain/ShortcutHelp.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
@@ -2501,7 +2517,7 @@ msgstr "Create a classification"
 msgid "Create a target from the file's weights"
 msgstr "Create a target from the file's weights"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Create on this screen"
 msgstr "Create on this screen"
 
@@ -2593,10 +2609,11 @@ msgstr "current weight"
 #~ msgid "Custom"
 #~ msgstr "Custom"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Cut"
 msgstr "Cut"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Dark"
 msgstr "Dark"
@@ -2610,6 +2627,7 @@ msgid "Dashboards are independent: each keeps its own widgets and their settings
 msgstr "Dashboards are independent: each keeps its own widgets and their settings."
 
 #: src/components/domain/MarketRefresh.tsx
+#: src/components/domain/ShortcutHelp.tsx
 #: src/components/Nav/model.ts
 msgid "Data"
 msgstr "Data"
@@ -2618,6 +2636,8 @@ msgstr "Data"
 msgid "Data and storage"
 msgstr "Data and storage"
 
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/ScopePicker.tsx
 #: src/screens/dashboard/dialogs.tsx
 msgid "Data source"
@@ -3057,6 +3077,7 @@ msgid "down"
 msgstr "down"
 
 #: src/components/domain/MarketRefresh.tsx
+#: src/lib/commands/catalog.ts
 msgid "Download history"
 msgstr "Download history"
 
@@ -3156,7 +3177,7 @@ msgstr "Earned over the period"
 msgid "edit"
 msgstr "edit"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/SecurityAlerts.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/dashboard/Dashboard.tsx
@@ -3319,6 +3340,10 @@ msgstr "End of period minus start, deposits included — the figure a statement 
 #: src/components/domain/aiToolLabels.ts
 msgid "ends"
 msgstr "ends"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Enter Full Screen"
+msgstr "Enter Full Screen"
 
 #: src/components/domain/ProfileLock.tsx
 msgid "Enter the password to open this profile."
@@ -3557,6 +3582,14 @@ msgstr "Export period"
 msgid "Export to CSV…"
 msgstr "Export to CSV…"
 
+#: src/lib/commands/catalog.ts
+msgid "Export transactions"
+msgstr "Export transactions"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Export Transactions…"
+msgstr "Export Transactions…"
+
 #: src/components/domain/SecurityPopup.tsx
 msgid "Facts"
 msgstr "Facts"
@@ -3651,7 +3684,7 @@ msgstr "FIFO — the oldest lot goes first"
 #~ msgid "Figures come from your own data. Not investment advice."
 #~ msgstr "Figures come from your own data. Not investment advice."
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Import/labels.ts
 msgid "File"
 msgstr "File"
@@ -3827,27 +3860,31 @@ msgstr "Give at least one category a weight: under \"Edit tree\" every category 
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 
-#: src/lib/shortcuts.tsx
+#: src/components/domain/menuBar/model.ts
+msgid "Go"
+msgstr "Go"
+
+#: src/lib/commands/catalog.ts
 msgid "Go to Accounts"
 msgstr "Go to Accounts"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Instruments"
 msgstr "Go to Instruments"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Overview"
 msgstr "Go to Overview"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Positions"
 msgstr "Go to Positions"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Transactions"
 msgstr "Go to Transactions"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Watchlist"
 msgstr "Go to Watchlist"
 
@@ -3918,7 +3955,7 @@ msgstr "Held in"
 #~ msgid "Held since"
 #~ msgstr "Held since"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Help"
 msgstr "Help"
 
@@ -3930,11 +3967,11 @@ msgstr "Here"
 msgid "Hide"
 msgstr "Hide"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Hide {app}"
 msgstr "Hide {app}"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Hide Others"
 msgstr "Hide Others"
 
@@ -4158,6 +4195,7 @@ msgstr "Import"
 msgid "Import a classification"
 msgstr "Import a classification"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/DataPanel.tsx
 msgid "Import a file"
 msgstr "Import a file"
@@ -4183,6 +4221,10 @@ msgstr "Import into \"{0}\""
 #: src/screens/Settings/DataPanel.tsx
 msgid "Import layouts"
 msgstr "Import layouts"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Import…"
+msgstr "Import…"
 
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "importing them is optional"
@@ -4298,6 +4340,7 @@ msgid "instrument"
 msgstr "instrument"
 
 #: src/components/domain/AlertDialogs.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PlanForm.tsx
 #: src/components/domain/positionColumns.tsx
 #: src/screens/Allocation/MembersPanel.tsx
@@ -4558,7 +4601,7 @@ msgid "Keyboard"
 msgstr "Keyboard"
 
 #: src/components/domain/ShortcutHelp.tsx
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Keyboard shortcuts"
 msgstr "Keyboard shortcuts"
 
@@ -4773,6 +4816,7 @@ msgstr "Levels"
 msgid "levels: {0}"
 msgstr "levels: {0}"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Light"
 msgstr "Light"
@@ -4838,7 +4882,7 @@ msgstr "Loading the model list…"
 msgid "Lock now"
 msgstr "Lock now"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Lock profile"
 msgstr "Lock profile"
 
@@ -4922,6 +4966,7 @@ msgstr "Mappings"
 msgid "Market"
 msgstr "Market"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/model.ts
 msgid "Market data"
 msgstr "Market data"
@@ -4956,7 +5001,7 @@ msgstr "Metric"
 msgid "Metric not found."
 msgstr "Metric not found."
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Minimize"
 msgstr "Minimize"
 
@@ -5166,6 +5211,11 @@ msgstr "Network error: {0}"
 msgid "new"
 msgstr "new"
 
+#: src/components/domain/menuBar/model.ts
+msgid "New"
+msgstr "New"
+
+#: src/lib/commands/catalog.ts
 #: src/screens/Accounts/AccountForm.tsx
 #: src/screens/Accounts/index.tsx
 msgid "New account"
@@ -5173,6 +5223,7 @@ msgstr "New account"
 
 #: src/components/domain/AlertDialogs.tsx
 #: src/components/domain/SecurityPopup.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Alerts/index.tsx
 msgid "New alert"
 msgstr "New alert"
@@ -5271,6 +5322,7 @@ msgid "New period"
 msgstr "New period"
 
 #: src/components/domain/PlanForm.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Plans/index.tsx
 msgid "New plan"
 msgstr "New plan"
@@ -5308,12 +5360,13 @@ msgstr "New target"
 msgid "new tax"
 msgstr "new tax"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Transactions/index.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "New transaction"
 msgstr "New transaction"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Watchlist/ListDialog.tsx
 msgid "New watchlist"
 msgstr "New watchlist"
@@ -5331,7 +5384,7 @@ msgstr "next {0}"
 msgid "Next month"
 msgstr "Next month"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Next period"
 msgstr "Next period"
 
@@ -6150,6 +6203,10 @@ msgstr "Only when I ask"
 msgid "Open"
 msgstr "Open"
 
+#: src/lib/commands/catalog.ts
+msgid "Open a screen"
+msgstr "Open a screen"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "open an account"
 msgstr "open an account"
@@ -6158,7 +6215,7 @@ msgstr "open an account"
 msgid "Open in the directory"
 msgstr "Open in the directory"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Open or close the AI assistant"
 msgstr "Open or close the AI assistant"
 
@@ -6216,6 +6273,10 @@ msgstr "Optional: it can be created later."
 msgid "Optional: what you actually put aside."
 msgstr "Optional: what you actually put aside."
 
+#: src/components/domain/Commands.tsx
+msgid "Options"
+msgstr "Options"
+
 #: src/screens/Risk.tsx
 #~ msgid "Ordered by depth, not by date: \"how much can be lost\" is answered by the worst episode, not the last one."
 #~ msgstr "Ordered by depth, not by date: \"how much can be lost\" is answered by the worst episode, not the last one."
@@ -6258,7 +6319,7 @@ msgstr "Overrides the dashboard period for this widget alone."
 msgid "Overview"
 msgstr "Overview"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Overview and favourites, in order"
 msgstr "Overview and favourites, in order"
 
@@ -6321,7 +6382,7 @@ msgstr "Password set"
 msgid "Past date"
 msgstr "Past date"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Paste"
 msgstr "Paste"
 
@@ -6391,6 +6452,7 @@ msgstr "Performance"
 msgid "period"
 msgstr "period"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PeriodControl.tsx
 #: src/components/domain/PeriodEditor.tsx
 #: src/screens/dashboard/dialogs.tsx
@@ -6429,6 +6491,10 @@ msgstr "Pick instruments from the directory, or find one online."
 #: src/components/domain/aiToolLabels.ts
 msgid "plan"
 msgstr "plan"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Plan"
+msgstr "Plan"
 
 #: src/components/Nav/model.ts
 msgid "Planning"
@@ -6539,7 +6605,7 @@ msgstr "Press Enter to search the provider."
 msgid "Previous month"
 msgstr "Previous month"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Previous period"
 msgstr "Previous period"
 
@@ -6598,6 +6664,11 @@ msgstr "Proceeds minus cost basis, fees and taxes on disposals only."
 #: src/screens/Reports/index.tsx
 #~ msgid "Proceeds minus cost basis, fees and taxes over every disposal in the window. Open positions are not included."
 #~ msgstr "Proceeds minus cost basis, fees and taxes over every disposal in the window. Open positions are not included."
+
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
+msgid "Profile"
+msgstr "Profile"
 
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/ProfilesPanel.tsx
@@ -6714,7 +6785,7 @@ msgstr "Quarterly"
 msgid "quarters"
 msgstr "quarters"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Quit {app}"
 msgstr "Quit {app}"
 
@@ -6924,7 +6995,7 @@ msgstr "recovery"
 msgid "Recovery"
 msgstr "Recovery"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Redo"
 msgstr "Redo"
 
@@ -6945,7 +7016,7 @@ msgid "Refresh quotes"
 msgstr "Refresh quotes"
 
 #: src/components/domain/MarketRefresh.tsx
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Refresh quotes and rates"
 msgstr "Refresh quotes and rates"
 
@@ -7379,7 +7450,7 @@ msgstr "search again"
 msgid "Search again"
 msgstr "Search again"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Search on this screen"
 msgstr "Search on this screen"
 
@@ -7498,7 +7569,7 @@ msgstr "Select {0}"
 msgid "Select all"
 msgstr "Select all"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Select All"
 msgstr "Select All"
 
@@ -7550,7 +7621,7 @@ msgstr "Sent"
 #~ msgid "Sent {0}, of which {1} came from the provider's cache. Received {2}, of which {3} was thinking."
 #~ msgstr "Sent {0}, of which {1} came from the provider's cache. Received {2}, of which {3} was thinking."
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Services"
 msgstr "Services"
 
@@ -7576,7 +7647,7 @@ msgid "Set password and continue"
 msgstr "Set password and continue"
 
 #: src/components/Nav/model.ts
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/index.tsx
 msgid "Settings"
 msgstr "Settings"
@@ -7585,7 +7656,7 @@ msgstr "Settings"
 msgid "Settings sections"
 msgstr "Settings sections"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Settings…"
 msgstr "Settings…"
 
@@ -7665,7 +7736,7 @@ msgstr "Shortcuts for the commands used most, and how to turn some off."
 msgid "Show"
 msgstr "Show"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Show All"
 msgstr "Show All"
 
@@ -7887,6 +7958,10 @@ msgstr "Stocks"
 msgid "Stop"
 msgstr "Stop"
 
+#: src/lib/commands/catalog.ts
+msgid "Stop the refresh"
+msgstr "Stop the refresh"
+
 #: src/components/domain/MarketRefresh.tsx
 #: src/screens/Plans/index.tsx
 msgid "Stopped"
@@ -7930,6 +8005,7 @@ msgstr "Symbol"
 msgid "Symbols on cash transactions"
 msgstr "Symbols on cash transactions"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "System"
 msgstr "System"
@@ -9184,6 +9260,7 @@ msgstr "traded"
 msgid "Trades"
 msgstr "Trades"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Reports/Gains.tsx
 msgid "Transaction"
 msgstr "Transaction"
@@ -9352,7 +9429,7 @@ msgstr "under"
 msgid "under the peak of {0}"
 msgstr "under the peak of {0}"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Undo"
 msgstr "Undo"
 
@@ -9509,7 +9586,7 @@ msgstr "Version {skipped} was skipped and is not offered again."
 msgid "Vibe"
 msgstr "Vibe"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Allocation/index.tsx
 msgid "View"
 msgstr "View"
@@ -9555,6 +9632,7 @@ msgstr "Volatility, Sharpe and the maximum drawdown over the period."
 msgid "was {0}"
 msgstr "was {0}"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/Nav/model.ts
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
@@ -9954,7 +10032,7 @@ msgstr "will be created: {0}"
 msgid "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 msgstr "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Risk.tsx
 msgid "Window"
 msgstr "Window"
@@ -10221,6 +10299,6 @@ msgstr "YTD"
 msgid "zero volatility — nothing to divide by"
 msgstr "zero volatility — nothing to divide by"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Zoom"
 msgstr "Zoom"

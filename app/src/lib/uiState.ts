@@ -51,7 +51,7 @@ export interface UiState {
   updates: UpdatePrefs;
   /** How the navigation is arranged. */
   nav: NavPrefs;
-  /** Keyboard preferences; `lib/shortcuts.tsx` is the only reader. */
+  /** Keyboard preferences; `lib/commands` is the only reader. */
   shortcuts: ShortcutPrefs;
 }
 

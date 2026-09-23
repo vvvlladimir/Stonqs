@@ -6,7 +6,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { ScreenId } from "../../lib/nav";
 import { useUiState, type NavPrefs } from "../../lib/uiState";
 import { usePointerDrag } from "../../lib/pointerDrag";
-import { ariaBinding, COMMANDS, useLayer } from "../../lib/shortcuts";
+import { ariaBinding, COMMANDS, useLayer } from "../../lib/commands";
 import { AsOfPicker } from "../domain/AsOfPicker";
 import { ScopePicker } from "../domain/ScopePicker";
 import { arrange, HOME, moveBefore, SCREENS, SETTINGS, TABS, type NavSection } from "./model";

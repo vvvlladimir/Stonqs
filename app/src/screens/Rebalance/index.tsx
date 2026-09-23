@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Command } from "../../lib/shortcuts";
+import { Command } from "../../lib/commands";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { CalendarDotsIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";

@@ -65,11 +65,21 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 - CSS lives one file per primitive under `styles/ui/`; `tokens.css` holds variables only. A screen does not declare its own classes: if a look is missing, the primitive gains a prop, never a copy.
 - Enum labels live in `lib/kinds.ts` alone — a screen never declares its own `KIND_LABELS`; counted nouns go through Lingui's `<Plural>`/`plural()`, never a per-screen form table.
 
-## Keyboard
+## Keyboard, palette, menu bar
 
-- One `keydown` listener for the window, in `lib/shortcuts.tsx` (ADR-0072). A shortcut is a row in
-  `COMMANDS` answered with `useCommand` / `<Command>`, never a `keydown` listener of a screen's own.
-  Palette, `?` list, tooltips, `aria-keyshortcuts` and the macOS menu bar read the catalogue.
+- `lib/commands/` is the command layer (ADR-0072), imported through its barrel. A command is a row
+  in `catalog.ts` answered with `useCommand` / `<Command>`, never a `keydown` listener of a screen's
+  own. The keyboard, the palette, the `?` list, tooltips, `aria-keyshortcuts` and the menu bar all
+  read the catalogue plus the registry.
+- A command a screen answers names that `screen` in the catalogue and gets a `<Command>` on it. The
+  registry opens the screen from anywhere else and the `<Command>` runs the intent on arrival, so
+  the shell never learns what "new plan" means.
+- Exclusive options are a choice (`useChoice`), published by their owner: `PeriodControl` for the
+  period, the shell for data source, colour scheme and profile.
+- The macOS menu bar is `components/domain/menuBar/model.ts` (data) resolved by `MenuBar`. A new
+  item is a line there. Bare keys never become accelerators. On Windows and Linux there is no bar,
+  so a menu item must also be reachable from the palette, which holds as long as both read the
+  registry.
 - An overlay takes the keyboard with `useLayer` (`Modal` does it for you): `Escape` closes the
   newest layer only, and commands are off under a layer unless it lets them `pass`. A modal also
   gets `useDialogFocus` (focus in, `Tab` trapped, focus returned); under a coarse pointer it focuses

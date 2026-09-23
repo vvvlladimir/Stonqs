@@ -2,7 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import { SparkleIcon } from "@phosphor-icons/react";
 
 import { useSettings } from "../../lib/queries";
-import { ariaKeys, keyHint } from "../../lib/shortcuts";
+import { ariaKeys, keyHint } from "../../lib/commands";
 
 /**
  * Dock button that opens the panel; hidden entirely when the panel is disabled in Settings.

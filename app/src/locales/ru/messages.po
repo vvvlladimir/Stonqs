@@ -1165,7 +1165,7 @@ msgstr "в год"
 msgid "a zero amount"
 msgstr "нулевая сумма"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "About {app}"
 msgstr "О программе {app}"
 
@@ -1177,6 +1177,7 @@ msgstr "выше цели"
 msgid "account"
 msgstr "счёт"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PlanForm.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Import/labels.ts
@@ -1289,6 +1290,7 @@ msgid "Add demo data"
 msgstr "Добавить демо-данные"
 
 #: src/components/domain/PlanForm.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Securities/index.tsx
 msgid "Add instrument"
 msgstr "Добавить бумагу"
@@ -1382,12 +1384,13 @@ msgstr "Против цели"
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/AiToggle.tsx
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/AiPanel.tsx
 #: src/screens/Settings/model.ts
 msgid "AI assistant"
 msgstr "AI-ассистент"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Alert"
 msgstr "Оповещение"
@@ -1765,6 +1768,10 @@ msgstr "Спросите о портфеле…"
 msgid "Ask first"
 msgstr "Спрашивать"
 
+#: src/components/domain/menuBar/model.ts
+msgid "Ask the Assistant"
+msgstr "Спросить ассистента"
+
 #: src/components/domain/ListingPicker.tsx
 msgid "Ask the directory again"
 msgstr "Спросить справочник заново"
@@ -1856,6 +1863,7 @@ msgid "Back to the chats"
 msgstr "К списку чатов"
 
 #: src/components/domain/AsOfPicker.tsx
+#: src/lib/commands/catalog.ts
 msgid "Back to today"
 msgstr "Вернуться к сегодня"
 
@@ -1933,7 +1941,7 @@ msgstr "ветка"
 msgid "Breakdown"
 msgstr "Разбивка"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Bring All to Front"
 msgstr "Все окна — на передний план"
 
@@ -2150,6 +2158,7 @@ msgstr "Изменить разбивку в «{0}»"
 msgid "Charts"
 msgstr "Графики"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Check for updates"
 msgstr "Проверить обновления"
@@ -2157,6 +2166,10 @@ msgstr "Проверить обновления"
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Check for updates automatically"
 msgstr "Проверять обновления автоматически"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Check for Updates…"
+msgstr "Проверить обновления…"
 
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Checking…"
@@ -2244,7 +2257,7 @@ msgstr "Закрыть диалог, меню или ассистента"
 msgid "Close column"
 msgstr "Колонка цены закрытия"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Close Window"
 msgstr "Закрыть окно"
 
@@ -2295,6 +2308,8 @@ msgstr "свернуть до {SHOWN}"
 msgid "Colour"
 msgstr "Цвет"
 
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Colour scheme"
 msgstr "Цветовая схема"
@@ -2331,7 +2346,7 @@ msgid "Columns were detected automatically: levels — {0}; share — {1}; targe
 msgstr "Колонки определены сами: уровни — {0}; доля — {1}; цель — {2}; тикер — {3}; ISIN — {4}."
 
 #: src/components/domain/Commands.tsx
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Command palette"
 msgstr "Палитра команд"
 
@@ -2419,7 +2434,7 @@ msgstr "Взносы"
 msgid "Contributions due · {0}"
 msgstr "Невыполненные взносы · {0}"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Copy"
 msgstr "Копировать"
 
@@ -2487,6 +2502,7 @@ msgstr "Покрытие данными"
 msgid "create"
 msgstr "заводить"
 
+#: src/components/domain/ShortcutHelp.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
@@ -2501,7 +2517,7 @@ msgstr "Создать классификацию"
 msgid "Create a target from the file's weights"
 msgstr "Создать цель из весов файла"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Create on this screen"
 msgstr "Создать на этом экране"
 
@@ -2593,10 +2609,11 @@ msgstr "текущий вес"
 #~ msgid "Custom"
 #~ msgstr "Своя"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Cut"
 msgstr "Вырезать"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Dark"
 msgstr "Тёмная"
@@ -2610,6 +2627,7 @@ msgid "Dashboards are independent: each keeps its own widgets and their settings
 msgstr "Дашборды независимы: набор виджетов и их настройки хранятся у каждого свои."
 
 #: src/components/domain/MarketRefresh.tsx
+#: src/components/domain/ShortcutHelp.tsx
 #: src/components/Nav/model.ts
 msgid "Data"
 msgstr "Данные"
@@ -2618,6 +2636,8 @@ msgstr "Данные"
 msgid "Data and storage"
 msgstr "Данные и хранилище"
 
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/ScopePicker.tsx
 #: src/screens/dashboard/dialogs.tsx
 msgid "Data source"
@@ -3057,6 +3077,7 @@ msgid "down"
 msgstr "в минус"
 
 #: src/components/domain/MarketRefresh.tsx
+#: src/lib/commands/catalog.ts
 msgid "Download history"
 msgstr "Загрузить историю"
 
@@ -3156,7 +3177,7 @@ msgstr "Заработано за период"
 msgid "edit"
 msgstr "изменить"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/SecurityAlerts.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/dashboard/Dashboard.tsx
@@ -3319,6 +3340,10 @@ msgstr "Конец периода минус начало, вместе с по�
 #: src/components/domain/aiToolLabels.ts
 msgid "ends"
 msgstr "заканчивается"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Enter Full Screen"
+msgstr "Войти в полноэкранный режим"
 
 #: src/components/domain/ProfileLock.tsx
 msgid "Enter the password to open this profile."
@@ -3557,6 +3582,14 @@ msgstr "Период выгрузки"
 msgid "Export to CSV…"
 msgstr "Экспорт в CSV…"
 
+#: src/lib/commands/catalog.ts
+msgid "Export transactions"
+msgstr "Экспорт операций"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Export Transactions…"
+msgstr "Экспорт операций…"
+
 #: src/components/domain/SecurityPopup.tsx
 msgid "Facts"
 msgstr "Факты"
@@ -3651,7 +3684,7 @@ msgstr "FIFO — первым списывается старый лот"
 #~ msgid "Figures come from your own data. Not investment advice."
 #~ msgstr "Цифры взяты из ваших данных. Не является инвестиционной рекомендацией."
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Import/labels.ts
 msgid "File"
 msgstr "Файл"
@@ -3827,27 +3860,31 @@ msgstr "Поставьте вес хотя бы одной категории: �
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Поставьте вес хотя бы одной категории этого уровня — в режиме «Изменить дерево» у каждой есть поле «Целевой вес»."
 
-#: src/lib/shortcuts.tsx
+#: src/components/domain/menuBar/model.ts
+msgid "Go"
+msgstr "Переход"
+
+#: src/lib/commands/catalog.ts
 msgid "Go to Accounts"
 msgstr "Перейти к счетам"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Instruments"
 msgstr "Перейти к инструментам"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Overview"
 msgstr "Перейти к обзору"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Positions"
 msgstr "Перейти к позициям"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Transactions"
 msgstr "Перейти к операциям"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Go to Watchlist"
 msgstr "Перейти к списку наблюдения"
 
@@ -3918,7 +3955,7 @@ msgstr "Лежит на"
 #~ msgid "Held since"
 #~ msgstr "Держим с"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Help"
 msgstr "Справка"
 
@@ -3930,11 +3967,11 @@ msgstr "Здесь"
 msgid "Hide"
 msgstr "Скрыть"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Hide {app}"
 msgstr "Скрыть {app}"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Hide Others"
 msgstr "Скрыть остальные"
 
@@ -4158,6 +4195,7 @@ msgstr "Импорт"
 msgid "Import a classification"
 msgstr "Импорт классификации"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/DataPanel.tsx
 msgid "Import a file"
 msgstr "Импортировать файл"
@@ -4183,6 +4221,10 @@ msgstr "Импорт в «{0}»"
 #: src/screens/Settings/DataPanel.tsx
 msgid "Import layouts"
 msgstr "Раскладки импорта"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Import…"
+msgstr "Импорт…"
 
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "importing them is optional"
@@ -4298,6 +4340,7 @@ msgid "instrument"
 msgstr "инструмент"
 
 #: src/components/domain/AlertDialogs.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PlanForm.tsx
 #: src/components/domain/positionColumns.tsx
 #: src/screens/Allocation/MembersPanel.tsx
@@ -4558,7 +4601,7 @@ msgid "Keyboard"
 msgstr "Клавиатура"
 
 #: src/components/domain/ShortcutHelp.tsx
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Keyboard shortcuts"
 msgstr "Сочетания клавиш"
 
@@ -4773,6 +4816,7 @@ msgstr "Уровни"
 msgid "levels: {0}"
 msgstr "уровней: {0}"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Light"
 msgstr "Светлая"
@@ -4838,7 +4882,7 @@ msgstr "Загружается список моделей…"
 msgid "Lock now"
 msgstr "Заблокировать"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Lock profile"
 msgstr "Заблокировать профиль"
 
@@ -4917,6 +4961,7 @@ msgstr "Соответствия"
 msgid "Market"
 msgstr "Рынок"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Settings/model.ts
 msgid "Market data"
 msgstr "Рыночные данные"
@@ -4951,7 +4996,7 @@ msgstr "Показатель"
 msgid "Metric not found."
 msgstr "Показатель не найден."
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Minimize"
 msgstr "Свернуть"
 
@@ -5161,6 +5206,11 @@ msgstr "Ошибка сети: {0}"
 msgid "new"
 msgstr "новый"
 
+#: src/components/domain/menuBar/model.ts
+msgid "New"
+msgstr "Новый"
+
+#: src/lib/commands/catalog.ts
 #: src/screens/Accounts/AccountForm.tsx
 #: src/screens/Accounts/index.tsx
 msgid "New account"
@@ -5168,6 +5218,7 @@ msgstr "Новый счёт"
 
 #: src/components/domain/AlertDialogs.tsx
 #: src/components/domain/SecurityPopup.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Alerts/index.tsx
 msgid "New alert"
 msgstr "Новое оповещение"
@@ -5266,6 +5317,7 @@ msgid "New period"
 msgstr "Новый период"
 
 #: src/components/domain/PlanForm.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Plans/index.tsx
 msgid "New plan"
 msgstr "Новый план"
@@ -5303,12 +5355,13 @@ msgstr "Новая цель"
 msgid "new tax"
 msgstr "новый налог"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Transactions/index.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "New transaction"
 msgstr "Новая операция"
 
+#: src/lib/commands/catalog.ts
 #: src/screens/Watchlist/ListDialog.tsx
 msgid "New watchlist"
 msgstr "Новый список наблюдения"
@@ -5326,7 +5379,7 @@ msgstr "следующий {0}"
 msgid "Next month"
 msgstr "Следующий месяц"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Next period"
 msgstr "Следующий период"
 
@@ -6145,6 +6198,10 @@ msgstr "Только по запросу"
 msgid "Open"
 msgstr "Открыт"
 
+#: src/lib/commands/catalog.ts
+msgid "Open a screen"
+msgstr "Открыть экран"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "open an account"
 msgstr "открыть счёт"
@@ -6153,7 +6210,7 @@ msgstr "открыть счёт"
 msgid "Open in the directory"
 msgstr "Открыть в справочнике"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Open or close the AI assistant"
 msgstr "Открыть или закрыть ИИ-ассистента"
 
@@ -6211,6 +6268,10 @@ msgstr "Необязательно: его можно создать позже.
 msgid "Optional: what you actually put aside."
 msgstr "Необязательно: сколько вы реально откладываете."
 
+#: src/components/domain/Commands.tsx
+msgid "Options"
+msgstr "Параметры"
+
 #: src/screens/Risk.tsx
 #~ msgid "Ordered by depth, not by date: \"how much can be lost\" is answered by the worst episode, not the last one."
 #~ msgstr "Порядок — по глубине, а не по дате: вопрос «сколько можно потерять» отвечается худшим эпизодом, а не последним."
@@ -6253,7 +6314,7 @@ msgstr "Переопределяет период дашборда только 
 msgid "Overview"
 msgstr "Обзор"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Overview and favourites, in order"
 msgstr "Обзор и избранное, по порядку"
 
@@ -6316,7 +6377,7 @@ msgstr "Пароль установлен"
 msgid "Past date"
 msgstr "Прошлая дата"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Paste"
 msgstr "Вставить"
 
@@ -6386,6 +6447,7 @@ msgstr "Доходность"
 msgid "period"
 msgstr "период"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/domain/PeriodControl.tsx
 #: src/components/domain/PeriodEditor.tsx
 #: src/screens/dashboard/dialogs.tsx
@@ -6424,6 +6486,10 @@ msgstr "Выберите инструменты из справочника ил
 #: src/components/domain/aiToolLabels.ts
 msgid "plan"
 msgstr "план"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Plan"
+msgstr "План"
 
 #: src/components/Nav/model.ts
 msgid "Planning"
@@ -6534,7 +6600,7 @@ msgstr "Нажмите Enter, чтобы искать у поставщика к
 msgid "Previous month"
 msgstr "Предыдущий месяц"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Previous period"
 msgstr "Предыдущий период"
 
@@ -6593,6 +6659,11 @@ msgstr "Выручка минус себестоимость, комиссии �
 #: src/screens/Reports/index.tsx
 #~ msgid "Proceeds minus cost basis, fees and taxes over every disposal in the window. Open positions are not included."
 #~ msgstr "Выручка минус себестоимость, комиссии и налоги по всем выбытиям окна. Открытые позиции сюда не входят."
+
+#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
+msgid "Profile"
+msgstr "Профиль"
 
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/ProfilesPanel.tsx
@@ -6709,7 +6780,7 @@ msgstr "Ежеквартально"
 msgid "quarters"
 msgstr "кварталов"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Quit {app}"
 msgstr "Завершить {app}"
 
@@ -6919,7 +6990,7 @@ msgstr "восстановление"
 msgid "Recovery"
 msgstr "Восстановление"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Redo"
 msgstr "Повторить"
 
@@ -6940,7 +7011,7 @@ msgid "Refresh quotes"
 msgstr "Обновить котировки"
 
 #: src/components/domain/MarketRefresh.tsx
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Refresh quotes and rates"
 msgstr "Обновить котировки и курсы"
 
@@ -7374,7 +7445,7 @@ msgstr "искать заново"
 msgid "Search again"
 msgstr "Искать заново"
 
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 msgid "Search on this screen"
 msgstr "Поиск на этом экране"
 
@@ -7493,7 +7564,7 @@ msgstr "Выбрать {0}"
 msgid "Select all"
 msgstr "Выбрать все"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Select All"
 msgstr "Выбрать все"
 
@@ -7545,7 +7616,7 @@ msgstr "Отправлено"
 #~ msgid "Sent {0}, of which {1} came from the provider's cache. Received {2}, of which {3} was thinking."
 #~ msgstr "Отправлено {0}, из них {1} — из кэша провайдера. Получено {2}, из них {3} — размышления."
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Services"
 msgstr "Службы"
 
@@ -7571,7 +7642,7 @@ msgid "Set password and continue"
 msgstr "Задать пароль и продолжить"
 
 #: src/components/Nav/model.ts
-#: src/lib/shortcuts.tsx
+#: src/lib/commands/catalog.ts
 #: src/screens/Settings/index.tsx
 msgid "Settings"
 msgstr "Настройки"
@@ -7580,7 +7651,7 @@ msgstr "Настройки"
 msgid "Settings sections"
 msgstr "Разделы настроек"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Settings…"
 msgstr "Настройки…"
 
@@ -7660,7 +7731,7 @@ msgstr "Сочетания клавиш для частых команд и во
 msgid "Show"
 msgstr "Показать"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Show All"
 msgstr "Показать все"
 
@@ -7882,6 +7953,10 @@ msgstr "Акции"
 msgid "Stop"
 msgstr "Остановить"
 
+#: src/lib/commands/catalog.ts
+msgid "Stop the refresh"
+msgstr "Остановить обновление"
+
 #: src/components/domain/MarketRefresh.tsx
 #: src/screens/Plans/index.tsx
 msgid "Stopped"
@@ -7925,6 +8000,7 @@ msgstr "Символ"
 msgid "Symbols on cash transactions"
 msgstr "Символы у денежных операций"
 
+#: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "System"
 msgstr "Системный"
@@ -9179,6 +9255,7 @@ msgstr "оборот"
 msgid "Trades"
 msgstr "Сделки"
 
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Reports/Gains.tsx
 msgid "Transaction"
 msgstr "Операция"
@@ -9347,7 +9424,7 @@ msgstr "внутри"
 msgid "under the peak of {0}"
 msgstr "ниже пика от {0}"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Undo"
 msgstr "Отменить"
 
@@ -9504,7 +9581,7 @@ msgstr "Версия {skipped} пропущена и больше не пред�
 msgid "Vibe"
 msgstr "Vibe"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Allocation/index.tsx
 msgid "View"
 msgstr "Вид"
@@ -9550,6 +9627,7 @@ msgstr "Волатильность, Sharpe и максимальная прос�
 msgid "was {0}"
 msgstr "было {0}"
 
+#: src/components/domain/menuBar/model.ts
 #: src/components/Nav/model.ts
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/widgets/index.tsx
@@ -9949,7 +10027,7 @@ msgstr "будут заведены: {0}"
 msgid "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 msgstr "будет пропущено: лечится на шаге «Разбор» или построчно ниже"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 #: src/screens/Risk.tsx
 msgid "Window"
 msgstr "Окно"
@@ -10216,6 +10294,6 @@ msgstr "YTD"
 msgid "zero volatility — nothing to divide by"
 msgstr "нулевая волатильность — делить не на что"
 
-#: src/components/domain/Commands.tsx
+#: src/components/domain/menuBar/model.ts
 msgid "Zoom"
 msgstr "Изменить масштаб"

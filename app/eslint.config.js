@@ -64,7 +64,8 @@ export default tseslint.config(
     // is spelled out rather than turned into a pattern — anything else exporting a helper beside
     // a component is still a warning worth reading.
     files: [
-      "src/lib/{asOf,dock,nav,shortcuts,updates}.tsx",
+      "src/lib/{asOf,dock,nav,updates}.tsx",
+      "src/lib/commands/react.tsx",
       "src/components/ui/{Async,Menu,Selection,Toast}.tsx",
       "src/components/domain/{MarketRefresh,SecurityCardProvider}.tsx",
     ],

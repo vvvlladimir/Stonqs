@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { i18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
 import { App } from "./App";
-import { ShortcutsProvider } from "./lib/shortcuts";
+import { ShortcutsProvider } from "./lib/commands";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { applyTheme } from "./lib/theme";
 import { activateLocale, resolveLocale } from "./lib/i18n";

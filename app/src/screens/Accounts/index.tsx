@@ -1,5 +1,5 @@
 import { plural } from "@lingui/core/macro";
-import { Command } from "../../lib/shortcuts";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -96,6 +96,7 @@ export function Accounts() {
             <PlusIcon /> <Trans>New account</Trans>
           </button>
           <Command id="new" label={t`New account`} run={newAccount} />
+          <Command id="newAccount" run={newAccount} />
         </>
       }
     >

@@ -1,5 +1,5 @@
 import { plural } from "@lingui/core/macro";
-import { Command } from "../../lib/shortcuts";
+import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { FlaskIcon, NotePencilIcon, PlusIcon } from "@phosphor-icons/react";
@@ -85,6 +85,7 @@ export function Alerts() {
             disabled={!first}
             run={() => first && setDraft(newAlert(first))}
           />
+          <Command id="newAlert" disabled={!first} run={() => first && setDraft(newAlert(first))} />
         </>
       }
     >

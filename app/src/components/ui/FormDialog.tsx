@@ -3,7 +3,7 @@ import { useLingui } from "@lingui/react/macro";
 import { Modal } from "./Modal";
 import { ErrorText, Submit } from "./Form";
 import { CANCEL, SUBMIT, SUBMITTING } from "./formLabels";
-import { IS_MAC } from "../../lib/shortcuts";
+import { IS_MAC } from "../../lib/commands";
 
 export interface FormDialogProps {
   title: ReactNode;

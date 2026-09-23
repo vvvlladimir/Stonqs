@@ -6,7 +6,7 @@ import {
   type CommandDef,
   type CommandGroup,
   type CommandId,
-} from "../../lib/shortcuts";
+} from "../../lib/commands";
 import { useUiState } from "../../lib/uiState";
 import { Banner, Kbd, List, ListRow, Modal, Panel } from "../ui";
 
@@ -19,6 +19,8 @@ export function ShortcutHelp({ onClose }: { onClose: () => void }) {
   const groups: Array<{ id: CommandGroup; title: string }> = [
     { id: "general", title: t`General` },
     { id: "navigation", title: t`Navigation` },
+    { id: "create", title: t`Create` },
+    { id: "data", title: t`Data` },
     { id: "screen", title: t`On a screen` },
   ];
   const ids = Object.keys(COMMANDS) as CommandId[];

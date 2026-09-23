@@ -16,7 +16,7 @@ import { api } from "../../lib/api";
 import { useChatSend, useProviderName } from "../../lib/ai";
 import { formatDateTime } from "../../lib/format";
 import { usePointerDrag } from "../../lib/pointerDrag";
-import { useLayer, type CommandId } from "../../lib/shortcuts";
+import { useLayer, type CommandId } from "../../lib/commands";
 import { AI_PANEL_MAX, AI_PANEL_MIN, useUiState } from "../../lib/uiState";
 import {
   keys,
