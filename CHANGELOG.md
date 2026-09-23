@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/vvvlladimir/Stonqs/compare/v0.2.0...v0.3.0) (2026-09-23)
+
+
+### Features
+
+* **app:** new features - savings goals, historical picker, calculation sheet ([#21](https://github.com/vvvlladimir/Stonqs/issues/21)) ([b45a8fa](https://github.com/vvvlladimir/Stonqs/commit/b45a8fae933afc92d5bcf0cf10447f75a21bc274))
+* **import:** Import and auto-detection functionality has been improved  ([#19](https://github.com/vvvlladimir/Stonqs/issues/19)) ([24d1d4f](https://github.com/vvvlladimir/Stonqs/commit/24d1d4f10d2b64dac6ecd799df246cc5ab786f1b))
+
 ## [0.2.0](https://github.com/vvvlladimir/Stonqs/compare/v0.1.0...v0.2.0) (2026-09-21)
 
 
