@@ -26,9 +26,7 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  # The bump touches Cargo.toml but not Cargo.lock, which records the workspace crates' own
-  # versions — and every job builds with `--locked`. Left alone, the release pull request fails
-  # its own CI. `--workspace` rewrites those three entries and nothing else.
+  
   lockfile:
     needs: release-please
     if: needs.release-please.outputs.pr != ''
@@ -49,26 +47,9 @@ jobs:
           git commit -m "chore: refresh Cargo.lock for the release"
           git push
 
-  # The release release-please writes is a draft, and a draft carries no git tag: GitHub materialises
-  # one only when somebody publishes it. Without the tag release-please cannot find its own last
-  # release and bumps the version again on every push (release-please#1650), so the tag is pushed
-  # here instead. `release.yml` is then *called*, not triggered by that push — a ref pushed with
-  # GITHUB_TOKEN raises no workflow event.
-  tag:
+  build:
     needs: release-please
     if: needs.release-please.outputs.released == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Tag the release commit
-        env:
-          TAG: ${{ needs.release-please.outputs.tag }}
-        run: |
-          git tag "$TAG"
-          git push origin "$TAG"
-
-  build:
-    needs: [release-please, tag]
     uses: ./.github/workflows/release.yml
     with:
       tag: ${{ needs.release-please.outputs.tag }}

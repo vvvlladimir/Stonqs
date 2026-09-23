@@ -5,6 +5,7 @@
     ".": {
       "release-type": "simple",
       "draft": true,
+      "force-tag-creation": true,
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
         { "type": "toml", "path": "Cargo.toml", "jsonpath": "$.workspace.package.version" },
