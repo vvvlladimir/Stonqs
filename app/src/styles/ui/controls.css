@@ -38,6 +38,17 @@
   color: var(--neg);
   border-color: color-mix(in srgb, var(--neg) 35%, var(--border));
 }
+/* An action that is offered but not recommended — declining, dismissing for good. It keeps the
+   button's hit area and loses its frame, so it reads as the quietest thing in a footer. */
+.btn--quiet {
+  background: none;
+  color: var(--text-3);
+  border-color: transparent;
+  padding: 0 var(--sp-4);
+}
+.btn--quiet:hover {
+  color: var(--text);
+}
 .btn--sm {
   height: var(--h-ctl-sm);
   padding: 0 var(--sp-5);

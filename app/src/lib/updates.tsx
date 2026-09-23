@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { checkForUpdate, installUpdate, restart, today, type AvailableUpdate } from "./api";
+import { appVersion, checkForUpdate, installUpdate, restart, today, type AvailableUpdate } from "./api";
 import { useUiState } from "./uiState";
 
 /**
@@ -17,6 +17,8 @@ export type UpdateStage = "idle" | "checking" | "found" | "current" | "installin
 
 interface Updates {
   stage: UpdateStage;
+  /** The running build's own version; null until the bundle has answered. */
+  current: string | null;
   /** What is on offer, once a check found something. */
   update: AvailableUpdate | null;
   /** How much of the download has arrived; `null` while the size is unknown. */
@@ -43,8 +45,15 @@ export function UpdatesProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [asked, setAsked] = useState(false);
+  const [current, setCurrent] = useState<string | null>(null);
   // The automatic check is a once-per-window event, not something a re-render may repeat.
   const startedRef = useRef(false);
+
+  // Read once and shared: the version this build runs is what every answer here is measured
+  // against, so two parts of the app must not ask the bundle separately and disagree.
+  useEffect(() => {
+    void appVersion().then(setCurrent);
+  }, []);
 
   const run = useCallback(
     async (byHand: boolean) => {
@@ -107,6 +116,7 @@ export function UpdatesProvider({ children }: { children: ReactNode }) {
 
   const value: Updates = {
     stage,
+    current,
     update,
     progress,
     error,

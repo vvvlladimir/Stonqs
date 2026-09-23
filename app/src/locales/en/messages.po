@@ -590,6 +590,11 @@ msgstr "{0}: {1} · {2, plural, one {# payment} other {# payments}}"
 msgid "{0}: no data"
 msgstr "{0}: no data"
 
+#. placeholder {0}: Math.round(progress * 100)
+#: src/components/domain/UpdateDialog.tsx
+msgid "{0}% downloaded"
+msgstr "{0}% downloaded"
+
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{active, plural, one {# active plan} other {# active plans}}"
 msgstr "{active, plural, one {# active plan} other {# active plans}}"
@@ -3096,6 +3101,10 @@ msgstr "Download history"
 #: src/components/domain/UpdateDialog.tsx
 msgid "Downloading the update"
 msgstr "Downloading the update"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Downloading…"
+msgstr "Downloading…"
 
 #: src/screens/dashboard/EditBar.tsx
 msgid "Drag a tile's header to move it, or any of its edges or corners to resize it."
@@ -8249,6 +8258,10 @@ msgstr "The annualized standard deviation of daily returns, over trading days."
 msgid "The answer was cut off at the model's output limit."
 msgstr "The answer was cut off at the model's output limit."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "The app restarts once it is in place."
+msgstr "The app restarts once it is in place."
+
 #. placeholder {0}: name(request.tool)
 #: src/components/domain/AiTools.tsx
 msgid "The assistant wants to change: {0}"
@@ -9093,6 +9106,10 @@ msgstr "This profile's data and API keys are encrypted with it."
 msgid "This profile's data is stored unencrypted. Set a password before saving an API key."
 msgstr "This profile's data is stored unencrypted. Set a password before saving an API key."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "This release ships no notes of its own."
+msgstr "This release ships no notes of its own."
+
 #: src/screens/dashboard/widgets/ai.tsx
 msgid "This summary reads:"
 msgstr "This summary reads:"
@@ -9585,13 +9602,13 @@ msgstr "Venues…"
 
 #. placeholder {0}: update.version
 #: src/components/domain/UpdateDialog.tsx
-msgid "Version {0} is available."
-msgstr "Version {0} is available."
+#~ msgid "Version {0} is available."
+#~ msgstr "Version {0} is available."
 
 #. placeholder {0}: update.version
 #: src/components/domain/UpdateDialog.tsx
-msgid "Version {0} is downloading. The app restarts once it is in place."
-msgstr "Version {0} is downloading. The app restarts once it is in place."
+#~ msgid "Version {0} is downloading. The app restarts once it is in place."
+#~ msgstr "Version {0} is downloading. The app restarts once it is in place."
 
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Version {skipped} was skipped and is not offered again."
@@ -9714,6 +9731,10 @@ msgstr "What am I most exposed to?"
 #: src/components/domain/aiToolLabels.ts
 msgid "what an account group holds"
 msgstr "what an account group holds"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "What changed"
+msgstr "What changed"
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "What each category of the tree paid over the period."

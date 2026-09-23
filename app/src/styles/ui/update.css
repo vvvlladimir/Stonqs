@@ -1,0 +1,141 @@
+/* The update dialog. One shape across every stage — the two versions, then what that stage has
+   to say — so the box does not resize under the button that was just pressed. */
+
+.upd__vers {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-6);
+}
+.upd__ver {
+  display: inline-flex;
+  align-items: center;
+  height: var(--h-ctl-sm);
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-med);
+}
+/* The version on offer is the subject of the dialog, so it is the one thing that carries colour. */
+.upd__ver--new {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: var(--fw-bold);
+}
+.upd__arrow {
+  color: var(--text-3);
+  flex: none;
+}
+.upd__when {
+  font-size: var(--fs-sm);
+  margin-inline-start: auto;
+}
+
+/* A one-line verdict with its own icon: the answer, before the detail under it. */
+.upd__note {
+  display: flex;
+  align-items: start;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.upd__note-icon {
+  display: flex;
+  flex: none;
+  /* Optical: the icon aligns with the first line's cap height, not with the box. */
+  margin-top: 1px;
+  font-size: var(--fs-lg);
+}
+.upd__note--ok {
+  border-color: color-mix(in srgb, var(--pos) 28%, var(--border));
+  background: var(--pos-soft);
+}
+.upd__note--ok .upd__note-icon {
+  color: var(--pos);
+}
+.upd__note--warn {
+  border-color: color-mix(in srgb, var(--warn) 28%, var(--border));
+  background: var(--warn-soft);
+}
+.upd__note--warn .upd__note-icon {
+  color: var(--warn);
+}
+.upd__note + .upd__vers {
+  margin: var(--sp-5) 0 0;
+}
+
+.upd__raw {
+  margin-top: var(--sp-5);
+}
+
+.upd__progress {
+  display: grid;
+  gap: var(--sp-4);
+}
+.upd__progress-note {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  font-size: var(--fs-sm);
+}
+
+.upd__notes {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.upd__notes-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: var(--fs-meta);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+/* The notes are the only part that can be any length, so they scroll rather than the dialog:
+   the decision stays on screen however long a release turns out to be. */
+.upd__notes-body {
+  max-height: 46dvh;
+  overflow: auto;
+  padding: var(--sp-5);
+}
+/* A changelog is a list of sections; its headings are labels above them, not titles of a page. */
+.upd__notes-body .md h1,
+.upd__notes-body .md h2,
+.upd__notes-body .md h3,
+.upd__notes-body .md h4 {
+  color: var(--text-2);
+  font-size: var(--fs-meta);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.upd__notes-body .md > * + h1,
+.upd__notes-body .md > * + h2,
+.upd__notes-body .md > * + h3,
+.upd__notes-body .md > * + h4 {
+  margin-top: var(--sp-6);
+}
+/* The scope a changelog entry opens with ("**app:**") is a label on the line, not emphasis. */
+.upd__notes-body .md li strong:first-child {
+  color: var(--text-2);
+  font-weight: var(--fw-med);
+}
+.upd__notes-body .md ul {
+  padding-inline-start: var(--sp-6);
+}
+.upd__notes-body .md li::marker {
+  color: var(--text-3);
+}

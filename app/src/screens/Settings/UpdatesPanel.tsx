@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 
-import { appVersion } from "../../lib/api";
 import { useUiState } from "../../lib/uiState";
 import { useUpdates } from "../../lib/updates";
 import { Buttons, CheckField, Form, Panel } from "../../components/ui";
@@ -15,11 +13,6 @@ export function UpdatesPanel() {
   const { t } = useLingui();
   const { ui, save } = useUiState();
   const updates = useUpdates();
-  const [version, setVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    void appVersion().then(setVersion);
-  }, []);
 
   const skipped = ui.updates.skip;
 
@@ -27,7 +20,7 @@ export function UpdatesPanel() {
     <Panel
       title={t`Updates`}
       info={t`Where this app looks for a newer version, and whether it may look on its own.`}
-      note={version ?? undefined}
+      note={updates?.current ?? undefined}
     >
       <Form>
         <CheckField

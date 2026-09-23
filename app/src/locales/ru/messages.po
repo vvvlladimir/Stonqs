@@ -590,6 +590,11 @@ msgstr "{0}: {1} · {2, plural, one {# выплата} few {# выплаты} ma
 msgid "{0}: no data"
 msgstr "{0}: нет данных"
 
+#. placeholder {0}: Math.round(progress * 100)
+#: src/components/domain/UpdateDialog.tsx
+msgid "{0}% downloaded"
+msgstr "загружено {0}%"
+
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{active, plural, one {# active plan} other {# active plans}}"
 msgstr "{active, plural, one {# активный план} few {# активных плана} many {# активных планов} other {# активных планов}}"
@@ -3096,6 +3101,10 @@ msgstr "Загрузить историю"
 #: src/components/domain/UpdateDialog.tsx
 msgid "Downloading the update"
 msgstr "Загрузка обновления"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Downloading…"
+msgstr "Загрузка…"
 
 #: src/screens/dashboard/EditBar.tsx
 msgid "Drag a tile's header to move it, or any of its edges or corners to resize it."
@@ -8244,6 +8253,10 @@ msgstr "Годовое стандартное отклонение дневны�
 msgid "The answer was cut off at the model's output limit."
 msgstr "Ответ оборван: модель упёрлась в лимит длины ответа."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "The app restarts once it is in place."
+msgstr "Приложение перезапустится, как только обновление будет установлено."
+
 #. placeholder {0}: name(request.tool)
 #: src/components/domain/AiTools.tsx
 msgid "The assistant wants to change: {0}"
@@ -9088,6 +9101,10 @@ msgstr "Данные и API-ключи профиля зашифрованы э�
 msgid "This profile's data is stored unencrypted. Set a password before saving an API key."
 msgstr "Данные профиля хранятся без шифрования. Установите пароль, прежде чем сохранять API-ключ."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "This release ships no notes of its own."
+msgstr "У этого выпуска нет собственного описания."
+
 #: src/screens/dashboard/widgets/ai.tsx
 msgid "This summary reads:"
 msgstr "Сводка читает:"
@@ -9580,13 +9597,13 @@ msgstr "Площадки…"
 
 #. placeholder {0}: update.version
 #: src/components/domain/UpdateDialog.tsx
-msgid "Version {0} is available."
-msgstr "Доступна версия {0}."
+#~ msgid "Version {0} is available."
+#~ msgstr "Доступна версия {0}."
 
 #. placeholder {0}: update.version
 #: src/components/domain/UpdateDialog.tsx
-msgid "Version {0} is downloading. The app restarts once it is in place."
-msgstr "Версия {0} загружается. Приложение перезапустится, когда она встанет на место."
+#~ msgid "Version {0} is downloading. The app restarts once it is in place."
+#~ msgstr "Версия {0} загружается. Приложение перезапустится, когда она встанет на место."
 
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Version {skipped} was skipped and is not offered again."
@@ -9709,6 +9726,10 @@ msgstr "Какие риски у меня самые большие?"
 #: src/components/domain/aiToolLabels.ts
 msgid "what an account group holds"
 msgstr "состав группы счетов"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "What changed"
+msgstr "Что изменилось"
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "What each category of the tree paid over the period."
