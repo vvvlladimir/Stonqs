@@ -12,7 +12,10 @@ failed copy is `Error::Backup` and **aborts the upgrade**. A database with nothi
 not copied, and only the three newest copies are kept. An in-memory database passes `None` for the
 path and is never copied.
 
-Latest is `0028_goals_and_limits.sql`: `goals` (+ `goal_accounts`, cascading — no rows means the
+Latest is `0029_limit_withdrawals.sql`: `contribution_limits.withdrawals_restore`, `0` for every
+existing limit — a withdrawal gives allowance back only when the user says so (ADR-0071).
+
+Before that, `0028_goals_and_limits.sql`: `goals` (+ `goal_accounts`, cascading — no rows means the
 whole portfolio, so a goal is never re-pointed by an account being deleted) and
 `contribution_limits`, whose `year_starts_on` is `MM-DD` because an allowance year is not always
 the calendar one. `expected_return` is stored as a fraction and is the user's assumption, never a

@@ -1,6 +1,6 @@
 # 68: A goal is an intention, and a contribution limit is measured, never enforced
 
-- Status: Accepted
+- Status: Accepted (withdrawal netting superseded by ADR-0071)
 
 ## Context
 

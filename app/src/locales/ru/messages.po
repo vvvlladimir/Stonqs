@@ -5900,6 +5900,10 @@ msgstr "У покупки уходит в себестоимость, у про�
 msgid "on average"
 msgstr "в среднем"
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "On for a flexible allowance. Off, money taken out still counts as paid in."
+msgstr "Включите для гибкого лимита. Выключено — снятые деньги всё равно считаются внесёнными."
+
 #: src/components/charts/DriftBars.tsx
 msgid "on target"
 msgstr "на цели"
@@ -9760,6 +9764,10 @@ msgstr "Ставка изъятия"
 #: src/components/charts/ValueChart.tsx
 msgid "Withdrawals"
 msgstr "Выводы"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Withdrawals give allowance back"
+msgstr "Снятия возвращают лимит"
 
 #: src/screens/Income/index.tsx
 msgid "Withheld at the source, so it is not in what was received."

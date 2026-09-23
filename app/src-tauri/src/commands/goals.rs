@@ -45,6 +45,8 @@ pub struct LimitInput {
     pub currency: String,
     /// `MM-DD`: the day the limit year opens.
     pub year_starts_on: String,
+    #[serde(default)]
+    pub withdrawals_restore: bool,
     pub note: Option<String>,
 }
 
@@ -143,6 +145,7 @@ pub fn limit_save(app: AppHandle, state: State<AppState>, input: LimitInput) -> 
         limit.amount = amount(&input.amount, "amount")?;
         limit.currency = sq_core::money::normalize_currency(&input.currency);
         limit.year_starts_on = input.year_starts_on.trim().to_string();
+        limit.withdrawals_restore = input.withdrawals_restore;
         limit.note = input.note.map(|n| n.trim().to_string()).filter(|n| !n.is_empty());
         store.save_limit(&limit)?;
         limit

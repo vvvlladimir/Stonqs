@@ -45,7 +45,11 @@ never eats an allowance — otherwise one internal transfer would look like a fr
 spent. Buying instruments with money already inside the account changes nothing either: the money
 was contributed when it arrived, not when it was invested.
 
-Withdrawals are netted off inside the same limit year, and a year whose withdrawals exceed its
+Whether a withdrawal counts is the limit's own setting. By default it does not: money taken out
+still counts as paid in, because most allowances (an ordinary ISA, an ИИС) stay spent once used —
+so an everyday account with frequent spending still shows its deposits as used. With `Withdrawals
+give allowance back` on, withdrawals and outgoing transfers are netted off inside the same limit
+year, which is how a "flexible" allowance behaves; a year whose withdrawals then exceed its
 deposits reads as nothing used — never as extra allowance earned.
 
 One consequence is worth naming: a transfer whose partner leg was never imported counts as a

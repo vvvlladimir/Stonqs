@@ -82,6 +82,10 @@ pub struct ContributionLimit {
     /// `MM-DD`: the day the limit year opens. The UK's begins on 6 April, so this is not
     /// always `01-01`.
     pub year_starts_on: String,
+    /// A withdrawal gives allowance back (a "flexible" ISA). Off, the year counts what was paid
+    /// in and ignores what left — which is how most allowances are administered.
+    #[serde(default)]
+    pub withdrawals_restore: bool,
     pub note: Option<String>,
 }
 
@@ -94,6 +98,7 @@ impl ContributionLimit {
             amount,
             currency: normalize_currency(currency),
             year_starts_on: "01-01".to_string(),
+            withdrawals_restore: false,
             note: None,
         }
     }

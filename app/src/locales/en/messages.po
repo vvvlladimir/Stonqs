@@ -5905,6 +5905,10 @@ msgstr "On a buy it joins the cost basis; on a sell it reduces proceeds"
 msgid "on average"
 msgstr "on average"
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "On for a flexible allowance. Off, money taken out still counts as paid in."
+msgstr "On for a flexible allowance. Off, money taken out still counts as paid in."
+
 #: src/components/charts/DriftBars.tsx
 msgid "on target"
 msgstr "on target"
@@ -9765,6 +9769,10 @@ msgstr "Withdrawal rate"
 #: src/components/charts/ValueChart.tsx
 msgid "Withdrawals"
 msgstr "Withdrawals"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Withdrawals give allowance back"
+msgstr "Withdrawals give allowance back"
 
 #: src/screens/Income/index.tsx
 msgid "Withheld at the source, so it is not in what was received."

@@ -119,8 +119,9 @@ Here is every network call the app makes, and when:
 | Inflation figures | Eurostat, IMF | Only if you pick a region for real returns |
 | Instrument lookup | Yahoo, OpenFIGI | When you search for or identify an instrument |
 | AI assistant | The provider *you* configured, with *your* key | Only when you use it |
+| Update check | GitHub Releases | Once a day; turn it off in Settings → Updates |
 
-Nothing else leaves your machine — no analytics, no crash reports, no update ping. You can switch
+Nothing else leaves your machine — no analytics, no crash reports. You can switch
 market-data sources, add your own, or turn them off and enter prices by hand.
 [SECURITY.md](SECURITY.md) explains exactly what the profile password does and does not protect
 against.

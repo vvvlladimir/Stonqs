@@ -10,6 +10,7 @@ import { affects, useInvalidate, useLimits } from "../../lib/queries";
 import {
   Async,
   Bar,
+  CheckField,
   Empty,
   ErrorText,
   Field,
@@ -29,6 +30,7 @@ const BLANK: LimitInput = {
   amount: "",
   currency: "",
   year_starts_on: "01-01",
+  withdrawals_restore: false,
   note: null,
 };
 
@@ -64,6 +66,7 @@ export function LimitsPanel({ accounts, base }: { accounts: AccountRow[]; base: 
       currency: usage.currency,
       // The stored day is the one the year opens on; the reading's `from` carries its year too.
       year_starts_on: usage.from.slice(5),
+      withdrawals_restore: usage.withdrawals_restore,
       note: null,
     });
 
@@ -149,6 +152,7 @@ function LimitCard({
   return (
     <ListRow
       box
+      top
       title={usage.name}
       sub={account}
       value={<Money value={usage.used} currency={usage.currency} />}
@@ -173,21 +177,22 @@ function LimitCard({
         </>
       }
       foot={
-        <>
-          <Bar fill={`${share * 100}%`} size="lg" tone={over ? "neg" : undefined} />
+        <span className="stack">
+          <Bar fill={`${share * 100}%`} size="sm" tone={over ? "neg" : undefined} />
           <span>
             {formatPercent(usage.share)}
             {" · "}
             <Trans>
               <Money value={usage.remaining} currency={usage.currency} /> left
             </Trans>
+            {" · "}
+            <span className="dim">
+              <Trans>
+                year {formatDay(usage.from)} — {formatDay(usage.to)}
+              </Trans>
+            </span>
           </span>
-          <span className="dim">
-            <Trans>
-              year {formatDay(usage.from)} — {formatDay(usage.to)}
-            </Trans>
-          </span>
-        </>
+        </span>
       }
     />
   );
@@ -255,6 +260,12 @@ function LimitForm({
           onChange={(e) => onChange({ ...draft, year_starts_on: e.target.value })}
         />
       </Field>
+      <CheckField
+        label={t`Withdrawals give allowance back`}
+        hint={t`On for a flexible allowance. Off, money taken out still counts as paid in.`}
+        checked={draft.withdrawals_restore}
+        onChange={(withdrawals_restore) => onChange({ ...draft, withdrawals_restore })}
+      />
     </FormDialog>
   );
 }

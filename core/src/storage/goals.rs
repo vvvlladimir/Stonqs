@@ -28,6 +28,7 @@ fn row_to_limit(row: &Row<'_>) -> rusqlite::Result<ContributionLimit> {
         amount: row.get::<_, SqlDecimal>("amount")?.0,
         currency: row.get("currency")?,
         year_starts_on: row.get("year_starts_on")?,
+        withdrawals_restore: row.get("withdrawals_restore")?,
         note: row.get("note")?,
     })
 }
@@ -122,15 +123,16 @@ impl Store {
         limit.validate()?;
         self.conn.execute(
             "INSERT INTO contribution_limits
-                 (id, account_id, name, amount, currency, year_starts_on, note)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                 (id, account_id, name, amount, currency, year_starts_on, note, withdrawals_restore)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
              ON CONFLICT (id) DO UPDATE SET
                  account_id = excluded.account_id,
                  name = excluded.name,
                  amount = excluded.amount,
                  currency = excluded.currency,
                  year_starts_on = excluded.year_starts_on,
-                 note = excluded.note",
+                 note = excluded.note,
+                 withdrawals_restore = excluded.withdrawals_restore",
             params![
                 limit.id,
                 limit.account_id,
@@ -139,6 +141,7 @@ impl Store {
                 limit.currency,
                 limit.year_starts_on,
                 limit.note,
+                limit.withdrawals_restore,
             ],
         )?;
         Ok(())

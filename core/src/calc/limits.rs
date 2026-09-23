@@ -2,8 +2,9 @@
 //!
 //! A contribution is money that entered the *portfolio*: a deposit, and a transfer leg whose
 //! partner is not in the ledger. Moving money between two of the user's own accounts is not a
-//! contribution and never eats an allowance (ADR-0068). It is measured, never enforced: nothing
-//! here refuses anything.
+//! contribution and never eats an allowance (ADR-0068). What left the account is netted off only
+//! when the limit says a withdrawal gives allowance back (ADR-0071). It is measured, never
+//! enforced: nothing here refuses anything.
 
 use super::holdings::paired_links;
 use crate::error::Result;
@@ -24,7 +25,8 @@ pub struct LimitUsage {
     pub to: NaiveDate,
     #[serde(with = "rust_decimal::serde::str")]
     pub allowance: Decimal,
-    /// Paid in over that year, withdrawals netted off, never below zero.
+    /// Paid in over that year — net of withdrawals only when they restore allowance — never
+    /// below zero.
     #[serde(with = "rust_decimal::serde::str")]
     pub used: Decimal,
     /// What is left of the allowance; zero once it is spent.
@@ -34,6 +36,8 @@ pub struct LimitUsage {
     #[serde(with = "rust_decimal::serde::str")]
     pub share: Decimal,
     pub currency: String,
+    /// Echoes the limit's switch, so an edit form starts from what is stored.
+    pub withdrawals_restore: bool,
 }
 
 /// Reads `limit` over the limit year that `as_of` falls in.
@@ -48,7 +52,15 @@ pub fn limit_usage(
 ) -> Result<LimitUsage> {
     limit.validate()?;
     let (from, to) = limit.year_of(as_of)?;
-    let used = contributions_between(transactions, &limit.account_id, from, to, &limit.currency, rates)?;
+    let used = contributions_between(
+        transactions,
+        &limit.account_id,
+        from,
+        to,
+        &limit.currency,
+        limit.withdrawals_restore,
+        rates,
+    )?;
     // A year whose withdrawals exceed its deposits has spent no allowance; it has not earned one.
     let used = used.max(Decimal::ZERO);
 
@@ -67,10 +79,12 @@ pub fn limit_usage(
         },
         used,
         currency: limit.currency.clone(),
+        withdrawals_restore: limit.withdrawals_restore,
     })
 }
 
-/// Money that entered the portfolio through one account in `[from, to]`, net of what left it.
+/// Money that entered the portfolio through one account in `[from, to]`; with `net`, less what
+/// left it the same way.
 ///
 /// The paired-link reading is the ledger's, not this function's invention: a transfer with a
 /// partner in the same set moved money inside the portfolio, and counting it would make one
@@ -81,6 +95,7 @@ pub fn contributions_between(
     from: NaiveDate,
     to: NaiveDate,
     currency: &str,
+    net: bool,
     rates: &dyn RateLookup,
 ) -> Result<Decimal> {
     let paired = paired_links(transactions);
@@ -101,6 +116,9 @@ pub fn contributions_between(
             }
             _ => continue,
         };
+        if !net && signed < Decimal::ZERO {
+            continue;
+        }
         total += rates.convert(signed, &t.currency, currency, t.date)?;
     }
     Ok(total)
@@ -169,15 +187,21 @@ mod tests {
         assert_eq!(usage.used, dec!(3000));
     }
 
-    /// Taking money back out frees the allowance again, but never creates one.
+    /// 5 000 in, 9 000 out. By default a withdrawal gives nothing back: 5 000 used, 15 000 left.
+    /// A flexible allowance nets it off: 5 000 - 9 000 = -4 000, read as 0 used, never as credit.
     #[test]
-    fn withdrawals_net_off_and_stop_at_zero() {
+    fn withdrawals_count_only_when_they_restore_allowance() {
         let txs = vec![
             Transaction::cash(ACC, TransactionKind::Deposit, d(2025, 2, 1), dec!(5000), "GBP"),
             Transaction::cash(ACC, TransactionKind::Withdrawal, d(2025, 4, 1), dec!(9000), "GBP"),
         ];
         let usage = limit_usage(&limit(), &txs, d(2025, 6, 1), &Same).unwrap();
+        assert_eq!(usage.used, dec!(5000));
+        assert_eq!(usage.remaining, dec!(15000));
 
+        let mut flexible = limit();
+        flexible.withdrawals_restore = true;
+        let usage = limit_usage(&flexible, &txs, d(2025, 6, 1), &Same).unwrap();
         assert_eq!(usage.used, Decimal::ZERO);
         assert_eq!(usage.remaining, dec!(20000));
     }

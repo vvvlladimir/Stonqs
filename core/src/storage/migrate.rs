@@ -132,6 +132,11 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
         "goals_and_limits",
         include_str!("../../migrations/0028_goals_and_limits.sql"),
     ),
+    (
+        29,
+        "limit_withdrawals",
+        include_str!("../../migrations/0029_limit_withdrawals.sql"),
+    ),
 ];
 
 /// Applies all pending migrations.

@@ -38,8 +38,10 @@ two limits if two allowances apply to it.
 What counts against a limit is money that entered the portfolio through that account: a deposit,
 and a transfer whose other leg is not in the ledger. Moving money between two of your own accounts
 counts for nothing, and neither does buying instruments with money already sitting in the account —
-it was contributed when it arrived. Withdrawals are netted off inside the same year, and a year
-that ends net negative reads as nothing used rather than as extra allowance.
+it was contributed when it arrived. By default a withdrawal gives nothing back: money taken out
+still counts as paid in, which is how most allowances work. Turning on `Withdrawals give allowance
+back` on the limit nets withdrawals off inside the same year, for a "flexible" allowance; a year
+that then ends net negative reads as nothing used rather than as extra allowance.
 
 **Nothing is ever blocked.** The limit is reported against what was paid in and that is all: no
 transaction is refused, no import is stopped.

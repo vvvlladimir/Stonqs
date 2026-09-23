@@ -156,6 +156,7 @@ function GoalCard({ row, onEdit, onDelete }: { row: GoalRow; onEdit: () => void;
   return (
     <ListRow
       box
+      top
       title={goal.name}
       sub={row.account_names.length > 0 ? row.account_names.join(" · ") : <Trans>the whole portfolio</Trans>}
       value={<Money value={progress.current_base} currency={currency} />}
@@ -180,8 +181,8 @@ function GoalCard({ row, onEdit, onDelete }: { row: GoalRow; onEdit: () => void;
         </>
       }
       foot={
-        <>
-          <Bar fill={`${share * 100}%`} size="lg" label={formatPercent(progress.progress)} />
+        <span className="stack">
+          <Bar fill={`${share * 100}%`} size="sm" label={formatPercent(progress.progress)} />
           <span>
             {formatPercent(progress.progress)}
             {progress.months_left !== null && (
@@ -198,9 +199,10 @@ function GoalCard({ row, onEdit, onDelete }: { row: GoalRow; onEdit: () => void;
                 </Badge>
               </>
             )}
+            {" · "}
+            <span className="dim">{pace}</span>
           </span>
-          <span className="dim">{pace}</span>
-        </>
+        </span>
       }
     />
   );

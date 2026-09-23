@@ -217,11 +217,12 @@ export interface LimitUsage {
   from: DateString;
   to: DateString;
   allowance: MoneyString;
-  /** Paid in over the year, withdrawals netted off, never below zero. */
+  /** Paid in over the year — net of withdrawals only when they restore allowance — never below zero. */
   used: MoneyString;
   remaining: MoneyString;
   share: MoneyString;
   currency: string;
+  withdrawals_restore: boolean;
 }
 
 export interface LimitInput {
@@ -232,5 +233,7 @@ export interface LimitInput {
   currency: string;
   /** `MM-DD`: the day the limit year opens. */
   year_starts_on: string;
+  /** A withdrawal gives allowance back (a "flexible" ISA). */
+  withdrawals_restore: boolean;
   note: string | null;
 }

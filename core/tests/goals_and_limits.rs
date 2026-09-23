@@ -163,3 +163,35 @@ fn spending_inside_the_account_eats_no_allowance() {
     let after = analytics.limit_usage(&limit, d(2025, 6, 30)).unwrap().used;
     assert_eq!(before, after);
 }
+
+/// The ISA took 12 000 in May. A 3 000 withdrawal in June gives nothing back by default (12 000
+/// used); on a flexible allowance it does: 12 000 - 3 000 = 9 000. The switch survives the store.
+#[test]
+fn a_withdrawal_restores_allowance_only_when_the_limit_says_so() {
+    let world = seeded();
+    let analytics = PortfolioAnalytics::new(&world.store, &world.portfolio).unwrap();
+    let withdrawal = Transaction::cash(
+        &world.isa.id,
+        TransactionKind::Withdrawal,
+        d(2025, 6, 1),
+        dec!(3000),
+        "GBP",
+    );
+    world.store.save_transaction(&withdrawal).unwrap();
+
+    let mut limit = ContributionLimit::new(&world.isa.id, "ISA", dec!(20000), "GBP");
+    world.store.save_limit(&limit).unwrap();
+    assert_eq!(
+        analytics.limit_usage(&limit, d(2025, 6, 30)).unwrap().used,
+        dec!(12000)
+    );
+
+    limit.withdrawals_restore = true;
+    world.store.save_limit(&limit).unwrap();
+    let stored = world.store.list_limits().unwrap().remove(0);
+    assert!(stored.withdrawals_restore);
+    assert_eq!(
+        analytics.limit_usage(&stored, d(2025, 6, 30)).unwrap().used,
+        dec!(9000)
+    );
+}

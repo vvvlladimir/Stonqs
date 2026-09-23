@@ -325,6 +325,7 @@ fn limit_usage_carries_its_own_year() {
         remaining: dec!(8000),
         share: dec!(0.6),
         currency: "GBP".into(),
+        withdrawals_restore: false,
     })
     .unwrap();
 
@@ -341,6 +342,7 @@ fn limit_usage_carries_its_own_year() {
             "share",
             "to",
             "used",
+            "withdrawals_restore",
         ]
     );
     assert_eq!(json["from"], Value::String("2025-04-06".into()));
