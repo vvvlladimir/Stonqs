@@ -9,12 +9,21 @@ use crate::import::parse::{ImportProblem, ParsedCsv, ProblemCode, is_placeholder
 use rust_decimal::Decimal;
 use std::collections::BTreeMap;
 
+/// One source row ready to be read: the file's cells, and the user's hand edits beside them.
+pub(super) struct RowInput {
+    pub raw: BTreeMap<String, String>,
+    /// Edits that have no column to live in. A delivery whose file states no price is corrected
+    /// by *adding* the value, not by changing a cell, so an override of an unmapped field is
+    /// carried on its own instead of being dropped.
+    pub added: BTreeMap<ImportField, String>,
+}
+
 /// The file's rows with the overrides already folded in.
 pub(super) fn rows_with_overrides(
     parsed: &ParsedCsv,
     mapping: &ImportMapping,
     overrides: &[RowOverride],
-) -> Vec<BTreeMap<String, String>> {
+) -> Vec<RowInput> {
     parsed
         .rows
         .iter()
@@ -26,12 +35,18 @@ pub(super) fn rows_with_overrides(
                 .cloned()
                 .zip(values.iter().cloned())
                 .collect();
+            let mut added = BTreeMap::new();
             for o in overrides.iter().filter(|o| o.number == index + 1) {
-                if let Some(column) = mapping.column(o.field) {
-                    raw.insert(column.to_string(), o.value.clone());
+                match mapping.column(o.field) {
+                    Some(column) => {
+                        raw.insert(column.to_string(), o.value.clone());
+                    }
+                    None => {
+                        added.insert(o.field, o.value.clone());
+                    }
                 }
             }
-            raw
+            RowInput { raw, added }
         })
         .collect()
 }
@@ -43,11 +58,23 @@ pub(super) struct Cells<'a> {
     pub decimal_separator: char,
     /// 1-based, as the user sees it in the wizard.
     pub number: usize,
+    /// What the rule that produced this operation says instead of the row (ADR-0067). Empty
+    /// for a row that became one operation, which is every row of most files.
+    pub emitted: BTreeMap<ImportField, String>,
+    /// Hand edits with no column of their own. They outrank a rule: the user is correcting the
+    /// operation the rule produced, not asking for it to be produced differently.
+    pub added: &'a BTreeMap<ImportField, String>,
 }
 
 impl Cells<'_> {
     pub fn get(&self, field: ImportField) -> Option<&str> {
-        cell_of(self.raw, self.mapping, field)
+        if let Some(value) = self.added.get(&field) {
+            return Some(value.trim()).filter(|v| !v.is_empty());
+        }
+        match self.emitted.get(&field) {
+            Some(value) => Some(value.trim()).filter(|v| !v.is_empty()),
+            None => cell_of(self.raw, self.mapping, field),
+        }
     }
 
     /// The column a problem points at. Empty when nothing is mapped to the field — the message

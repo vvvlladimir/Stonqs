@@ -79,6 +79,7 @@ import type {
   TransactionFilter,
   TransactionInput,
   TransactionsData,
+  TransferSuggestion,
   AccountInput,
   AccountRow,
   AccountsTotal,
@@ -248,8 +249,13 @@ export const api = {
     call<PositionReturnRow[]>("position_returns", { from, to, source: source ?? null }),
 
   transactionsList: (filter: TransactionFilter) => call<TransactionsData>("transactions_list", { filter }),
+  transactionsExportSave: (filter: TransactionFilter, path: string) =>
+    call<void>("transactions_export_save", { filter, path }),
   transactionSave: (input: TransactionInput) => call<Transaction>("transaction_save", { input }),
   transactionDelete: (id: string) => call<void>("transaction_delete", { id }),
+  /** Moves between two of the user's own accounts that arrived as two unrelated rows. */
+  transferSuggestions: () => call<TransferSuggestion[]>("transfer_suggestions"),
+  transferLink: (ids: [string, string]) => call<void>("transfer_link", { ids }),
 
   periodRanges: (as_of: DateString) => call<PeriodRange[]>("period_ranges", { asOf: as_of }),
   periodsGet: () => call<PeriodSettings>("periods_get"),

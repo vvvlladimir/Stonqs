@@ -1,4 +1,4 @@
-use super::dedupe::{fingerprint, fingerprint_of};
+use super::dedupe::{fingerprint, fingerprint_of, loose_fingerprint_of};
 use super::ibflex;
 use super::mapping::{ImportMapping, normalize_alias};
 use super::parse::{ImportProblem, ParseConfig, ProblemCode, parse_csv};
@@ -24,6 +24,11 @@ pub struct ImportOptions {
     pub new_security_source: Option<String>,
 
     pub import_duplicates: bool,
+
+    /// Write rows a stored operation only *resembles*. Off by default: the likeliest reading is
+    /// that the stored row is this one, corrected by hand since (`RowStatus::Similar`).
+    #[serde(default)]
+    pub import_similar: bool,
 }
 
 fn default_new_security_source() -> Option<String> {
@@ -37,6 +42,7 @@ impl Default for ImportOptions {
             new_security_kind: SecurityKind::Other,
             new_security_source: default_new_security_source(),
             import_duplicates: false,
+            import_similar: false,
         }
     }
 }
@@ -45,7 +51,16 @@ impl Default for ImportOptions {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportResult {
     pub imported: usize,
+    /// Rows that replaced an operation already in the database, matched by the broker's own
+    /// identifier. Counted apart from `imported`: nothing new entered the ledger.
+    #[serde(default)]
+    pub updated: usize,
     pub skipped: usize,
+
+    /// Rows skipped because a stored operation resembles them. Counted apart from `skipped`, so
+    /// the screen can offer to write them after all rather than leave the user guessing.
+    #[serde(default)]
+    pub similar: usize,
 
     pub created_securities: Vec<String>,
     pub problems: Vec<ImportProblem>,
@@ -90,17 +105,23 @@ impl<'a> ImportService<'a> {
             Some(m) => m.clone(),
             // A Flex statement's columns are this crate's own, so detecting them off their
             // headers would be guessing at an answer we already know.
+            // Our own file states the model's own wording, so detecting it off the headers
+            // would be guessing at an answer the format already gives.
+            None if super::canonical::is_canonical(content) => super::canonical::mapping(),
             None if ibflex::is_flex(content) => ibflex::mapping(),
             None => ImportMapping::detect_with_values(&parsed.headers, &parsed.rows),
         };
 
         let securities = self.store.list_securities()?;
         let accounts = self.store.list_accounts()?;
-        let known = self.known_fingerprints()?;
+        let (known, loose) = self.known_fingerprints()?;
+        let known_external = self.known_external()?;
         let context = ImportContext {
             securities: &securities,
             accounts: &accounts,
+            known_external: &known_external,
             known_fingerprints: &known,
+            known_loose: &loose,
             base_currency: self.base_currency.as_deref(),
             today: self.today,
         };
@@ -119,16 +140,23 @@ impl<'a> ImportService<'a> {
         // import in between — so identity is checked again here, against the store, inside
         // the transaction. A row the preview already called a duplicate is excluded: writing
         // it is what `import_duplicates` was answered about.
-        let mut known = self.known_fingerprints()?;
+        let (mut known, _) = self.known_fingerprints()?;
 
         for row in &preview.rows {
             let importable = match row.status {
                 RowStatus::Ready => true,
+                // A restatement is a correction of a row that is already there, so it is not
+                // what the duplicate switch was answered about.
+                RowStatus::Updated => true,
                 RowStatus::Duplicate => options.import_duplicates,
+                RowStatus::Similar => options.import_similar,
                 RowStatus::UnknownSecurity => options.create_missing_securities,
                 RowStatus::Ignored | RowStatus::Invalid => false,
             };
             if !importable {
+                if row.status == RowStatus::Similar {
+                    result.similar += 1;
+                }
                 result.skipped += 1;
                 continue;
             }
@@ -180,6 +208,29 @@ impl<'a> ImportService<'a> {
                             .store
                             .find_security_by_symbol(&plan.symbol)?
                             .or(self.store.find_security_by_symbol(symbol)?);
+                        // A ticker names a listing, an ISIN names the instrument. The stored row
+                        // under this ticker carrying a different ISIN is a different company, and
+                        // a ticker is unique, so neither reusing it nor creating beside it is
+                        // possible: the row waits for a ticker of its own.
+                        if let (Some(found), Some(wanted)) = (&existing, &plan.isin)
+                            && found
+                                .isin
+                                .as_deref()
+                                .is_some_and(|stored| normalize_alias(stored) != normalize_alias(wanted))
+                        {
+                            result.skipped += 1;
+                            result.problems.push(ImportProblem::row(
+                                ProblemCode::TickerIsinConflict,
+                                row.number,
+                                format!(
+                                    "ticker {} is already in the database under ISIN {}, and this \
+                                     row says {wanted} — give the new instrument a ticker of its own",
+                                    found.symbol,
+                                    found.isin.as_deref().unwrap_or("-")
+                                ),
+                            ));
+                            continue;
+                        }
                         let security = match existing {
                             Some(s) => s,
                             None => {
@@ -196,7 +247,13 @@ impl<'a> ImportService<'a> {
                 draft.security_id = Some(id);
             }
 
-            if row.status != RowStatus::Duplicate && !known.insert(fingerprint(&draft)) {
+            // A restatement writes over a row that is in the store already, so its content
+            // may well match one — that is the point of it, not a reason to skip it.
+            if !matches!(
+                row.status,
+                RowStatus::Duplicate | RowStatus::Updated | RowStatus::Similar
+            ) && !known.insert(fingerprint(&draft))
+            {
                 result.skipped += 1;
                 continue;
             }
@@ -204,7 +261,11 @@ impl<'a> ImportService<'a> {
             match draft.to_transaction() {
                 Ok(transaction) => {
                     self.store.save_transaction(&transaction)?;
-                    result.imported += 1;
+                    if row.status == RowStatus::Updated {
+                        result.updated += 1;
+                    } else {
+                        result.imported += 1;
+                    }
                 }
                 Err(e) => {
                     result.skipped += 1;
@@ -240,13 +301,25 @@ impl<'a> ImportService<'a> {
         self.store.save_quotes(&import.quotes)
     }
 
-    fn known_fingerprints(&self) -> Result<HashSet<String>> {
+    /// What the store knows by the broker's own identifier, for the rows that carry one.
+    fn known_external(&self) -> Result<Vec<super::dedupe::KnownRow>> {
         let accounts: Vec<String> = self.store.list_accounts()?.into_iter().map(|a| a.id).collect();
         Ok(self
             .store
             .transactions_for_accounts(&accounts, None)?
             .iter()
-            .map(fingerprint_of)
+            .filter_map(super::dedupe::KnownRow::of)
             .collect())
+    }
+
+    /// Both readings of what the store already holds: the exact content fingerprint, and the
+    /// one that ignores what an operation is worth (`dedupe::loose_fingerprint_of`).
+    fn known_fingerprints(&self) -> Result<(HashSet<String>, HashSet<String>)> {
+        let accounts: Vec<String> = self.store.list_accounts()?.into_iter().map(|a| a.id).collect();
+        let stored = self.store.transactions_for_accounts(&accounts, None)?;
+        Ok((
+            stored.iter().map(fingerprint_of).collect(),
+            stored.iter().filter_map(loose_fingerprint_of).collect(),
+        ))
     }
 }

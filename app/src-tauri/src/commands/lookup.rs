@@ -67,8 +67,8 @@ pub async fn import_resolve_symbol(
         }
 
         let fallback = currency.unwrap_or_else(|| "EUR".to_string());
-        for query in queries {
-            if let Some(found) = service.resolve_preferring(&query, Some(&fallback))? {
+        for query in &queries {
+            if let Some(found) = service.resolve_preferring(query, Some(&fallback))? {
                 let mut draft = SecurityDraft::from_match(&found, &fallback);
                 if draft.isin.is_none() && is_isin(&value) {
                     draft.isin = Some(value.to_uppercase());
@@ -76,7 +76,24 @@ pub async fn import_resolve_symbol(
                 return Ok(Some(draft));
             }
         }
-        Ok(None)
+
+        // The search places a code on no venue at all when the file names one this source does
+        // not index. The directory still can: it is keyed by ISIN, and every venue it returns is
+        // probed for candles before one is taken. Without an ISIN the bare ticker is asked
+        // instead — a broker's code with a suffix this source spells differently.
+        let venue = match queries.iter().find(|q| is_isin(q)) {
+            Some(isin) => service.best_listing(isin, Some(&fallback))?,
+            None => service.best_listing_by_symbol(&value, Some(&fallback))?,
+        };
+        let Some(venue) = venue else { return Ok(None) };
+        let mut draft = match SecurityDraft::from_listing(&venue, &fallback) {
+            Some(draft) => draft,
+            None => return Ok(None),
+        };
+        if draft.isin.is_none() {
+            draft.isin = queries.iter().find(|q| is_isin(q)).map(|i| i.to_uppercase());
+        }
+        Ok(Some(draft))
     })
     .await
 }

@@ -1,6 +1,6 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api";
 import { Banner, Buttons, ErrorText, List, Panel } from "../../components/ui";
 import { MapRow } from "./MapRow";
@@ -21,6 +21,9 @@ export function AssetsStep({
   const { t } = useLingui();
   const [progress, setProgress] = useState<string | null>(null);
   const [failed, setFailed] = useState<string[]>([]);
+  // The search runs once per visit to this step, not once per render: it is network, and the
+  // mapping it writes re-renders the step that started it.
+  const searched = useRef(false);
 
   const needed = preview.symbols.filter((s) => s.required);
   const known = needed.filter((s) => s.security_id);
@@ -68,12 +71,25 @@ export function AssetsStep({
     onChange({ ...mapping, new_securities });
   };
 
+  // An instrument nobody identified enters the portfolio under the export's own code and stays
+  // without prices, which is only discovered days later on a chart that has none. The step
+  // therefore does its own work on arrival and leaves the corrections to the user.
+  useEffect(() => {
+    if (searched.current || unknown.length === 0) return;
+    searched.current = true;
+    void resolveAll();
+    // Started once on arrival; `resolveAll` closes over the mapping it was mounted with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <Banner tone={unknown.length === 0 ? "info" : "warn"}>
-        {unknown.length === 0
-          ? t`Every instrument is identified. Their quotes will arrive automatically.`
-          : t`${plural(unknown.length, { one: "# instrument", other: "# instruments" })} not identified. Such an instrument enters the portfolio under the export's code and stays without quotes.`}
+        {progress
+          ? t`Identifying instruments: ${progress}`
+          : unknown.length === 0
+            ? t`Every instrument is identified. Their quotes will arrive automatically.`
+            : t`${plural(unknown.length, { one: "# instrument", other: "# instruments" })} not identified. Such an instrument enters the portfolio under the export's code and stays without quotes.`}
       </Banner>
 
       {unknown.length > 0 && (
@@ -83,15 +99,16 @@ export function AssetsStep({
           tools={
             <Buttons>
               <button className="btn btn--sm" disabled={progress !== null} onClick={resolveAll}>
-                {progress ? t`Searching ${progress}…` : t`Identify all`}
+                {progress ? t`Searching ${progress}…` : t`Search again`}
               </button>
             </Buttons>
           }
         >
           <p className="muted">
             <Trans>
-              The search goes by ISIN first, then by the column value and the name from the file. What it
-              finds can be corrected or replaced with another listing.
+              The search runs by itself when the step opens: by ISIN first, then by the column value and the
+              name from the file, and finally over the exchanges the instrument trades on, taking the first
+              that actually has prices. What it finds can be corrected or replaced with another listing.
             </Trans>
           </p>
           {failed.length > 0 && (

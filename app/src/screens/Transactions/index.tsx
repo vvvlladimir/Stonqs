@@ -1,7 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { PlusIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react";
+import { save as saveFile } from "@tauri-apps/plugin-dialog";
 import { api, today } from "../../lib/api";
 import { Page } from "../../components/Page";
 import {
@@ -35,6 +36,7 @@ export function Transactions({ focus }: { focus?: string | null }) {
     if (focus) setQuery(focus);
   }, [focus]);
   const [draft, setDraft] = useState<TransactionInput | null>(null);
+  const [exporting, setExporting] = useState(false);
   const menu = useMenu();
 
   const accounts = useAccounts();
@@ -95,6 +97,8 @@ export function Transactions({ focus }: { focus?: string | null }) {
     fees: null,
     taxes: null,
     currency: firstDepot?.currency ?? accounts.data[0]?.currency ?? "EUR",
+    fee_currency: null,
+    tax_currency: null,
     fx_rate_to_base: null,
     note: null,
   });
@@ -112,6 +116,8 @@ export function Transactions({ focus }: { focus?: string | null }) {
       fees: row.fees,
       taxes: row.taxes,
       currency: row.currency,
+      fee_currency: row.fee_currency,
+      tax_currency: row.tax_currency,
       fx_rate_to_base: row.fx_rate_to_base,
       note: row.note,
     });
@@ -119,6 +125,21 @@ export function Transactions({ focus }: { focus?: string | null }) {
   const years = [...new Set((all.data?.rows ?? []).map((row) => row.date.slice(0, 4)))].sort(
     (a, b) => Number(b) - Number(a),
   );
+
+  // The file holds what the screen holds: the same filter, not the whole journal.
+  const exportFile = async () => {
+    const path = await saveFile({
+      defaultPath: `transactions-${today()}.json`,
+      filters: [{ name: "Stonqs transactions", extensions: ["json"] }],
+    });
+    if (!path) return;
+    setExporting(true);
+    try {
+      await api.transactionsExportSave(filter, path);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const currency = rows.data?.base_currency ?? "";
 
@@ -142,9 +163,14 @@ export function Transactions({ focus }: { focus?: string | null }) {
       }
       asOf={formatDay(today())}
       actions={
-        <button className="btn" onClick={() => setDraft(blank())}>
-          <PlusIcon /> <Trans>New transaction</Trans>
-        </button>
+        <>
+          <button className="btn" onClick={exportFile} disabled={exporting}>
+            <DownloadSimpleIcon /> <Trans>Export</Trans>
+          </button>
+          <button className="btn" onClick={() => setDraft(blank())}>
+            <PlusIcon /> <Trans>New transaction</Trans>
+          </button>
+        </>
       }
       filters={
         <Filters query={query} onQuery={setQuery} filter={filter} onFilter={setFilter} years={years} />

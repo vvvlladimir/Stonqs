@@ -15,6 +15,22 @@ Consequences worth knowing:
 - Many instruments have no ISIN at all — US stocks as most providers report them. That is normal,
   not a data problem to fix.
 
+**A source answering with almost nothing is a venue fault, not an empty market.** A ticker taken
+from a broker's file often belongs to an exchange the price source does not index. The source then
+answers the request rather than failing it, but returns only today's close, so the instrument shows
+a price and no history at all. The app calls a series that covers under a quarter of the period the
+instrument has been held too short, flags it, and — for an instrument it chose the venue for
+itself — moves it to another exchange that really has prices and fetches it there. A holding
+younger than about three months is never judged this way, and an instrument that simply listed
+part-way through the period is not either: a series short because the listing is young is a fact,
+not a fault.
+
+**How far back prices are fetched is decided by the ledger.** An automatic fetch covers each
+instrument from its first operation and each currency pair from the first operation using it, so
+importing history older than the app's default window does not leave that older part unvalued.
+A manual refresh of recent prices only extends what is already stored and never closes a hole
+older than the series.
+
 An instrument can also be set to manual prices, in which case no provider is asked and the user
 enters closes themselves. Missing quotes on such an instrument are expected.
 

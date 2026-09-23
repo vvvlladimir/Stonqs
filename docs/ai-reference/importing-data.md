@@ -23,6 +23,27 @@ Two details explain most surprises:
   between accounts — and only the sign tells the legs apart. A leg without a partner is read as
   money crossing the portfolio boundary.
 
+Three more things follow from a file being somebody else's:
+
+- **An identity that survives an edit.** Correcting a stored operation changes its fingerprint, so
+  the file it came from no longer recognises it. The import also compares what an edit cannot
+  change — day, account, instrument, quantity — and treats a match as the stored row rather than a
+  second one. It is left out unless the user says otherwise.
+- **An ISIN identifies the instrument, a ticker only a listing.** Rows are joined to an instrument
+  by ISIN first. A ticker already in the portfolio under a *different* ISIN names a different
+  instrument, and since one ticker cannot name two, such a row is not written until it is given a
+  ticker of its own.
+- **Shares can arrive without a price.** A statement from a broker a portfolio was moved to states
+  quantities and never what they cost. Imported as it stands, the position enters at a cost of
+  zero and reads as pure profit; the value has to be supplied on the row.
+
+**A move between two brokers arrives as two unrelated rows**, because each export knows only its
+own half, and both are read as money crossing the portfolio boundary — the very thing every return
+figure is measured against. After a write the app lists payments that match in currency and size
+within a few days and offers to join them into one move. It never joins them by itself: matching
+amounts are not proof that one payment is the other, and joining the wrong pair erases a real
+deposit and a real withdrawal at once.
+
 A row the user marks as not an operation is skipped, counted as skipped, and never written. Brokers
 print lines that are not transactions at all, and refusing the whole file over them would be no
 answer. An Interactive Brokers statement arrives with three such wordings already on the skip list

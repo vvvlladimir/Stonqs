@@ -44,6 +44,8 @@ pub fn print_preview(preview: &ImportPreview) {
         let status = match row.status {
             RowStatus::Ready => "ready",
             RowStatus::Duplicate => "duplicate",
+            RowStatus::Updated => "restated",
+            RowStatus::Similar => "looks stored",
             RowStatus::UnknownSecurity => "no instrument",
             RowStatus::Ignored => "skipped",
             RowStatus::Invalid => "error",

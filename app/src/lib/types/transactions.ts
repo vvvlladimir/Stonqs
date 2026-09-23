@@ -34,9 +34,14 @@ export interface Transaction {
   fees: MoneyString;
   taxes: MoneyString;
   currency: string;
+  /** Currency the commission was billed in; null when it is the operation's own. */
+  fee_currency: string | null;
+  tax_currency: string | null;
   /** Transaction-time FX rate, or null to use the rate table. */
   fx_rate_to_base: MoneyString | null;
   link_id: string | null;
+  /** The broker's own identifier, for a row that came from a file. */
+  external_id: string | null;
   note: string | null;
 }
 
@@ -47,6 +52,27 @@ export interface TransactionRow extends Transaction {
   amount_base: MoneyString;
   /** Signed cash leg; purchases are negative. */
   net_base: MoneyString;
+}
+
+/**
+ * Two stored operations that look like the two halves of one move between the user's own
+ * accounts — the shape a portfolio carried from one broker to another leaves behind, where each
+ * export knows only its own leg. A suggestion, never a decision: linking is the user's press.
+ */
+export interface TransferSuggestion {
+  out_id: string;
+  in_id: string;
+  currency: string;
+  amount_out: MoneyString;
+  amount_in: MoneyString;
+  date_out: DateString;
+  date_in: DateString;
+  account_out: string;
+  account_in: string;
+  account_out_name: string;
+  account_in_name: string;
+  /** Days between the two legs. */
+  days_apart: number;
 }
 
 /** Monthly journal net computed by the core. */
@@ -93,6 +119,8 @@ export interface TransactionInput {
   fees: string | null;
   taxes: string | null;
   currency: string;
+  fee_currency: string | null;
+  tax_currency: string | null;
   fx_rate_to_base: string | null;
   note: string | null;
 }

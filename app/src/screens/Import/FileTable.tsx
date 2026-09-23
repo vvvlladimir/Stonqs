@@ -14,6 +14,8 @@ import {
   fieldByColumn,
   fieldLabel,
   normalizeAlias,
+  SPLITS,
+  splitOf,
   type KindChoice,
   type PreviewRow,
 } from "./labels";
@@ -68,6 +70,7 @@ export function FileTable({
   }));
   const kindOptions = [
     ...kinds(i18n).map(([id, title]) => ({ value: id, label: title })),
+    ...Object.entries(SPLITS).map(([id, split]) => ({ value: id, label: i18n._(split.label) })),
     { value: SKIP, label: t`do not import` },
   ];
   const accountOptions = (edit?.accounts ?? []).map((account) => ({
@@ -97,14 +100,16 @@ export function FileTable({
     const key = normalizeAlias(value);
     const kind = kindOf.get(key) ?? null;
     const skip = skipped.has(key);
+    // A wording answered by a rule shows that answer, not the kind it happens to alias.
+    const split = splitOf(mapping, value);
     return pair(
       value,
-      Boolean(kind) || skip,
+      Boolean(kind) || skip || Boolean(split),
       <Choice
         wide
         label={t`Transaction kind for "${value}"`}
         placeholder={t`— not mapped —`}
-        value={skip ? SKIP : (kind ?? "")}
+        value={split ?? (skip ? SKIP : (kind ?? ""))}
         onChange={(next) => edit!.onChange(assignKinds(mapping, [value], next as KindChoice))}
         options={kindOptions}
       />,

@@ -9,11 +9,92 @@
 //! Not all of them have been tried against a real export yet, which is why a preset is only ever
 //! a starting point: the import wizard lets the user override every part of it (`import.md`).
 
-use super::mapping::{ImportMapping, default_kind_aliases};
+use super::mapping::{ImportMapping, default_kind_aliases, normalize_header};
 use super::parse::ParseConfig;
 use crate::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
+
+/// What makes a file recognisable as this broker's export. Everything in it is optional and
+/// everything declared must hold, so a rule is a claim the preset makes about the file rather
+/// than a guess the app makes about the preset.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PresetMatch {
+    /// Column names the file must all have. Derived from the layout itself when the preset
+    /// declares none: the columns a layout maps *are* that broker's header row.
+    #[serde(default)]
+    pub headers: Vec<String>,
+
+    /// Text that must occur near the start of the file — a broker's name in its preamble.
+    #[serde(default)]
+    pub marker: Option<String>,
+
+    /// Part of the file's own name, compared case-insensitively.
+    #[serde(default)]
+    pub file_name: Option<String>,
+}
+
+impl PresetMatch {
+    /// The rule a layout implies: its own mapped columns.
+    pub fn of_columns(columns: impl IntoIterator<Item = String>) -> Self {
+        PresetMatch {
+            headers: columns.into_iter().collect(),
+            ..PresetMatch::default()
+        }
+    }
+
+    /// How well the file answers this rule: the number of signals matched, or `None` when
+    /// anything the rule declares is absent. A rule declaring nothing recognises nothing.
+    pub fn score(&self, headers: &[String], file_name: Option<&str>, head: &str) -> Option<u32> {
+        let normalized: Vec<String> = headers.iter().map(|h| normalize_header(h)).collect();
+        for wanted in &self.headers {
+            let wanted = normalize_header(wanted);
+            if !normalized.contains(&wanted) {
+                return None;
+            }
+        }
+        let mut score = self.headers.len() as u32;
+        if let Some(marker) = &self.marker {
+            if !head.to_lowercase().contains(&marker.to_lowercase()) {
+                return None;
+            }
+            score += 2;
+        }
+        if let Some(part) = &self.file_name {
+            if !file_name?.to_lowercase().contains(&part.to_lowercase()) {
+                return None;
+            }
+            score += 2;
+        }
+        (score > 0).then_some(score)
+    }
+}
+
+/// Picks the layout a file belongs to. A tie is no answer: two layouts fitting a file equally
+/// well means neither has been recognised, and guessing one costs more than asking.
+pub fn best_match<'a>(
+    candidates: impl IntoIterator<Item = (&'a str, PresetMatch)>,
+    headers: &[String],
+    file_name: Option<&str>,
+    head: &str,
+) -> Option<&'a str> {
+    let mut best: Option<(&str, u32)> = None;
+    let mut tied = false;
+    for (name, rule) in candidates {
+        let Some(score) = rule.score(headers, file_name, head) else {
+            continue;
+        };
+        match best {
+            Some((_, top)) if score < top => {}
+            Some((_, top)) if score == top => tied = true,
+            _ => {
+                best = Some((name, score));
+                tied = false;
+            }
+        }
+    }
+    if tied { None } else { best.map(|(name, _)| name) }
+}
 
 /// One broker's layout: how to read the file and what its columns and wordings mean.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -24,6 +105,10 @@ pub struct BrokerPreset {
     pub config: ParseConfig,
 
     pub mapping: ImportMapping,
+
+    /// How a file is recognised as this broker's. Absent means "by the columns it maps".
+    #[serde(default, rename = "match", skip_serializing_if = "Option::is_none")]
+    pub match_rule: Option<PresetMatch>,
 }
 
 impl BrokerPreset {
@@ -35,6 +120,14 @@ impl BrokerPreset {
             merged.kind_aliases.entry(value).or_insert(kind);
         }
         merged
+    }
+
+    /// The rule this preset is recognised by: its own if it declares one, otherwise the columns
+    /// it maps — a layout that names "Wertpapierbezeichnung" already describes its broker.
+    pub fn match_rule(&self) -> PresetMatch {
+        self.match_rule
+            .clone()
+            .unwrap_or_else(|| PresetMatch::of_columns(self.mapping.columns.values().cloned()))
     }
 
     /// Turns a layout made on a real file into a preset: an account belongs to the user who
@@ -51,6 +144,7 @@ impl BrokerPreset {
             name: name.to_string(),
             config: config.clone(),
             mapping,
+            match_rule: None,
         }
     }
 }
@@ -108,6 +202,55 @@ mod tests {
             // The shared wordings come back when the preset is applied.
             assert_eq!(mapping.kind_of("BUY"), Some(crate::model::TransactionKind::Buy));
         }
+    }
+
+    #[test]
+    fn a_shipped_layout_recognises_the_file_it_was_written_for() {
+        let presets = builtin_presets();
+        let republic = presets
+            .iter()
+            .find(|p| p.name.contains("Trade Republic"))
+            .expect("Trade Republic ships as a preset");
+
+        // A preset declares no rule of its own, so the columns it maps are the rule.
+        let headers: Vec<String> = republic.mapping.columns.values().cloned().collect();
+        let candidates = presets.iter().map(|p| (p.name.as_str(), p.match_rule()));
+        assert_eq!(
+            best_match(candidates, &headers, None, ""),
+            Some(republic.name.as_str())
+        );
+    }
+
+    #[test]
+    fn a_file_no_layout_describes_is_not_guessed_at() {
+        let headers = vec!["when".to_string(), "what".to_string(), "how much".to_string()];
+        let candidates = builtin_presets()
+            .iter()
+            .map(|p| (p.name.as_str(), p.match_rule()));
+        assert_eq!(best_match(candidates, &headers, None, ""), None);
+    }
+
+    #[test]
+    fn two_layouts_fitting_equally_well_recognise_nothing() {
+        let rule = PresetMatch::of_columns(["Date".to_string(), "Amount".to_string()]);
+        let headers = vec!["Date".to_string(), "Amount".to_string()];
+        let candidates = [("A", rule.clone()), ("B", rule)];
+        assert_eq!(best_match(candidates, &headers, None, ""), None);
+    }
+
+    #[test]
+    fn a_declared_rule_must_hold_in_full() {
+        let rule = PresetMatch {
+            headers: vec!["Date".to_string()],
+            marker: Some("Interactive Brokers".to_string()),
+            file_name: None,
+        };
+        let headers = vec!["Date".to_string()];
+        assert_eq!(
+            rule.score(&headers, None, "Interactive Brokers statement"),
+            Some(3)
+        );
+        assert_eq!(rule.score(&headers, None, "Some other broker"), None);
     }
 
     #[test]

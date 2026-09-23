@@ -56,13 +56,14 @@ fn the_field_that_names_a_column_best_keeps_the_others_off_it() {
 #[test]
 fn a_fee_column_has_to_hold_numbers() {
     // Bitvavo splits the fee into "Fee currency" and "Fee amount": the letters in the
-    // first one must not be read as money.
+    // first one must not be read as money — and they are the fee's currency, not the row's.
     let mapping = detect(
         &["Date", "Type", "Amount", "Fee currency", "Fee amount"],
         &[&["2023-11-30", "buy", "10.00", "ETH", "0.02"]],
     );
     assert_eq!(mapping.column(ImportField::Fee), Some("Fee amount"));
-    assert_eq!(mapping.column(ImportField::Currency), Some("Fee currency"));
+    assert_eq!(mapping.column(ImportField::FeeCurrency), Some("Fee currency"));
+    assert_eq!(mapping.column(ImportField::Currency), None);
 }
 
 #[test]

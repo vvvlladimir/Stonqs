@@ -101,14 +101,15 @@
       "columns": {
         "DATE": "Date",
         "KIND": "Type",
+        "SYMBOL": "Currency",
+        "QUANTITY": "Amount",
         "PRICE": "Quote Price",
-        "AMOUNT": "Amount",
+        "AMOUNT": "Received / Paid Amount",
         "FEE": "Fee amount",
-        "CURRENCY": "Currency",
-        "LINK_ID": "Transaction ID"
+        "CURRENCY": "Received / Paid Currency"
       },
       "kind_aliases": {
-        "STAKING": "TRANSFER_IN"
+        "STAKING": "REWARD"
       },
       "ignored_kinds": [],
       "symbol_aliases": {},
@@ -194,7 +195,7 @@
         "FEE": "Fee"
       },
       "kind_aliases": {
-        "STAKING": "TRANSFER_IN"
+        "STAKING": "REWARD"
       },
       "ignored_kinds": [],
       "symbol_aliases": {},
@@ -223,14 +224,14 @@
         "QUANTITY": "Quantity Transacted",
         "PRICE": "Price at Transaction",
         "AMOUNT": "Subtotal",
-        "FEE": "Total (inclusive of fees and/or spread)",
+        "FEE": "Fees and/or Spread",
         "CURRENCY": "Price Currency",
         "NOTE": "Notes"
       },
       "kind_aliases": {
         "CONVERT": "TRANSFER_IN",
-        "RECEIVE": "TRANSFER_IN",
-        "SEND": "TRANSFER_OUT",
+        "RECEIVE": "DELIVERY_INBOUND",
+        "SEND": "DELIVERY_OUTBOUND",
         "STAKINGINCOME": "REWARD"
       },
       "ignored_kinds": [],
@@ -326,8 +327,9 @@
       "columns": {
         "DATE": "Date",
         "KIND": "Way",
-        "NAME": "Base currency (name)",
-        "AMOUNT": "Base amount",
+        "SYMBOL": "Base currency (name)",
+        "QUANTITY": "Base amount",
+        "AMOUNT": "Quote amount",
         "FEE": "Fee amount",
         "CURRENCY": "Quote currency",
         "NOTE": "Notes"
@@ -522,9 +524,9 @@
         "SYMBOL": "Ticker",
         "ISIN": "ISIN",
         "QUANTITY": "Quantity",
-        "PRICE": "Price per Share",
+        "PRICE": "Price per Share in Account Currency",
         "AMOUNT": "Total Amount",
-        "FEE": "FX Fee (BPS)",
+        "FEE": "FX Fee Amount",
         "TAX": "Stamp Duty",
         "CURRENCY": "Account Currency",
         "FX_RATE": "FX Rate",
@@ -755,8 +757,9 @@
       "columns": {
         "DATE": "Date",
         "KIND": "Transaction Type",
+        "QUANTITY": "BTC Amount",
         "PRICE": "BTC Price",
-        "AMOUNT": "BTC Amount",
+        "AMOUNT": "Fiat Amount (excl. fees)",
         "FEE": "Fee",
         "CURRENCY": "Fiat Currency"
       },
@@ -791,8 +794,8 @@
         "FEE": "Fees"
       },
       "kind_aliases": {
-        "RECEIVE": "TRANSFER_IN",
-        "SEND": "TRANSFER_OUT",
+        "RECEIVE": "DELIVERY_INBOUND",
+        "SEND": "DELIVERY_OUTBOUND",
         "STAKE": "TRANSFER_IN",
         "STAKINGREWARD": "REWARD"
       },
@@ -919,12 +922,79 @@
   {
     "name": "Trade Republic",
     "config": {
-      "delimiter": ";",
+      "delimiter": ",",
       "skip_top_rows": 0,
       "skip_bottom_rows": 0,
       "has_header": true,
       "date_format": "%Y-%m-%d",
       "decimal_separator": "."
+    },
+    "mapping": {
+      "account_id": null,
+      "columns": {
+        "DATE": "date",
+        "KIND": "type",
+        "SYMBOL": "symbol",
+        "NAME": "name",
+        "QUANTITY": "shares",
+        "PRICE": "price",
+        "AMOUNT": "amount",
+        "FEE": "fee",
+        "TAX": "tax",
+        "CURRENCY": "currency",
+        "FX_RATE": "fx_rate",
+        "NOTE": "description"
+      },
+      "kind_aliases": {
+        "BENEFITSSAVEBACK": "CASHBACK",
+        "BONDACCRUEDINTEREST": "INTEREST",
+        "BONUS": "CASHBACK",
+        "CARDORDERINGFEE": "FEE",
+        "CARDTRANSACTION": "WITHDRAWAL",
+        "CARDTRANSACTIONINTERNATIONAL": "WITHDRAWAL",
+        "CARDTRANSACTIONREFUND": "DEPOSIT",
+        "CARDTRANSACTIONREFUNDREVERSAL": "WITHDRAWAL",
+        "CUSTOMERINBOUND": "DEPOSIT",
+        "CUSTOMERINPAYMENT": "DEPOSIT",
+        "CUSTOMERINPAYMENTREVERSAL": "DEPOSIT",
+        "CUSTOMEROUTBOUNDREQUEST": "WITHDRAWAL",
+        "DIVIDENDEQUIVALENTPAYMENT": "DIVIDEND",
+        "GENERALINBOUND": "DEPOSIT",
+        "KINDERGELDBONUS": "DEPOSIT",
+        "MANUALCASHTRANSFER": "DEPOSIT",
+        "PREDETERMINEDTAXBASE": "TAX",
+        "PRIVATEMARKETBUY": "BUY",
+        "PRIVATEMARKETSELL": "SELL",
+        "REFERRAL": "CASHBACK",
+        "SECACCOUNT": "TAX",
+        "TAXOPTIMIZATION": "TAX_REFUND",
+        "TRANSFERDIRECTDEBITINBOUND": "WITHDRAWAL",
+        "TRANSFERIN": "DEPOSIT",
+        "TRANSFERINBOUND": "DEPOSIT",
+        "TRANSFERINSTANTINBOUND": "DEPOSIT",
+        "TRANSFERINSTANTOUTBOUND": "WITHDRAWAL",
+        "TRANSFEROUT": "WITHDRAWAL",
+        "TRANSFEROUTBOUND": "WITHDRAWAL",
+        "VIBANTRANSFERINBOUND": "DEPOSIT",
+        "VIBANTRANSFEROUTBOUND": "WITHDRAWAL"
+      },
+      "ignored_kinds": [],
+      "symbol_aliases": {},
+      "account_aliases": {},
+      "default_currency": null,
+      "amount_sign": "SIGNED",
+      "new_securities": {}
+    }
+  },
+  {
+    "name": "Trade Republic · statement",
+    "config": {
+      "delimiter": ";",
+      "skip_top_rows": 0,
+      "skip_bottom_rows": 0,
+      "has_header": true,
+      "date_format": "%Y-%m-%d",
+      "decimal_separator": ","
     },
     "mapping": {
       "account_id": null,
@@ -972,8 +1042,9 @@
         "QUANTITY": "No. of shares",
         "PRICE": "Price / share",
         "AMOUNT": "Total",
+        "FEE": "Currency conversion fee",
         "TAX": "Withholding tax",
-        "CURRENCY": "Currency (Result)",
+        "CURRENCY": "Currency (Total)",
         "FX_RATE": "Exchange rate",
         "NOTE": "Notes"
       },

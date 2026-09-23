@@ -5,7 +5,7 @@
 use super::cells::Cells;
 use super::{AccountMapping, ImportContext, KindMapping, SymbolMapping};
 use crate::import::checks::{self, Direction};
-use crate::import::mapping::{AmountSign, ImportField, normalize_alias};
+use crate::import::mapping::{AmountBasis, AmountSign, ImportField, normalize_alias};
 use crate::import::parse::{ImportProblem, ProblemCode, parse_date_any, parse_date_with};
 use crate::import::securities::SecurityDraft;
 use crate::model::{Account, AccountKind, Security, TransactionKind, is_isin};
@@ -20,6 +20,7 @@ pub(super) struct Index<'a> {
     by_symbol: BTreeMap<String, &'a Security>,
     by_isin: BTreeMap<String, &'a Security>,
     accounts_by_id: BTreeMap<&'a str, &'a Account>,
+    accounts_by_name: BTreeMap<String, &'a Account>,
 }
 
 impl<'a> Index<'a> {
@@ -36,6 +37,22 @@ impl<'a> Index<'a> {
                 .filter_map(|s| s.isin.as_ref().map(|i| (normalize_alias(i), s)))
                 .collect(),
             accounts_by_id: context.accounts.iter().map(|a| (a.id.as_str(), a)).collect(),
+            accounts_by_name: context
+                .accounts
+                .iter()
+                .map(|a| (normalize_alias(&a.name), a))
+                .collect(),
+        }
+    }
+
+    /// Currency of the account the row's *money* lands on — a depot keeps none of its own, so it
+    /// is asked of the deposit account behind it. `None` when the account is unknown.
+    pub(super) fn settlement_currency(&self, account_id: &str) -> Option<&'a str> {
+        let account = self.accounts_by_id.get(account_id)?;
+        let settles_on = account.settlement_account_id();
+        match self.accounts_by_id.get(settles_on) {
+            Some(cash) => Some(cash.currency.as_str()),
+            None => Some(account.currency.as_str()),
         }
     }
 }
@@ -95,6 +112,21 @@ pub(super) fn date(
 
 /// The operation, and whether the user chose to skip this wording entirely. An ignored value is
 /// not an unknown one: it stays visible in the preview so the choice can be taken back.
+/// Counts the file's own wording without deciding anything by it — a rule has already said
+/// what the operation is, and the wizard still lists what the file called it.
+pub(super) fn count_kind(cells: &Cells, stats: &mut BTreeMap<String, KindMapping>) {
+    let Some(value) = cells.get(ImportField::Kind) else {
+        return;
+    };
+    let stat = stats.entry(value.to_string()).or_insert(KindMapping {
+        value: value.to_string(),
+        count: 0,
+        kind: cells.mapping.kind_of(value),
+        ignored: cells.mapping.is_ignored(value),
+    });
+    stat.count += 1;
+}
+
 pub(super) fn kind(
     cells: &Cells,
     stats: &mut BTreeMap<String, KindMapping>,
@@ -134,16 +166,25 @@ pub(super) fn kind(
 
 pub(super) fn account(
     cells: &Cells,
+    index: &Index,
     stats: &mut BTreeMap<String, AccountMapping>,
     problems: &mut Vec<ImportProblem>,
 ) -> Option<String> {
     match cells.get(ImportField::Account) {
         Some(value) => {
+            // A name the portfolio already carries is not a guess: our own export writes
+            // accounts by name, and a broker that prints one means the same thing by it.
             let mapped = cells
                 .mapping
                 .account_aliases
                 .get(&normalize_alias(value))
-                .cloned();
+                .cloned()
+                .or_else(|| {
+                    index
+                        .accounts_by_name
+                        .get(&normalize_alias(value))
+                        .map(|a| a.id.clone())
+                });
             let resolved = mapped.clone().or_else(|| cells.mapping.account_id.clone());
             let stat = stats.entry(value.to_string()).or_insert(AccountMapping {
                 value: value.to_string(),
@@ -273,6 +314,48 @@ pub(super) fn amounts(cells: &Cells, problems: &mut Vec<ImportProblem>) -> Amoun
     }
 }
 
+/// Puts back what a net amount had taken out of it. The model stores the trade's own value and
+/// the charges beside it, so a file printing the sum of the two has to be undone here — only for
+/// the charges in the row's own currency, since the others were never in that total.
+pub(super) fn restore_gross(
+    amounts: &mut Amounts,
+    kind: Option<TransactionKind>,
+    basis: AmountBasis,
+    fee_is_local: bool,
+    tax_is_local: bool,
+) {
+    let Some(kind) = kind else { return };
+    let sign = Decimal::from(kind.charge_sign());
+    if basis != AmountBasis::Net || sign.is_zero() {
+        return;
+    }
+    let charges = if fee_is_local {
+        amounts.fees.abs()
+    } else {
+        Decimal::ZERO
+    } + if tax_is_local {
+        amounts.taxes.abs()
+    } else {
+        Decimal::ZERO
+    };
+    if charges.is_zero() {
+        return;
+    }
+    // The file's own sign carries direction and must survive the correction.
+    let direction = if amounts.amount.is_sign_negative() {
+        Decimal::NEGATIVE_ONE
+    } else {
+        Decimal::ONE
+    };
+    amounts.amount = direction * (amounts.amount.abs() - sign * charges);
+}
+
+/// The currency a fee or a tax was billed in, kept only when it differs from the operation's —
+/// a file that repeats the same code in every column says nothing new.
+pub(super) fn charge_currency(cells: &Cells, field: ImportField, currency: &Currency) -> Option<Currency> {
+    cells.get(field).map(normalize_currency).filter(|c| c != currency)
+}
+
 /// The type column says *what* happened and the sign says *which way*. One wording can span both
 /// directions, so a row whose sign disagrees with its kind is flipped rather than refused.
 pub(super) fn directed(
@@ -339,6 +422,7 @@ pub(super) fn instrument(
     index: &Index,
     kind: Option<TransactionKind>,
     stats: &mut BTreeMap<String, SymbolMapping>,
+    problems: &mut Vec<ImportProblem>,
 ) -> Instrument {
     let raw_symbol = cells.get(ImportField::Symbol).map(|s| s.to_string());
     let symbol = raw_symbol
@@ -352,19 +436,55 @@ pub(super) fn instrument(
             .map(str::to_uppercase)
     });
     let file_name = cells.get(ImportField::Name).map(|s| s.to_string());
-    let security = symbol
+    // The ISIN identifies the instrument and a ticker only one of its listings, so the ISIN is
+    // asked first. Two brokers print the same ticker for different instruments often enough —
+    // a local listing, a renamed company — and joining them silently writes one company's
+    // trades into another's position.
+    let by_isin = isin
         .as_deref()
-        .and_then(|s| index.by_symbol.get(&normalize_alias(s)))
-        .or_else(|| {
-            isin.as_deref()
-                .and_then(|i| index.by_isin.get(&normalize_alias(i)))
-        })
+        .and_then(|i| index.by_isin.get(&normalize_alias(i)))
         .or_else(|| {
             symbol
                 .as_deref()
                 .and_then(|s| index.by_isin.get(&normalize_alias(s)))
         })
         .copied();
+    let by_symbol = symbol
+        .as_deref()
+        .and_then(|s| index.by_symbol.get(&normalize_alias(s)))
+        .copied();
+
+    let security = match (by_isin, by_symbol) {
+        (Some(found), _) => Some(found),
+        // The ticker is known and carries another ISIN: not this instrument. The row keeps its
+        // own identifiers and is treated as a new instrument rather than joined to that one.
+        (None, Some(found))
+            if isin.is_some()
+                && found.isin.as_deref().is_some_and(|stored| {
+                    normalize_alias(stored) != normalize_alias(isin.as_deref().unwrap_or(""))
+                }) =>
+        {
+            problems.push(
+                ImportProblem::row(
+                    ProblemCode::TickerIsinConflict,
+                    cells.number,
+                    format!(
+                        "ticker {} is already in the database under ISIN {}, and this row says {} \
+                         — they are two instruments and one ticker cannot name both. Give this \
+                         one a ticker of its own on the \"Instruments\" step",
+                        found.symbol,
+                        found.isin.as_deref().unwrap_or("-"),
+                        isin.as_deref().unwrap_or("-")
+                    ),
+                )
+                .with("symbol", &found.symbol)
+                .with("stored", found.isin.as_deref().unwrap_or("-"))
+                .with("isin", isin.as_deref().unwrap_or("-")),
+            );
+            None
+        }
+        (None, found) => found,
+    };
 
     let planned: Option<SecurityDraft> = raw_symbol
         .as_deref()

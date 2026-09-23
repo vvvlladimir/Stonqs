@@ -66,6 +66,8 @@ export interface SecurityRow extends Security {
   coverage_to: DateString | null;
   /** Latest close in `quote_currency`, or null without quotes. */
   last_close: MoneyString | null;
+  /** The stored series is far shorter than the instrument has been held: usually a wrong venue. */
+  sparse_history: boolean;
   attributes: AttributeValues;
 }
 

@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Banner, Field, FormDialog } from "../../components/ui";
 import type { ImportField, RowOverride } from "../../lib/types";
 import { fieldLabel, problemDetail, type PreviewRow } from "./labels";
@@ -22,6 +22,25 @@ export function RowFix({
   onClose: () => void;
 }) {
   const { t, i18n } = useLingui();
+  // Fields the row needs and the file has no column for. A delivery stating only a quantity is
+  // repaired by *adding* what it was worth, so those fields are offered even though no cell of
+  // the file holds them; the core carries such an edit on its own (`RowInput::added`).
+  const extra = useMemo(() => {
+    const mapped = new Set(columns.map(([field]) => field));
+    const wanted: ImportField[] = row.problems.some((p) => p.code === "DELIVERY_WITHOUT_COST")
+      ? ["PRICE", "AMOUNT"]
+      : [];
+    return wanted.filter((field) => !mapped.has(field));
+  }, [columns, row.problems]);
+
+  const fields: Array<[ImportField, string | null]> = useMemo(
+    () => [
+      ...columns.map(([field, column]) => [field, column] as [ImportField, string | null]),
+      ...extra.map((field) => [field, null] as [ImportField, string | null]),
+    ],
+    [columns, extra],
+  );
+
   const [draft, setDraft] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       columns.map(([field, column]) => [
@@ -40,10 +59,10 @@ export function RowFix({
 
   const save = () => {
     const next = overrides.filter((o) => o.number !== row.number);
-    for (const [field, column] of columns) {
-      if (draft[field] !== (row.raw[column] ?? "")) {
-        next.push({ number: row.number, field, value: draft[field] });
-      }
+    for (const [field, column] of fields) {
+      const was = column === null ? "" : (row.raw[column] ?? "");
+      const value = draft[field] ?? "";
+      if (value !== was) next.push({ number: row.number, field, value });
     }
     onChange(next);
     onClose();
@@ -69,16 +88,23 @@ export function RowFix({
           {problemDetail(i18n, problem)}
         </Banner>
       ))}
-      {columns.map(([field, column]) => {
-        const was = row.raw[column] ?? "";
+      {fields.map(([field, column]) => {
+        const was = column === null ? "" : (row.raw[column] ?? "");
+        const value = draft[field] ?? "";
         return (
           <Field
             key={field}
             label={fieldLabel(i18n, field)}
             // The original value is the thing a hand edit is judged against, so it stays visible.
-            hint={draft[field] === was ? t`column "${column}"` : t`column "${column}" · was "${was}"`}
+            hint={
+              column === null
+                ? t`the file has no column for this — the value is added to the row`
+                : value === was
+                  ? t`column "${column}"`
+                  : t`column "${column}" · was "${was}"`
+            }
           >
-            <input value={draft[field]} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })} />
+            <input value={value} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })} />
           </Field>
         );
       })}

@@ -49,7 +49,12 @@ pub fn transactions_net_by_month(
 
 /// Signed cash side of one transaction, in base currency.
 pub fn transaction_net_base(t: &Transaction, base: &str, rates: &dyn RateLookup) -> Result<Decimal> {
-    Ok(t.cash_delta() * super::resolve_rate(t, base, rates)?)
+    let mut net = t.cash_delta() * super::resolve_rate(t, base, rates)?;
+    // A charge billed in another currency left that balance; it is converted at its own rate.
+    for (currency, amount) in t.foreign_charge_legs() {
+        net += amount * super::holdings::charge_rate(t, &currency, base, rates)?;
+    }
+    Ok(net)
 }
 
 /// Unsigned `amount` in base currency — a separate column from [`transaction_net_base`]

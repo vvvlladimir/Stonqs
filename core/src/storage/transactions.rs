@@ -3,11 +3,31 @@ use crate::error::{Error, Result};
 use crate::model::{AccountKind, Transaction, TransactionKind};
 use chrono::NaiveDate;
 use rusqlite::{Row, params};
+use std::collections::BTreeMap;
+
+/// How far back market data has to reach for the ledger to be valuable at all: the first
+/// operation touching each instrument, and the first touching each currency. A refresh that
+/// stops short of these dates leaves a hole no later catch-up ever fills — the window a
+/// catch-up asks for begins at what is already stored.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct HistoryNeed {
+    /// Security id -> date of its first operation.
+    pub securities: BTreeMap<String, NaiveDate>,
+    /// Currency -> date of the first operation denominated or charged in it.
+    pub currencies: BTreeMap<String, NaiveDate>,
+}
 
 fn row_to_transaction(row: &Row<'_>) -> rusqlite::Result<Transaction> {
     let kind: String = row.get("kind")?;
     let date: String = row.get("date")?;
     let fx: Option<SqlDecimal> = row.get("fx_rate_to_base")?;
+    let currency: String = row.get("currency")?;
+    // A charge in the transaction's own currency is stored as NULL; a row written before that
+    // rule existed is folded back to it here, so nothing downstream sees two spellings of one
+    // currency.
+    let charge_currency = |column| -> rusqlite::Result<Option<String>> {
+        Ok(row.get::<_, Option<String>>(column)?.filter(|c| *c != currency))
+    };
     Ok(Transaction {
         id: row.get("id")?,
         account_id: row.get("account_id")?,
@@ -21,9 +41,12 @@ fn row_to_transaction(row: &Row<'_>) -> rusqlite::Result<Transaction> {
         amount: row.get::<_, SqlDecimal>("amount")?.0,
         fees: row.get::<_, SqlDecimal>("fees")?.0,
         taxes: row.get::<_, SqlDecimal>("taxes")?.0,
-        currency: row.get("currency")?,
+        fee_currency: charge_currency("fee_currency")?,
+        tax_currency: charge_currency("tax_currency")?,
+        currency,
         fx_rate_to_base: fx.map(|d| d.0),
         link_id: row.get("link_id")?,
+        external_id: row.get("external_id")?,
         note: row.get("note")?,
         // A row read back is the operation the user entered, never a lens's rewrite of it.
         scoped_from: None,
@@ -38,8 +61,9 @@ impl Store {
         self.conn.execute(
             "INSERT INTO transactions
                  (id, account_id, security_id, kind, date, quantity, price, amount,
-                  fees, taxes, currency, fx_rate_to_base, link_id, note)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+                  fees, taxes, currency, fee_currency, tax_currency, fx_rate_to_base, link_id,
+                  external_id, note)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
              ON CONFLICT (id) DO UPDATE SET
                  account_id = excluded.account_id,
                  security_id = excluded.security_id,
@@ -51,8 +75,11 @@ impl Store {
                  fees = excluded.fees,
                  taxes = excluded.taxes,
                  currency = excluded.currency,
+                 fee_currency = excluded.fee_currency,
+                 tax_currency = excluded.tax_currency,
                  fx_rate_to_base = excluded.fx_rate_to_base,
                  link_id = excluded.link_id,
+                 external_id = excluded.external_id,
                  note = excluded.note",
             params![
                 t.id,
@@ -66,8 +93,11 @@ impl Store {
                 dec_to_sql(t.fees),
                 dec_to_sql(t.taxes),
                 t.currency,
+                t.fee_currency.as_ref().filter(|c| **c != t.currency),
+                t.tax_currency.as_ref().filter(|c| **c != t.currency),
                 t.fx_rate_to_base.map(dec_to_sql),
                 t.link_id,
+                t.external_id,
                 t.note,
             ],
         )?;
@@ -88,6 +118,69 @@ impl Store {
             ))),
             _ => Ok(()),
         }
+    }
+
+    /// The earliest date each instrument and each currency is needed from. Charge currencies
+    /// count too: a fee billed in USD needs USD/base on that day as much as the trade does.
+    pub fn history_need(&self) -> Result<HistoryNeed> {
+        let mut need = HistoryNeed::default();
+
+        let mut stmt = self.conn.prepare(
+            "SELECT security_id, min(date) FROM transactions
+             WHERE security_id IS NOT NULL GROUP BY security_id",
+        )?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        for row in rows {
+            let (id, date) = row?;
+            need.securities.insert(id, date_from_sql(&date)?);
+        }
+
+        // One pass per column rather than a join: each is a separate "first day this currency
+        // was involved", and the earliest of the three is what has to be fetched.
+        let mut stmt = self.conn.prepare(
+            "SELECT currency, min(date) FROM transactions GROUP BY currency
+             UNION ALL SELECT fee_currency, min(date) FROM transactions
+                 WHERE fee_currency IS NOT NULL GROUP BY fee_currency
+             UNION ALL SELECT tax_currency, min(date) FROM transactions
+                 WHERE tax_currency IS NOT NULL GROUP BY tax_currency
+             UNION ALL SELECT s.currency, min(t.date) FROM transactions t
+                 JOIN securities s ON s.id = t.security_id GROUP BY s.currency",
+        )?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        for row in rows {
+            let (currency, date) = row?;
+            let date = date_from_sql(&date)?;
+            need.currencies
+                .entry(crate::money::normalize_currency(&currency))
+                .and_modify(|known| *known = (*known).min(date))
+                .or_insert(date);
+        }
+        Ok(need)
+    }
+
+    /// Ties two stored operations together as the two legs of one move. Both get the same new
+    /// link id, so `calc` stops reading them as money crossing the portfolio boundary
+    /// (`paired_links` believes a link only when two rows make it). Refuses anything other than
+    /// exactly two rows: a link is a claim about a pair.
+    pub fn link_transactions(&self, ids: &[String]) -> Result<String> {
+        if ids.len() != 2 || ids[0] == ids[1] {
+            return Err(Error::Invalid(
+                "a transfer link joins exactly two different operations".into(),
+            ));
+        }
+        let link_id = crate::model::new_id();
+        let tx = self.conn.unchecked_transaction()?;
+        for id in ids {
+            let changed = tx.execute(
+                "UPDATE transactions SET link_id = ?2 WHERE id = ?1",
+                params![id, link_id],
+            )?;
+            if changed == 0 {
+                return Err(Error::NotFound(format!("transaction {id}")));
+            }
+        }
+        tx.commit()?;
+        Ok(link_id)
     }
 
     pub fn delete_transaction(&self, id: &str) -> Result<()> {

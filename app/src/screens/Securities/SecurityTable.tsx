@@ -84,7 +84,7 @@ export function SecurityTable({
           key: "history",
           header: t`Quote history`,
           className: "sub",
-          ariaLabel: t`Quote history: the period cached locally and how many quotes it holds`,
+          ariaLabel: t`Quote history: the period cached locally and how many quotes it holds. Red means the series is far shorter than the instrument has been held — usually the wrong venue`,
           sort: (row) => row.quote_count,
           cell: HistoryCell,
         },
@@ -149,11 +149,17 @@ function priceOf(row: SecurityRow) {
   );
 }
 
-/** Show the cached quote period and count; zero quotes usually means a bad symbol. */
+/**
+ * The cached quote period and count. A series far shorter than the instrument has been held is
+ * the symptom of a ticker on a venue this source does not quote, so it is stated in red instead
+ * of read as a history: the refresh moves such an instrument by itself, and "Venues…" does the
+ * rest where it cannot.
+ */
 function HistoryCell(row: SecurityRow) {
+  const thin = row.sparse_history;
   if (row.quote_count === 0 || !row.coverage_from || !row.coverage_to)
     return (
-      <span className="dim">
+      <span className={thin ? "neg" : "dim"}>
         <Trans>none</Trans>
       </span>
     );
@@ -162,7 +168,7 @@ function HistoryCell(row: SecurityRow) {
       <div>
         {row.coverage_from.slice(0, 7)} — {row.coverage_to.slice(0, 7)}
       </div>
-      <div className="dim">
+      <div className={thin ? "neg" : "dim"}>
         <Plural value={row.quote_count} one="# quote" other="# quotes" />
       </div>
     </>

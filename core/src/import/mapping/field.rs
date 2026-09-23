@@ -26,12 +26,16 @@ pub enum ImportField {
     Fee,
     Tax,
     Currency,
+    /// Currency of the fee column, when the broker bills it somewhere other than the trade.
+    FeeCurrency,
+    TaxCurrency,
 
     FxRate,
 
     Account,
 
     LinkId,
+    ExternalId,
     Note,
 }
 
@@ -49,9 +53,12 @@ impl ImportField {
         ImportField::Fee,
         ImportField::Tax,
         ImportField::Currency,
+        ImportField::FeeCurrency,
+        ImportField::TaxCurrency,
         ImportField::FxRate,
         ImportField::Account,
         ImportField::LinkId,
+        ImportField::ExternalId,
         ImportField::Note,
     ];
 
@@ -104,9 +111,12 @@ impl ImportField {
             | ImportField::Fee
             | ImportField::Tax
             | ImportField::FxRate => ValueShape::Number,
-            ImportField::Currency => ValueShape::CurrencyCode,
+            ImportField::Currency | ImportField::FeeCurrency | ImportField::TaxCurrency => {
+                ValueShape::CurrencyCode
+            }
             ImportField::Isin => ValueShape::Isin,
             ImportField::LinkId => ValueShape::Link,
+            ImportField::ExternalId => ValueShape::Unique,
             _ => ValueShape::Free,
         }
     }

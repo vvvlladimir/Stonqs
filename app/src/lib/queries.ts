@@ -62,6 +62,7 @@ export const keys = {
   positions: (date?: DateString, source?: Source) => key("positions", date, source ?? undefined),
   dashboard: (date?: DateString, source?: Source) => key("dashboard", date, source ?? undefined),
   transactions: (filter?: TransactionFilter) => key("transactions", filter),
+  transferSuggestions: () => key("transferSuggestions"),
   reports: (from?: DateString, to?: DateString, source?: Source) =>
     key("reports", from, to, source ?? undefined),
 
@@ -391,6 +392,19 @@ export function useTransactions(filter: TransactionFilter) {
   });
 }
 
+/**
+ * Moves that arrived as two unrelated rows. Read on demand — the import screen asks after a
+ * write — rather than on every ledger render: it is a whole-portfolio scan, and nothing on the
+ * screen is wrong while the answer is missing.
+ */
+export function useTransferSuggestions(enabled: boolean) {
+  return useQuery({
+    queryKey: keys.transferSuggestions(),
+    queryFn: api.transferSuggestions,
+    enabled,
+  });
+}
+
 export function useReports(range: PeriodRange | undefined, source?: Source) {
   return useQuery({
     queryKey: keys.reports(range?.from, range?.to, source),
@@ -688,7 +702,7 @@ export const affects: Record<DataChangeKind, QueryKey[]> = {
   ai_chats: [keys.aiChats(), keys.aiGrants(), keys.aiUsage()],
   // An import writes transactions and may create securities; both rows carry counts.
   // Committing a plan writes transactions, so the occurrence it answered stops being due.
-  transactions: [...LISTS, ...REPORTS, ...PLANS],
+  transactions: [...LISTS, ...REPORTS, ...PLANS, keys.transferSuggestions()],
   plans: PLANS,
   alerts: ALERTS,
   watchlists: [keys.watchlists(), keys.watchlistRows()],

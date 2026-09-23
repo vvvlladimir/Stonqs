@@ -41,6 +41,9 @@ pub(crate) enum ValueShape {
     /// aliases list ("Reference", "Transaction ID"), and reading one as a link makes every
     /// transfer look internal — see `calc::holdings::paired_links` for what that costs.
     Link,
+    /// The opposite claim to `Link`: a broker's own row identifier is unique per row, so a
+    /// column that repeats itself is a pairing key, not an id.
+    Unique,
     Free,
 }
 
@@ -57,6 +60,10 @@ impl ValueShape {
         }
         if self == ValueShape::Free {
             return Some(1.0);
+        }
+        if self == ValueShape::Unique {
+            let distinct: std::collections::BTreeSet<&str> = values.iter().copied().collect();
+            return Some(if distinct.len() == values.len() { 1.0 } else { 0.0 });
         }
         // Repetition is the whole claim, so it is judged over the column rather than per value.
         if self == ValueShape::Link {
@@ -83,7 +90,7 @@ impl ValueShape {
     fn fits_value(self, value: &str) -> bool {
         match self {
             // Judged over the whole column in `fit`; no single value is or is not a link.
-            ValueShape::Free | ValueShape::Link => true,
+            ValueShape::Free | ValueShape::Link | ValueShape::Unique => true,
             ValueShape::Date => parse_date_any(value).is_some(),
             // An ISIN parses as a number once the letters are dropped, so a number has to
             // start like one.
@@ -111,14 +118,14 @@ impl ValueShape {
 pub(super) fn shape_allows(shape: ValueShape, tier: MatchTier, values: &[&str]) -> bool {
     // A link overrules an exact header too, unlike every other shape: "Reference" names a
     // pairing key as literally as it names a row id, and only the values tell the two apart.
-    if shape == ValueShape::Link {
+    if shape == ValueShape::Link || shape == ValueShape::Unique {
         return shape.fit(values).is_none_or(|fit| fit > 0.0);
     }
     if tier == MatchTier::Exact {
         return true;
     }
     match shape {
-        ValueShape::Link => unreachable!("handled above, before the tier"),
+        ValueShape::Link | ValueShape::Unique => unreachable!("handled above, before the tier"),
         ValueShape::Free => {
             if tier == MatchTier::Word {
                 return true;

@@ -620,3 +620,80 @@ fn quote(security_id: &str, date: chrono::NaiveDate, close: rust_decimal::Decima
         source: "yahoo".into(),
     }
 }
+
+/// A charge billed in its own currency survives the database; one billed in the transaction's
+/// own currency is stored as absent, so a row has a single spelling of "the same currency".
+#[test]
+fn a_charge_keeps_the_currency_it_was_billed_in() {
+    let (store, _cash, depot, apple) = seeded();
+    let foreign = Transaction::buy(&depot.id, &apple.id, d(2024, 3, 1), dec!(10), dec!(100), "USD")
+        .with_fees_in(dec!(12), "EUR")
+        .with_taxes_in(dec!(3), "usd");
+    store.save_transaction(&foreign).unwrap();
+
+    let read = store.transactions_for_account(&depot.id).unwrap();
+    assert_eq!(read[0].fee_currency.as_deref(), Some("EUR"));
+    assert_eq!(read[0].fees_in(), "EUR");
+    assert_eq!(
+        read[0].tax_currency, None,
+        "the transaction's own currency is not repeated"
+    );
+    assert_eq!(read[0].taxes_in(), "USD");
+}
+
+/// How far back market data has to reach is read off the ledger, not off a fixed window: the
+/// first operation per instrument, and per currency — charge currencies and the instrument's
+/// own trading currency included.
+#[test]
+fn history_need_reports_the_first_operation_of_each_subject() {
+    let (store, cash, depot, apple) = seeded();
+
+    let old = Transaction::buy(&depot.id, &apple.id, d(2019, 3, 4), dec!(10), dec!(45), "USD");
+    let newer = Transaction::buy(&depot.id, &apple.id, d(2024, 6, 5), dec!(5), dec!(195), "USD");
+    // A fee billed in another currency needs that pair from its own day, not from the trade's.
+    let mut charged = Transaction::cash(
+        &cash.id,
+        TransactionKind::Deposit,
+        d(2021, 1, 8),
+        dec!(1000),
+        "USD",
+    );
+    charged.fees = dec!(2);
+    charged.fee_currency = Some("CHF".into());
+    for tx in [&old, &newer, &charged] {
+        store.save_transaction(tx).unwrap();
+    }
+
+    let need = store.history_need().unwrap();
+    assert_eq!(need.securities.get(&apple.id), Some(&d(2019, 3, 4)));
+    // AAPL trades in USD, so its own currency is needed from the same day as the instrument.
+    assert_eq!(need.currencies.get("USD"), Some(&d(2019, 3, 4)));
+    assert_eq!(need.currencies.get("CHF"), Some(&d(2021, 1, 8)));
+    assert_eq!(need.currencies.get("EUR"), None);
+}
+
+/// Coverage records what was asked for; the span records what came back. A source answering a
+/// five-year request with one day leaves the two far apart, which is how a wrong ticker shows.
+#[test]
+fn quote_span_is_what_came_back_not_what_was_asked() {
+    let (store, _cash, _depot, apple) = seeded();
+    assert_eq!(store.quote_span(&apple.id).unwrap(), None);
+
+    let asked = DateRange::new(d(2019, 1, 1), d(2024, 6, 5));
+    store.extend_quote_coverage(&apple.id, asked).unwrap();
+    store
+        .save_quotes(&[Quote {
+            security_id: apple.id.clone(),
+            date: d(2024, 6, 5),
+            close: dec!(195.37),
+            currency: "USD".into(),
+            source: "stooq".into(),
+        }])
+        .unwrap();
+
+    assert_eq!(store.quote_coverage(&apple.id).unwrap(), Some(asked));
+    assert_eq!(
+        store.quote_span(&apple.id).unwrap(),
+        Some(DateRange::new(d(2024, 6, 5), d(2024, 6, 5)))
+    );
+}

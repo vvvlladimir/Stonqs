@@ -5,7 +5,7 @@
 use crate::error::{UiError, UiResult};
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use sq_core::import::{ImportMapping, ParseConfig, builtin_presets};
+use sq_core::import::{ImportMapping, ParseConfig, PresetMatch, best_match, builtin_presets};
 use std::path::{Path, PathBuf};
 use tauri::State;
 
@@ -26,6 +26,37 @@ pub struct ImportTemplate {
     pub mapping: ImportMapping,
     #[serde(default)]
     pub source: TemplateSource,
+    /// How a file is recognised as this layout's. Absent means "by the columns it maps",
+    /// which is what a layout saved from a real file already describes.
+    #[serde(default, rename = "match", skip_serializing_if = "Option::is_none")]
+    pub match_rule: Option<PresetMatch>,
+}
+
+impl ImportTemplate {
+    fn rule(&self) -> PresetMatch {
+        self.match_rule
+            .clone()
+            .unwrap_or_else(|| PresetMatch::of_columns(self.mapping.columns.values().cloned()))
+    }
+}
+
+/// The layout a file belongs to, if exactly one does. The user's own come first in the list,
+/// so a layout saved over a shipped name is the one that answers.
+pub fn match_for(
+    db_path: &Path,
+    headers: &[String],
+    file_name: Option<&str>,
+    head: &str,
+) -> Option<ImportTemplate> {
+    let templates = listing(db_path);
+    let name = best_match(
+        templates.iter().map(|t| (t.name.as_str(), t.rule())),
+        headers,
+        file_name,
+        head,
+    )?
+    .to_string();
+    templates.into_iter().find(|t| t.name == name)
 }
 
 pub fn path_for(db_path: &Path) -> PathBuf {
@@ -81,6 +112,7 @@ pub fn listing(db_path: &Path) -> Vec<ImportTemplate> {
             config: preset.config.clone(),
             mapping: preset.mapping(),
             source: TemplateSource::Builtin,
+            match_rule: preset.match_rule.clone(),
         });
     }
     out
@@ -104,6 +136,9 @@ pub fn save_template(
         config,
         mapping,
         source: TemplateSource::User,
+        // A layout saved from a real file already describes it: the columns it maps are that
+        // file's header row, so it recognises the next export without a rule of its own.
+        match_rule: None,
     });
     templates.sort_by(|a, b| a.name.cmp(&b.name));
     store(db_path, &templates)?;

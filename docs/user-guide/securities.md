@@ -21,10 +21,21 @@ deletes nothing.
 A banner also warns when an instrument's quote currency differs from the currency recorded for it.
 That usually means the prices are coming from another listing than the one the user thinks.
 
+**A quote history shown in red is too short for how long the instrument has been held.** The source
+answered — often with today's price alone — but the series covers a sliver of the period the
+instrument has been owned, so charts and past values of that position have nothing to read. It is
+almost always a ticker belonging to an exchange this source does not quote. The app repairs this by
+itself for an instrument it added or looked up on its own: the next time it fetches what is
+missing, it searches the exchanges the instrument trades on, moves it to the first one that really
+has prices, and fetches the history there. Where no such exchange is found, the row stays red and
+Venues is the manual way out. Instruments in this state are counted in the line above the table.
+
 **Prices come from a provider or by hand.** An instrument with no data source is priced manually
 and is never touched by a refresh; a new instrument defaults to being quoted. "Refresh quotes"
 fetches what is missing for every instrument, and the app also fetches quotes by itself whenever
-something new appears — an import, a new instrument, a new transaction.
+something new appears — an import, a new instrument, a new transaction. That automatic fetch
+reaches back to the instrument's first operation rather than to a fixed number of years, so
+importing a decade of history does not leave the older half of it unpriced.
 
 Each instrument carries a note, a WKN, a tradable quantity step (which is what rebalancing rounds
 to), and any attributes the user has defined — an attribute can also seed a whole classification

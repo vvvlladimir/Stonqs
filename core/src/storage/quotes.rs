@@ -99,6 +99,25 @@ impl Store {
         rows.next().transpose().map_err(Into::into)
     }
 
+    /// First and last quote actually stored, which is not what `quote_coverage` records: a
+    /// provider asked for five years and answering with one day leaves coverage wide and this
+    /// span empty. That gap is the shape a wrong ticker leaves behind.
+    pub fn quote_span(&self, security_id: &str) -> Result<Option<DateRange>> {
+        let row: Option<(String, String)> = self.conn.query_row(
+            "SELECT min(date), max(date) FROM quotes WHERE security_id = ?1",
+            [security_id],
+            |r| {
+                let from: Option<String> = r.get(0)?;
+                let to: Option<String> = r.get(1)?;
+                Ok(from.zip(to))
+            },
+        )?;
+        match row {
+            Some((from, to)) => Ok(Some(DateRange::new(date_from_sql(&from)?, date_from_sql(&to)?))),
+            None => Ok(None),
+        }
+    }
+
     /// Extends the single continuous requested range.
     pub fn extend_quote_coverage(&self, security_id: &str, range: DateRange) -> Result<()> {
         let merged = match self.quote_coverage(security_id)? {

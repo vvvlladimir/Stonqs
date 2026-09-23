@@ -8,6 +8,7 @@ use sq_core::calc::{
     MonthlyNet, YearlyNet, transaction_amount_base, transaction_net_base, transactions_net_by_month,
     transactions_net_by_year,
 };
+use sq_core::import::canonical_to_file;
 use sq_core::prelude::*;
 use std::str::FromStr;
 use tauri::{AppHandle, State};
@@ -43,20 +44,42 @@ pub struct TransactionFilter {
     pub to: Option<String>,
 }
 
+/// Writes the filtered operations as the app's own transaction file. The export is of what the
+/// screen shows, so it takes the same filter the list does — and it names accounts and
+/// instruments rather than ids, so the file imports into another portfolio (ADR-0066).
 #[tauri::command]
-pub fn transactions_list(state: State<AppState>, filter: TransactionFilter) -> UiResult<TransactionsData> {
+pub fn transactions_export(state: State<AppState>, filter: TransactionFilter) -> UiResult<String> {
     let store = state.store()?;
     let portfolio = state.scoped_portfolio(&store)?;
-    let base = portfolio.base_currency.clone();
+    let rows = filtered_transactions(&store, &portfolio.account_ids, &filter)?;
+    Ok(canonical_to_file(
+        &rows,
+        &store.list_accounts()?,
+        &store.list_securities()?,
+    )?)
+}
 
+#[tauri::command]
+pub fn transactions_export_save(
+    state: State<AppState>,
+    filter: TransactionFilter,
+    path: String,
+) -> UiResult<()> {
+    let text = transactions_export(state, filter)?;
+    std::fs::write(&path, text).map_err(|e| UiError::invalid(format!("cannot write {path}: {e}")))
+}
+
+/// The rows a filter leaves, in stored order. Shared by the list and its export so the file can
+/// never hold a different set of operations than the screen it was taken from.
+fn filtered_transactions(
+    store: &Store,
+    account_ids: &[String],
+    filter: &TransactionFilter,
+) -> UiResult<Vec<Transaction>> {
     let from = filter.from.as_deref().map(parse_date).transpose()?;
     let to = filter.to.as_deref().map(parse_date).transpose()?;
-
-    let accounts = store.list_accounts()?;
-    let securities = store.list_securities()?;
-
-    let filtered: Vec<Transaction> = store
-        .transactions_for_accounts(&portfolio.account_ids, to)?
+    Ok(store
+        .transactions_for_accounts(account_ids, to)?
         .into_iter()
         .filter(|t| from.is_none_or(|d| t.date >= d))
         .filter(|t| filter.account_id.as_ref().is_none_or(|id| &t.account_id == id))
@@ -67,7 +90,19 @@ pub fn transactions_list(state: State<AppState>, filter: TransactionFilter) -> U
                 .is_none_or(|id| t.security_id.as_ref() == Some(id))
         })
         .filter(|t| filter.kind.is_none_or(|k| t.kind == k))
-        .collect();
+        .collect())
+}
+
+#[tauri::command]
+pub fn transactions_list(state: State<AppState>, filter: TransactionFilter) -> UiResult<TransactionsData> {
+    let store = state.store()?;
+    let portfolio = state.scoped_portfolio(&store)?;
+    let base = portfolio.base_currency.clone();
+
+    let accounts = store.list_accounts()?;
+    let securities = store.list_securities()?;
+
+    let filtered = filtered_transactions(&store, &portfolio.account_ids, &filter)?;
 
     let pairs: Vec<(String, String)> = filtered
         .iter()
@@ -128,8 +163,18 @@ pub struct TransactionInput {
     pub fees: Option<String>,
     pub taxes: Option<String>,
     pub currency: String,
+    /// Only when the charge was billed somewhere other than the operation itself.
+    pub fee_currency: Option<String>,
+    pub tax_currency: Option<String>,
     pub fx_rate_to_base: Option<String>,
     pub note: Option<String>,
+}
+
+/// A charge currency is recorded only when it differs from the operation's own.
+fn charge_currency(input: Option<String>, currency: &str) -> Option<String> {
+    input
+        .map(|c| sq_core::money::normalize_currency(&c))
+        .filter(|c| !c.is_empty() && c != currency)
 }
 
 /// Parses one wire input into a transaction. Shared with the plan commit, which writes the same
@@ -157,9 +202,13 @@ pub(crate) fn from_input(input: TransactionInput) -> UiResult<Transaction> {
         amount,
         fees: decimal(input.fees.as_deref(), "commission")?.unwrap_or_default(),
         taxes: decimal(input.taxes.as_deref(), "tax")?.unwrap_or_default(),
+        fee_currency: charge_currency(input.fee_currency, &currency),
+        tax_currency: charge_currency(input.tax_currency, &currency),
         currency,
         fx_rate_to_base: decimal(input.fx_rate_to_base.as_deref(), "fx rate")?,
         link_id: None,
+        // The broker's own identifier belongs to an imported row and is never typed by hand.
+        external_id: None,
         note: input.note.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()),
         // Nothing the user writes is a lens's rewrite of something else.
         scoped_from: None,
@@ -197,6 +246,49 @@ pub fn transaction_save(
     crate::jobs::fetch_missing(&app, &state);
     emit_changed(&app, "transactions")?;
     Ok(transaction)
+}
+
+/// One suggested pair of legs, with the names the screen shows instead of ids.
+#[derive(Debug, Serialize)]
+pub struct TransferSuggestion {
+    #[serde(flatten)]
+    pub pair: sq_core::calc::TransferPair,
+    pub account_out_name: String,
+    pub account_in_name: String,
+}
+
+/// Moves between two of the user's own accounts that arrived as two unrelated rows — the usual
+/// shape of a portfolio carried from one broker to another, where each export knows only its own
+/// half. Read from the whole portfolio rather than the lens: a leg the picker is not looking at
+/// is still the other half of the move. Nothing is written; the pairs are offered.
+#[tauri::command]
+pub fn transfer_suggestions(state: State<AppState>) -> UiResult<Vec<TransferSuggestion>> {
+    let store = state.store()?;
+    let portfolio = state.portfolio()?;
+    let rows = store.transactions_for_accounts(&portfolio.account_ids, None)?;
+    let names: std::collections::BTreeMap<String, String> = store
+        .list_accounts()?
+        .into_iter()
+        .map(|a| (a.id, a.name))
+        .collect();
+    let name_of = |id: &str| names.get(id).cloned().unwrap_or_else(|| id.to_string());
+
+    Ok(sq_core::calc::transfer_candidates(&rows)
+        .into_iter()
+        .map(|pair| TransferSuggestion {
+            account_out_name: name_of(&pair.account_out),
+            account_in_name: name_of(&pair.account_in),
+            pair,
+        })
+        .collect())
+}
+
+/// Confirms one suggestion: the two operations become the two legs of one move, and stop
+/// counting as money entering and leaving the portfolio.
+#[tauri::command]
+pub fn transfer_link(app: AppHandle, state: State<AppState>, ids: Vec<String>) -> UiResult<()> {
+    state.store()?.link_transactions(&ids)?;
+    emit_changed(&app, "transactions")
 }
 
 #[tauri::command]

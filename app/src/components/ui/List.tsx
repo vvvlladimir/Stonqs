@@ -8,8 +8,12 @@ import type { ElementType, HTMLAttributes, ReactNode } from "react";
  */
 
 export interface ListProps {
-  /** Boxed rows stack with a gap; a grid lays them out in columns. */
-  variant?: "lines" | "cards" | "grid";
+  /**
+   * How the rows sit together. `cards` stacks boxes with a gap, `grid` lays them out in columns,
+   * and `picks` is a set of choices: gapped, roomier, and every box the same height — the option
+   * that takes longer to explain must not look like the bigger answer.
+   */
+  variant?: "lines" | "cards" | "grid" | "picks";
   /** `ul` for a real list, `div` where the rows are buttons. */
   as?: "ul" | "div";
   className?: string;

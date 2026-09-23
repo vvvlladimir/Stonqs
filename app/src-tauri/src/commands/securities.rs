@@ -30,6 +30,10 @@ pub struct SecurityRow {
     /// The instrument's symbol at sources other than its own (`source -> symbol`): what a
     /// fallback may ask when the own source fails (ADR-0052).
     pub other_symbols: std::collections::BTreeMap<String, String>,
+    /// The stored series covers far less than the instrument has been held — what a ticker on a
+    /// venue the source does not quote leaves behind. The table says so rather than showing a
+    /// price that is one day old and years out of place.
+    pub sparse_history: bool,
 }
 
 #[tauri::command]
@@ -41,6 +45,7 @@ pub fn securities_list(state: State<AppState>) -> UiResult<Vec<SecurityRow>> {
     let stats = store.quote_stats()?;
     let mut attributes = store.security_attributes()?;
     let mut other_symbols = store.all_security_symbols()?;
+    let today = chrono::Local::now().date_naive();
 
     Ok(securities
         .into_iter()
@@ -54,8 +59,11 @@ pub fn securities_list(state: State<AppState>) -> UiResult<Vec<SecurityRow>> {
             };
             let transaction_count = mine().count();
             let observed = observed_quantity_step(mine().map(|t| t.quantity));
+            let held_from = mine().map(|t| t.date).min();
             let stat = stats.get(&security.id);
             SecurityRow {
+                sparse_history: security.data_source.is_some()
+                    && crate::jobs::sparse_history(held_from, stat.map(|q| q.range), today),
                 effective_quantity_step: security.quantity_step_for(observed),
                 quantity_step_observed: observed,
                 needs_lookup: security.needs_lookup(),

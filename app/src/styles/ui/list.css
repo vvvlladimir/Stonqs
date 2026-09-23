@@ -34,6 +34,26 @@
   gap: var(--sp-5);
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
 }
+/* A set of choices, stacked under a finger and side by side where there is room. One size for
+   all of them either way: the boxes are alternatives, and a description two lines longer than
+   its neighbour would otherwise read as the weightier option. */
+.rows--picks {
+  gap: var(--sp-4);
+  grid-auto-rows: 1fr;
+}
+@media (min-width: 700px) {
+  .rows--picks {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+}
+/* The whole box is the answer, so it stands roomier than a tappable line, and its slots start
+   at the top — two descriptions of different lengths still begin level. Named against both
+   classes because `.row--box.row--tap` sets the tighter padding further down this file. */
+.rows--picks > .row--box.row--tap {
+  align-items: flex-start;
+  padding: var(--sp-6);
+}
 .row {
   display: flex;
   align-items: center;
@@ -111,6 +131,17 @@
 .row--box.row--tap:hover {
   border-color: var(--accent);
   background: var(--accent-softer);
+}
+/* The chosen box answers the way hovering it promised, only settled: the same accent, kept
+   after the pointer leaves. Spelled against all three classes because the tappable box sets
+   its own surface above `.row--on`, which would otherwise leave a choice with no mark at all. */
+.row--box.row--tap.row--on,
+.row--box.row--tap.row--on:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.row--box.row--tap.row--on .row__lead {
+  color: var(--accent);
 }
 .row--box.row--tap .row__lead {
   font-size: var(--fs-xl);

@@ -41,6 +41,30 @@ pub enum TransactionKind {
 }
 
 impl TransactionKind {
+    /// Every operation the model has, in declaration order — which is the order reports group
+    /// by. Used where a list has to be complete rather than merely long.
+    pub const ALL: &'static [TransactionKind] = &[
+        TransactionKind::Buy,
+        TransactionKind::Sell,
+        TransactionKind::DeliveryInbound,
+        TransactionKind::DeliveryOutbound,
+        TransactionKind::SecurityTransferIn,
+        TransactionKind::SecurityTransferOut,
+        TransactionKind::Dividend,
+        TransactionKind::Interest,
+        TransactionKind::InterestCharge,
+        TransactionKind::Cashback,
+        TransactionKind::Reward,
+        TransactionKind::Fee,
+        TransactionKind::FeeRefund,
+        TransactionKind::Tax,
+        TransactionKind::TaxRefund,
+        TransactionKind::Deposit,
+        TransactionKind::Withdrawal,
+        TransactionKind::TransferIn,
+        TransactionKind::TransferOut,
+    ];
+
     pub fn affects_quantity(self) -> bool {
         self.quantity_sign() != 0
     }
@@ -97,6 +121,20 @@ impl TransactionKind {
             | TransactionKind::DeliveryOutbound
             | TransactionKind::SecurityTransferIn
             | TransactionKind::SecurityTransferOut => 0,
+        }
+    }
+
+    /// How charges enter this operation's total: they add to what an acquisition cost and come
+    /// off what a disposal or a payment yielded. Zero where the amount is already the whole of
+    /// it — a deposit, a standalone fee — so fees recorded there change no total.
+    pub fn charge_sign(self) -> i8 {
+        match self {
+            TransactionKind::Buy | TransactionKind::DeliveryInbound => 1,
+            TransactionKind::Sell
+            | TransactionKind::DeliveryOutbound
+            | TransactionKind::Dividend
+            | TransactionKind::Interest => -1,
+            _ => 0,
         }
     }
 
@@ -159,12 +197,25 @@ pub struct Transaction {
     pub taxes: Decimal,
 
     pub currency: Currency,
+    /// Currency of `fees`, `None` when it is the transaction's own — a commission is charged on
+    /// the venue and withholding is deducted where the issuer sits, so neither has to follow the
+    /// currency the operation settles in.
+    #[serde(default)]
+    pub fee_currency: Option<Currency>,
+    /// Currency of `taxes`, read like [`Self::fee_currency`].
+    #[serde(default)]
+    pub tax_currency: Option<Currency>,
     /// Rate actually applied at the time, fixed on the transaction — never rewritten by later rate moves.
     #[serde(default, with = "rust_decimal::serde::str_option")]
     pub fx_rate_to_base: Option<Decimal>,
     /// Links the two legs of a transfer or currency exchange — two rows, since sides can have different accounts, currencies, and dates.
     #[serde(default)]
     pub link_id: Option<String>,
+    /// The broker's own identifier for this operation, when the file carried one. It is what
+    /// makes a re-import an update rather than a second row: the same id is the same
+    /// operation even when its numbers have been restated.
+    #[serde(default)]
+    pub external_id: Option<String>,
     pub note: Option<String>,
     /// The kind this row had before `calc::scope` rewrote it into a delivery — set only where the
     /// shares are in scope and the cash that paid for them is not. A lens changes the point of
@@ -188,8 +239,11 @@ impl Transaction {
             fees: Decimal::ZERO,
             taxes: Decimal::ZERO,
             currency: normalize_currency(currency),
+            fee_currency: None,
+            tax_currency: None,
             fx_rate_to_base: None,
             link_id: None,
+            external_id: None,
             note: None,
             scoped_from: None,
         }
@@ -369,6 +423,30 @@ impl Transaction {
         self
     }
 
+    /// A commission charged in a currency of its own.
+    pub fn with_fees_in(mut self, fees: Decimal, currency: &str) -> Self {
+        self.fees = fees;
+        self.fee_currency = charge_currency(&self.currency, currency);
+        self
+    }
+
+    /// Tax withheld in a currency of its own.
+    pub fn with_taxes_in(mut self, taxes: Decimal, currency: &str) -> Self {
+        self.taxes = taxes;
+        self.tax_currency = charge_currency(&self.currency, currency);
+        self
+    }
+
+    /// The currency `fees` are expressed in, resolved.
+    pub fn fees_in(&self) -> &Currency {
+        self.fee_currency.as_ref().unwrap_or(&self.currency)
+    }
+
+    /// The currency `taxes` are expressed in, resolved.
+    pub fn taxes_in(&self) -> &Currency {
+        self.tax_currency.as_ref().unwrap_or(&self.currency)
+    }
+
     pub fn with_fx_rate(mut self, rate: Decimal) -> Self {
         self.fx_rate_to_base = Some(rate);
         self
@@ -383,21 +461,52 @@ impl Transaction {
         self
     }
 
+    pub fn with_external_id(mut self, id: impl Into<String>) -> Self {
+        self.external_id = Some(id.into());
+        self
+    }
+
     pub fn with_note(mut self, note: impl Into<String>) -> Self {
         self.note = Some(note.into());
         self
     }
 
     /// Always non-negative; direction comes from [`Self::cash_delta`]. Fees/taxes add to cost on acquisition, subtract from proceeds on disposal.
+    ///
+    /// A charge in a currency of its own is **not** in this total: it is money taken from
+    /// another balance, and adding it here would sum two currencies into one number. It comes
+    /// back as its own leg in [`Self::foreign_charge_legs`].
     pub fn gross_in_transaction_currency(&self) -> Decimal {
-        match self.kind {
-            TransactionKind::Buy | TransactionKind::DeliveryInbound => self.amount + self.fees + self.taxes,
-            TransactionKind::Sell
-            | TransactionKind::DeliveryOutbound
-            | TransactionKind::Dividend
-            | TransactionKind::Interest => self.amount - self.fees - self.taxes,
-            _ => self.amount,
+        let sign = Decimal::from(self.kind.charge_sign());
+        let fees = if self.fee_currency.is_none() {
+            self.fees
+        } else {
+            Decimal::ZERO
+        };
+        let taxes = if self.tax_currency.is_none() {
+            self.taxes
+        } else {
+            Decimal::ZERO
+        };
+        self.amount + sign * (fees + taxes)
+    }
+
+    /// Charges paid in a currency other than the transaction's, as cash movements. A commission
+    /// leaves money whichever side of the trade it sits on, so both legs are negative; a
+    /// delivery moves no cash at all and therefore has no legs here.
+    pub fn foreign_charge_legs(&self) -> Vec<(Currency, Decimal)> {
+        if self.kind.charge_sign() == 0 || self.kind.cash_sign() == 0 {
+            return Vec::new();
         }
+        let mut legs = Vec::new();
+        for (currency, amount) in [(&self.fee_currency, self.fees), (&self.tax_currency, self.taxes)] {
+            if let Some(currency) = currency
+                && !amount.is_zero()
+            {
+                legs.push((currency.clone(), -amount));
+            }
+        }
+        legs
     }
 
     pub fn cash_delta(&self) -> Decimal {
@@ -451,8 +560,22 @@ impl Transaction {
         {
             return Err(Error::Invalid("fx rate must be positive".into()));
         }
+        if [&self.fee_currency, &self.tax_currency]
+            .into_iter()
+            .flatten()
+            .any(|c| c.trim().is_empty())
+        {
+            return Err(Error::Invalid("charge currency must not be empty".into()));
+        }
         Ok(())
     }
+}
+
+/// A charge currency is only recorded when it differs from the transaction's, so one row has
+/// exactly one spelling of "the same currency".
+fn charge_currency(transaction: &Currency, charge: &str) -> Option<Currency> {
+    let charge = normalize_currency(charge);
+    (charge != *transaction).then_some(charge)
 }
 
 impl TransactionKind {

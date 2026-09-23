@@ -6,6 +6,7 @@ import { useQuoteProviders } from "../../lib/queries";
 import type { ImportOptions, ImportPreviewData, ImportResult, RowOverride } from "../../lib/types";
 import { ProblemList } from "./ProblemList";
 import { RowTable } from "./RowTable";
+import { TransferPairs } from "./TransferPairs";
 
 /** Choose a quote source for instruments not resolved during import. */
 function NewSecuritySource({
@@ -64,8 +65,10 @@ export function CommitStep({
   const newSecurities = preview.symbols.filter((x) => x.required && !x.security_id);
   const willWrite =
     s.ready +
+    s.updated +
     (options.create_missing_securities ? s.unknown_securities : 0) +
-    (options.import_duplicates ? s.duplicates : 0);
+    (options.import_duplicates ? s.duplicates : 0) +
+    (options.import_similar ? s.similar : 0);
 
   const warnings = useMemo(
     () => preview.rows.flatMap((r) => r.problems).filter((p) => p.severity === "WARNING"),
@@ -79,6 +82,8 @@ export function CommitStep({
           <Trans>
             {result.imported} written, {result.skipped} skipped.
           </Trans>
+          {result.updated > 0 && t` ${result.updated} replaced a row the broker restated.`}
+          {result.similar > 0 && t` ${result.similar} left out: an operation like them is already stored.`}
           {result.created_securities.length > 0 &&
             t` Instruments created: ${result.created_securities.join(", ")}.`}{" "}
           <Trans>The file is in the database — writing it again adds nothing.</Trans>
@@ -111,6 +116,13 @@ export function CommitStep({
               }
             />
           )}
+          {s.updated > 0 && (
+            <ListRow
+              title={t`Restated by the broker`}
+              sub={t`the same operation, with different values: the stored row is replaced`}
+              value={<Badge tone="warn">{s.updated}</Badge>}
+            />
+          )}
           {s.duplicates > 0 && (
             <ListRow
               title={t`Duplicates`}
@@ -121,6 +133,20 @@ export function CommitStep({
                   label={t`write`}
                   checked={options.import_duplicates}
                   onChange={(on) => onOptions({ ...options, import_duplicates: on })}
+                />
+              }
+            />
+          )}
+          {s.similar > 0 && (
+            <ListRow
+              title={t`An operation like it is already stored`}
+              sub={t`same day, account, instrument and quantity — worth something else. Usually the stored row, corrected by hand after it was imported`}
+              value={<Badge tone="warn">{s.similar}</Badge>}
+              end={
+                <CheckField
+                  label={t`write`}
+                  checked={options.import_similar}
+                  onChange={(on) => onOptions({ ...options, import_similar: on })}
                 />
               }
             />
@@ -168,6 +194,9 @@ export function CommitStep({
           </p>
         </Form>
       </Panel>
+
+      {/* Asked only once something has been written: the pairs are read off the ledger. */}
+      <TransferPairs enabled={result !== null} />
 
       <ProblemList title={t`Row notices`} problems={warnings} />
 
