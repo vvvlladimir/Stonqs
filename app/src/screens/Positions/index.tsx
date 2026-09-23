@@ -3,7 +3,6 @@ import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { ColumnsIcon } from "@phosphor-icons/react";
-import { today } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import {
   usePortfolio,
@@ -40,10 +39,11 @@ import {
   resolveColumnIds,
   useAllColumns,
 } from "../../components/domain/positionColumns";
+import { useAsOf } from "../../lib/asOf";
 
 export function Positions() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<string>("ALL");
   const [picking, setPicking] = useState(false);

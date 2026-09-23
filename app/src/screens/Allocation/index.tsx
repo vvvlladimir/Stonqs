@@ -2,7 +2,6 @@ import { bucketLabel } from "../../lib/taxonomy";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { CheckIcon, TreeStructureIcon } from "@phosphor-icons/react";
-import { today } from "../../lib/api";
 import { Page } from "../../components/Page";
 import { Async, Empty, Pending, QueryError, Seg } from "../../components/ui";
 import {
@@ -26,10 +25,11 @@ import { AllocationMetrics, UnclassifiedBanner } from "./Header";
 import { MembersPanel } from "./MembersPanel";
 import { TaxonomyDock } from "./TaxonomyDock";
 import { UNCLASSIFIED, views, bucketAt, descend, levelShare, nodeSlot, type LevelRow } from "./model";
+import { useAsOf } from "../../lib/asOf";
 
 export function Allocation() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const invalidate = useInvalidate();
   const [view, setView] = useState("map");
   const [taxonomyId, setTaxonomyId] = useState<string | null>(null);

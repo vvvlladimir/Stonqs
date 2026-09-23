@@ -1,7 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Fragment, useRef, useState } from "react";
 import { CheckIcon, PlusIcon, SlidersHorizontalIcon } from "@phosphor-icons/react";
-import { today } from "../../lib/api";
 import { Page } from "../../components/Page";
 import { ErrorText, useToast } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
@@ -29,6 +28,7 @@ import {
 } from "./grid";
 import { WidgetTile } from "./WidgetTile";
 import { makeWidget } from "./widgets";
+import { useAsOf } from "../../lib/asOf";
 
 type Dialog =
   | { kind: "palette" }
@@ -38,7 +38,7 @@ type Dialog =
 
 export function Dashboard() {
   const { t } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const { ui, ready, loadError, save } = useUiState();
   const [editing, setEditing] = useState(false);
   const [period, setPeriod] = useState<PeriodId>("SINCE_INCEPTION");

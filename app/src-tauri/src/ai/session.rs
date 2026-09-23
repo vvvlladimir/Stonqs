@@ -67,6 +67,10 @@ pub struct Session<'a> {
     pub store: &'a Store,
     pub scope: &'a ScopeSelection,
     pub today: NaiveDate,
+    /// The date the user has the screens set to, when it is not today. Stated, never applied:
+    /// the tools answer for today, so a model that does not say which date it means would
+    /// contradict the figures the user is looking at.
+    pub as_of: Option<NaiveDate>,
     /// The screen the user is on, as the frontend names it. Where they are, not what they asked
     /// about — a question typed on the import screen can still be about last year's dividends.
     pub screen: Option<String>,
@@ -252,6 +256,7 @@ fn context_of(session: &Session) -> String {
         session.scope,
         session.screen.as_deref(),
         session.today,
+        session.as_of,
     )
 }
 
@@ -263,8 +268,17 @@ pub(super) fn context_line(
     scope: &ScopeSelection,
     screen: Option<&str>,
     today: NaiveDate,
+    as_of: Option<NaiveDate>,
 ) -> String {
     let mut lines = vec![format!("Today is {today}.")];
+
+    if let Some(as_of) = as_of.filter(|d| *d != today) {
+        lines.push(format!(
+            "The screens are set to {as_of}, so the figures the user can see are read at that \
+             date while the tools answer for today. Say which date a figure is from when the \
+             two could be confused."
+        ));
+    }
 
     if let Some(screen) = screen {
         lines.push(format!(
@@ -490,6 +504,7 @@ mod tests {
             store,
             scope,
             today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
+            as_of: None,
             screen: None,
             chat_id,
             web_search: false,

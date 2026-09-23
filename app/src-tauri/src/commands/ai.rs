@@ -384,6 +384,8 @@ pub fn ai_send(
     chat_id: String,
     text: String,
     screen: Option<String>,
+    // The date the screens are set to, when the user moved that lens off today.
+    as_of: Option<String>,
     on_event: Channel<AiStreamEvent>,
 ) -> UiResult<()> {
     let settings = state.settings()?.clone();
@@ -403,6 +405,7 @@ pub fn ai_send(
         state.scope_selection(&store)?
     };
     let today = chrono::Local::now().date_naive();
+    let as_of = as_of.as_deref().map(crate::commands::parse_date).transpose()?;
     let access = state.db_access()?;
 
     state.ai_cancel.store(false, Ordering::Relaxed);
@@ -439,6 +442,7 @@ pub fn ai_send(
                 store: &store,
                 scope: &scope,
                 today,
+                as_of,
                 screen,
                 chat_id: &chat_id,
                 web_search: settings.ai_web_search,

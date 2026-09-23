@@ -2,7 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { CalendarDotsIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { DriftBars } from "../../components/charts";
 import { Page } from "../../components/Page";
 import {
@@ -37,10 +37,11 @@ import { CashPanel } from "./CashPanel";
 import { PlanTable } from "./PlanTable";
 import { TargetForm } from "./TargetForm";
 import { cashInPlan, formatPoints, largestDrift } from "./model";
+import { useAsOf } from "../../lib/asOf";
 
 export function Rebalance() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const invalidate = useInvalidate();
   const [targetId, setTargetId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);

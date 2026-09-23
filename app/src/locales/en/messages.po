@@ -1548,6 +1548,10 @@ msgstr "Annualized volatility over a sliding window of trading days."
 msgid "another currency than the account keeps"
 msgstr "another currency than the account keeps"
 
+#: src/components/domain/AsOfPicker.tsx
+msgid "Another date"
+msgstr "Another date"
+
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Answer format"
 msgstr "Answer format"
@@ -1730,6 +1734,10 @@ msgstr "Back"
 #: src/components/domain/AiChatPanel.tsx
 msgid "Back to the chats"
 msgstr "Back to the chats"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "Back to today"
+msgstr "Back to today"
 
 #: src/components/domain/AiTools.tsx
 msgid "Balanced"
@@ -2416,6 +2424,7 @@ msgid "date"
 msgstr "date"
 
 #: src/components/domain/AlertDialogs.tsx
+#: src/components/domain/AsOfPicker.tsx
 #: src/components/domain/SecurityPopup.tsx
 #: src/lib/kinds.ts
 #: src/screens/Import/labels.ts
@@ -3048,6 +3057,14 @@ msgstr "Enable the AI panel"
 #: src/screens/Settings/ProfileSecurity.tsx
 #~ msgid "Encrypted"
 #~ msgstr "Encrypted"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "End of last month"
+msgstr "End of last month"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "End of last year"
+msgstr "End of last year"
 
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "End of period minus start, deposits included — the figure a statement shows."
@@ -5742,6 +5759,10 @@ msgstr "Password protected"
 msgid "Password set"
 msgstr "Password set"
 
+#: src/components/domain/AsOfPicker.tsx
+msgid "Past date"
+msgstr "Past date"
+
 #: src/screens/Settings/DataPanel.tsx
 msgid "Path copied"
 msgstr "Path copied"
@@ -7042,6 +7063,11 @@ msgstr "Show them"
 #: src/components/domain/SecurityPopup.tsx
 msgid "Show transactions"
 msgstr "Show transactions"
+
+#. placeholder {0}: formatDay(date)
+#: src/components/domain/AsOfPicker.tsx
+msgid "Showing the portfolio as of {0}."
+msgstr "Showing the portfolio as of {0}."
 
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "Shown after the value; never part of it"
@@ -8371,6 +8397,7 @@ msgstr "to sell {0}"
 msgid "today"
 msgstr "today"
 
+#: src/components/domain/AsOfPicker.tsx
 #: src/components/domain/positionColumns.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Watchlist/columns.tsx
@@ -8726,6 +8753,10 @@ msgstr "Value today less what the shares cost under this method."
 #: src/components/domain/positionColumns.tsx
 msgid "Value, {currency}"
 msgstr "Value, {currency}"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "Values, holdings and periods are read as of this day."
+msgstr "Values, holdings and periods are read as of this day."
 
 #: src/components/domain/aiToolLabels.ts
 msgid "venue"

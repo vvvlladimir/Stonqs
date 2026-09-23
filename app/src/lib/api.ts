@@ -547,10 +547,16 @@ export const api = {
     });
   },
 
-  aiSend: (chatId: string, text: string, screen: string | null, onEvent: (event: AiEvent) => void) => {
+  aiSend: (
+    chatId: string,
+    text: string,
+    screen: string | null,
+    asOf: string | null,
+    onEvent: (event: AiEvent) => void,
+  ) => {
     const channel = new Channel<AiEvent>();
     channel.onmessage = onEvent;
-    return call<void>("ai_send", { chatId, text, screen, onEvent: channel });
+    return call<void>("ai_send", { chatId, text, screen, asOf, onEvent: channel });
   },
 
   /** Fills an empty portfolio with the sample history; refuses once it holds an account. */

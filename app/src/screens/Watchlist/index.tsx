@@ -3,7 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { ColumnsIcon, PlusIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import {
   affects,
@@ -44,10 +44,11 @@ import {
   orderColumns,
   resolveColumnIds,
 } from "../../components/domain/positionColumns";
+import { useAsOf } from "../../lib/asOf";
 
 export function Watchlist() {
   const { t, i18n } = useLingui();
-  const date = today();
+  const date = useAsOf().date;
   const invalidate = useInvalidate();
   const menu = useMenu();
   const card = useSecurityCard();

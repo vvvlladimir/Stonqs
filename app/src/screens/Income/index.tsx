@@ -1,7 +1,6 @@
 import { plural } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { today } from "../../lib/api";
 import {
   useIncomeOver,
   useIncomeTaxonomy,
@@ -34,11 +33,12 @@ import { MonthPanel } from "./MonthPanel";
 import { Payers } from "./Payers";
 import { PaymentsPanel } from "./PaymentsPanel";
 import { kindOptions, kindSlots, pickMonth, ratio, valueBySecurity } from "./model";
+import { useAsOf } from "../../lib/asOf";
 
 /** Core provides dated income records and comparison totals; the UI only groups them. */
 export function Income() {
   const { t, i18n } = useLingui();
-  const asOf = today();
+  const asOf = useAsOf().date;
   const [period, setPeriod] = useState<PeriodId>("ONE_YEAR");
   const [kindFilter, setKindFilter] = useState("all");
   const [picked, setPicked] = useState<{ year: number; month: number } | null>(null);

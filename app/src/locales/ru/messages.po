@@ -1548,6 +1548,10 @@ msgstr "Годовая волатильность в скользящем окн
 msgid "another currency than the account keeps"
 msgstr "валюта не та, что у счёта"
 
+#: src/components/domain/AsOfPicker.tsx
+msgid "Another date"
+msgstr "Другая дата"
+
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Answer format"
 msgstr "Формат ответа"
@@ -1730,6 +1734,10 @@ msgstr "Назад"
 #: src/components/domain/AiChatPanel.tsx
 msgid "Back to the chats"
 msgstr "К списку чатов"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "Back to today"
+msgstr "Вернуться к сегодня"
 
 #: src/components/domain/AiTools.tsx
 msgid "Balanced"
@@ -2416,6 +2424,7 @@ msgid "date"
 msgstr "дата"
 
 #: src/components/domain/AlertDialogs.tsx
+#: src/components/domain/AsOfPicker.tsx
 #: src/components/domain/SecurityPopup.tsx
 #: src/lib/kinds.ts
 #: src/screens/Import/labels.ts
@@ -3048,6 +3057,14 @@ msgstr "Включить AI-панель"
 #: src/screens/Settings/ProfileSecurity.tsx
 #~ msgid "Encrypted"
 #~ msgstr "Зашифрован"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "End of last month"
+msgstr "Конец прошлого месяца"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "End of last year"
+msgstr "Конец прошлого года"
 
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "End of period minus start, deposits included — the figure a statement shows."
@@ -5737,6 +5754,10 @@ msgstr "Защищён паролем"
 msgid "Password set"
 msgstr "Пароль установлен"
 
+#: src/components/domain/AsOfPicker.tsx
+msgid "Past date"
+msgstr "Прошлая дата"
+
 #: src/screens/Settings/DataPanel.tsx
 msgid "Path copied"
 msgstr "Путь скопирован"
@@ -7037,6 +7058,11 @@ msgstr "Показать их"
 #: src/components/domain/SecurityPopup.tsx
 msgid "Show transactions"
 msgstr "Показать сделки"
+
+#. placeholder {0}: formatDay(date)
+#: src/components/domain/AsOfPicker.tsx
+msgid "Showing the portfolio as of {0}."
+msgstr "Портфель показан на {0}."
 
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "Shown after the value; never part of it"
@@ -8366,6 +8392,7 @@ msgstr "к продаже {0}"
 msgid "today"
 msgstr "сегодня"
 
+#: src/components/domain/AsOfPicker.tsx
 #: src/components/domain/positionColumns.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Watchlist/columns.tsx
@@ -8721,6 +8748,10 @@ msgstr "Сегодняшняя стоимость за вычетом покуп
 #: src/components/domain/positionColumns.tsx
 msgid "Value, {currency}"
 msgstr "Стоимость, {currency}"
+
+#: src/components/domain/AsOfPicker.tsx
+msgid "Values, holdings and periods are read as of this day."
+msgstr "Стоимость, позиции и периоды читаются на этот день."
 
 #: src/components/domain/aiToolLabels.ts
 msgid "venue"

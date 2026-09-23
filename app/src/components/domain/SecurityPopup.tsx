@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { today } from "../../lib/api";
 import type { I18n } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -51,6 +50,7 @@ import type {
   TaxonomyData,
   TransactionRow,
 } from "../../lib/types";
+import { useAsOf } from "../../lib/asOf";
 
 /**
  * The instrument's card: market history, facts, classification and its latest transactions.
@@ -69,7 +69,7 @@ const FACTS_WHILE_LOADING = 12;
 export function SecurityCard({ securityId, onClose }: { securityId: string; onClose: () => void }) {
   const { t, i18n } = useLingui();
   const nav = useNav();
-  const to = today();
+  const to = useAsOf().date;
 
   const positions = usePositions(to);
   const securities = useSecurities();

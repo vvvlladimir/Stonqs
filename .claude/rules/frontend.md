@@ -14,6 +14,15 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   `lib/types` and never from a file inside it. A new type joins the file of its subject and is
   re-exported by `index.ts` — a name that would collide with one already there is the sign that two
   different wire shapes are being given one name, not an invitation to merge them.
+- The date every reading screen answers for is `lib/asOf.tsx` (`useAsOf`), a **session** context,
+  not `UiState`: a date restored from disk would open the app in the past without anybody asking.
+  `AsOfPicker` wears the `.scope` look beside `ScopePicker` — two lenses, one control shape — and
+  `AsOfBanner` sits above every screen while it is not today, because a past portfolio otherwise
+  reads as one whose prices stopped updating. A screen reads `useAsOf().date` where it used to call
+  `today()`; a **form default and anything that writes keeps real `today()`**, so viewing the past
+  cannot backdate what is entered. The panel sends that date to `ai_send` (`as_of`), where the host
+  only *states* it: the tools still answer for today, and an alert created mid-turn must not be
+  dated 2023.
 - A period is resolved by the core (`period_ranges`), never date arithmetic in the UI: `PeriodControl` picks an id, the screen hands the resulting `PeriodRange` to a query hook. `lib/periods.ts` owns only the labels of the shipped seven. See ADR-0018. A quote window (the 90-day sparkline) is not a period and does not go through it: `useQuoteWindow` in `lib/queries.ts` owns that arithmetic, so no screen subtracts days of its own.
 - The axis is open at one end (ADR-0026): the shipped `PeriodPreset`s plus the user's own `PeriodSpec`s (`AppSettings::periods`), one flat list keyed by an opaque `PeriodId`. A screen never branches on which kind it picked, and an id that no longer resolves falls back through `pickRange` rather than leaving the screen periodless. Removing a shipped preset only records it in `hidden_presets`; `period_delete` refuses to empty the strip.
 

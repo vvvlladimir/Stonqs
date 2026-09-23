@@ -1,6 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { today } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import {
   useBenchmarkCompare,
@@ -17,10 +16,11 @@ import { formatDay, formatPercent } from "../../lib/format";
 import { PerformanceMetrics } from "./Metrics";
 import { PositionReturns } from "./PositionReturns";
 import { byContribution, monthCell } from "./model";
+import { useAsOf } from "../../lib/asOf";
 
 export function Performance() {
   const { t } = useLingui();
-  const asOf = today();
+  const asOf = useAsOf().date;
   const [period, setPeriod] = useState<PeriodId>("SINCE_INCEPTION");
   const [benchmarkId, setBenchmarkId] = useState("");
 

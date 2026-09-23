@@ -32,6 +32,7 @@ import { useLanguage } from "./lib/i18n";
 import { useTheme } from "./lib/theme";
 import { useUiState } from "./lib/uiState";
 import { UpdatesProvider } from "./lib/updates";
+import { AsOfProvider } from "./lib/asOf";
 import type { MessageDescriptor } from "@lingui/core";
 import { NavProvider, type ScreenId } from "./lib/nav";
 import { noteChange } from "./lib/freshness";
@@ -57,6 +58,7 @@ import { Reports } from "./screens/Reports";
 import { Import } from "./screens/Import";
 import { SyncChip } from "./components/domain/MarketRefresh";
 import { ScopePicker } from "./components/domain/ScopePicker";
+import { AsOfBanner, AsOfPicker } from "./components/domain/AsOfPicker";
 import { SecurityCardProvider } from "./components/domain/SecurityCardProvider";
 import { UpdateDialog } from "./components/domain/UpdateDialog";
 import { ListRow, Modal, ToastProvider, TooltipLayer } from "./components/ui";
@@ -209,88 +211,93 @@ export function App() {
   return (
     <ToastProvider>
       <NavProvider value={{ screen, go }}>
-        <UpdatesProvider>
-          <SecurityCardProvider>
-            <div className="shell">
-              <nav className="nav">
-                {navButton(NAV[0])}
-                {GROUPS.map((group) => (
-                  <Fragment key={group.id}>
-                    <div className="nav__group-label">{i18n._(group.label)}</div>
-                    {NAV.filter((s) => s.group === group.id && s.id !== "dashboard").map((s) =>
-                      navButton(s, s.primary ? "" : " nav__more"),
-                    )}
-                  </Fragment>
-                ))}
-                <button type="button" className="nav__item nav__mobile" onClick={() => setMoreOpen(true)}>
-                  <DotsThreeCircleIcon />
-                  <Trans>More</Trans>
-                </button>
-                <ScopePicker variant="nav" />
-              </nav>
+        <AsOfProvider>
+          <UpdatesProvider>
+            <SecurityCardProvider>
+              <div className="shell">
+                <nav className="nav">
+                  {navButton(NAV[0])}
+                  {GROUPS.map((group) => (
+                    <Fragment key={group.id}>
+                      <div className="nav__group-label">{i18n._(group.label)}</div>
+                      {NAV.filter((s) => s.group === group.id && s.id !== "dashboard").map((s) =>
+                        navButton(s, s.primary ? "" : " nav__more"),
+                      )}
+                    </Fragment>
+                  ))}
+                  <button type="button" className="nav__item nav__mobile" onClick={() => setMoreOpen(true)}>
+                    <DotsThreeCircleIcon />
+                    <Trans>More</Trans>
+                  </button>
+                  <AsOfPicker variant="nav" />
+                  <ScopePicker variant="nav" />
+                </nav>
 
-              <div className="main">
-                <main className="app">
-                  {screen === "dashboard" && <Dashboard />}
-                  {screen === "positions" && <Positions />}
-                  {screen === "transactions" && <Transactions focus={focus} />}
-                  {screen === "performance" && <Performance />}
-                  {screen === "trades" && <Trades />}
-                  {screen === "risk" && <Risk />}
-                  {screen === "income" && <Income />}
-                  {screen === "allocation" && <Allocation />}
-                  {screen === "rebalance" && <Rebalance />}
-                  {screen === "plans" && <Plans />}
-                  {screen === "alerts" && <Alerts />}
-                  {screen === "watchlist" && <Watchlist />}
-                  {screen === "reports" && <Reports />}
-                  {screen === "import" && <Import />}
-                  {screen === "accounts" && <Accounts />}
-                  {screen === "securities" && <Securities focus={focus} />}
-                  {screen === "settings" && <Settings status={status.data} />}
-                </main>
+                <div className="main">
+                  <AsOfBanner />
+                  <main className="app">
+                    {screen === "dashboard" && <Dashboard />}
+                    {screen === "positions" && <Positions />}
+                    {screen === "transactions" && <Transactions focus={focus} />}
+                    {screen === "performance" && <Performance />}
+                    {screen === "trades" && <Trades />}
+                    {screen === "risk" && <Risk />}
+                    {screen === "income" && <Income />}
+                    {screen === "allocation" && <Allocation />}
+                    {screen === "rebalance" && <Rebalance />}
+                    {screen === "plans" && <Plans />}
+                    {screen === "alerts" && <Alerts />}
+                    {screen === "watchlist" && <Watchlist />}
+                    {screen === "reports" && <Reports />}
+                    {screen === "import" && <Import />}
+                    {screen === "accounts" && <Accounts />}
+                    {screen === "securities" && <Securities focus={focus} />}
+                    {screen === "settings" && <Settings status={status.data} />}
+                  </main>
+                </div>
+
+                <div className="dock">
+                  {/* Screens portal dock controls here without changing page layout. */}
+                  <div id="dock-slot" className="dock__slot" />
+                  <AsOfPicker variant="dock" />
+                  <ScopePicker variant="dock" />
+                  <SyncChip />
+                  <AiToggle open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />
+                </div>
+
+                {aiOpen && <AiChatPanel onClose={() => setAiOpen(false)} />}
+
+                {moreOpen && (
+                  <Modal title={t`All screens`} onClose={() => setMoreOpen(false)}>
+                    <div className="smenu">
+                      {GROUPS.map((group) => (
+                        <div key={group.id}>
+                          <div className="group-label">{i18n._(group.label)}</div>
+                          {NAV.filter((s) => s.group === group.id).map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <ListRow
+                                key={item.id}
+                                lead={<Icon />}
+                                title={i18n._(item.title)}
+                                on={item.id === screen}
+                                onClick={() => go(item.id as ScreenId)}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </Modal>
+                )}
+
+                <TooltipLayer />
+                <AlertNotifier />
+                <UpdateDialog />
               </div>
-
-              <div className="dock">
-                {/* Screens portal dock controls here without changing page layout. */}
-                <div id="dock-slot" className="dock__slot" />
-                <ScopePicker variant="dock" />
-                <SyncChip />
-                <AiToggle open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />
-              </div>
-
-              {aiOpen && <AiChatPanel onClose={() => setAiOpen(false)} />}
-
-              {moreOpen && (
-                <Modal title={t`All screens`} onClose={() => setMoreOpen(false)}>
-                  <div className="smenu">
-                    {GROUPS.map((group) => (
-                      <div key={group.id}>
-                        <div className="group-label">{i18n._(group.label)}</div>
-                        {NAV.filter((s) => s.group === group.id).map((item) => {
-                          const Icon = item.icon;
-                          return (
-                            <ListRow
-                              key={item.id}
-                              lead={<Icon />}
-                              title={i18n._(item.title)}
-                              on={item.id === screen}
-                              onClick={() => go(item.id as ScreenId)}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </Modal>
-              )}
-
-              <TooltipLayer />
-              <AlertNotifier />
-              <UpdateDialog />
-            </div>
-          </SecurityCardProvider>
-        </UpdatesProvider>
+            </SecurityCardProvider>
+          </UpdatesProvider>
+        </AsOfProvider>
       </NavProvider>
     </ToastProvider>
   );

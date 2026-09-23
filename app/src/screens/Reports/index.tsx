@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { save } from "@tauri-apps/plugin-dialog";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { useReports } from "../../lib/queries";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import { Page } from "../../components/Page";
@@ -23,6 +23,7 @@ import { Charges } from "./Charges";
 import { Dividends } from "./Dividends";
 import { Gains } from "./Gains";
 import { exportsOf, tabs, type Tab } from "./model";
+import { useAsOf } from "../../lib/asOf";
 
 /**
  * The tax-and-accounting view of a period: what was realized, what was paid out and what
@@ -30,7 +31,7 @@ import { exportsOf, tabs, type Tab } from "./model";
  */
 export function Reports() {
   const { t, i18n } = useLingui();
-  const asOf = today();
+  const asOf = useAsOf().date;
   const [period, setPeriod] = useState<PeriodId>("YTD");
   const [tab, setTab] = useState<Tab>("gains");
   const [saving, setSaving] = useState(false);

@@ -16,7 +16,6 @@ import { CheckField, Field, FormDialog, List, ListRow, Modal } from "../../compo
 import type { Dashboard as Board, Widget } from "../../lib/uiState";
 import type { Security } from "../../lib/types";
 import { periodLabel, usePeriodRanges } from "../../lib/periods";
-import { today } from "../../lib/api";
 import { METRICS } from "./widgets/metrics";
 
 import { WIDGETS, type Field as WidgetField } from "./widgets";
@@ -33,6 +32,7 @@ import {
   sourceOf,
 } from "./widgets/model";
 import { scopeLabel } from "../../components/domain/ScopePicker";
+import { useAsOf } from "../../lib/asOf";
 
 /** Widget catalog grouped for visual browsing. */
 export function Palette({ onClose, onPick }: { onClose: () => void; onPick: (type: string) => void }) {
@@ -91,7 +91,7 @@ export function Config({
   const watchlists = useWatchlists();
   const scope = useScope();
   // The whole axis, user periods included — a widget may override the dashboard with any of them.
-  const ranges = usePeriodRanges(today());
+  const ranges = usePeriodRanges(useAsOf().date);
 
   const has = (field: WidgetField) => def.fields.includes(field);
   const set = (key: string, value: unknown) => setDraft({ ...draft, cfg: { ...draft.cfg, [key]: value } });

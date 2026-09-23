@@ -1,7 +1,8 @@
 # Allocation
 
 How the portfolio divides across a **classification tree** — asset class, region, sector, or any
-tree the user builds. The account picker applies: the shares are of what is in view.
+tree the user builds. The account picker applies: the shares are of what is in view, and so does
+the date picker: the shares are of the day in view, today unless it was moved back.
 
 Three trees ship ready (asset class, region, sector) and are ordinary user data from then on: they
 can be renamed, edited or deleted, and they are never re-translated by the app.

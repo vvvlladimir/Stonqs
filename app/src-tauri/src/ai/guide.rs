@@ -16,6 +16,10 @@
 const REFERENCE: &[(&str, &str)] = &[
     ("alerts", include_str!("../../../../docs/ai-reference/alerts.md")),
     (
+        "as-of-date",
+        include_str!("../../../../docs/ai-reference/as-of-date.md"),
+    ),
+    (
         "allocation-and-taxonomy",
         include_str!("../../../../docs/ai-reference/allocation-and-taxonomy.md"),
     ),

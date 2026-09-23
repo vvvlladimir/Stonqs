@@ -1,7 +1,6 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { today } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import { useTrades } from "../../lib/queries";
 import { Page } from "../../components/Page";
@@ -10,6 +9,7 @@ import { PeriodControl } from "../../components/domain/PeriodControl";
 import { formatDay } from "../../lib/format";
 import { TradeMetrics } from "./TradeMetrics";
 import { TradesTable } from "./TradesTable";
+import { useAsOf } from "../../lib/asOf";
 
 /**
  * A trade is one purchase and the sales that emptied it — not an instrument and not a
@@ -18,7 +18,7 @@ import { TradesTable } from "./TradesTable";
  */
 export function Trades() {
   const { t } = useLingui();
-  const asOf = today();
+  const asOf = useAsOf().date;
   const [period, setPeriod] = useState<PeriodId>("SINCE_INCEPTION");
 
   const ranges = usePeriodRanges(asOf);

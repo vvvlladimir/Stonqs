@@ -1,7 +1,9 @@
 # Performance
 
 How the portfolio did over a chosen period, and what drove it. The account picker applies, and so
-does the period control — every figure on this screen is a figure *over a window*.
+does the period control — every figure on this screen is a figure *over a window*. The window ends
+at the date the app is set to, so moving that date back reads the same period a year or a decade
+ago; see the as-of date topic.
 
 **Two returns sit side by side and they answer different questions.**
 

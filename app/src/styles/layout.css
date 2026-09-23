@@ -15,6 +15,18 @@
   padding: calc(var(--sp-6) + env(safe-area-inset-top, 0px)) var(--sp-6)
     calc(120px + env(safe-area-inset-bottom, 0px));
 }
+/* The time lens sits above every screen, not inside one: it says the whole page is historical. */
+.timelens {
+  padding: calc(var(--sp-4) + env(safe-area-inset-top, 0px)) var(--sp-6) 0;
+}
+@media (min-width: 700px) {
+  .timelens {
+    padding: var(--sp-5) var(--sp-8) 0;
+  }
+}
+.timelens + .app {
+  padding-top: var(--sp-4);
+}
 /* Fixed mobile controls stay clear of safe-area insets via surrounding padding. */
 .dock {
   position: fixed;
@@ -362,6 +374,12 @@
   .nav__scope .scope {
     width: 100%;
     justify-content: flex-start;
+  }
+  /* Two lenses, one block: the date sits directly above the data source rather than taking
+     free space of its own, which a second `margin-top: auto` would split with it. */
+  .nav__scope--date + .nav__scope {
+    margin-top: 0;
+    padding-top: var(--sp-3);
   }
   .app {
     /* Bottom clears the fixed dock (its offset plus one control) so the last row stays readable. */

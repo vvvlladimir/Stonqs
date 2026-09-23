@@ -2,7 +2,6 @@ import type { I18n } from "@lingui/core";
 import { msg, plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { today } from "../lib/api";
 import { usePeriodRanges, pickRange, type PeriodId } from "../lib/periods";
 import { useRisk } from "../lib/queries";
 import { Histogram, RollingVol, Underwater } from "../components/charts";
@@ -24,12 +23,13 @@ import {
 } from "../components/ui";
 import { formatDay, formatMonth } from "../lib/format";
 import type { Drawdown } from "../lib/types";
+import { useAsOf } from "../lib/asOf";
 
 const WINDOW_DAYS = [21, 63, 126, 252];
 
 export function Risk() {
   const { t, i18n } = useLingui();
-  const asOf = today();
+  const asOf = useAsOf().date;
   const [period, setPeriod] = useState<PeriodId>("SINCE_INCEPTION");
   const [window, setWindow] = useState("63");
   const riskFree = "2";

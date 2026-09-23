@@ -6,6 +6,7 @@ import { api, ApiError } from "./api";
 import { keys, useInvalidate } from "./queries";
 import { useNav } from "./nav";
 import type { AiEvent, AiUsage, ChatMessage, ToolDecision, ToolParams, UiError } from "./types";
+import { useAsOf } from "./asOf";
 
 /**
  * What the dashboard brief reads, always and only. Mirrors `ai/brief.rs::READINGS` so the tile
@@ -62,6 +63,8 @@ export function useChatSend(chatId: string | null) {
   const client = useQueryClient();
   // Taken at send time, not at render: the screen behind the panel is part of the question.
   const { screen } = useNav();
+  // The date lens, for the same reason: a question asked over a past portfolio is about it.
+  const { date: asOf, isToday } = useAsOf();
   const invalidate = useInvalidate();
   const [pending, setPending] = useState("");
   // Kept apart from `pending`: the thinking is shown above the answer and folded away, so the
@@ -114,7 +117,7 @@ export function useChatSend(chatId: string | null) {
       };
 
       try {
-        await api.aiSend(chatId, text, screen, (event: AiEvent) => {
+        await api.aiSend(chatId, text, screen, isToday ? null : asOf, (event: AiEvent) => {
           switch (event.type) {
             case "text":
               setPending((current) => current + event.text);
@@ -167,7 +170,7 @@ export function useChatSend(chatId: string | null) {
         );
       }
     },
-    [chatId, client, invalidate, screen],
+    [chatId, client, invalidate, screen, asOf, isToday],
   );
 
   const decide = useCallback((requestId: string, decision: ToolDecision) => {
