@@ -232,6 +232,12 @@ msgstr "{0, plural, one {# kind} other {# kinds}}"
 msgid "{0, plural, one {# list} other {# lists}}"
 msgstr "{0, plural, one {# list} other {# lists}}"
 
+#. placeholder {0}: progress.months_left
+#: src/screens/dashboard/widgets/value.tsx
+#: src/screens/Plans/Goals.tsx
+msgid "{0, plural, one {# month left} other {# months left}}"
+msgstr "{0, plural, one {# month left} other {# months left}}"
+
 #. placeholder {0}: broken.length
 #: src/screens/Securities/index.tsx
 msgid "{0, plural, one {# not identified} other {# not identified}}"
@@ -387,7 +393,7 @@ msgstr "{0} · {1} of {2}"
 msgid "{0} · {1} of {2} · {3} downloaded"
 msgstr "{0} · {1} of {2} · {3} downloaded"
 
-#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Bar, Money, Num, Percent, QueryError, Stat } from "../../../components/ui"; import { useDashboard, useFire, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: string; foot?: ReactNode; }) { const note = useFoot(ctx, foot); return ( <> <div className="kpiline"> <span className={`kpiline__v num ${tone ?? ""}`}>{value}</span> {delta && <span className="kpiline__d num">{delta}</span>} </div> {note && <div className="w__foot">{note}</div>} </> ); } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: string; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ export function FireWidget({ widget, date, period }: WidgetProps) { const { t, i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period) }; const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <> <Figure ctx={ctx} value={<Percent value={data.progress} digits={0} />} foot={ months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ) } /> <Bar fill={`${Math.min(Math.max(Number(data.progress) * 100, 0), 100)}%`} size="lg" /> <FireNote data={data} /> </> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; return ( <div className="w__foot"> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </div> ); } 
+#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Bar, Money, Num, Percent, QueryError, Stat } from "../../../components/ui"; import { useDashboard, useFire, useGoals, useLimits, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: string; foot?: ReactNode; }) { const note = useFoot(ctx, foot); return ( <> <div className="kpiline"> <span className={`kpiline__v num ${tone ?? ""}`}>{value}</span> {delta && <span className="kpiline__d num">{delta}</span>} </div> {note && <div className="w__foot">{note}</div>} </> ); } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: string; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ export function FireWidget({ widget, date, period }: WidgetProps) { const { t, i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period) }; const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <> <Figure ctx={ctx} value={<Percent value={data.progress} digits={0} />} foot={ months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ) } /> <Bar fill={`${Math.min(Math.max(Number(data.progress) * 100, 0), 100)}%`} size="lg" /> <FireNote data={data} /> </> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; return ( <div className="w__foot"> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </div> ); } /** * One goal as a track: where it is, and the single figure that answers "is this enough". * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean * nothing here. */ export function GoalWidget({ widget, date, period }: WidgetProps) { const { t } = useLingui(); const query = useGoals(date); const ctx = { date, period: periodOf(widget, period) }; const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : ""; return ( <Async query={query}> {(rows) => { const row = rows.find((r) => r.goal.id === wanted) ?? rows[0]; if (!row) return ( <p className="muted"> <Trans>No goals yet — one is added on the Plans screen.</Trans> </p> ); const { progress } = row; return ( <> <Figure ctx={ctx} value={<Percent value={progress.progress} digits={0} />} foot={ progress.months_left !== null ? plural(progress.months_left, { one: "# month left", other: "# months left" }) : progress.projected_date !== null ? t`at this pace, ${formatDay(progress.projected_date)}` : t`no date and no pace stated` } /> <Bar fill={`${Math.min(Math.max(Number(progress.progress) * 100, 0), 100)}%`} size="lg" tone={progress.on_track === false ? "neg" : undefined} /> <p className="w__note"> <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "} <Money value={progress.target_base} currency={row.goal.currency} /> {progress.required_monthly_base !== null && ( <> {" · "} <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "} {t`a month needed`} </> )} </p> </> ); }} </Async> ); } /** One contribution limit as a track: spent against allowed, over its own limit year. */ export function LimitWidget({ widget, date, period }: WidgetProps) { const { t } = useLingui(); const query = useLimits(date); const ctx = { date, period: periodOf(widget, period) }; const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : ""; return ( <Async query={query}> {(rows) => { const usage = rows.find((r) => r.limit_id === wanted) ?? rows[0]; if (!usage) return ( <p className="muted"> <Trans>No limits set — one is added on the Accounts screen.</Trans> </p> ); const over = Number(usage.share) > 1; return ( <> <Figure ctx={ctx} value={<Percent value={usage.share} digits={0} />} foot={t`of the allowance used`} /> <Bar fill={`${Math.min(Math.max(Number(usage.share) * 100, 0), 100)}%`} size="lg" tone={over ? "neg" : undefined} /> <p className="w__note"> <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "} <Money value={usage.allowance} currency={usage.currency} /> </p> </> ); }} </Async> ); } 
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{0} · previous period"
 msgstr "{0} · previous period"
@@ -740,6 +746,10 @@ msgstr "↑ crossed {level} upward"
 msgid "↓ crossed {level} downward"
 msgstr "↓ crossed {level} downward"
 
+#: src/screens/Plans/Goals.tsx
+msgid "<0/> a month to arrive on time"
+msgstr "<0/> a month to arrive on time"
+
 #: src/screens/Income/Events.tsx
 msgid "<0/> accrued"
 msgstr "<0/> accrued"
@@ -747,6 +757,10 @@ msgstr "<0/> accrued"
 #: src/components/domain/SecurityAlerts.tsx
 msgid "<0/> from now, <1/>"
 msgstr "<0/> from now, <1/>"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "<0/> left"
+msgstr "<0/> left"
 
 #: src/screens/Plans/DuePanel.tsx
 msgid "<0/> of <1/> stays as cash — it does not reach a whole unit"
@@ -927,6 +941,10 @@ msgstr "A divider line: it splits the dashboard into meaningful parts."
 #~ msgid "A feed of events: date, instrument and amount as the broker saw them."
 #~ msgstr "A feed of events: date, instrument and amount as the broker saw them."
 
+#: src/screens/Plans/Goals.tsx
+msgid "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
+msgstr "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
+
 #: src/screens/Accounts/GroupsPanel.tsx
 #~ msgid "A group is a saved slice of the portfolio, not a second portfolio: groups overlap, and deleting one touches no account."
 #~ msgstr "A group is a saved slice of the portfolio, not a second portfolio: groups overlap, and deleting one touches no account."
@@ -939,9 +957,17 @@ msgstr "A group is picked as the data source at the bottom of the navigation; ev
 msgid "A key is saved"
 msgstr "A key is saved"
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
+msgstr "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
+
 #: src/screens/Import/labels.ts
 msgid "a minus means money out"
 msgstr "a minus means money out"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "a month needed"
+msgstr "a month needed"
 
 #: src/screens/Performance/index.tsx
 #~ msgid "A monthly TWR is a chain inside the month, not a ratio of two values: a deposit on the 15th would otherwise turn into a gain."
@@ -1123,6 +1149,7 @@ msgid "account"
 msgstr "account"
 
 #: src/components/domain/PlanForm.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/Dividends.tsx
@@ -1169,6 +1196,10 @@ msgstr "Accounts from the file"
 #: src/screens/Settings/AccountsPanel.tsx
 msgid "Accounts in the portfolio"
 msgstr "Accounts in the portfolio"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Accounts that count"
+msgstr "Accounts that count"
 
 #: src/screens/Reports/Dividends.tsx
 msgid "accrued"
@@ -1423,6 +1454,10 @@ msgstr "Allow in this chat"
 msgid "Allow once"
 msgstr "Allow once"
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Allowance"
+msgstr "Allowance"
+
 #. placeholder {0}: tools.map(name).join(", ")
 #: src/components/domain/AiTools.tsx
 msgid "Allowed in this chat: {0}"
@@ -1492,6 +1527,14 @@ msgstr "An alert is a price level or a day on one instrument. A close that cross
 #: src/screens/Alerts/index.tsx
 #~ msgid "An alert watches one instrument: a price it rises or falls to, or a day to look at it again. It is checked after every quote refresh and announced once per crossing."
 #~ msgstr "An alert watches one instrument: a price it rises or falls to, or a day to look at it again. It is checked after every quote refresh and announced once per crossing."
+
+#: src/screens/Plans/Goals.tsx
+msgid "An amount you mean to have by a date, measured against the accounts you name."
+msgstr "An amount you mean to have by a date, measured against the accounts you name."
+
+#: src/screens/Plans/Goals.tsx
+msgid "An assumption, never this portfolio's measured return. Leave empty for pure saving."
+msgstr "An assumption, never this portfolio's measured return. Leave empty for pure saving."
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "An assumption, never this portfolio's measured return. Subtract inflation yourself to read the answer in today's money."
@@ -1727,6 +1770,12 @@ msgstr "At least {MIN_PASSWORD} characters."
 msgid "At least {MIN_PASSWORD} characters. It encrypts the profile's data and keys, and it cannot be recovered: forgotten, it takes all of them with it."
 msgstr "At least {MIN_PASSWORD} characters. It encrypts the profile's data and keys, and it cannot be recovered: forgotten, it takes all of them with it."
 
+#. placeholder {0}: formatDay(progress.projected_date)
+#: src/screens/dashboard/widgets/value.tsx
+#: src/screens/Plans/Goals.tsx
+msgid "at this pace, {0}"
+msgstr "at this pace, {0}"
+
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "Attribute"
 msgstr "Attribute"
@@ -1782,6 +1831,10 @@ msgstr "Base currency"
 #: src/screens/Allocation/Header.tsx
 msgid "base currency {currency}"
 msgstr "base currency {currency}"
+
+#: src/screens/Plans/Goals.tsx
+msgid "behind"
+msgstr "behind"
 
 #. placeholder {0}: formatDay(data.peak.date)
 #: src/screens/dashboard/widgets/value.tsx
@@ -1876,6 +1929,10 @@ msgstr "buys"
 #: src/screens/Rebalance/index.tsx
 msgid "Buys and sells apart: a sale realizes a result and can be taxable."
 msgstr "Buys and sells apart: a sale realizes a result and can be taxable."
+
+#: src/screens/Plans/Goals.tsx
+msgid "By"
+msgstr "By"
 
 #: src/screens/Reports/Charges.tsx
 msgid "By account"
@@ -2272,6 +2329,14 @@ msgstr "Contribution"
 #~ msgid "Contribution is a share, not money: dividing money by money in the frontend would bring back that very f64."
 #~ msgstr "Contribution is a share, not money: dividing money by money in the frontend would bring back that very f64."
 
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Contribution limit"
+msgstr "Contribution limit"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Contribution limits"
+msgstr "Contribution limits"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "Contributions"
 msgstr "Contributions"
@@ -2409,11 +2474,13 @@ msgstr "currency"
 #: src/components/domain/ListingPicker.tsx
 #: src/components/domain/PlanForm.tsx
 #: src/screens/Accounts/AccountForm.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Import/AssetRow.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
 #: src/screens/Onboarding.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "Currency"
@@ -2602,10 +2669,12 @@ msgstr "Deepest fall from a peak inside the period."
 #: src/components/domain/SecurityAlerts.tsx
 #: src/screens/Accounts/AccountCard.tsx
 #: src/screens/Accounts/GroupsPanel.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/NodeDialog.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Plans/index.tsx
 #: src/screens/Securities/index.tsx
 #: src/screens/Settings/AttributesPanel.tsx
@@ -2683,6 +2752,16 @@ msgstr "Delete source"
 #: src/screens/Rebalance/index.tsx
 msgid "Delete target"
 msgstr "Delete target"
+
+#. placeholder {0}: row.goal.name
+#: src/screens/Plans/Goals.tsx
+msgid "Delete the goal \"{0}\"? Nothing else changes."
+msgstr "Delete the goal \"{0}\"? Nothing else changes."
+
+#. placeholder {0}: usage.name
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Delete the limit \"{0}\"? No transaction changes."
+msgstr "Delete the limit \"{0}\"? No transaction changes."
 
 #: src/screens/Watchlist/index.tsx
 #~ msgid "Delete the list"
@@ -2997,7 +3076,9 @@ msgid "edit"
 msgstr "edit"
 
 #: src/components/domain/SecurityAlerts.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/dashboard/Dashboard.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Plans/index.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Edit"
@@ -3048,6 +3129,14 @@ msgstr "Edit plan"
 #: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Edit source"
 msgstr "Edit source"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Edit the goal"
+msgstr "Edit the goal"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Edit the limit"
+msgstr "Edit the limit"
 
 #: src/screens/Transactions/TransactionForm.tsx
 msgid "Edit transaction"
@@ -3344,6 +3433,10 @@ msgstr "Expand"
 msgid "Expected dividends"
 msgstr "Expected dividends"
 
+#: src/screens/Plans/Goals.tsx
+msgid "Expected return, % a year"
+msgstr "Expected return, % a year"
+
 #: src/screens/dashboard/dialogs.tsx
 msgid "Expected return, a year"
 msgstr "Expected return, a year"
@@ -3639,6 +3732,15 @@ msgstr "Give at least one category a weight: under \"Edit tree\" every category 
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 
+#: src/screens/dashboard/dialogs.tsx
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Goal"
+msgstr "Goal"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Goals"
+msgstr "Goals"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "group"
 msgstr "group"
@@ -3759,6 +3861,10 @@ msgstr "How far below the last peak the period ends."
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "How far below the last peak the portfolio stands now — not the depth of the hole it is climbing out of."
 msgstr "How far below the last peak the portfolio stands now — not the depth of the hole it is climbing out of."
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "How far one savings goal is along, and what it would take to arrive on time."
+msgstr "How far one savings goal is along, and what it would take to arrive on time."
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "How far the portfolio is from covering a year of spending, and when this pace gets there."
@@ -4420,6 +4526,10 @@ msgstr "Layout name"
 msgid "Leave empty"
 msgstr "Leave empty"
 
+#: src/screens/Plans/Goals.tsx
+msgid "Leave empty to ask when the monthly amount would arrive instead."
+msgstr "Leave empty to ask when the monthly amount would arrive instead."
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Leave empty to run up to today."
 msgstr "Leave empty to run up to today."
@@ -4457,8 +4567,20 @@ msgid "Left empty, the widget follows the picker like every screen does; naming 
 msgstr "Left empty, the widget follows the picker like every screen does; naming one pins this tile to it."
 
 #: src/screens/dashboard/dialogs.tsx
+msgid "Left empty, the widget shows the first goal."
+msgstr "Left empty, the widget shows the first goal."
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "Left empty, the widget shows the first limit."
+msgstr "Left empty, the widget shows the first limit."
+
+#: src/screens/dashboard/dialogs.tsx
 msgid "Left empty, the widget shows the first list."
 msgstr "Left empty, the widget shows the first list."
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "left of"
+msgstr "left of"
 
 #: src/components/domain/PeriodEditor.tsx
 msgid "Length"
@@ -4501,9 +4623,9 @@ msgstr "levels: {0}"
 msgid "Light"
 msgstr "Light"
 
-#: src/components/domain/AlertDialogs.tsx
-#~ msgid "Limit"
-#~ msgstr "Limit"
+#: src/screens/dashboard/dialogs.tsx
+msgid "Limit"
+msgstr "Limit"
 
 #: src/components/domain/AlertDialogs.tsx
 #~ msgid "Limit price"
@@ -4730,6 +4852,10 @@ msgstr "Money to invest on top of the portfolio; with \"Buy only\" the drift is 
 msgid "Month"
 msgstr "Month"
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "Month and day, as MM-DD. Not every allowance year is the calendar one."
+msgstr "Month and day, as MM-DD. Not every allowance year is the calendar one."
+
 #: src/lib/kinds.ts
 msgid "Monthly"
 msgstr "Monthly"
@@ -4808,11 +4934,13 @@ msgstr "name"
 #: src/components/domain/PeriodEditor.tsx
 #: src/components/domain/PlanForm.tsx
 #: src/screens/Accounts/AccountForm.tsx
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/Allocation/NodeDialog.tsx
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Import/AssetRow.tsx
+#: src/screens/Plans/Goals.tsx
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
 #: src/screens/Settings/AttributesPanel.tsx
@@ -4909,6 +5037,10 @@ msgstr "New dashboard"
 msgid "new date"
 msgstr "new date"
 
+#: src/screens/Plans/Goals.tsx
+msgid "New goal"
+msgstr "New goal"
+
 #: src/screens/Accounts/GroupForm.tsx
 #: src/screens/Accounts/GroupsPanel.tsx
 msgid "New group"
@@ -4917,6 +5049,10 @@ msgstr "New group"
 #: src/screens/Securities/SecurityForm.tsx
 msgid "New instrument"
 msgstr "New instrument"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "New limit"
+msgstr "New limit"
 
 #: src/screens/Watchlist/index.tsx
 msgid "New list"
@@ -5078,6 +5214,10 @@ msgstr "no data"
 msgid "No data for this period."
 msgstr "No data for this period."
 
+#: src/screens/dashboard/widgets/value.tsx
+msgid "no date and no pace stated"
+msgstr "no date and no pace stated"
+
 #: src/screens/dashboard/widgets/list.tsx
 msgid "No dividends expected."
 msgstr "No dividends expected."
@@ -5109,6 +5249,14 @@ msgstr "No exchange rate for this date yet, so the contribution cannot be conver
 #: src/screens/Import/FileStep.tsx
 msgid "No file chosen yet"
 msgstr "No file chosen yet"
+
+#: src/screens/Plans/Goals.tsx
+msgid "No goals yet"
+msgstr "No goals yet"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "No goals yet — one is added on the Plans screen."
+msgstr "No goals yet — one is added on the Plans screen."
 
 #: src/screens/Accounts/GroupsPanel.tsx
 msgid "No groups"
@@ -5156,11 +5304,23 @@ msgstr "No limit"
 #~ msgid "No limit is reached."
 #~ msgstr "No limit is reached."
 
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "No limits set"
+msgstr "No limits set"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "No limits set — one is added on the Accounts screen."
+msgstr "No limits set — one is added on the Accounts screen."
+
 #. placeholder {0}: detail.key
 #. placeholder {1}: detail.date
 #: src/components/ui/Async.tsx
 msgid "No market data for {0} on {1} or earlier"
 msgstr "No market data for {0} on {1} or earlier"
+
+#: src/screens/Plans/Goals.tsx
+msgid "no monthly amount stated"
+msgstr "no monthly amount stated"
 
 #: src/screens/Settings.tsx
 #~ msgid "No more often than once every, hours"
@@ -5353,6 +5513,10 @@ msgstr "none"
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "none in the file"
 msgstr "none in the file"
+
+#: src/screens/Plans/Goals.tsx
+msgid "None ticked means the whole portfolio."
+msgstr "None ticked means the whole portfolio."
 
 #: src/screens/Settings/DataPanel.tsx
 msgid "none yet"
@@ -5597,6 +5761,10 @@ msgstr "Numbers"
 msgid "occurrence"
 msgstr "occurrence"
 
+#: src/screens/dashboard/widgets/value.tsx
+msgid "of"
+msgstr "of"
+
 #. placeholder {0}: s.total
 #: src/screens/Import/Summary.tsx
 msgid "of {0}"
@@ -5609,13 +5777,19 @@ msgstr "of {0}"
 msgid "of {0} in the file"
 msgstr "of {0} in the file"
 
+#: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/MembersPanel.tsx
+#: src/screens/Plans/Goals.tsx
 msgid "of <0/>"
 msgstr "of <0/>"
 
 #: src/screens/Reports/Gains.tsx
 msgid "Of it, FX"
 msgstr "Of it, FX"
+
+#: src/screens/dashboard/widgets/value.tsx
+msgid "of the allowance used"
+msgstr "of the allowance used"
 
 #: src/screens/Allocation/Header.tsx
 msgid "of the portfolio (<0/>) is not classified under \"{taxonomyName}\""
@@ -5673,6 +5847,10 @@ msgstr "on the account"
 #: src/screens/Income/PaymentsPanel.tsx
 msgid "On the account"
 msgstr "On the account"
+
+#: src/screens/Plans/Goals.tsx
+msgid "on track"
+msgstr "on track"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Once a day"
@@ -5805,6 +5983,10 @@ msgstr "Optional, e.g. Authorization; {KEY} in its value is replaced by the save
 msgid "Optional: it can be created later."
 msgstr "Optional: it can be created later."
 
+#: src/screens/Plans/Goals.tsx
+msgid "Optional: what you actually put aside."
+msgstr "Optional: what you actually put aside."
+
 #: src/screens/Risk.tsx
 #~ msgid "Ordered by depth, not by date: \"how much can be lost\" is answered by the worst episode, not the last one."
 #~ msgstr "Ordered by depth, not by date: \"how much can be lost\" is answered by the worst episode, not the last one."
@@ -5858,6 +6040,10 @@ msgstr "Paid in"
 #: src/screens/dashboard/dialogs.tsx
 msgid "Paid in a month"
 msgstr "Paid in a month"
+
+#: src/screens/Plans/Goals.tsx
+msgid "Paid in monthly"
+msgstr "Paid in monthly"
 
 #: src/screens/dashboard/widgets/model.ts
 msgid "Paid in over the period"
@@ -7469,6 +7655,10 @@ msgstr "Target · {0}"
 msgid "target <0/>"
 msgstr "target <0/>"
 
+#: src/screens/Plans/Goals.tsx
+msgid "Target amount"
+msgstr "Target amount"
+
 #: src/screens/Rebalance/TargetForm.tsx
 msgid "Target name"
 msgstr "Target name"
@@ -7858,6 +8048,14 @@ msgstr "The fill is the current weight and the tick the target; hatching marks a
 #: src/screens/Rebalance/index.tsx
 #~ msgid "The fill is what exists, the tick is the target, hatching past it is an overweight and a dashed run up to it is a shortfall."
 #~ msgstr "The fill is what exists, the tick is the target, hatching past it is an overweight and a dashed run up to it is a shortfall."
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "The first goal"
+msgstr "The first goal"
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "The first limit"
+msgstr "The first limit"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "The first list"
@@ -8348,6 +8546,10 @@ msgstr "The value of open positions without cash balances."
 msgid "The weakest trading day."
 msgstr "The weakest trading day."
 
+#: src/screens/Plans/Goals.tsx
+msgid "the whole portfolio"
+msgstr "the whole portfolio"
+
 #: src/screens/Allocation/BreakdownPanel.tsx
 msgid "the whole portfolio down to instruments, a ring is a level"
 msgstr "the whole portfolio down to instruments, a ring is a level"
@@ -8371,6 +8573,10 @@ msgstr "The write is one transaction: a half-imported file can be neither finish
 #: src/screens/Import/labels.ts
 msgid "the wrong kind of account"
 msgstr "the wrong kind of account"
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "The year opens on"
+msgstr "The year opens on"
 
 #: src/screens/Securities/AttributeImportDialog.tsx
 msgid "these rows are not written"
@@ -8441,6 +8647,10 @@ msgstr "This instrument has no ISIN, so the venues were looked for under its tic
 #: src/components/domain/UpdateDialog.tsx
 msgid "This is the newest published version."
 msgstr "This is the newest published version."
+
+#: src/screens/Plans/Goals.tsx
+msgid "this pace does not arrive"
+msgstr "this pace does not arrive"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
@@ -9137,6 +9347,14 @@ msgstr "What it is made of"
 msgid "What moved the portfolio this period"
 msgstr "What moved the portfolio this period"
 
+#: src/screens/dashboard/widgets/index.tsx
+msgid "What one account has paid in this limit year against what it is allowed."
+msgstr "What one account has paid in this limit year against what it is allowed."
+
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "What one account may take in a year, against what it has taken. Nothing is blocked."
+msgstr "What one account may take in a year, against what it has taken. Nothing is blocked."
+
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "What open trades would make if closed at the last price."
 msgstr "What open trades would make if closed at the last price."
@@ -9536,6 +9754,12 @@ msgstr "Yahoo and the ECB. Startup fetches the tail only — from the last known
 msgid "Year"
 msgstr "Year"
 
+#. placeholder {0}: formatDay(usage.from)
+#. placeholder {1}: formatDay(usage.to)
+#: src/screens/Accounts/LimitsPanel.tsx
+msgid "year {0} — {1}"
+msgstr "year {0} — {1}"
+
 #: src/lib/periods.ts
 msgid "Year to date"
 msgstr "Year to date"
@@ -9590,6 +9814,10 @@ msgid "your classification trees"
 msgstr "your classification trees"
 
 #: src/components/domain/aiToolLabels.ts
+msgid "your contribution limits"
+msgstr "your contribution limits"
+
+#: src/components/domain/aiToolLabels.ts
 msgid "your investment plans"
 msgstr "your investment plans"
 
@@ -9636,6 +9864,10 @@ msgstr "Your question is sent to the provider's search when it looks something u
 #: src/components/domain/aiToolLabels.ts
 msgid "your return against an instrument's"
 msgstr "your return against an instrument's"
+
+#: src/components/domain/aiToolLabels.ts
+msgid "your savings goals"
+msgstr "your savings goals"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "your target allocations"

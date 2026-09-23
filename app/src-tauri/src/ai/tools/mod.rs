@@ -118,6 +118,8 @@ pub const CATALOGUE: &[Tool] = &[
     plans::PLANS_LIST,
     plans::PLANS_PROJECTION,
     plans::PLANS_DUE,
+    plans::PLANS_GOALS,
+    plans::ACCOUNTS_LIMITS,
     alerts::ALERTS_LIST,
     alerts::ALERTS_CROSSINGS,
     securities::SECURITIES_EVENTS,

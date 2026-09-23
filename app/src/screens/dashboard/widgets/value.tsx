@@ -6,6 +6,8 @@ import { Async, Bar, Money, Num, Percent, QueryError, Stat } from "../../../comp
 import {
   useDashboard,
   useFire,
+  useGoals,
+  useLimits,
   useIncomeOver,
   usePerformance,
   usePlans,
@@ -552,5 +554,104 @@ function FireNote({ data }: { data: FireProjection }) {
       {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`}
       {data.target_date && ` · ${formatDay(data.target_date)}`}
     </div>
+  );
+}
+
+/**
+ * One goal as a track: where it is, and the single figure that answers "is this enough".
+ * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean
+ * nothing here.
+ */
+export function GoalWidget({ widget, date, period }: WidgetProps) {
+  const { t } = useLingui();
+  const query = useGoals(date);
+  const ctx = { date, period: periodOf(widget, period) };
+  const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : "";
+
+  return (
+    <Async query={query}>
+      {(rows) => {
+        const row = rows.find((r) => r.goal.id === wanted) ?? rows[0];
+        if (!row)
+          return (
+            <p className="muted">
+              <Trans>No goals yet — one is added on the Plans screen.</Trans>
+            </p>
+          );
+        const { progress } = row;
+        return (
+          <>
+            <Figure
+              ctx={ctx}
+              value={<Percent value={progress.progress} digits={0} />}
+              foot={
+                progress.months_left !== null
+                  ? plural(progress.months_left, { one: "# month left", other: "# months left" })
+                  : progress.projected_date !== null
+                    ? t`at this pace, ${formatDay(progress.projected_date)}`
+                    : t`no date and no pace stated`
+              }
+            />
+            <Bar
+              fill={`${Math.min(Math.max(Number(progress.progress) * 100, 0), 100)}%`}
+              size="lg"
+              tone={progress.on_track === false ? "neg" : undefined}
+            />
+            <p className="w__note">
+              <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "}
+              <Money value={progress.target_base} currency={row.goal.currency} />
+              {progress.required_monthly_base !== null && (
+                <>
+                  {" · "}
+                  <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "}
+                  {t`a month needed`}
+                </>
+              )}
+            </p>
+          </>
+        );
+      }}
+    </Async>
+  );
+}
+
+/** One contribution limit as a track: spent against allowed, over its own limit year. */
+export function LimitWidget({ widget, date, period }: WidgetProps) {
+  const { t } = useLingui();
+  const query = useLimits(date);
+  const ctx = { date, period: periodOf(widget, period) };
+  const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : "";
+
+  return (
+    <Async query={query}>
+      {(rows) => {
+        const usage = rows.find((r) => r.limit_id === wanted) ?? rows[0];
+        if (!usage)
+          return (
+            <p className="muted">
+              <Trans>No limits set — one is added on the Accounts screen.</Trans>
+            </p>
+          );
+        const over = Number(usage.share) > 1;
+        return (
+          <>
+            <Figure
+              ctx={ctx}
+              value={<Percent value={usage.share} digits={0} />}
+              foot={t`of the allowance used`}
+            />
+            <Bar
+              fill={`${Math.min(Math.max(Number(usage.share) * 100, 0), 100)}%`}
+              size="lg"
+              tone={over ? "neg" : undefined}
+            />
+            <p className="w__note">
+              <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "}
+              <Money value={usage.allowance} currency={usage.currency} />
+            </p>
+          </>
+        );
+      }}
+    </Async>
   );
 }

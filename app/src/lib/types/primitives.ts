@@ -11,6 +11,7 @@ export type DataChangeKind =
   | "accounts"
   | "ai_chats"
   | "alerts"
+  | "goals"
   | "plans"
   | "portfolio"
   | "quotes"

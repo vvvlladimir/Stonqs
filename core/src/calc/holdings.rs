@@ -212,7 +212,7 @@ pub fn build_holdings_with(
 /// portfolio's external flows, and with them TWR, XIRR and the capital every rate divides by.
 /// A leg whose partner is nowhere in the same set is therefore money crossing the portfolio
 /// boundary, which is the rule [`super::scoped_transactions`] has always applied to a scope.
-fn paired_links(transactions: &[Transaction]) -> HashSet<&str> {
+pub(crate) fn paired_links(transactions: &[Transaction]) -> HashSet<&str> {
     let mut seen: HashMap<&str, usize> = HashMap::new();
     for t in transactions {
         if let Some(link) = t.link_id.as_deref() {

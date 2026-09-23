@@ -9,6 +9,7 @@ mod attributes;
 mod corporate_actions;
 mod events;
 mod fx_rates;
+mod goals;
 mod listings;
 mod migrate;
 mod plans;

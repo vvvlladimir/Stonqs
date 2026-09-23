@@ -12,6 +12,7 @@ import type { AccountInput, AccountRow } from "../../lib/types";
 import { AccountCard } from "./AccountCard";
 import { AccountForm } from "./AccountForm";
 import { GroupsPanel } from "./GroupsPanel";
+import { LimitsPanel } from "./LimitsPanel";
 import { EMPTY_ACCOUNT } from "./model";
 
 export function Accounts() {
@@ -145,6 +146,8 @@ export function Accounts() {
       </section>
 
       <GroupsPanel accounts={accounts.data} base={base} />
+
+      <LimitsPanel accounts={accounts.data} base={base} />
 
       {menu.node}
     </Page>

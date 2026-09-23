@@ -31,3 +31,17 @@ is what says "already done", not a flag on the plan.
 
 Deleting a plan leaves every transaction it ever recorded where it is. It removes the intention,
 not the history.
+
+**Goals** sit below the plans and answer a different question: an amount you mean to have by a
+date. A goal names the accounts that count towards it — none ticked means the whole portfolio — and
+it ignores the account picker entirely, so it reads the same wherever you happen to be looking.
+
+Give it a date and it says what would have to go in each month to arrive on time. Give it a monthly
+amount instead and it says when that pace arrives, or that it does not. Give it both and it also
+says whether you are on track; with only one of the two that question has no answer, and the goal
+says nothing rather than calling you behind.
+
+The expected return is an assumption you type, not what this portfolio has actually returned.
+Leaving it empty is the honest default for a savings goal: the money grows only by what is paid in.
+
+Deleting a goal changes nothing else. It is an intention, not a record.

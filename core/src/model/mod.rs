@@ -13,6 +13,7 @@ mod alert;
 mod attribute;
 mod corporate_action;
 mod event;
+mod goal;
 mod plan;
 mod portfolio;
 mod position;
@@ -29,6 +30,7 @@ pub use alert::{AlertCrossing, AlertDirection, AlertKind, AlertSide, CrossingDir
 pub use attribute::{AttributeKind, SecurityAttributeDef};
 pub use corporate_action::{CorporateAction, CorporateActionKind};
 pub use event::{SecurityEvent, SecurityEventKind};
+pub use goal::{ContributionLimit, Goal};
 pub use plan::{Interval, InvestmentPlan, PlanLeg, Schedule};
 pub use portfolio::{CostBasisMethod, Portfolio};
 pub use position::{Lot, Position};

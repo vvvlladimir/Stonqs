@@ -10,6 +10,8 @@ import {
   useTargets,
   useTaxonomies,
   useWatchlists,
+  useGoals,
+  useLimits,
 } from "../../lib/queries";
 import { useProviderName } from "../../lib/ai";
 import { CheckField, Field, FormDialog, List, ListRow, Modal } from "../../components/ui";
@@ -89,6 +91,8 @@ export function Config({
   const securities = useSecurities();
   const targets = useTargets();
   const watchlists = useWatchlists();
+  const goals = useGoals(useAsOf().date);
+  const limits = useLimits(useAsOf().date);
   const scope = useScope();
   // The whole axis, user periods included — a widget may override the dashboard with any of them.
   const ranges = usePeriodRanges(useAsOf().date);
@@ -291,6 +295,28 @@ export function Config({
           options={(watchlists.data ?? []).map((list) => ({ value: list.id, label: list.name }))}
           value={text("watchlist")}
           onChange={(watchlist) => set("watchlist", watchlist)}
+        />
+      )}
+
+      {has("goal") && (
+        <Field
+          label={t`Goal`}
+          hint={t`Left empty, the widget shows the first goal.`}
+          placeholder={t`The first goal`}
+          options={(goals.data ?? []).map((row) => ({ value: row.goal.id, label: row.goal.name }))}
+          value={text("goal")}
+          onChange={(goal) => set("goal", goal)}
+        />
+      )}
+
+      {has("limit") && (
+        <Field
+          label={t`Limit`}
+          hint={t`Left empty, the widget shows the first limit.`}
+          placeholder={t`The first limit`}
+          options={(limits.data ?? []).map((usage) => ({ value: usage.limit_id, label: usage.name }))}
+          value={text("limit")}
+          onChange={(limit) => set("limit", limit)}
         />
       )}
 

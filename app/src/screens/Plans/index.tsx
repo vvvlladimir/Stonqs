@@ -29,6 +29,7 @@ import {
 } from "../../components/ui";
 import type { PlanInput, PlanRow } from "../../lib/types";
 import { DuePanel } from "./DuePanel";
+import { GoalsPanel } from "./Goals";
 
 export function Plans() {
   const { t, i18n } = useLingui();
@@ -152,6 +153,8 @@ export function Plans() {
           ))}
         </List>
       )}
+
+      <GoalsPanel baseCurrency={base_currency} />
     </Page>
   );
 }

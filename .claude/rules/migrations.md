@@ -12,7 +12,14 @@ failed copy is `Error::Backup` and **aborts the upgrade**. A database with nothi
 not copied, and only the three newest copies are kept. An in-memory database passes `None` for the
 path and is never copied.
 
-Latest is `0027_external_id.sql`: `transactions.external_id`, nullable and indexed — the broker's
+Latest is `0028_goals_and_limits.sql`: `goals` (+ `goal_accounts`, cascading — no rows means the
+whole portfolio, so a goal is never re-pointed by an account being deleted) and
+`contribution_limits`, whose `year_starts_on` is `MM-DD` because an allowance year is not always
+the calendar one. `expected_return` is stored as a fraction and is the user's assumption, never a
+measured return. Nothing here is enforced: the tables are read, never consulted before a write
+(ADR-0068).
+
+Before that, `0027_external_id.sql`: `transactions.external_id`, nullable and indexed — the broker's
 own name for an operation. Identity is asked of it before the content fingerprint (ADR-0005), so
 the same id with different values is a restatement that **replaces** the stored row rather than
 joining it (ADR-0065). A row typed by hand carries none.

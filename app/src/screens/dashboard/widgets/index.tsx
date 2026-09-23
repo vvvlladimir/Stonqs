@@ -28,7 +28,7 @@ import {
 import { BriefWidget } from "./ai";
 import { METRICS } from "./metrics";
 import { HeadingWidget, MetricWidget } from "./tiles";
-import { FireWidget, RatioWidget } from "./value";
+import { FireWidget, GoalWidget, LimitWidget, RatioWidget } from "./value";
 import { RATIO_TERMS, ratioTerms } from "./model";
 import {
   AllocationWidget,
@@ -175,6 +175,26 @@ export const WIDGETS: Record<string, WidgetDef> = {
     fields: ["title", "fire"],
     defaults: { withdrawal: "0.04", return: "0.05" },
     Render: FireWidget,
+  },
+  goal: {
+    label: msg`Goal`,
+    icon: FlagCheckeredIcon,
+    description: msg`How far one savings goal is along, and what it would take to arrive on time.`,
+    group: msg`Numbers`,
+    size: { w: 4, h: 3 },
+    min: { w: 2, h: 3 },
+    fields: ["title", "goal"],
+    Render: GoalWidget,
+  },
+  limit: {
+    label: msg`Contribution limit`,
+    icon: FlagCheckeredIcon,
+    description: msg`What one account has paid in this limit year against what it is allowed.`,
+    group: msg`Numbers`,
+    size: { w: 4, h: 3 },
+    min: { w: 2, h: 3 },
+    fields: ["title", "limit"],
+    Render: LimitWidget,
   },
   chart: {
     label: msg`Value and flows`,

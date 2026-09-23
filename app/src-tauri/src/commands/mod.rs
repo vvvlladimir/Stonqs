@@ -9,6 +9,7 @@ pub mod corporate_actions;
 pub mod dashboard;
 pub mod demo;
 pub mod dev;
+pub mod goals;
 pub mod import;
 pub mod inflation;
 pub mod listings;

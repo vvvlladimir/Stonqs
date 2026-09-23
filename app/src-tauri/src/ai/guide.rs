@@ -52,6 +52,10 @@ const REFERENCE: &[(&str, &str)] = &[
         include_str!("../../../../docs/ai-reference/data-scope.md"),
     ),
     (
+        "goals-and-limits",
+        include_str!("../../../../docs/ai-reference/goals-and-limits.md"),
+    ),
+    (
         "importing-data",
         include_str!("../../../../docs/ai-reference/importing-data.md"),
     ),

@@ -63,6 +63,14 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   A plan writes nothing on its own: `plan_due` returns the drafts, and `plan_commit` is one command
   (rows + `plan_executions` link) so a half-written occurrence cannot leave the plan offering a
   month whose purchases are already in the ledger. See ADR-0033.
+- A goal and a contribution limit are *not* scoped either, and for the plan's reason (ADR-0068): a
+  goal **carries its own accounts** (`goal_accounts`, empty = the whole portfolio) and
+  `PortfolioAnalytics::goal_progress` re-scopes to them, so the picker changes nothing; a limit
+  belongs to one account. `goals_list` / `limits_list` take `portfolio()` and a date, never a
+  `source`. A contribution is a deposit or an **unpaired** transfer leg — the same `paired_links`
+  reading TWR takes — so an internal move eats no allowance, and a limit is **measured, never
+  enforced**: no command refuses a transaction over it. No jurisdiction ships in the binary; the
+  amount, the currency and `MM-DD` of the year's opening are the user's.
 - Alerts and instrument events are *not* scoped either: a level is about an instrument. The host
   never sends a notification — `alerts_take_notifications` checks the rules and hands over the
   unannounced crossings, marked in the same call, and `AlertNotifier` writes the text and calls

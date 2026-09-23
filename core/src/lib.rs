@@ -85,11 +85,11 @@ pub mod prelude {
     };
     pub use crate::model::{
         Account, AccountGroup, AccountKind, AlertCrossing, AlertDirection, AlertKind, AlertSide,
-        AllocationTarget, AttributeKind, CashClassification, CorporateAction, CorporateActionKind,
-        CostBasisMethod, CrossingDirection, Interval, InvestmentPlan, PlanLeg, Portfolio, Position, Schedule,
-        Security, SecurityAlert, SecurityAttributeDef, SecurityClassification, SecurityEvent,
-        SecurityEventKind, SecurityKind, Taxonomy, TaxonomyKind, TaxonomyNode, Transaction, TransactionKind,
-        Watchlist, observed_quantity_step,
+        AllocationTarget, AttributeKind, CashClassification, ContributionLimit, CorporateAction,
+        CorporateActionKind, CostBasisMethod, CrossingDirection, Goal, Interval, InvestmentPlan, PlanLeg,
+        Portfolio, Position, Schedule, Security, SecurityAlert, SecurityAttributeDef, SecurityClassification,
+        SecurityEvent, SecurityEventKind, SecurityKind, Taxonomy, TaxonomyKind, TaxonomyNode, Transaction,
+        TransactionKind, Watchlist, observed_quantity_step,
     };
     pub use crate::money::{Currency, Money};
     pub use crate::sources;

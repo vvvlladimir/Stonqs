@@ -77,6 +77,11 @@ import type {
   TaxonomyData,
   TransactionKind,
   TaxonomyPreview,
+  Goal,
+  GoalInput,
+  GoalRow,
+  LimitInput,
+  LimitUsage,
   AttributePreview,
   AttributeImportResult,
   Transaction,
@@ -334,6 +339,14 @@ export const api = {
   allocationTree: (taxonomy_id: string, date: DateString, source?: Source) =>
     call<Allocation>("allocation_tree", { taxonomyId: taxonomy_id, date, source: source ?? null }),
 
+  /** Goals with their progress. Not scoped: a goal carries the accounts it counts. */
+  goalsList: (date: DateString) => call<GoalRow[]>("goals_list", { date }),
+  goalSave: (input: GoalInput) => call<Goal>("goal_save", { input }),
+  goalDelete: (id: string) => call<void>("goal_delete", { id }),
+  /** Contribution limits with what the limit year `date` falls in has taken. */
+  limitsList: (date: DateString) => call<LimitUsage[]>("limits_list", { date }),
+  limitSave: (input: LimitInput) => call<unknown>("limit_save", { input }),
+  limitDelete: (id: string) => call<void>("limit_delete", { id }),
   taxonomiesList: () => call<TaxonomyData[]>("taxonomies_list"),
   /** The kind is not asked for: absent keeps what a tree has and makes a new one custom. */
   taxonomySave: (input: { id: string | null; name: string }) => call<unknown>("taxonomy_save", { input }),

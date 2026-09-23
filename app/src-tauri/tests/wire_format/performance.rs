@@ -276,3 +276,74 @@ fn calculation_sheet_rows_carry_their_own_window_and_string_money() {
     // The count of charges is a number; the money beside it is not.
     assert!(row["costs"]["count"].is_number());
 }
+
+/// A goal's reading crosses with money as strings and its unanswerable questions as `null` —
+/// "cannot tell" is not "behind", and the frontend must be able to tell them apart.
+#[test]
+fn goal_progress_keeps_its_absent_answers_null() {
+    use sq_core::calc::GoalProgress;
+
+    let json = serde_json::to_value(GoalProgress {
+        goal_id: "goal-1".into(),
+        name: "House".into(),
+        target_base: dec!(40000),
+        current_base: dec!(17000),
+        missing_base: dec!(23000),
+        progress: dec!(0.425),
+        months_left: Some(18),
+        required_monthly_base: Some(dec!(1277.78)),
+        months_to_target: None,
+        projected_date: None,
+        on_track: None,
+        monthly_base: None,
+        expected_return: dec!(0),
+    })
+    .unwrap();
+
+    assert_eq!(json["target_base"], Value::String("40000".into()));
+    assert_eq!(json["progress"], Value::String("0.425".into()));
+    // A month count is a number, not money.
+    assert!(json["months_left"].is_number());
+    assert_eq!(json["on_track"], Value::Null);
+    assert_eq!(json["monthly_base"], Value::Null);
+    assert_eq!(json["required_monthly_base"], Value::String("1277.78".into()));
+}
+
+/// A limit's year is two dates it carries, so the frontend never derives one from the other.
+#[test]
+fn limit_usage_carries_its_own_year() {
+    use sq_core::calc::LimitUsage;
+
+    let json = serde_json::to_value(LimitUsage {
+        limit_id: "limit-1".into(),
+        account_id: "acc-1".into(),
+        name: "ISA".into(),
+        from: chrono::NaiveDate::from_ymd_opt(2025, 4, 6).unwrap(),
+        to: chrono::NaiveDate::from_ymd_opt(2026, 4, 5).unwrap(),
+        allowance: dec!(20000),
+        used: dec!(12000),
+        remaining: dec!(8000),
+        share: dec!(0.6),
+        currency: "GBP".into(),
+    })
+    .unwrap();
+
+    assert_eq!(
+        keys(&json),
+        [
+            "account_id",
+            "allowance",
+            "currency",
+            "from",
+            "limit_id",
+            "name",
+            "remaining",
+            "share",
+            "to",
+            "used",
+        ]
+    );
+    assert_eq!(json["from"], Value::String("2025-04-06".into()));
+    assert_eq!(json["to"], Value::String("2026-04-05".into()));
+    assert_eq!(json["used"], Value::String("12000".into()));
+}

@@ -16,6 +16,30 @@ pub(super) const PLANS_LIST: Tool = Tool {
     run: plans_list,
 };
 
+pub(super) const PLANS_GOALS: Tool = Tool {
+    name: "plans_goals",
+    description: "The user's savings goals: the amount each is for, what its accounts are \
+                  worth now, how far along it is, and either what it would take per month to \
+                  arrive on time or when the stated pace arrives. A goal names its own \
+                  accounts and ignores the account lens.",
+    access: Access::Ask,
+    schema: no_arguments,
+    summary: |_, _| Params::new(),
+    run: plans_goals,
+};
+
+pub(super) const ACCOUNTS_LIMITS: Tool = Tool {
+    name: "accounts_limits",
+    description: "Yearly contribution ceilings the user stated for their accounts — an ISA, a \
+                  401(k), an ИИС — and what has been paid into each over its own limit year. \
+                  The app enforces nothing and knows no country's rules: these are the user's \
+                  own figures.",
+    access: Access::Ask,
+    schema: no_arguments,
+    summary: |_, _| Params::new(),
+    run: accounts_limits,
+};
+
 pub(super) const PLANS_PROJECTION: Tool = Tool {
     name: "plans_projection",
     description: "What the active plans would contribute month by month over the coming \
@@ -181,6 +205,70 @@ fn months_of(args: &Value) -> u32 {
 /// Plans, alerts and watchlists are **not** scoped (`.claude/rules/ui-boundary.md`): an intention
 /// about the portfolio, a level on an instrument and a list of instruments do not change when the
 /// account picker narrows, so these bodies read the portfolio rather than the lens.
+pub(super) fn plans_goals(context: &ToolContext, _args: &Value) -> AiResult<Value> {
+    let portfolio = &context.scope.portfolio;
+    let analytics = context.scope.analytics(context.store).map_err(tool)?;
+    let accounts = context.store.list_accounts().map_err(tool)?;
+
+    let mut rows = Vec::new();
+    for goal in context.store.list_goals(&portfolio.id).map_err(tool)? {
+        let progress = analytics.goal_progress(&goal, context.today).map_err(tool)?;
+        let names: Vec<&str> = goal
+            .accounts
+            .iter()
+            .filter_map(|id| accounts.iter().find(|a| &a.id == id))
+            .map(|a| a.name.as_str())
+            .collect();
+        rows.push(json!({
+            "name": goal.name,
+            "target": money(progress.target_base),
+            "current": money(progress.current_base),
+            "missing": money(progress.missing_base),
+            "progress_percent": percent(progress.progress),
+            "accounts": if names.is_empty() { Value::String("the whole portfolio".into()) } else { json!(names) },
+            "target_date": goal.target_date.map(|d| d.to_string()),
+            "months_left": progress.months_left,
+            "required_monthly": progress.required_monthly_base.map(money),
+            "stated_monthly": progress.monthly_base.map(money),
+            // Absent means the question cannot be answered, which is not the same as "behind".
+            "on_track": progress.on_track,
+            "arrives": progress.projected_date.map(|d| d.to_string()),
+        }));
+    }
+
+    Ok(json!({
+        "base_currency": portfolio.base_currency,
+        "goals": rows,
+    }))
+}
+
+pub(super) fn accounts_limits(context: &ToolContext, _args: &Value) -> AiResult<Value> {
+    let analytics = context.scope.analytics(context.store).map_err(tool)?;
+    let accounts = context.store.list_accounts().map_err(tool)?;
+
+    let mut rows = Vec::new();
+    for limit in context.store.list_limits().map_err(tool)? {
+        let usage = analytics.limit_usage(&limit, context.today).map_err(tool)?;
+        rows.push(json!({
+            "name": usage.name,
+            "account": accounts
+                .iter()
+                .find(|a| a.id == usage.account_id)
+                .map(|a| a.name.as_str())
+                .unwrap_or("?"),
+            "year_from": usage.from.to_string(),
+            "year_to": usage.to.to_string(),
+            "allowance": money(usage.allowance),
+            "used": money(usage.used),
+            "remaining": money(usage.remaining),
+            "used_percent": percent(usage.share),
+            "currency": usage.currency,
+        }));
+    }
+
+    Ok(json!({ "limits": rows }))
+}
+
 pub(super) fn plans_list(context: &ToolContext, _args: &Value) -> AiResult<Value> {
     let portfolio = &context.scope.portfolio;
     let plans = context.store.list_plans(&portfolio.id).map_err(tool)?;
