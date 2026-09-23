@@ -41,6 +41,19 @@ Each instrument carries a note, a WKN, a tradable quantity step (which is what r
 to), and any attributes the user has defined — an attribute can also seed a whole classification
 tree from its values.
 
+**Import attributes** and **Export attributes** fill those attributes for many instruments at
+once, from a spreadsheet. The export writes one row per instrument and one column per attribute,
+and the import reads that same shape back.
+
+Four things about the import are worth knowing before pressing it. It shows a plan first and
+writes nothing until it is accepted. An instrument is found by its ISIN before its ticker, so a
+file listing a foreign exchange's ticker still lands on the right row; a row matching nothing is
+listed and skipped. A column nobody has defined yet becomes a new attribute, and its kind — text,
+number or date — is read from its own values, while a column that already exists keeps the kind it
+was created with: a cell that does not fit it is skipped on its own, with a reason, and the rest of
+the row is still written. And a column the file does not mention is left untouched — importing one
+column never clears the others, so a partial spreadsheet is safe to import.
+
 **Splits** are edited per instrument. A split adjusts the lots held, never the stored quotes:
 quotes arrive already adjusted from the provider.
 

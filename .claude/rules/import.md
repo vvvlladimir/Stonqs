@@ -107,4 +107,16 @@
 - Value that moves *inside* the portfolio — a currency exchange, a crypto conversion, a stake, a wallet-to-wallet move — is one wording on two rows (`Balance Conversion`, `USDT -> EUR`), and only the sign tells the legs apart. The keyword maps it to `TransferIn`, the reversible side, and `resolve_direction` turns the negative leg into `TransferOut`. Such a row therefore **flips but never votes** in `checks::count_vote` — the mirror of Buy/Sell, which vote but never flip. Counting it would be counting a direction we invented: half the legs of a crypto file are negative by construction, and the file would judge itself unsigned and credit both legs.
 - A value the user marks "do not import" lands in `ImportMapping::ignored_kinds` and its rows get `RowStatus::Ignored` — counted in `summary.ignored`, out of `unknown_kinds()`, never written. A broker prints lines that are not operations (`Name Change`, `Monthly statement`); refusing the file over them is not an answer, and neither is importing them as something else. The choice is exclusive with a kind alias and stays visible in `preview.kinds` (`ignored: true`) so it can be taken back.
 - Row problems carry a `Severity` and a `ProblemCode`. Only `Error` makes a row `Invalid` — a direction-corrected row is `summary.warnings`, not `summary.invalid`. `checks::check_row`/`check_file` are heuristics and only ever emit warnings; a false positive must not block an import.
+- Instrument attributes have a CSV of their own (`import::attributes`): one row per instrument,
+  one column per attribute, `attributes_to_csv` writing what `build_attribute_preview` reads back.
+  The preview is pure like every other (securities and attribute defs as slices; only
+  `commit_attributes` touches `Store`), and it joins instruments through
+  `taxonomy::match_security` rather than a second matcher — ISIN before ticker, stated once. A
+  column that already exists **keeps its kind** (ADR-0031), so a cell failing `AttributeKind::normalize`
+  is an `Error` on that cell alone and the row's other values are still written; a column nobody
+  defined is inferred from its own values (every cell a number → `Number`, every cell an ISO date →
+  `Date`, else `Text`). A **blank cell is absent, not a clear**: the commit merges into what the
+  instrument already carries, because a file naming three attributes must not wipe the other
+  twelve. Re-running the same file is a no-op — a name already defined is reused rather than
+  duplicated.
 - Taxonomy CSV is read by meaning, not template: level columns found by header name (`Levels 2`, `Уровень 2`, `Category`), a security row identified by having a ticker/ISIN, the security's own name one level deeper than its category. The first level (tree's name, repeated every row) is detected and dropped. Securities are matched by ISIN first (ISIN = instrument, ticker = listing — a foreign file may print a different one). `commit_taxonomy(into)` extends the tree it's invoked on; a node already present under the same name/place is reused (case-insensitive match), so re-importing doesn't double the tree, and a security's split is overwritten by the newer file.

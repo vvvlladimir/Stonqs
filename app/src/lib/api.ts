@@ -77,6 +77,8 @@ import type {
   TaxonomyData,
   TransactionKind,
   TaxonomyPreview,
+  AttributePreview,
+  AttributeImportResult,
   Transaction,
   TransactionFilter,
   TransactionInput,
@@ -353,6 +355,13 @@ export const api = {
     call<Taxonomy>("taxonomy_group_commit", { attributeId: attribute_id, into, name }),
   taxonomyExportSave: (taxonomy_id: string, path: string) =>
     call<void>("taxonomy_export_save", { taxonomyId: taxonomy_id, path }),
+  /** What an attribute CSV would fill in, before it fills anything in. */
+  attributesImportPreviewPath: (path: string) =>
+    call<AttributePreview>("attributes_import_preview_path", { path, config: null }),
+  attributesImportCommitPath: (path: string) =>
+    call<AttributeImportResult>("attributes_import_commit_path", { path, config: null }),
+  /** Writes every instrument's attributes as the CSV this same import reads back. */
+  attributesExportSave: (path: string) => call<void>("attributes_export_save", { path }),
   taxonomyNodeSave: (input: {
     color?: number | null;
     id: string | null;

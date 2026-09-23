@@ -1,8 +1,9 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
+import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowsClockwiseIcon, PlusIcon } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon, DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
 import { api, today } from "../../lib/api";
 import { useIsWide } from "../../lib/useLayout";
 import { affects, useInvalidate, useQuoteProviders, useSecurities } from "../../lib/queries";
@@ -23,7 +24,8 @@ import {
   type MenuItem,
 } from "../../components/ui";
 import { formatDay } from "../../lib/format";
-import type { SecurityRow, SecurityInput } from "../../lib/types";
+import type { AttributePreview, SecurityRow, SecurityInput } from "../../lib/types";
+import { AttributeImportDialog } from "./AttributeImportDialog";
 import { SecurityForm } from "./SecurityForm";
 import { Splits } from "./Splits";
 import { SecurityTable } from "./SecurityTable";
@@ -40,6 +42,12 @@ export function Securities({ focus }: { focus?: string | null }) {
   const [splitsFor, setSplitsFor] = useState<string | null>(null);
   const [cut, setCut] = useState<Cut>("all");
   const [query, setQuery] = useState("");
+  // The file is kept beside its preview: the commit reads it again, so the plan shown and the
+  // plan written are built from the same bytes rather than from what the dialog holds.
+  const [attributeFile, setAttributeFile] = useState<{ path: string; preview: AttributePreview } | null>(
+    null,
+  );
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Navigation hints use the same visible search filter as typed input.
   useEffect(() => {
@@ -92,6 +100,39 @@ export function Securities({ focus }: { focus?: string | null }) {
       invalidate(...affects.securities);
     },
   });
+
+  const importAttributes = useMutation({
+    mutationFn: (path: string) => api.attributesImportCommitPath(path),
+    onSuccess: () => {
+      setAttributeFile(null);
+      invalidate(...affects.securities);
+    },
+  });
+
+  const pickAttributeFile = async () => {
+    setFileError(null);
+    const path = await openFile({ multiple: false, filters: [{ name: "CSV", extensions: ["csv"] }] });
+    if (typeof path !== "string") return;
+    try {
+      setAttributeFile({ path, preview: await api.attributesImportPreviewPath(path) });
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const exportAttributes = async () => {
+    setFileError(null);
+    const path = await saveFile({
+      defaultPath: "instrument-attributes.csv",
+      filters: [{ name: "CSV", extensions: ["csv"] }],
+    });
+    if (!path) return;
+    try {
+      await api.attributesExportSave(path);
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : String(error));
+    }
+  };
 
   /** Resolve imported ISIN placeholders to a provider symbol. */
   const identify = useMutation({
@@ -179,6 +220,24 @@ export function Securities({ focus }: { focus?: string | null }) {
             <ArrowsClockwiseIcon /> {running ? t`Refreshing…` : t`Refresh quotes`}
           </button>
           <button
+            type="button"
+            className="btn btn--ghost"
+            aria-haspopup="menu"
+            aria-label={t`More actions`}
+            onClick={(e) =>
+              menu.openFrom(
+                "securities",
+                [
+                  { label: t`Import attributes…`, onSelect: () => void pickAttributeFile() },
+                  { label: t`Export attributes`, onSelect: () => void exportAttributes() },
+                ],
+                e.currentTarget,
+              )
+            }
+          >
+            <DotsThreeIcon />
+          </button>
+          <button
             className="btn"
             onClick={() => setDraft({ ...EMPTY, data_source: providers.data?.[0] ?? null })}
           >
@@ -193,8 +252,13 @@ export function Securities({ focus }: { focus?: string | null }) {
         </>
       }
       banner={
-        broken.length + mismatched.length === 0 ? undefined : (
+        broken.length + mismatched.length === 0 && fileError === null ? undefined : (
           <>
+            {fileError !== null && (
+              <Banner tone="bad">
+                <Trans>Could not read or write the file: {fileError}</Trans>
+              </Banner>
+            )}
             {broken.length > 0 && (
               <Banner
                 action={
@@ -261,6 +325,15 @@ export function Securities({ focus }: { focus?: string | null }) {
       <Panel table={isWide}>
         <SecurityTable rows={shown} selection={selection} menu={menu} itemsFor={itemsFor} />
       </Panel>
+      {attributeFile && (
+        <AttributeImportDialog
+          preview={attributeFile.preview}
+          busy={importAttributes.isPending}
+          onClose={() => setAttributeFile(null)}
+          onImport={() => importAttributes.mutate(attributeFile.path)}
+        />
+      )}
+
       {menu.node}
     </Page>
   );

@@ -244,3 +244,46 @@ Regions,United States,Apple Inc.,72.60,,AAPL,US0378331005\n";
     assert_eq!(json["nodes"][0]["target"], Value::String("0.60".into()));
     assert_eq!(json["kind"], "REGION");
 }
+
+/// The attribute preview crosses as the plan it is: columns with their kind, rows with the
+/// values they would receive, and the problems that stopped the rest.
+#[test]
+fn attribute_import_preview_keys_match_the_typescript_types() {
+    use sq_core::import::{ParseConfig, build_attribute_preview, detect_attribute_config, parse_csv};
+
+    let csv = "Symbol,ISIN,Name,TER,Domicile\nAAPL,US0378331005,Apple Inc.,0.00,United States\n";
+    let parsed = parse_csv(csv.as_bytes(), &ParseConfig::default()).unwrap();
+    let config = detect_attribute_config(&parsed);
+    let mut security =
+        sq_core::model::Security::new("AAPL", "Apple Inc.", "USD", sq_core::model::SecurityKind::Stock);
+    security.isin = Some("US0378331005".into());
+    let preview = build_attribute_preview(&parsed, &config, std::slice::from_ref(&security), &[]);
+    let json: Value = serde_json::to_value(&preview).unwrap();
+
+    assert_eq!(keys(&json), ["attributes", "config", "problems", "rows"]);
+    assert_eq!(keys(&json["config"]), ["attributes", "isin", "name", "symbol"]);
+    assert_eq!(
+        keys(&json["attributes"][0]),
+        ["attribute_id", "kind", "name", "values"]
+    );
+    // A kind crosses as the core's own spelling, so the picker and the database agree.
+    assert_eq!(json["attributes"][0]["kind"], Value::String("NUMBER".into()));
+    assert_eq!(
+        keys(&json["rows"][0]),
+        [
+            "isin",
+            "label",
+            "matched_by",
+            "row",
+            "security_id",
+            "symbol",
+            "values"
+        ]
+    );
+    // Values are keyed by the attribute's name: an id nobody has seen yet cannot be one.
+    assert_eq!(
+        json["rows"][0]["values"]["Domicile"],
+        Value::String("United States".into())
+    );
+    assert_eq!(json["rows"][0]["matched_by"], Value::String("isin".into()));
+}

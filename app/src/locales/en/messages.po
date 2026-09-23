@@ -91,7 +91,9 @@ msgid "…and {0} more"
 msgstr "…and {0} more"
 
 #. placeholder {0}: missing.length - 40
+#. placeholder {0}: missing.length - SHOWN
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "…and {0} more."
 msgstr "…and {0} more."
 
@@ -162,6 +164,11 @@ msgstr "{0, plural, one {# cash row} other {# cash rows}}"
 #: src/screens/Allocation/BreakdownPanel.tsx
 msgid "{0, plural, one {# category on this level} other {# categories on this level}}"
 msgstr "{0, plural, one {# category on this level} other {# categories on this level}}"
+
+#. placeholder {0}: errors.length
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0, plural, one {# cell} other {# cells}}"
+msgstr "{0, plural, one {# cell} other {# cells}}"
 
 #. placeholder {0}: preview.headers.length
 #: src/screens/Import/FilePreview.tsx
@@ -307,6 +314,11 @@ msgstr "{0, plural, one {# transaction} other {# transactions}}"
 msgid "{0, plural, one {# unique transaction} other {# unique transactions}} of {1}"
 msgstr "{0, plural, one {# unique transaction} other {# unique transactions}} of {1}"
 
+#. placeholder {0}: a.values
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0, plural, one {# value} other {# values}}"
+msgstr "{0, plural, one {# value} other {# values}}"
+
 #. placeholder {0}: thin.length
 #: src/screens/Securities/index.tsx
 msgid "{0, plural, one {# with too little history} other {# with too little history}}"
@@ -406,6 +418,12 @@ msgstr "{0} % left"
 #: src/screens/Plans/index.tsx
 msgid "{0} a month"
 msgstr "{0} a month"
+
+#. placeholder {0}: import { plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { DataTable, ErrorText, FormDialog, Metric, Metrics, Scrolly, Tag } from "../../components/ui"; import type { AttributePreview } from "../../lib/types"; const SHOWN = 40; /** What an attribute file would fill in, shown before anything is written. */ export function AttributeImportDialog({ preview, busy, onClose, onImport, }: { preview: AttributePreview; busy: boolean; onClose: () => void; onImport: () => void; }) { const { t } = useLingui(); const matched = preview.rows.filter((r) => r.security_id !== null); const missing = preview.rows.filter((r) => r.security_id === null); const created = preview.attributes.filter((a) => a.attribute_id === null && a.values > 0); const errors = preview.problems.filter((p) => p.severity === "ERROR"); const values = matched.reduce((total, row) => total + Object.keys(row.values).length, 0); const KIND_LABEL: Record<string, string> = { TEXT: t`text`, NUMBER: t`number`, DATE: t`date`, }; return ( <FormDialog title={t`Import attributes`} onClose={onClose} onSubmit={onImport} busy={busy} busyLabel={t`Importing…`} submitLabel={t`Import`} ready={values > 0} wide > <Metrics> <Metric label={t`Instruments found`} value={String(matched.length)} hint={t`of ${preview.rows.length} in the file`} /> <Metric label={t`Not found`} value={String(missing.length)} tone={missing.length > 0 ? "negative" : "neutral"} hint={missing.length > 0 ? t`these rows are not written` : t`all matched`} /> <Metric label={t`Values`} value={String(values)} hint={t`cells that will be filled in`} /> <Metric label={t`New attributes`} value={String(created.length)} hint={created.length > 0 ? t`created on import` : t`all columns already exist`} /> </Metrics> <div> <p className="panel__note"> <Trans> Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values. </Trans> </p> <Scrolly max={160}> <DataTable card={false} rows={preview.attributes} rowKey={(a) => a.name} columns={[ { key: "name", align: "left", className: "nm", cell: (a) => a.name }, { key: "kind", align: "left", className: "sub", cell: (a) => KIND_LABEL[a.kind] ?? a.kind }, { key: "state", cell: (a) => a.attribute_id === null ? ( <Tag> <Trans>new</Trans> </Tag> ) : ( <span className="dim"> <Trans>exists</Trans> </span> ), }, { key: "values", cell: (a) => plural(a.values, { one: "# value", other: "# values" }), }, ]} /> </Scrolly> </div> {missing.length > 0 && ( <div> <p className="panel__note"> <Trans> These rows are skipped — the instrument is in the database under neither ISIN nor ticker: </Trans> </p> <Scrolly max={160}> <DataTable card={false} rows={missing.slice(0, SHOWN)} rowKey={(r) => String(r.row)} columns={[ { key: "label", align: "left", className: "nm", cell: (r) => r.label }, { key: "id", align: "left", className: "sub", cell: (r) => [r.symbol, r.isin].filter(Boolean).join(" · "), }, ]} /> </Scrolly> {missing.length > SHOWN && ( <p className="panel__note"> <Trans>…and {missing.length - SHOWN} more.</Trans> </p> )} </div> )} {errors.length > 0 && ( <ErrorText> <Trans> {plural(errors.length, { one: "# cell", other: "# cells" })} do not fit their attribute and are skipped: {errors[0].message} </Trans> </ErrorText> )} <p className="panel__note"> <Trans> A column the file does not name is left as it is — importing one column never clears the others. </Trans> </p> </FormDialog> ); } 
+#. placeholder {1}: errors[0].message
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0} do not fit their attribute and are skipped: {1}"
+msgstr "{0} do not fit their attribute and are skipped: {1}"
 
 #. placeholder {0}: p.currency
 #: src/screens/Import/labels.ts
@@ -873,6 +891,10 @@ msgstr "a column is not assigned"
 #~ msgid "A column marked \"over the period\" is measured between two dates rather than read off the valuation date; switching one on adds the period control to the screen."
 #~ msgstr "A column marked \"over the period\" is measured between two dates rather than read off the valuation date; switching one on adds the period control to the screen."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "A column the file does not name is left as it is — importing one column never clears the others."
+msgstr "A column the file does not name is left as it is — importing one column never clears the others."
+
 #: src/screens/Reports/Charges.tsx
 msgid "A commission inside a trade never reaches this table: it is already in the position's cost basis, and dividend tax sits next to its payment on the \"Dividends\" tab."
 msgstr "A commission inside a trade never reaches this table: it is already in the position's cost basis, and dividend tax sits next to its payment on the \"Dividends\" tab."
@@ -1334,6 +1356,10 @@ msgstr "All"
 msgid "All {0} rows carry the same transaction kind {1} — check that the right column is assigned to the kind."
 msgstr "All {0} rows carry the same transaction kind {1} — check that the right column is assigned to the kind."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "all columns already exist"
+msgstr "all columns already exist"
+
 #: src/screens/Performance/Metrics.tsx
 msgid "All fees against the capital at work, trade commissions included."
 msgstr "All fees against the capital at work, trade commissions included."
@@ -1351,6 +1377,7 @@ msgid "All kinds"
 msgstr "All kinds"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "all matched"
 msgstr "all matched"
 
@@ -1987,6 +2014,10 @@ msgstr "Categories on this level"
 msgid "Category"
 msgstr "Category"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "cells that will be filled in"
+msgstr "cells that will be filled in"
+
 #: src/screens/Performance/CalculationSheet.tsx
 msgid "Chained"
 msgstr "Chained"
@@ -2169,6 +2200,10 @@ msgstr "Column width"
 msgid "Columns"
 msgstr "Columns"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values."
+msgstr "Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values."
+
 #. placeholder {0}: preview.config.levels.join(", ") || t`not found`
 #. placeholder {1}: preview.config.weight ?? t`none`
 #. placeholder {2}: preview.config.target ?? t`none`
@@ -2288,6 +2323,10 @@ msgstr "Costs"
 msgid "Costs are taken off before the money is split"
 msgstr "Costs are taken off before the money is split"
 
+#: src/screens/Securities/index.tsx
+msgid "Could not read or write the file: {fileError}"
+msgstr "Could not read or write the file: {fileError}"
+
 #: src/components/domain/AiChatPanel.tsx
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -2327,6 +2366,10 @@ msgstr "Create a target from the file's weights"
 #: src/screens/Onboarding.tsx
 msgid "Create portfolio"
 msgstr "Create portfolio"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "created on import"
+msgstr "created on import"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/Onboarding.tsx
@@ -2447,6 +2490,7 @@ msgid "Database error: {0}"
 msgstr "Database error: {0}"
 
 #: src/components/domain/aiToolLabels.ts
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "date"
 msgstr "date"
 
@@ -3276,6 +3320,10 @@ msgstr "exchange rates"
 msgid "Exchange rates"
 msgstr "Exchange rates"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "exists"
+msgstr "exists"
+
 #: src/screens/Trades/TradesTable.tsx
 msgid "Exit"
 msgstr "Exit"
@@ -3312,6 +3360,10 @@ msgstr "Export"
 #: src/components/domain/AiChatPanel.tsx
 msgid "Export as Markdown…"
 msgstr "Export as Markdown…"
+
+#: src/screens/Securities/index.tsx
+msgid "Export attributes"
+msgstr "Export attributes"
 
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -3821,6 +3873,10 @@ msgstr "how the portfolio performed"
 msgid "How the result adds up"
 msgstr "How the result adds up"
 
+#: src/components/domain/aiToolLabels.ts
+msgid "how the result adds up, step by step"
+msgstr "how the result adds up, step by step"
+
 #: src/components/domain/positionColumns.tsx
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "How widely this position's daily returns swing, stated for a year."
@@ -3857,6 +3913,7 @@ msgstr "Identifying…"
 #: src/App.tsx
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Import"
 msgstr "Import"
 
@@ -3867,6 +3924,14 @@ msgstr "Import a classification"
 #: src/screens/Settings/DataPanel.tsx
 msgid "Import a file"
 msgstr "Import a file"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Import attributes"
+msgstr "Import attributes"
+
+#: src/screens/Securities/index.tsx
+msgid "Import attributes…"
+msgstr "Import attributes…"
 
 #: src/screens/Allocation/index.tsx
 #: src/screens/Allocation/TaxonomyDock.tsx
@@ -3887,6 +3952,7 @@ msgid "importing them is optional"
 msgstr "importing them is optional"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Importing…"
 msgstr "Importing…"
 
@@ -4075,6 +4141,7 @@ msgid "Instruments at their last quote plus cash, in the reporting currency."
 msgstr "Instruments at their last quote plus cash, in the reporting currency."
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Instruments found"
 msgstr "Instruments found"
 
@@ -4687,6 +4754,10 @@ msgstr "months ahead"
 msgid "More"
 msgstr "More"
 
+#: src/screens/Securities/index.tsx
+msgid "More actions"
+msgstr "More actions"
+
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Move"
 msgstr "Move"
@@ -4776,6 +4847,10 @@ msgstr "Needs a key"
 msgid "Network error: {0}"
 msgstr "Network error: {0}"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "new"
+msgstr "new"
+
 #: src/screens/Accounts/AccountForm.tsx
 #: src/screens/Accounts/index.tsx
 msgid "New account"
@@ -4794,6 +4869,10 @@ msgstr "new amount"
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "New attribute"
 msgstr "New attribute"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "New attributes"
+msgstr "New attributes"
 
 #: src/screens/Allocation/NodeDialog.tsx
 msgid "New category"
@@ -5314,6 +5393,7 @@ msgid "not found"
 msgstr "not found"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Not found"
 msgstr "Not found"
 
@@ -5501,6 +5581,10 @@ msgstr "Now <0/>. Every close that crosses the level in the chosen direction is 
 #~ msgid "Now <0/>. Every close that crosses the level, up or down, is logged and announced."
 #~ msgstr "Now <0/>. Every close that crosses the level, up or down, is logged and announced."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "number"
+msgstr "number"
+
 #: src/lib/kinds.ts
 msgid "Number"
 msgstr "Number"
@@ -5519,7 +5603,9 @@ msgid "of {0}"
 msgstr "of {0}"
 
 #. placeholder {0}: preview.assignments.length
+#. placeholder {0}: preview.rows.length
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "of {0} in the file"
 msgstr "of {0} in the file"
 
@@ -7480,6 +7566,10 @@ msgstr "Taxonomy"
 msgid "Test"
 msgstr "Test"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "text"
+msgstr "text"
+
 #: src/lib/kinds.ts
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Text"
@@ -8282,6 +8372,14 @@ msgstr "The write is one transaction: a half-imported file can be neither finish
 msgid "the wrong kind of account"
 msgstr "the wrong kind of account"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "these rows are not written"
+msgstr "these rows are not written"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "These rows are skipped — the instrument is in the database under neither ISIN nor ticker:"
+msgstr "These rows are skipped — the instrument is in the database under neither ISIN nor ticker:"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "These rows create a category but no split — the instrument is in the database under neither ISIN nor ticker:"
 msgstr "These rows create a category but no split — the instrument is in the database under neither ISIN nor ticker:"
@@ -8826,6 +8924,10 @@ msgstr "Value today less what the shares cost under this method."
 #: src/components/domain/positionColumns.tsx
 msgid "Value, {currency}"
 msgstr "Value, {currency}"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Values"
+msgstr "Values"
 
 #: src/components/domain/AsOfPicker.tsx
 msgid "Values, holdings and periods are read as of this day."

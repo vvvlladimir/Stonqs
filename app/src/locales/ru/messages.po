@@ -91,7 +91,9 @@ msgid "…and {0} more"
 msgstr "…и ещё {0}"
 
 #. placeholder {0}: missing.length - 40
+#. placeholder {0}: missing.length - SHOWN
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "…and {0} more."
 msgstr "…и ещё {0}."
 
@@ -162,6 +164,11 @@ msgstr "{0, plural, one {# строка с деньгами} few {# строки
 #: src/screens/Allocation/BreakdownPanel.tsx
 msgid "{0, plural, one {# category on this level} other {# categories on this level}}"
 msgstr "{0, plural, one {# категория на этом уровне} few {# категории на этом уровне} many {# категорий на этом уровне} other {# категорий на этом уровне}}"
+
+#. placeholder {0}: errors.length
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0, plural, one {# cell} other {# cells}}"
+msgstr "{0, plural, one {# ячейка} few {# ячейки} many {# ячеек} other {# ячейки}}"
 
 #. placeholder {0}: preview.headers.length
 #: src/screens/Import/FilePreview.tsx
@@ -307,6 +314,11 @@ msgstr "{0, plural, one {# сделка} few {# сделки} many {# сдело
 msgid "{0, plural, one {# unique transaction} other {# unique transactions}} of {1}"
 msgstr "{0, plural, one {# уникальная операция} few {# уникальные операции} many {# уникальных операций} other {# уникальных операций}} из {1}"
 
+#. placeholder {0}: a.values
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0, plural, one {# value} other {# values}}"
+msgstr "{0, plural, one {# значение} few {# значения} many {# значений} other {# значения}}"
+
 #. placeholder {0}: thin.length
 #: src/screens/Securities/index.tsx
 msgid "{0, plural, one {# with too little history} other {# with too little history}}"
@@ -406,6 +418,12 @@ msgstr "осталось {0} %"
 #: src/screens/Plans/index.tsx
 msgid "{0} a month"
 msgstr "{0} в месяц"
+
+#. placeholder {0}: import { plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { DataTable, ErrorText, FormDialog, Metric, Metrics, Scrolly, Tag } from "../../components/ui"; import type { AttributePreview } from "../../lib/types"; const SHOWN = 40; /** What an attribute file would fill in, shown before anything is written. */ export function AttributeImportDialog({ preview, busy, onClose, onImport, }: { preview: AttributePreview; busy: boolean; onClose: () => void; onImport: () => void; }) { const { t } = useLingui(); const matched = preview.rows.filter((r) => r.security_id !== null); const missing = preview.rows.filter((r) => r.security_id === null); const created = preview.attributes.filter((a) => a.attribute_id === null && a.values > 0); const errors = preview.problems.filter((p) => p.severity === "ERROR"); const values = matched.reduce((total, row) => total + Object.keys(row.values).length, 0); const KIND_LABEL: Record<string, string> = { TEXT: t`text`, NUMBER: t`number`, DATE: t`date`, }; return ( <FormDialog title={t`Import attributes`} onClose={onClose} onSubmit={onImport} busy={busy} busyLabel={t`Importing…`} submitLabel={t`Import`} ready={values > 0} wide > <Metrics> <Metric label={t`Instruments found`} value={String(matched.length)} hint={t`of ${preview.rows.length} in the file`} /> <Metric label={t`Not found`} value={String(missing.length)} tone={missing.length > 0 ? "negative" : "neutral"} hint={missing.length > 0 ? t`these rows are not written` : t`all matched`} /> <Metric label={t`Values`} value={String(values)} hint={t`cells that will be filled in`} /> <Metric label={t`New attributes`} value={String(created.length)} hint={created.length > 0 ? t`created on import` : t`all columns already exist`} /> </Metrics> <div> <p className="panel__note"> <Trans> Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values. </Trans> </p> <Scrolly max={160}> <DataTable card={false} rows={preview.attributes} rowKey={(a) => a.name} columns={[ { key: "name", align: "left", className: "nm", cell: (a) => a.name }, { key: "kind", align: "left", className: "sub", cell: (a) => KIND_LABEL[a.kind] ?? a.kind }, { key: "state", cell: (a) => a.attribute_id === null ? ( <Tag> <Trans>new</Trans> </Tag> ) : ( <span className="dim"> <Trans>exists</Trans> </span> ), }, { key: "values", cell: (a) => plural(a.values, { one: "# value", other: "# values" }), }, ]} /> </Scrolly> </div> {missing.length > 0 && ( <div> <p className="panel__note"> <Trans> These rows are skipped — the instrument is in the database under neither ISIN nor ticker: </Trans> </p> <Scrolly max={160}> <DataTable card={false} rows={missing.slice(0, SHOWN)} rowKey={(r) => String(r.row)} columns={[ { key: "label", align: "left", className: "nm", cell: (r) => r.label }, { key: "id", align: "left", className: "sub", cell: (r) => [r.symbol, r.isin].filter(Boolean).join(" · "), }, ]} /> </Scrolly> {missing.length > SHOWN && ( <p className="panel__note"> <Trans>…and {missing.length - SHOWN} more.</Trans> </p> )} </div> )} {errors.length > 0 && ( <ErrorText> <Trans> {plural(errors.length, { one: "# cell", other: "# cells" })} do not fit their attribute and are skipped: {errors[0].message} </Trans> </ErrorText> )} <p className="panel__note"> <Trans> A column the file does not name is left as it is — importing one column never clears the others. </Trans> </p> </FormDialog> ); } 
+#. placeholder {1}: errors[0].message
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "{0} do not fit their attribute and are skipped: {1}"
+msgstr "{0} не подходят своему атрибуту и пропущены: {1}"
 
 #. placeholder {0}: p.currency
 #: src/screens/Import/labels.ts
@@ -873,6 +891,10 @@ msgstr "не назначена колонка"
 #~ msgid "A column marked \"over the period\" is measured between two dates rather than read off the valuation date; switching one on adds the period control to the screen."
 #~ msgstr "Колонка с пометкой «за период» считается между двумя датами, а не читается на дату оценки; включение такой колонки добавляет на экран выбор периода."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "A column the file does not name is left as it is — importing one column never clears the others."
+msgstr "Колонка, которой нет в файле, остаётся как была: импорт одной колонки никогда не стирает остальные."
+
 #: src/screens/Reports/Charges.tsx
 msgid "A commission inside a trade never reaches this table: it is already in the position's cost basis, and dividend tax sits next to its payment on the \"Dividends\" tab."
 msgstr "Комиссия внутри сделки сюда не попадает: она уже в себестоимости позиции, а налог с дивиденда — рядом со своей выплатой на вкладке «Дивиденды»."
@@ -1334,6 +1356,10 @@ msgstr "Все"
 msgid "All {0} rows carry the same transaction kind {1} — check that the right column is assigned to the kind."
 msgstr "Во всех {0} строках один и тот же вид операции {1} — проверьте, та ли колонка назначена виду."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "all columns already exist"
+msgstr "все колонки уже есть"
+
 #: src/screens/Performance/Metrics.tsx
 msgid "All fees against the capital at work, trade commissions included."
 msgstr "Все комиссии к работающему капиталу, включая торговые."
@@ -1351,6 +1377,7 @@ msgid "All kinds"
 msgstr "Все виды"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "all matched"
 msgstr "все сошлись"
 
@@ -1987,6 +2014,10 @@ msgstr "Категорий на уровне"
 msgid "Category"
 msgstr "Категория"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "cells that will be filled in"
+msgstr "ячеек будет заполнено"
+
 #: src/screens/Performance/CalculationSheet.tsx
 msgid "Chained"
 msgstr "Накопленная"
@@ -2169,6 +2200,10 @@ msgstr "Ширина колонки"
 msgid "Columns"
 msgstr "Колонки"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Columns of the file. An attribute that already exists keeps the kind it was created with; a new one is read from its own values."
+msgstr "Колонки файла. Уже существующий атрибут сохраняет свой тип; новый определяется по его значениям."
+
 #. placeholder {0}: preview.config.levels.join(", ") || t`not found`
 #. placeholder {1}: preview.config.weight ?? t`none`
 #. placeholder {2}: preview.config.target ?? t`none`
@@ -2288,6 +2323,10 @@ msgstr "Расходы"
 msgid "Costs are taken off before the money is split"
 msgstr "Издержки снимаются до того, как деньги делятся"
 
+#: src/screens/Securities/index.tsx
+msgid "Could not read or write the file: {fileError}"
+msgstr "Не удалось прочитать или записать файл: {fileError}"
+
 #: src/components/domain/AiChatPanel.tsx
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -2327,6 +2366,10 @@ msgstr "Создать цель из весов файла"
 #: src/screens/Onboarding.tsx
 msgid "Create portfolio"
 msgstr "Создать портфель"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "created on import"
+msgstr "будет создано при импорте"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/Onboarding.tsx
@@ -2447,6 +2490,7 @@ msgid "Database error: {0}"
 msgstr "Ошибка базы: {0}"
 
 #: src/components/domain/aiToolLabels.ts
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "date"
 msgstr "дата"
 
@@ -3276,6 +3320,10 @@ msgstr "курсы валют"
 msgid "Exchange rates"
 msgstr "Курсы валют"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "exists"
+msgstr "есть"
+
 #: src/screens/Trades/TradesTable.tsx
 msgid "Exit"
 msgstr "Выход"
@@ -3312,6 +3360,10 @@ msgstr "Выгрузить"
 #: src/components/domain/AiChatPanel.tsx
 msgid "Export as Markdown…"
 msgstr "Выгрузить в Markdown…"
+
+#: src/screens/Securities/index.tsx
+msgid "Export attributes"
+msgstr "Экспорт атрибутов"
 
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -3821,6 +3873,10 @@ msgstr "результат портфеля"
 msgid "How the result adds up"
 msgstr "Из чего сложился результат"
 
+#: src/components/domain/aiToolLabels.ts
+msgid "how the result adds up, step by step"
+msgstr "из чего сложился результат, по шагам"
+
 #: src/components/domain/positionColumns.tsx
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "Насколько сильно колеблется дневная доходность позиции, в пересчёте на год."
@@ -3857,6 +3913,7 @@ msgstr "Опознаём…"
 #: src/App.tsx
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Import"
 msgstr "Импорт"
 
@@ -3867,6 +3924,14 @@ msgstr "Импорт классификации"
 #: src/screens/Settings/DataPanel.tsx
 msgid "Import a file"
 msgstr "Импортировать файл"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Import attributes"
+msgstr "Импорт атрибутов"
+
+#: src/screens/Securities/index.tsx
+msgid "Import attributes…"
+msgstr "Импорт атрибутов…"
 
 #: src/screens/Allocation/index.tsx
 #: src/screens/Allocation/TaxonomyDock.tsx
@@ -3887,6 +3952,7 @@ msgid "importing them is optional"
 msgstr "можно не импортировать"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Importing…"
 msgstr "Импортируем…"
 
@@ -4075,6 +4141,7 @@ msgid "Instruments at their last quote plus cash, in the reporting currency."
 msgstr "Бумаги по последней котировке плюс деньги, в валюте отчётности."
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Instruments found"
 msgstr "Бумаг найдено"
 
@@ -4682,6 +4749,10 @@ msgstr "месяцев вперёд"
 msgid "More"
 msgstr "Ещё"
 
+#: src/screens/Securities/index.tsx
+msgid "More actions"
+msgstr "Ещё действия"
+
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Move"
 msgstr "Движение"
@@ -4771,6 +4842,10 @@ msgstr "Нужен ключ"
 msgid "Network error: {0}"
 msgstr "Ошибка сети: {0}"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "new"
+msgstr "новый"
+
 #: src/screens/Accounts/AccountForm.tsx
 #: src/screens/Accounts/index.tsx
 msgid "New account"
@@ -4789,6 +4864,10 @@ msgstr "новая сумма"
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "New attribute"
 msgstr "Новый атрибут"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "New attributes"
+msgstr "Новых атрибутов"
 
 #: src/screens/Allocation/NodeDialog.tsx
 msgid "New category"
@@ -5309,6 +5388,7 @@ msgid "not found"
 msgstr "не найдены"
 
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Not found"
 msgstr "Не найдено"
 
@@ -5496,6 +5576,10 @@ msgstr "Сейчас <0/>. Каждое закрытие, пересёкшее �
 #~ msgid "Now <0/>. Every close that crosses the level, up or down, is logged and announced."
 #~ msgstr "Сейчас <0/>. Каждое закрытие, пересёкшее уровень вверх или вниз, записывается в журнал и объявляется."
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "number"
+msgstr "число"
+
 #: src/lib/kinds.ts
 msgid "Number"
 msgstr "Число"
@@ -5514,7 +5598,9 @@ msgid "of {0}"
 msgstr "из {0}"
 
 #. placeholder {0}: preview.assignments.length
+#. placeholder {0}: preview.rows.length
 #: src/screens/Allocation/ImportDialog.tsx
+#: src/screens/Securities/AttributeImportDialog.tsx
 msgid "of {0} in the file"
 msgstr "из {0} в файле"
 
@@ -7475,6 +7561,10 @@ msgstr "Таксономия"
 msgid "Test"
 msgstr "Проверить"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "text"
+msgstr "текст"
+
 #: src/lib/kinds.ts
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Text"
@@ -8277,6 +8367,14 @@ msgstr "Запись идёт одной транзакцией: наполов�
 msgid "the wrong kind of account"
 msgstr "не тот вид счёта"
 
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "these rows are not written"
+msgstr "эти строки не будут записаны"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "These rows are skipped — the instrument is in the database under neither ISIN nor ticker:"
+msgstr "Эти строки пропущены: инструмента нет в базе ни по ISIN, ни по тикеру:"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "These rows create a category but no split — the instrument is in the database under neither ISIN nor ticker:"
 msgstr "Эти строки создадут категорию, но не раскладку — бумаги нет в базе ни по ISIN, ни по тикеру:"
@@ -8821,6 +8919,10 @@ msgstr "Сегодняшняя стоимость за вычетом покуп
 #: src/components/domain/positionColumns.tsx
 msgid "Value, {currency}"
 msgstr "Стоимость, {currency}"
+
+#: src/screens/Securities/AttributeImportDialog.tsx
+msgid "Values"
+msgstr "Значений"
 
 #: src/components/domain/AsOfPicker.tsx
 msgid "Values, holdings and periods are read as of this day."
