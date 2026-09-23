@@ -30,6 +30,8 @@ export const keys = {
   status: () => key("status"),
   settings: () => key("settings"),
   profiles: () => key("profiles"),
+  plugins: () => key("plugins"),
+  pluginTheme: (key_?: string) => key("plugin-theme", key_),
   portfolio: () => key("portfolio"),
   aiKeyStatus: (provider?: string) => key("ai-key-status", provider),
   aiChats: () => key("ai-chats"),
@@ -147,6 +149,25 @@ export function useStatus() {
 
 export function useProfiles() {
   return useQuery({ queryKey: keys.profiles(), queryFn: api.profilesList });
+}
+
+/** What the app is extended with, and which of it can be used. */
+export function usePlugins() {
+  return useQuery({ queryKey: keys.plugins(), queryFn: api.pluginsList });
+}
+
+/**
+ * The stylesheet of the theme in use, if one comes from a plugin. Kept forever once read: it is
+ * a file on this machine, and re-reading it on every focus would repaint the app for nothing.
+ */
+export function usePluginTheme(theme: string | null) {
+  const [plugin, id] = (theme ?? "").split("/");
+  return useQuery({
+    queryKey: keys.pluginTheme(theme ?? undefined),
+    queryFn: () => api.pluginThemeCss(plugin, id),
+    enabled: Boolean(plugin && id),
+    staleTime: Infinity,
+  });
 }
 
 export function useSettings() {

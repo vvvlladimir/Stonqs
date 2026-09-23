@@ -134,6 +134,9 @@ pub struct AppState {
     /// list to go stale. Keyed because a chat switched to another provider asks a second
     /// catalogue, and one slot would answer it with the first provider's models.
     pub ai_models: Mutex<HashMap<String, Vec<String>>>,
+    /// What the app is extended with. Beside the profiles rather than inside one, so a theme
+    /// survives switching profile (ADR-0070).
+    pub plugins: crate::plugins::Plugins,
     /// Bytes currently being processed by the import wizard.
     import_file: Mutex<Option<(crate::commands::import::LoadedFile, Vec<u8>)>>,
 }
@@ -164,6 +167,7 @@ impl AppState {
             portfolio: Mutex::new(opened.portfolio),
             db_path: Mutex::new(db_path),
             db_gate: RwLock::new(()),
+            plugins: crate::plugins::Plugins::new(&dir),
             profiles,
             profile: Mutex::new(profile.id),
             vault: Mutex::new(opened.vault),

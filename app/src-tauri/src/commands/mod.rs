@@ -18,6 +18,7 @@ pub mod payments;
 pub mod performance;
 pub mod periods;
 pub mod plans;
+pub mod plugins;
 pub mod portfolio;
 pub mod positions;
 pub mod profiles;

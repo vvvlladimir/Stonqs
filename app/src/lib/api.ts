@@ -55,6 +55,8 @@ import type {
   RebalancePlan,
   AppSettings,
   Profile,
+  Plugin,
+  PluginList,
   ProfileList,
   DataCoverage,
   Progress,
@@ -491,6 +493,12 @@ export const api = {
     call<CustomTestRow[]>("market_custom_test", { source, symbol, currency }),
 
   settingsGet: () => call<AppSettings>("settings_get"),
+
+  pluginsList: () => call<PluginList>("plugins_list"),
+  /** Installs the folder the user picked; a path, because a plugin is a folder, not a file. */
+  pluginInstall: (path: string) => call<Plugin>("plugin_install", { path }),
+  pluginRemove: (id: string) => call<void>("plugin_remove", { id }),
+  pluginThemeCss: (plugin: string, theme: string) => call<string>("plugin_theme_css", { plugin, theme }),
 
   profilesList: () => call<ProfileList>("profiles_list"),
   profileCreate: (name: string) => call<Profile>("profile_create", { name }),

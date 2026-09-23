@@ -341,3 +341,31 @@ fn profile_list_keys_match_the_typescript_types() {
         ["created_at", "id", "name", "protected"]
     );
 }
+
+#[test]
+fn a_plugin_carries_its_status_flattened_beside_its_name() {
+    use sq_app_lib::plugins::{Base, PluginInfo, Status, ThemeDef};
+
+    let json = serde_json::to_value(PluginInfo {
+        id: "com.example.midnight".into(),
+        name: "Midnight".into(),
+        version: "1.0.0".into(),
+        themes: vec![ThemeDef {
+            id: "midnight".into(),
+            name: "Midnight".into(),
+            file: "midnight.css".into(),
+            base: Base::Dark,
+        }],
+        status: Status::Api { wants: 2, speaks: 1 },
+    })
+    .unwrap();
+
+    // The status is a discriminated union on `status`, the way `UiError` is on `code`: the
+    // frontend writes the sentence, the host says which one and with what values.
+    assert_eq!(
+        keys(&json),
+        ["id", "name", "speaks", "status", "themes", "version", "wants"]
+    );
+    assert_eq!(json["status"], "api");
+    assert_eq!(json["themes"][0]["base"], "dark");
+}

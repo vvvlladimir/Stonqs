@@ -1013,6 +1013,14 @@ msgstr "План покупает инструменты, поэтому ему 
 msgid "A plan is a contribution on a schedule: how much, how often, and what it buys. It proposes the transactions and you confirm them, so nothing is written behind your back."
 msgstr "План — это взнос по расписанию: сколько, как часто и что покупается. Он предлагает операции, а подтверждаете их вы, так что ничего не записывается втихую."
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
+msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: пока это цветовые темы."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin is a folder holding a plugin.json and the files it names."
+msgstr "Плагин — это папка с файлом plugin.json и теми файлами, которые он называет."
+
 #: src/screens/Positions/index.tsx
 msgid "A position comes from transactions: add a purchase on the \"Transactions\" screen, or load a broker export under \"Import\"."
 msgstr "Позиция появляется из сделок: заведите покупку на экране «Сделки» или загрузите выгрузку брокера через «Импорт»."
@@ -1103,6 +1111,10 @@ msgstr "целевое распределение"
 #: src/screens/Rebalance/index.tsx
 msgid "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 msgstr "Цель — это набор весов по узлам таксономии. Без неё сравнивать не с чем: «до цели не хватает 5 000» и «5 000 лежат деньгами» — разные новости."
+
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
+msgstr "Тема из плагина. Она изменяет одну из двух схем выше, а не заменяет её."
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
@@ -2142,6 +2154,10 @@ msgstr "Сначала выберите счёт по умолчанию: ина
 #: src/screens/Import/FileStep.tsx
 msgid "Choose a file"
 msgstr "Выбрать файл"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Choose a plugin folder"
+msgstr "Выберите папку плагина"
 
 #: src/components/domain/ProfilePicker.tsx
 msgid "Choose a profile"
@@ -4167,6 +4183,14 @@ msgstr "Инфляция"
 msgid "inside \"{0}\""
 msgstr "внутри «{0}»"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Install from folder…"
+msgstr "Установить из папки…"
+
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "Installed theme"
+msgstr "Установленная тема"
+
 #: src/components/domain/positionColumns.tsx
 msgid "Instr. gain"
 msgstr "Рез. бумаги"
@@ -5542,6 +5566,10 @@ msgstr "Списков наблюдения пока нет"
 msgid "none"
 msgstr "нет"
 
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "None"
+msgstr "Нет"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "none in the file"
 msgstr "в файле нет"
@@ -5711,6 +5739,10 @@ msgstr "Пересечений пока нет. Журнал пополняет�
 #: src/screens/Allocation/MembersPanel.tsx
 msgid "Nothing here"
 msgstr "Здесь пусто"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Nothing installed"
+msgstr "Ничего не установлено"
 
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "nothing is classified yet"
@@ -6238,6 +6270,11 @@ msgstr "Планирование"
 msgid "Plans"
 msgstr "Планы"
 
+#: src/screens/Settings/model.ts
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Plugins"
+msgstr "Плагины"
+
 #: src/screens/Import/ParseStep.tsx
 msgid "point at the transaction-kind column in the header — only unique operations stay here then"
 msgstr "укажите колонку вида операции в шапке — тогда здесь останутся уникальные операции"
@@ -6746,6 +6783,7 @@ msgstr "Запомнить на этом устройстве"
 
 #: src/screens/dashboard/WidgetTile.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
+#: src/screens/Settings/PluginsPanel.tsx
 msgid "Remove"
 msgstr "Убрать"
 

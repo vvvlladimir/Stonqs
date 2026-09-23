@@ -1,10 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useLingui } from "@lingui/react/macro";
 import { api } from "../../lib/api";
-import { keys, useInvalidate, useSettings } from "../../lib/queries";
+import { keys, useInvalidate, usePlugins, useSettings } from "../../lib/queries";
 import { LOCALE_NAMES, PREFERENCES, useLanguage } from "../../lib/i18n";
 import { useUiState } from "../../lib/uiState";
-import type { ThemePreference } from "../../lib/theme";
+import { pluginTheme, themeOfPlugin, type ThemePreference } from "../../lib/theme";
 import { Field, Form, Panel, Pending, QueryError, Seg } from "../../components/ui";
 
 /** Language and colour scheme: the language is host settings, the scheme is UI state. */
@@ -14,6 +14,7 @@ export function AppearancePanel() {
   const settings = useSettings();
   const { preference } = useLanguage();
   const { ui, save: saveUi } = useUiState();
+  const plugins = usePlugins();
 
   const save = useMutation({
     mutationFn: api.settingsSave,
@@ -23,6 +24,7 @@ export function AppearancePanel() {
   if (settings.isError) return <QueryError error={settings.error} />;
   if (!settings.data) return <Pending />;
   const current = settings.data;
+  const installed = plugins.data?.themes ?? [];
 
   const themes: Array<{ value: ThemePreference; label: string }> = [
     { value: "system", label: t`System` },
@@ -48,10 +50,25 @@ export function AppearancePanel() {
           <Seg
             label={t`Colour scheme`}
             options={themes}
-            value={ui.theme}
+            value={pluginTheme(ui.theme) ? "system" : ui.theme}
             onChange={(theme) => saveUi({ ...ui, theme })}
           />
         </Field>
+
+        {installed.length > 0 && (
+          <Field
+            label={t`Installed theme`}
+            hint={t`A theme from a plugin. It varies one of the two schemes above rather than replacing it.`}
+            options={[
+              { value: "", label: t`None` },
+              ...installed.map((theme) => ({ value: themeOfPlugin(theme.key), label: theme.name })),
+            ]}
+            value={pluginTheme(ui.theme) ? ui.theme : ""}
+            onChange={(value) =>
+              saveUi({ ...ui, theme: value === "" ? "system" : (value as ThemePreference) })
+            }
+          />
+        )}
       </Form>
     </Panel>
   );

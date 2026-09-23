@@ -20,6 +20,11 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   all while locked. A background thread never calls `Store::open` itself: it takes
   `AppState::db_access()` (path + key) and holds `db_in_use()` for as long as its connection is
   open, because converting the file (`dbfile.rs`) must be the only connection.
+- A plugin is **not** profile data: `AppState::plugins` reads `plugins/<id>/` beside the
+  profiles folder, so a theme survives switching profile (ADR-0070). Its commands take no store,
+  which is why a locked profile still has its colours; what a plugin *stores* belongs to the
+  profile, in that profile's vault under the plugin's id. The host copies the manifest and the
+  files it names and nothing else, and refuses a file name that leaves the package.
 - `Store` is `Send`, not `Sync`, hence `Mutex<Store>`. Never hold that lock across a network call — background jobs open their own `Store` on `AppState::db_path` in a separate thread.
 - **Text never crosses IPC.** The host and the core send a code, a key and the values behind it;
   the sentence is written in the frontend, where the language is known — see ADR-0023. `ScopeOption`

@@ -3,12 +3,20 @@ import { Trans } from "@lingui/react/macro";
 import { Suspense, lazy, useEffect, useState } from "react";
 
 import { onDataChanged } from "./lib/api";
-import { affects, useAlertsUnseen, useInvalidate, useProfiles, useStatus } from "./lib/queries";
+import {
+  affects,
+  useAlertsUnseen,
+  useInvalidate,
+  usePluginTheme,
+  usePlugins,
+  useProfiles,
+  useStatus,
+} from "./lib/queries";
 import { needsPick } from "./lib/profiles";
 import { ProfilePicker } from "./components/domain/ProfilePicker";
 import { ProfileLock } from "./components/domain/ProfileLock";
 import { useLanguage } from "./lib/i18n";
-import { useTheme } from "./lib/theme";
+import { pluginTheme, useTheme } from "./lib/theme";
 import { useUiState } from "./lib/uiState";
 import { UpdatesProvider } from "./lib/updates";
 import { AsOfProvider } from "./lib/asOf";
@@ -59,6 +67,7 @@ export function App() {
   const [aiOpen, setAiOpen] = useState(false);
   const status = useStatus();
   const profiles = useProfiles();
+  const plugins = usePlugins();
   // Asked once per window, before anything else: with one profile there is nobody to ask about.
   const [picked, setPicked] = useState(false);
   // A crossing nobody looked at yet marks the Alerts item, the way a tree with gaps marks its tab.
@@ -67,7 +76,13 @@ export function App() {
   // Re-renders the shell when the saved preference or the OS language changes the catalog.
   useLingui();
   useLanguage();
-  useTheme(useUiState().ui.theme);
+  // A theme installed as a plugin is a stylesheet on this machine plus the built-in scheme it
+  // varies; both arrive a moment after the shell, which is why `useTheme` takes them separately.
+  const theme = useUiState().ui.theme;
+  const themeKey = pluginTheme(theme);
+  const installed = usePluginTheme(themeKey);
+  const base = plugins.data?.themes.find((t) => t.key === themeKey)?.base;
+  useTheme(theme, installed.data, base);
 
   // A host-side write refreshes the screens that depend on what it touched.
   useEffect(() => {

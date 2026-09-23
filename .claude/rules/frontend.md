@@ -40,6 +40,13 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 - A screen puts controls of its own in the dock through `lib/dock.tsx` (`DockSlot`, `useDockSlot`),
   never by looking the element up by id: a lookup can only run after the commit, so the screen
   renders once into nothing and then fixes itself up a render later.
+- A theme may come from a plugin (ADR-0070). `UiState::theme` then holds
+  `plugin:<plugin id>/<theme id>`; `lib/theme.ts` owns that spelling in one constant, applies the
+  theme's **base** scheme through the same `data-theme` attribute and injects the plugin's
+  stylesheet as the one `#plugin-theme` style element. Injected rather than linked, so a theme
+  file needs no origin and its author writes plain `:root` rules. A preference naming a plugin
+  that is gone is **kept**, not dropped — the stylesheet simply never arrives and the base scheme
+  is what shows.
 - The updater is the frontend's, not the host's (ADR-0063): `lib/updates.tsx` owns the check (once
   a calendar day, `UiState::updates`), `UpdateDialog` is the only place a version is offered, and
   `api.ts` keeps the plugin's handle so nothing else holds an installer. An automatic check that

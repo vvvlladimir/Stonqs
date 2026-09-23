@@ -11,6 +11,7 @@ pub mod error;
 pub mod events;
 pub mod import_templates;
 pub mod jobs;
+pub mod plugins;
 pub mod profiles;
 pub mod scope;
 pub mod secrets;
@@ -58,6 +59,10 @@ pub fn run() {
             commands::portfolio::portfolio_get,
             commands::portfolio::portfolio_save,
             commands::portfolio::setup_portfolio,
+            commands::plugins::plugins_list,
+            commands::plugins::plugin_install,
+            commands::plugins::plugin_remove,
+            commands::plugins::plugin_theme_css,
             commands::profiles::profiles_list,
             commands::profiles::profile_create,
             commands::profiles::profile_rename,

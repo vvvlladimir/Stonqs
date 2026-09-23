@@ -6,6 +6,7 @@ import type { AppStatus } from "../../lib/types";
 import { AccountsPanel } from "./AccountsPanel";
 import { AiPanel } from "./AiPanel";
 import { AppearancePanel } from "./AppearancePanel";
+import { PluginsPanel } from "./PluginsPanel";
 import { AttributesPanel } from "./AttributesPanel";
 import { CATEGORIES, type CategoryId } from "./model";
 import { DataPanel } from "./DataPanel";
@@ -42,6 +43,7 @@ export function Settings({ status }: { status: AppStatus }) {
         {category === "market" && <MarketDataPanel />}
         {category === "ai" && <AiPanel />}
         {category === "appearance" && <AppearancePanel />}
+        {category === "plugins" && <PluginsPanel />}
         {category === "profiles" && <ProfilesPanel />}
         {category === "data" && <DataPanel status={status} />}
         {category === "updates" && <UpdatesPanel />}

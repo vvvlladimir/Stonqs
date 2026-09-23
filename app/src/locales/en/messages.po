@@ -1013,6 +1013,14 @@ msgstr "A plan buys instruments, so it needs a securities account"
 msgid "A plan is a contribution on a schedule: how much, how often, and what it buys. It proposes the transactions and you confirm them, so nothing is written behind your back."
 msgstr "A plan is a contribution on a schedule: how much, how often, and what it buys. It proposes the transactions and you confirm them, so nothing is written behind your back."
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
+msgstr "A plugin adds to the app without changing what a figure means: for now, colour themes."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin is a folder holding a plugin.json and the files it names."
+msgstr "A plugin is a folder holding a plugin.json and the files it names."
+
 #: src/screens/Positions/index.tsx
 msgid "A position comes from transactions: add a purchase on the \"Transactions\" screen, or load a broker export under \"Import\"."
 msgstr "A position comes from transactions: add a purchase on the \"Transactions\" screen, or load a broker export under \"Import\"."
@@ -1103,6 +1111,10 @@ msgstr "a target allocation"
 #: src/screens/Rebalance/index.tsx
 msgid "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 msgstr "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
+
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
+msgstr "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
@@ -2142,6 +2154,10 @@ msgstr "Choose a default account first: otherwise the rows have nowhere to go."
 #: src/screens/Import/FileStep.tsx
 msgid "Choose a file"
 msgstr "Choose a file"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Choose a plugin folder"
+msgstr "Choose a plugin folder"
 
 #: src/components/domain/ProfilePicker.tsx
 msgid "Choose a profile"
@@ -4167,6 +4183,14 @@ msgstr "Inflation"
 msgid "inside \"{0}\""
 msgstr "inside \"{0}\""
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Install from folder…"
+msgstr "Install from folder…"
+
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "Installed theme"
+msgstr "Installed theme"
+
 #: src/components/domain/positionColumns.tsx
 msgid "Instr. gain"
 msgstr "Instr. gain"
@@ -5547,6 +5571,10 @@ msgstr "No watchlists yet"
 msgid "none"
 msgstr "none"
 
+#: src/screens/Settings/AppearancePanel.tsx
+msgid "None"
+msgstr "None"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "none in the file"
 msgstr "none in the file"
@@ -5716,6 +5744,10 @@ msgstr "Nothing has crossed yet. The log fills after each quote refresh."
 #: src/screens/Allocation/MembersPanel.tsx
 msgid "Nothing here"
 msgstr "Nothing here"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Nothing installed"
+msgstr "Nothing installed"
 
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "nothing is classified yet"
@@ -6243,6 +6275,11 @@ msgstr "Planning"
 msgid "Plans"
 msgstr "Plans"
 
+#: src/screens/Settings/model.ts
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Plugins"
+msgstr "Plugins"
+
 #: src/screens/Import/ParseStep.tsx
 msgid "point at the transaction-kind column in the header — only unique operations stay here then"
 msgstr "point at the transaction-kind column in the header — only unique operations stay here then"
@@ -6751,6 +6788,7 @@ msgstr "Remember on this device"
 
 #: src/screens/dashboard/WidgetTile.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
+#: src/screens/Settings/PluginsPanel.tsx
 msgid "Remove"
 msgstr "Remove"
 

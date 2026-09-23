@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { keys, useSettings } from "./queries";
-import type { ThemePreference } from "./theme";
+import { isPluginTheme, type ThemePreference } from "./theme";
 import shipped from "./defaultDashboard.json";
 
 /** Persistent UI layout state stored by the host as opaque JSON. */
@@ -220,7 +220,11 @@ function clampPanel(value: unknown): number {
 }
 
 function isTheme(value: unknown): value is ThemePreference {
-  return value === "system" || value === "light" || value === "dark";
+  if (typeof value !== "string") return false;
+  // A plugin theme is stored by name, and the plugin behind it may be gone by the time this is
+  // read — `useTheme` falls back to its base scheme rather than the preference being dropped,
+  // because uninstalling a theme for one session should not forget it was chosen.
+  return value === "system" || value === "light" || value === "dark" || isPluginTheme(value);
 }
 
 /**
