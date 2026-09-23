@@ -356,6 +356,7 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             file: "midnight.css".into(),
             base: Base::Dark,
         }],
+        layouts: Vec::new(),
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -364,7 +365,9 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     // frontend writes the sentence, the host says which one and with what values.
     assert_eq!(
         keys(&json),
-        ["id", "name", "speaks", "status", "themes", "version", "wants"]
+        [
+            "id", "layouts", "name", "speaks", "status", "themes", "version", "wants"
+        ]
     );
     assert_eq!(json["status"], "api");
     assert_eq!(json["themes"][0]["base"], "dark");

@@ -34,7 +34,13 @@ pub fn import_load(state: State<AppState>, name: String, content: Vec<u8>) -> Ui
     // question the wizard is about to ask, and applying it is what "it just opens" means.
     let parsed = parse_file(&content, &ParseConfig::default())?;
     let head = String::from_utf8_lossy(&content[..content.len().min(2048)]).to_string();
-    let found = crate::import_templates::match_for(&state.db_path()?, &parsed.headers, Some(&name), &head);
+    let found = crate::import_templates::match_for(
+        &state.db_path()?,
+        &state.plugins,
+        &parsed.headers,
+        Some(&name),
+        &head,
+    );
 
     *state.import_file()? = Some((LoadedFile { name, size }, content));
     let (config, mapping) = match &found {
@@ -42,7 +48,8 @@ pub fn import_load(state: State<AppState>, name: String, content: Vec<u8>) -> Ui
         None => (ParseConfig::default(), None),
     };
     let mut data = import_preview(state, config, mapping, Vec::new())?;
-    data.applied_template = found.map(|t| t.name);
+    // The id, not the name: a plugin's layout and a shipped one may print the same one.
+    data.applied_template = found.map(|t| t.id);
     Ok(data)
 }
 

@@ -12,11 +12,19 @@ export interface PluginTheme {
 export type PluginStatus =
   { status: "ok" } | { status: "api"; wants: number; speaks: number } | { status: "broken"; detail: string };
 
+/** A broker layout a plugin brings, with the sample it proved itself against at install. */
+export interface PluginLayout {
+  id: string;
+  file: string;
+  sample: string;
+}
+
 export type Plugin = {
   id: string;
   name: string;
   version: string;
   themes: PluginTheme[];
+  layouts: PluginLayout[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */

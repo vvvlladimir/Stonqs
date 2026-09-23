@@ -639,6 +639,10 @@ msgstr "{from} — сейчас"
 msgid "{hidden, plural, one {# more figure} other {# more figures}}"
 msgstr "{hidden, plural, one {ещё # показатель} few {ещё # показателя} many {ещё # показателей} other {ещё # показателя}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{layouts, plural, one {# import layout} other {# import layouts}}"
+msgstr "{layouts, plural, one {# раскладка импорта} few {# раскладки импорта} many {# раскладок импорта} other {# раскладки импорта}}"
+
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "{models, plural, one {# own model} other {# own models}}"
 msgstr "{models, plural, one {# своя модель} few {# свои модели} many {# своих моделей} other {# своих моделей}}"
@@ -729,6 +733,10 @@ msgstr "{symbol}: дата наступила"
 #: src/lib/alerts.ts
 #~ msgid "{symbol}: limit reached"
 #~ msgstr "{symbol}: лимит достигнут"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{themes, plural, one {# theme} other {# themes}}"
+msgstr "{themes, plural, one {# тема} few {# темы} many {# тем} other {# темы}}"
 
 #: src/screens/Alerts/index.tsx
 #~ msgid "{unread, plural, one {# new} other {# new}}"
@@ -1019,8 +1027,12 @@ msgid "A plan is a contribution on a schedule: how much, how often, and what it 
 msgstr "План — это взнос по расписанию: сколько, как часто и что покупается. Он предлагает операции, а подтверждаете их вы, так что ничего не записывается втихую."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
-msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: пока это цветовые темы."
+msgid "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы и раскладки импорта."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
+#~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: пока это цветовые темы."
 
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "A plugin is a folder holding a plugin.json and the files it names."
@@ -7072,6 +7084,10 @@ msgid "Remove password and keys"
 msgstr "Убрать пароль и ключи"
 
 #: src/screens/Import/TemplateBar.tsx
+msgid "Remove the plugin that brought this layout"
+msgstr "Удалите плагин, который принёс эту раскладку"
+
+#: src/screens/Import/TemplateBar.tsx
 #: src/screens/Settings/DataPanel.tsx
 msgid "Remove the shipped preset from the list"
 msgstr "Убрать встроенный пресет из списка"
@@ -7709,7 +7725,6 @@ msgstr "Доли уровня"
 msgid "Sharpe"
 msgstr "Sharpe"
 
-#: src/screens/Import/TemplateBar.tsx
 #: src/screens/Settings/DataPanel.tsx
 msgid "Shipped"
 msgstr "Встроенные"

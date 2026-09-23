@@ -1,0 +1,6 @@
+Trade Date,Operation,Instrument,ISIN,Units,Unit Price,Net Amount,Commission,Withholding Tax,Ccy,Reference
+2025-03-03,Cash In,,,,,2500.00,,,EUR,NB-1001
+2025-03-04,Purchase,IWDA,IE00B4L5Y983,12,98.40,-1180.80,-1.50,,EUR,NB-1002
+2025-04-15,Dividend,AAPL,US0378331005,10,,2.40,,-0.36,EUR,NB-1003
+2025-05-06,Disposal,IWDA,IE00B4L5Y983,4,101.20,404.80,-1.50,,EUR,NB-1004
+2025-05-31,Account Fee,,,,,-2.00,,,EUR,NB-1005

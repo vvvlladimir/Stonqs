@@ -468,7 +468,7 @@ export const api = {
   importTemplates: () => call<ImportTemplate[]>("import_templates_list"),
   importTemplateSave: (name: string, config: ParseConfig, mapping: ImportMapping) =>
     call<ImportTemplate[]>("import_template_save", { name, config, mapping }),
-  importTemplateDelete: (name: string) => call<ImportTemplate[]>("import_template_delete", { name }),
+  importTemplateDelete: (id: string) => call<ImportTemplate[]>("import_template_delete", { id }),
   importPresetsRestore: () => call<ImportTemplate[]>("import_presets_restore"),
 
   importPricesLoadPath: (path: string) => call<PriceImport>("import_prices_load_path", { path }),

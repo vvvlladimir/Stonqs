@@ -1,6 +1,6 @@
 # 70: A plugin brings data and shows it; it never changes what a number means
 
-- Status: Accepted; themes are implemented, the other two kinds of content are not yet
+- Status: Accepted; data plugins (themes, broker layouts) are implemented, UI and compute are not yet
 
 ## Context
 

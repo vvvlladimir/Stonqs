@@ -11,6 +11,7 @@
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
+use sq_core::import::BrokerPreset;
 use std::path::{Path, PathBuf};
 
 const FOLDER: &str = "plugins";
@@ -46,6 +47,20 @@ pub struct Manifest {
 pub struct Provides {
     #[serde(default)]
     pub themes: Vec<ThemeDef>,
+    #[serde(default)]
+    pub layouts: Vec<LayoutDef>,
+}
+
+/// A broker layout: the same JSON a shipped preset is written in, plus the sample it was made
+/// from. The sample is **required** — a layout nobody tried against a real export is exactly what
+/// the shipped ones were before they had fixtures, and a stranger's untried layout is worse.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LayoutDef {
+    pub id: String,
+    /// The layout file, holding one preset in `presets/brokers.json` shape.
+    pub file: String,
+    /// A redacted export this layout must recognise and read without a question.
+    pub sample: String,
 }
 
 /// A theme is a stylesheet that redefines the app's own custom properties, loaded only while it
@@ -91,6 +106,8 @@ pub struct PluginInfo {
     pub name: String,
     pub version: String,
     pub themes: Vec<ThemeDef>,
+    #[serde(default)]
+    pub layouts: Vec<LayoutDef>,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -149,12 +166,14 @@ impl Plugins {
                     name: manifest.name,
                     version: manifest.version,
                     themes: manifest.provides.themes,
+                    layouts: manifest.provides.layouts,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
                     name: id,
                     version: String::new(),
                     themes: Vec::new(),
+                    layouts: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -179,6 +198,28 @@ impl Plugins {
                 })
             })
             .collect())
+    }
+
+    /// Every layout a loadable plugin brings, parsed, each with the plugin it came from. A
+    /// layout that no longer parses is skipped rather than failing the list: the wizard's other
+    /// layouts are not this one's business.
+    pub fn layouts(&self) -> UiResult<Vec<(String, BrokerPreset)>> {
+        let mut out = Vec::new();
+        for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
+            let folder = self.folder_of(&plugin.id);
+            for layout in plugin.layouts {
+                let Ok(path) = safe_join(&folder, &layout.file) else {
+                    continue;
+                };
+                let parsed = std::fs::read_to_string(&path)
+                    .ok()
+                    .and_then(|text| serde_json::from_str::<BrokerPreset>(&text).ok());
+                if let Some(preset) = parsed {
+                    out.push((format!("{}/{}", plugin.id, layout.id), preset));
+                }
+            }
+        }
+        Ok(out)
     }
 
     /// A theme's stylesheet. Read on demand rather than at startup: only one is ever applied.
@@ -213,6 +254,29 @@ impl Plugins {
                 manifest.id
             )));
         }
+        // A package that brings nothing this build can use is a typo far more often than it is a
+        // package for a later version — `provides` misspelled, or a content kind this build does
+        // not know. A missing required field already fails above; an optional one would otherwise
+        // install in silence and leave the user looking for a theme that was never declared.
+        if manifest.provides.themes.is_empty() && manifest.provides.layouts.is_empty() {
+            return Err(UiError::invalid(format!(
+                "plugin {} declares nothing this build can use: expected `provides.themes` or \
+                 `provides.layouts`",
+                manifest.id
+            )));
+        }
+
+        // A layout proves itself before it is installed, against the sample the package carries.
+        // The shipped layouts answer to the same check in `core/tests/fixtures/presets/`; this is
+        // that promise applied to a layout nobody in this repository has seen.
+        for layout in &manifest.provides.layouts {
+            let preset = std::fs::read_to_string(safe_join(source, &layout.file)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", layout.file)))?;
+            let sample = std::fs::read(safe_join(source, &layout.sample)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", layout.sample)))?;
+            crate::import_templates::check_layout(&layout.id, &preset, &sample, &layout.sample)?;
+        }
+
         let target = self.folder_of(&manifest.id);
         // A reinstall replaces: the id is the identity, and two copies of one plugin is not a
         // state the list could explain.
@@ -221,18 +285,26 @@ impl Plugins {
         }
         std::fs::create_dir_all(&target).map_err(io)?;
         std::fs::copy(source.join(MANIFEST), target.join(MANIFEST)).map_err(io)?;
-        for theme in &manifest.provides.themes {
-            let from = safe_join(source, &theme.file)?;
-            let to = safe_join(&target, &theme.file)?;
+        let files = manifest
+            .provides
+            .themes
+            .iter()
+            .map(|theme| theme.file.clone())
+            .chain(
+                manifest
+                    .provides
+                    .layouts
+                    .iter()
+                    .flat_map(|layout| [layout.file.clone(), layout.sample.clone()]),
+            );
+        for file in files {
+            let from = safe_join(source, &file)?;
+            let to = safe_join(&target, &file)?;
             if let Some(parent) = to.parent() {
                 std::fs::create_dir_all(parent).map_err(io)?;
             }
-            std::fs::copy(&from, &to).map_err(|e| {
-                UiError::invalid(format!(
-                    "{} is named by the manifest and missing: {e}",
-                    theme.file
-                ))
-            })?;
+            std::fs::copy(&from, &to)
+                .map_err(|e| UiError::invalid(format!("{file} is named by the manifest and missing: {e}")))?;
         }
         Ok(PluginInfo {
             status: status_of(&manifest),
@@ -240,6 +312,7 @@ impl Plugins {
             name: manifest.name,
             version: manifest.version,
             themes: manifest.provides.themes,
+            layouts: manifest.provides.layouts,
         })
     }
 
@@ -355,6 +428,24 @@ mod tests {
             "a theme that cannot be applied is not in the picker"
         );
         assert!(plugins.theme_css("com.example.future", "midnight").is_err());
+    }
+
+    #[test]
+    fn a_package_that_declares_nothing_this_build_can_use_is_refused() {
+        let dir = temp();
+        let source = dir.join("typo");
+        std::fs::create_dir_all(&source).unwrap();
+        // `provides` misspelled: every required field is there, so nothing else would catch it.
+        std::fs::write(
+            source.join(MANIFEST),
+            r#"{"id":"com.example.typo","api":1,"name":"Typo","provides":{"themez":[]}}"#,
+        )
+        .unwrap();
+
+        let plugins = Plugins::new(&dir);
+        let failure = plugins.install(&source).unwrap_err();
+        assert!(format!("{failure:?}").contains("declares nothing"), "{failure:?}");
+        assert!(plugins.list().unwrap().is_empty(), "nothing was written");
     }
 
     #[test]

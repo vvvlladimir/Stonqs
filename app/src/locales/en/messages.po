@@ -639,6 +639,10 @@ msgstr "{from} — now"
 msgid "{hidden, plural, one {# more figure} other {# more figures}}"
 msgstr "{hidden, plural, one {# more figure} other {# more figures}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{layouts, plural, one {# import layout} other {# import layouts}}"
+msgstr "{layouts, plural, one {# import layout} other {# import layouts}}"
+
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "{models, plural, one {# own model} other {# own models}}"
 msgstr "{models, plural, one {# own model} other {# own models}}"
@@ -729,6 +733,10 @@ msgstr "{symbol}: date reached"
 #: src/lib/alerts.ts
 #~ msgid "{symbol}: limit reached"
 #~ msgstr "{symbol}: limit reached"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{themes, plural, one {# theme} other {# themes}}"
+msgstr "{themes, plural, one {# theme} other {# themes}}"
 
 #: src/screens/Alerts/index.tsx
 #~ msgid "{unread, plural, one {# new} other {# new}}"
@@ -1019,8 +1027,12 @@ msgid "A plan is a contribution on a schedule: how much, how often, and what it 
 msgstr "A plan is a contribution on a schedule: how much, how often, and what it buys. It proposes the transactions and you confirm them, so nothing is written behind your back."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
-msgstr "A plugin adds to the app without changing what a figure means: for now, colour themes."
+msgid "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+msgstr "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
+#~ msgstr "A plugin adds to the app without changing what a figure means: for now, colour themes."
 
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "A plugin is a folder holding a plugin.json and the files it names."
@@ -7077,6 +7089,10 @@ msgid "Remove password and keys"
 msgstr "Remove password and keys"
 
 #: src/screens/Import/TemplateBar.tsx
+msgid "Remove the plugin that brought this layout"
+msgstr "Remove the plugin that brought this layout"
+
+#: src/screens/Import/TemplateBar.tsx
 #: src/screens/Settings/DataPanel.tsx
 msgid "Remove the shipped preset from the list"
 msgstr "Remove the shipped preset from the list"
@@ -7714,7 +7730,6 @@ msgstr "Shares of this level"
 msgid "Sharpe"
 msgstr "Sharpe"
 
-#: src/screens/Import/TemplateBar.tsx
 #: src/screens/Settings/DataPanel.tsx
 msgid "Shipped"
 msgstr "Shipped"

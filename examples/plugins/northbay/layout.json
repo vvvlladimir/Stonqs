@@ -1,0 +1,40 @@
+{
+  "name": "Northbay Securities",
+  "config": {
+    "delimiter": ",",
+    "skip_top_rows": 0,
+    "skip_bottom_rows": 0,
+    "has_header": true,
+    "date_format": "%Y-%m-%d",
+    "decimal_separator": "."
+  },
+  "mapping": {
+    "account_id": null,
+    "columns": {
+      "DATE": "Trade Date",
+      "KIND": "Operation",
+      "SYMBOL": "Instrument",
+      "ISIN": "ISIN",
+      "QUANTITY": "Units",
+      "PRICE": "Unit Price",
+      "AMOUNT": "Net Amount",
+      "FEE": "Commission",
+      "TAX": "Withholding Tax",
+      "CURRENCY": "Ccy",
+      "EXTERNAL_ID": "Reference"
+    },
+    "kind_aliases": {
+      "CASHIN": "DEPOSIT",
+      "CASHOUT": "WITHDRAWAL",
+      "PURCHASE": "BUY",
+      "DISPOSAL": "SELL",
+      "ACCOUNTFEE": "FEE"
+    },
+    "ignored_kinds": [],
+    "symbol_aliases": {},
+    "account_aliases": {},
+    "default_currency": null,
+    "amount_sign": "SIGNED",
+    "new_securities": {}
+  }
+}

@@ -57,6 +57,15 @@
   `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
   `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
   wrong pair erases a real deposit and a real withdrawal from every return figure at once.
+- A layout can arrive as a **plugin** (ADR-0070), and then it is identity that keeps it apart from
+  the shipped ones: every layout in the wizard's list carries an `id` (`user:<name>`,
+  `builtin:<name>`, or a plugin's `<plugin id>/<layout id>`), and the commands take that, never the
+  name — two sources may print one name, and deleting by name would let a stranger's package
+  decide which layout goes. One name is listed once, the user's own winning over a plugin's and a
+  plugin's over a shipped one. A plugin's layout is **not** deletable from the wizard; the plugin
+  is. Installing one runs `import_templates::check_layout` against the sample the package is
+  obliged to carry — recognised, every wording mapped, no invalid row — and a package failing it
+  installs nothing at all.
 - A shipped layout is only as good as the file it was tried against: `core/tests/fixtures/presets/`
   holds one folder per layout — the redacted export, what it must be recognised as, and the
   operations it must produce, written in the canonical format so the expectation needs no second

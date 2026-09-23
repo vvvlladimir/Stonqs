@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { open as pickFolder } from "@tauri-apps/plugin-dialog";
+import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { api } from "../../lib/api";
@@ -39,7 +40,7 @@ export function PluginsPanel() {
   return (
     <Panel
       title={t`Plugins`}
-      info={t`A plugin adds to the app without changing what a figure means: for now, colour themes.`}
+      info={t`A plugin adds to the app without changing what a figure means: colour themes and broker import layouts.`}
       tools={
         <button
           className="btn btn--ghost btn--sm"
@@ -62,7 +63,7 @@ export function PluginsPanel() {
             <ListRow
               key={plugin.id}
               title={plugin.name}
-              sub={subtitle(plugin, t)}
+              sub={subtitle(plugin)}
               foot={plugin.status === "ok" ? undefined : <Banner tone="warn">{reason(plugin, t)}</Banner>}
               showActions
               end={
@@ -88,9 +89,16 @@ function InstallError({ error }: { error: unknown }) {
 
 type T = ReturnType<typeof useLingui>["t"];
 
-function subtitle(plugin: Plugin, t: T): string {
+function subtitle(plugin: Plugin): string {
   const themes = plugin.themes.length;
-  return [plugin.version, themes > 0 ? t`${themes} theme(s)` : null].filter(Boolean).join(" · ");
+  const layouts = plugin.layouts.length;
+  return [
+    plugin.version,
+    themes > 0 ? plural(themes, { one: "# theme", other: "# themes" }) : null,
+    layouts > 0 ? plural(layouts, { one: "# import layout", other: "# import layouts" }) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /** Why a plugin is not in use, said in the user's language from the host's code. */

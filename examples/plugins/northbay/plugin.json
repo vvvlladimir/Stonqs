@@ -1,0 +1,15 @@
+{
+  "id": "app.stonqs.northbay",
+  "api": 1,
+  "name": "Northbay Securities",
+  "version": "1.0.0",
+  "provides": {
+    "layouts": [
+      {
+        "id": "northbay",
+        "file": "layout.json",
+        "sample": "sample.csv"
+      }
+    ]
+  }
+}
