@@ -1,7 +1,8 @@
 import { useId, type ReactNode } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { Modal } from "./Modal";
-import { CANCEL, ErrorText, SUBMIT, SUBMITTING, Submit } from "./Form";
+import { ErrorText, Submit } from "./Form";
+import { CANCEL, SUBMIT, SUBMITTING } from "./formLabels";
 
 export interface FormDialogProps {
   title: ReactNode;

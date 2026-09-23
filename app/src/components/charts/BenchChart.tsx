@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Chart, Grid, Marker, indexScale, valueAxis, type ChartHeight } from "./Chart";
-import { CH, path, slotVar, tickStep, toPlotNumber } from "../../lib/plot";
+import { Chart, Grid, Marker, type ChartHeight } from "./Chart";
+import { CH, indexScale, path, slotVar, tickStep, toPlotNumber, valueAxis } from "../../lib/plot";
 import { formatDay, formatPercent } from "../../lib/format";
 import type { GrowthSeries } from "../../lib/types";
 

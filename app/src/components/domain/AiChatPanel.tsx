@@ -25,7 +25,6 @@ import {
   useAiModels,
   useAiProviders,
   useInvalidate,
-  useSettings,
 } from "../../lib/queries";
 import type { AiBlock, AiChat, AiEffort, AiToolMode, ChatMessage, UiError } from "../../lib/types";
 import {
@@ -52,18 +51,6 @@ import {
   useUiErrorText,
   type MenuItem,
 } from "../ui";
-
-/** Dock button that opens the panel; hidden entirely when the panel is disabled in Settings. */
-export function AiToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
-  const { t } = useLingui();
-  const settings = useSettings();
-  if (!settings.data?.ai_enabled) return null;
-  return (
-    <button type="button" className="iconbtn ai-toggle" data-tip={t`AI assistant`} onClick={onToggle}>
-      <SparkleIcon weight={open ? "fill" : "regular"} />
-    </button>
-  );
-}
 
 /**
  * A global drawer, not a screen — mounted once at the shell level next to `TooltipLayer`.

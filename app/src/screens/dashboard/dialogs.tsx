@@ -33,7 +33,7 @@ import {
   sourceKey,
   sourceOf,
 } from "./widgets/model";
-import { scopeLabel } from "../../components/domain/ScopePicker";
+import { scopeLabel } from "../../components/domain/scopeLabel";
 import { useAsOf } from "../../lib/asOf";
 
 /** Widget catalog grouped for visual browsing. */

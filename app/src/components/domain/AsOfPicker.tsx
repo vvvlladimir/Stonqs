@@ -2,7 +2,8 @@ import { useState } from "react";
 import { CalendarBlankIcon, CaretUpDownIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react";
 import { Trans, useLingui } from "@lingui/react/macro";
 
-import { endOfPreviousMonth, endOfPreviousYear, useAsOf } from "../../lib/asOf";
+import { useAsOf } from "../../lib/asOf";
+import { endOfPreviousMonth, endOfPreviousYear } from "../../lib/dates";
 import { today } from "../../lib/api";
 import { formatDay, formatDayNumeric } from "../../lib/format";
 import { Banner, Field, ListRow, Modal } from "../ui";

@@ -1360,6 +1360,7 @@ msgid "Against the target"
 msgstr "Against the target"
 
 #: src/components/domain/AiChatPanel.tsx
+#: src/components/domain/AiToggle.tsx
 #: src/screens/Settings/AiPanel.tsx
 #: src/screens/Settings/model.ts
 msgid "AI assistant"
@@ -1995,7 +1996,7 @@ msgstr "Calculating…"
 msgid "Calendar by year and month"
 msgstr "Calendar by year and month"
 
-#: src/components/ui/Form.tsx
+#: src/components/ui/formLabels.ts
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 msgid "Cancel"
@@ -2025,7 +2026,7 @@ msgid "CASH"
 msgstr "CASH"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Cash · {0}"
 msgstr "Cash · {0}"
 
@@ -3766,7 +3767,7 @@ msgid "Group"
 msgstr "Group"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Group · {0}"
 msgstr "Group · {0}"
 
@@ -7102,7 +7103,7 @@ msgstr "same day, account, instrument and quantity — worth something else. Usu
 msgid "Same month a year ago"
 msgstr "Same month a year ago"
 
-#: src/components/ui/Form.tsx
+#: src/components/ui/formLabels.ts
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Import/TemplateBar.tsx
@@ -7122,7 +7123,7 @@ msgstr "Save key"
 msgid "Save the current layout as a template"
 msgstr "Save the current layout as a template"
 
-#: src/components/ui/Form.tsx
+#: src/components/ui/formLabels.ts
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
@@ -7213,13 +7214,13 @@ msgid "Securities"
 msgstr "Securities"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Securities · {0}"
 msgstr "Securities · {0}"
 
 #. placeholder {0}: option.name
 #. placeholder {1}: option.cash_name ?? ""
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Securities · {0} + {1}"
 msgstr "Securities · {0} + {1}"
 
@@ -9653,7 +9654,7 @@ msgid "Whole portfolio"
 msgstr "Whole portfolio"
 
 #. placeholder {0}: option.name
-#: src/components/domain/ScopePicker.tsx
+#: src/components/domain/scopeLabel.ts
 msgid "Whole portfolio · {0}"
 msgstr "Whole portfolio · {0}"
 

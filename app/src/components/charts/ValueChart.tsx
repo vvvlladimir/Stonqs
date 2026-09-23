@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Area, Chart, Grid, Marker, indexScale, valueAxis, type ChartHeight } from "./Chart";
-import { CH, path, toPlotNumber } from "../../lib/plot";
+import { Area, Chart, Grid, Marker, type ChartHeight } from "./Chart";
+import { CH, indexScale, path, toPlotNumber, valueAxis } from "../../lib/plot";
 import { formatDay, formatMoney } from "../../lib/format";
 import type { ValueSeries } from "../../lib/types";
 

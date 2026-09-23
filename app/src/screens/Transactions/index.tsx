@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react";
 import { save as saveFile } from "@tauri-apps/plugin-dialog";
@@ -29,12 +29,9 @@ export function Transactions({ focus }: { focus?: string | null }) {
   const { t, i18n } = useLingui();
   const invalidate = useInvalidate();
   const [filter, setFilter] = useState<TransactionFilter>({});
-  const [query, setQuery] = useState("");
-
-  // Navigation hints use the same visible search filter as typed input.
-  useEffect(() => {
-    if (focus) setQuery(focus);
-  }, [focus]);
+  // Navigation hints use the same visible search filter as typed input. The screen is keyed by
+  // the hint (`App`), so arriving with a new one starts here rather than syncing in an effect.
+  const [query, setQuery] = useState(focus ?? "");
   const [draft, setDraft] = useState<TransactionInput | null>(null);
   const [exporting, setExporting] = useState(false);
   const menu = useMenu();

@@ -1,6 +1,6 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowsClockwiseIcon, DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
@@ -40,18 +40,15 @@ export function Securities({ focus }: { focus?: string | null }) {
   const [listingsFor, setListingsFor] = useState<string | null>(null);
   const [splitsFor, setSplitsFor] = useState<string | null>(null);
   const [cut, setCut] = useState<Cut>("all");
-  const [query, setQuery] = useState("");
+  // Navigation hints use the same visible search filter as typed input. The screen is keyed by
+  // the hint (`App`), so arriving with a new one starts here rather than syncing in an effect.
+  const [query, setQuery] = useState(focus ?? "");
   // The file is kept beside its preview: the commit reads it again, so the plan shown and the
   // plan written are built from the same bytes rather than from what the dialog holds.
   const [attributeFile, setAttributeFile] = useState<{ path: string; preview: AttributePreview } | null>(
     null,
   );
   const [fileError, setFileError] = useState<string | null>(null);
-
-  // Navigation hints use the same visible search filter as typed input.
-  useEffect(() => {
-    if (focus) setQuery(focus);
-  }, [focus]);
   const menu = useMenu();
 
   // Build the selection hook before early returns.

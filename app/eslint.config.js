@@ -23,9 +23,7 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      // Three prop-to-state syncs trip this (Transactions.tsx, Securities.tsx, Allocation.tsx);
-      // they are rewritten when the screens are split, so warn instead of blocking the build.
-      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/set-state-in-effect": "error",
       // `noUnusedLocals` in tsconfig already covers this; keep the underscore escape hatch.
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       // The guard that keeps hard-coded text from creeping back in: every user-visible string
@@ -58,5 +56,18 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // A context and the hook that reads it are one file on purpose: the pair is the primitive,
+    // and splitting it to keep fast refresh would cost every reader a hop for a dev-time gain.
+    // Editing one of these files reloads the window; that is the trade, and it is why the list
+    // is spelled out rather than turned into a pattern — anything else exporting a helper beside
+    // a component is still a warning worth reading.
+    files: [
+      "src/lib/{asOf,dock,nav,updates}.tsx",
+      "src/components/ui/{Async,Menu,Selection,Toast}.tsx",
+      "src/components/domain/{MarketRefresh,SecurityCardProvider}.tsx",
+    ],
+    rules: { "react-refresh/only-export-components": "off" },
   },
 );

@@ -1,4 +1,4 @@
-import { scopeLabel } from "../../components/domain/ScopePicker";
+import { scopeLabel } from "../../components/domain/scopeLabel";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";

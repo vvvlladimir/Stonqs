@@ -1,16 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { msg } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { useErrorText } from "./Async";
+import { CANCEL, SUBMIT, SUBMITTING } from "./formLabels";
 
 /**
  * Form primitives. Fields are full-width, 44px tall — the minimum touch target, not styling.
- * The wording of the buttons lives here once: a screen never writes "Saving…" itself.
+ * The wording of the buttons is `formLabels.ts`: a screen never writes "Saving…" itself.
  */
-export const SUBMIT = msg`Save`;
-export const SUBMITTING = msg`Saving…`;
-export const CANCEL = msg`Cancel`;
 
 /** `<option>` holds text only, so a select's label is a string, not a ReactNode. A disabled
  * option is shown but cannot be picked — the choice exists, something else is missing. */

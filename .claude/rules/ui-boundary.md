@@ -23,7 +23,7 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
 - `Store` is `Send`, not `Sync`, hence `Mutex<Store>`. Never hold that lock across a network call — background jobs open their own `Store` on `AppState::db_path` in a separate thread.
 - **Text never crosses IPC.** The host and the core send a code, a key and the values behind it;
   the sentence is written in the frontend, where the language is known — see ADR-0023. `ScopeOption`
-  carries names (`ScopePicker.scopeLabel` composes), a refresh failure carries `code`/`subject`
+  carries names (`components/domain/scopeLabel.ts` composes), a refresh failure carries `code`/`subject`
   (`MarketRefresh.headline`), `ImportProblem` carries `code`/`params` (`Import/labels.problemDetail`),
   `UiError` carries `code` (`Async.useErrorText`). Every string left in Rust is English and is a
   developer detail, never a headline.

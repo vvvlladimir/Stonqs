@@ -8,12 +8,11 @@ import {
   FolderIcon,
   type Icon,
 } from "@phosphor-icons/react";
-import type { I18n } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { api } from "../../lib/api";
 import { affects, useInvalidate, useScope } from "../../lib/queries";
 import { ErrorText, ListRow, Modal } from "../ui";
+import { scopeLabel } from "./scopeLabel";
 import type { DataScope, ScopeOption } from "../../lib/types";
 
 /** Global data scope selector shared by all screens. */
@@ -101,25 +100,6 @@ export function ScopePicker({ variant }: { variant: "nav" | "dock" }) {
       )}
     </>
   );
-}
-
-/**
- * The one place the scope's wording is written. The host sends names and a kind, so
- * "Securities · Depot + Cash" is composed here, in the active language.
- */
-export function scopeLabel(i18n: I18n, option: ScopeOption): string {
-  switch (option.kind) {
-    case "PORTFOLIO":
-      return i18n._(msg`Whole portfolio · ${option.name}`);
-    case "GROUP":
-      return i18n._(msg`Group · ${option.name}`);
-    case "ACCOUNT":
-      return option.account_kind === "SECURITIES"
-        ? i18n._(msg`Securities · ${option.name}`)
-        : i18n._(msg`Cash · ${option.name}`);
-    case "ACCOUNT_WITH_CASH":
-      return i18n._(msg`Securities · ${option.name} + ${option.cash_name ?? ""}`);
-  }
 }
 
 function Subtitle({ option }: { option?: ScopeOption }) {
