@@ -1,7 +1,7 @@
 {
   "name": "stonqs-ui",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "AGPL-3.0-only",
   "type": "module",
   "packageManager": "pnpm@10.29.3",
