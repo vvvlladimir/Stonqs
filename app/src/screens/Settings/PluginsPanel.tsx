@@ -40,7 +40,7 @@ export function PluginsPanel() {
   return (
     <Panel
       title={t`Plugins`}
-      info={t`A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself.`}
+      info={t`A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself.`}
       tools={
         <button
           className="btn btn--ghost btn--sm"
@@ -93,11 +93,15 @@ function subtitle(plugin: Plugin): string {
   const themes = plugin.themes.length;
   const layouts = plugin.layouts.length;
   const readers = plugin.readers.length;
+  const taxonomies = plugin.taxonomies.length;
   return [
     plugin.version,
     themes > 0 ? plural(themes, { one: "# theme", other: "# themes" }) : null,
     layouts > 0 ? plural(layouts, { one: "# import layout", other: "# import layouts" }) : null,
     readers > 0 ? plural(readers, { one: "# file reader", other: "# file readers" }) : null,
+    taxonomies > 0
+      ? plural(taxonomies, { one: "# classification set", other: "# classification sets" })
+      : null,
   ]
     .filter(Boolean)
     .join(" · ");

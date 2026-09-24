@@ -356,6 +356,17 @@ export const api = {
   taxonomyDelete: (id: string) => call<void>("taxonomy_delete", { id }),
   taxonomyImportPreviewPath: (path: string, name?: string | null) =>
     call<TaxonomyPreview>("taxonomy_import_preview_path", { path, config: null, name: name ?? null }),
+  /** The same preview over bytes, which is what a classification set from a plugin arrives as. */
+  taxonomyImportPreview: (content: number[], name?: string | null) =>
+    call<TaxonomyPreview>("taxonomy_import_preview", { content, config: null, name: name ?? null }),
+  taxonomyImportCommit: (content: number[], name: string | null, into: string | null, with_targets: boolean) =>
+    call<Taxonomy>("taxonomy_import_commit", {
+      content,
+      config: null,
+      name,
+      into,
+      withTargets: with_targets,
+    }),
   taxonomyImportCommitPath: (path: string, name: string | null, into: string | null, with_targets: boolean) =>
     call<Taxonomy>("taxonomy_import_commit_path", {
       path,
@@ -500,6 +511,10 @@ export const api = {
   pluginInstall: (path: string) => call<Plugin>("plugin_install", { path }),
   pluginRemove: (id: string) => call<void>("plugin_remove", { id }),
   pluginThemeCss: (plugin: string, theme: string) => call<string>("plugin_theme_css", { plugin, theme }),
+  /** A classification set's CSV, previewed and committed by the commands every taxonomy file
+   *  goes through — the set has no path into the portfolio of its own. */
+  pluginTaxonomyCsv: (plugin: string, set: string) =>
+    call<number[]>("plugin_taxonomy_csv", { plugin, set }),
 
   profilesList: () => call<ProfileList>("profiles_list"),
   profileCreate: (name: string) => call<Profile>("profile_create", { name }),

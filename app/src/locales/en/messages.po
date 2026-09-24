@@ -744,6 +744,10 @@ msgstr "{symbol}: date reached"
 #~ msgstr "{symbol}: limit reached"
 
 #: src/screens/Settings/PluginsPanel.tsx
+msgid "{taxonomies, plural, one {# classification set} other {# classification sets}}"
+msgstr "{taxonomies, plural, one {# classification set} other {# classification sets}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
 msgid "{themes, plural, one {# theme} other {# themes}}"
 msgstr "{themes, plural, one {# theme} other {# themes}}"
 
@@ -1040,8 +1044,12 @@ msgstr "A plan is a contribution on a schedule: how much, how often, and what it
 #~ msgstr "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
-msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself."
+msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."

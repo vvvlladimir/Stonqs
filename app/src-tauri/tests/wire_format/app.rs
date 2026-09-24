@@ -363,7 +363,7 @@ fn profile_list_keys_match_the_typescript_types() {
 
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
-    use sq_app_lib::plugins::{Base, PluginInfo, ReaderDef, Status, ThemeDef};
+    use sq_app_lib::plugins::{Base, PluginInfo, ReaderDef, Status, TaxonomyDef, ThemeDef};
 
     let json = serde_json::to_value(PluginInfo {
         id: "com.example.midnight".into(),
@@ -383,6 +383,11 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             expected: "expected.json".into(),
             extensions: vec![".sta".into()],
         }],
+        taxonomies: vec![TaxonomyDef {
+            id: "regions".into(),
+            name: "Regions".into(),
+            file: "regions.csv".into(),
+        }],
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -392,7 +397,16 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     assert_eq!(
         keys(&json),
         [
-            "id", "layouts", "name", "readers", "speaks", "status", "themes", "version", "wants"
+            "id",
+            "layouts",
+            "name",
+            "readers",
+            "speaks",
+            "status",
+            "taxonomies",
+            "themes",
+            "version",
+            "wants"
         ]
     );
     assert_eq!(json["status"], "api");
@@ -403,4 +417,6 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
         keys(&json["readers"][0]),
         ["expected", "extensions", "file", "id", "sample"]
     );
+    // A classification set ships no expectation: the file *is* the data, so one would be a copy.
+    assert_eq!(keys(&json["taxonomies"][0]), ["file", "id", "name"]);
 }

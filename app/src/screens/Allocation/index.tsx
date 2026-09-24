@@ -15,6 +15,7 @@ import {
   usePositions,
   useRebalance,
   useSecurities,
+  usePlugins,
   useTargets,
   useTaxonomies,
 } from "../../lib/queries";
@@ -38,6 +39,7 @@ export function Allocation() {
 
   const portfolio = usePortfolio();
   const taxonomies = useTaxonomies();
+  const plugins = usePlugins();
   const selected = taxonomyId ?? taxonomies.data?.[0]?.id ?? null;
   const taxonomy = taxonomies.data?.find((t) => t.id === selected) ?? null;
 
@@ -189,6 +191,19 @@ export function Allocation() {
               >
                 <Trans>Import from CSV…</Trans>
               </button>
+              {/* A ready tree a plugin brought. It goes through the same preview and the same
+                  commit as a file, so there is nothing extra to explain here. */}
+              {(plugins.data?.taxonomy_sets ?? []).map((set) => (
+                <button
+                  key={set.key}
+                  type="button"
+                  className="btn btn--ghost"
+                  disabled={dialogs.busy !== null}
+                  onClick={() => dialogs.importSet(set.key, null)}
+                >
+                  {set.name}
+                </button>
+              ))}
             </>
           }
         >

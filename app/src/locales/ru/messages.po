@@ -744,6 +744,10 @@ msgstr "{symbol}: дата наступила"
 #~ msgstr "{symbol}: лимит достигнут"
 
 #: src/screens/Settings/PluginsPanel.tsx
+msgid "{taxonomies, plural, one {# classification set} other {# classification sets}}"
+msgstr "{taxonomies, plural, one {# набор классификации} few {# набора классификации} many {# наборов классификации} other {# набора классификации}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
 msgid "{themes, plural, one {# theme} other {# themes}}"
 msgstr "{themes, plural, one {# тема} few {# темы} many {# тем} other {# темы}}"
 
@@ -1040,8 +1044,12 @@ msgstr "План — это взнос по расписанию: сколько
 #~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы и раскладки импорта."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
-msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта и читатели для файлов, которые приложение само открыть не умеет."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
+#~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта и читатели для файлов, которые приложение само открыть не умеет."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself."
+msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации и читатели для файлов, которые приложение само открыть не умеет."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."

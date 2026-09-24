@@ -1,0 +1,12 @@
+Levels 1,Levels 2,Levels 3,Levels 4,Weight,Symbol,ISIN
+Regions,Developed markets,,,,,
+Regions,Developed markets,North America,,,,
+Regions,Developed markets,North America,Core S&P 500 USD (Acc),100.00,CSPX.L,IE00B5BMR087
+Regions,Developed markets,Europe,,,,
+Regions,Developed markets,Europe,Core MSCI Europe EUR (Acc),100.00,IMEU.L,IE00B1YZSC51
+Regions,Developed markets,Japan,,,,
+Regions,Developed markets,World,,,,
+Regions,Developed markets,World,Core MSCI World USD (Acc),100.00,IWDA.L,IE00B4L5Y983
+Regions,Emerging markets,,,,,
+Regions,Emerging markets,Broad,,,,
+Regions,Emerging markets,Broad,Core MSCI EM IMI USD (Acc),100.00,EIMI.L,IE00BKM4GZ66

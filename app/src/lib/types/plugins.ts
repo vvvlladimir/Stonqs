@@ -29,6 +29,13 @@ export interface PluginReader {
   extensions: string[];
 }
 
+/** A ready classification tree a plugin brings: the same CSV the taxonomy import reads. */
+export interface PluginTaxonomy {
+  id: string;
+  name: string;
+  file: string;
+}
+
 export type Plugin = {
   id: string;
   name: string;
@@ -36,6 +43,7 @@ export type Plugin = {
   themes: PluginTheme[];
   layouts: PluginLayout[];
   readers: PluginReader[];
+  taxonomies: PluginTaxonomy[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */
@@ -47,10 +55,20 @@ export interface InstalledTheme {
   base: ThemeBase;
 }
 
+/** One classification set on offer, addressed the way a command names it. */
+export interface InstalledTaxonomySet {
+  /** `<plugin id>/<set id>`. */
+  key: string;
+  name: string;
+  plugin: string;
+}
+
 export interface PluginList {
   plugins: Plugin[];
   /** Only the themes that can actually be applied. */
   themes: InstalledTheme[];
+  /** Only the sets that can actually be created. */
+  taxonomy_sets: InstalledTaxonomySet[];
   /** The plugin API this build speaks. */
   api: number;
 }

@@ -54,6 +54,21 @@ pub struct Provides {
     pub layouts: Vec<LayoutDef>,
     #[serde(default)]
     pub readers: Vec<ReaderDef>,
+    #[serde(default)]
+    pub taxonomies: Vec<TaxonomyDef>,
+}
+
+/// A ready classification tree: the same CSV the taxonomy import reads, so the file *is* the
+/// data and there is nothing for a separate expectation to state. It goes through
+/// `taxonomy_import_preview` like any other, which is why installing one adds no second path
+/// into the portfolio.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TaxonomyDef {
+    pub id: String,
+    /// What the tree is called when it is created. The user renames it freely afterwards — a
+    /// classification's name is their data, never a label the app translates.
+    pub name: String,
+    pub file: String,
 }
 
 /// A file reader: a WASM component that turns bytes this app cannot read into the app's own
@@ -135,8 +150,19 @@ pub struct PluginInfo {
     pub layouts: Vec<LayoutDef>,
     #[serde(default)]
     pub readers: Vec<ReaderDef>,
+    #[serde(default)]
+    pub taxonomies: Vec<TaxonomyDef>,
     #[serde(flatten)]
     pub status: Status,
+}
+
+/// One classification set on offer, addressed the way a command names it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct TaxonomySetInfo {
+    /// `<plugin id>/<set id>`.
+    pub key: String,
+    pub name: String,
+    pub plugin: String,
 }
 
 /// One installed theme, addressed the way the stored preference addresses it.
@@ -195,6 +221,7 @@ impl Plugins {
                     themes: manifest.provides.themes,
                     layouts: manifest.provides.layouts,
                     readers: manifest.provides.readers,
+                    taxonomies: manifest.provides.taxonomies,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
@@ -203,6 +230,7 @@ impl Plugins {
                     themes: Vec::new(),
                     layouts: Vec::new(),
                     readers: Vec::new(),
+                    taxonomies: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -312,6 +340,45 @@ impl Plugins {
         std::fs::read_to_string(safe_join(&folder, &def.file)?).map_err(io)
     }
 
+    /// The classification sets on offer, from plugins this build can load.
+    pub fn taxonomy_sets(&self) -> UiResult<Vec<TaxonomySetInfo>> {
+        Ok(self
+            .list()?
+            .into_iter()
+            .filter(|p| p.status == Status::Ok)
+            .flat_map(|p| {
+                p.taxonomies.into_iter().map(move |set| TaxonomySetInfo {
+                    key: format!("{}/{}", p.id, set.id),
+                    name: set.name,
+                    plugin: p.id.clone(),
+                })
+            })
+            .collect())
+    }
+
+    /// A set's CSV, read on demand. It is handed to the same preview every taxonomy file goes
+    /// through, so a set from a plugin has no path of its own into the portfolio.
+    pub fn taxonomy_csv(&self, plugin: &str, set: &str) -> UiResult<Vec<u8>> {
+        if !valid_id(plugin) {
+            return Err(UiError::not_found(format!("plugin {plugin}")));
+        }
+        let folder = self.folder_of(plugin);
+        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        if status_of(&manifest) != Status::Ok {
+            return Err(UiError::invalid(format!(
+                "plugin {plugin} is built for plugin API {}",
+                manifest.api
+            )));
+        }
+        let def = manifest
+            .provides
+            .taxonomies
+            .into_iter()
+            .find(|t| t.id == set)
+            .ok_or_else(|| UiError::not_found(format!("classification set {plugin}/{set}")))?;
+        std::fs::read(safe_join(&folder, &def.file)?).map_err(io)
+    }
+
     /// Installs the folder the user picked. Only the manifest and the files it names are copied:
     /// a package is what it declares, and whatever else sits beside it is not ours to carry in.
     pub fn install(&self, source: &Path) -> UiResult<PluginInfo> {
@@ -329,10 +396,11 @@ impl Plugins {
         if manifest.provides.themes.is_empty()
             && manifest.provides.layouts.is_empty()
             && manifest.provides.readers.is_empty()
+            && manifest.provides.taxonomies.is_empty()
         {
             return Err(UiError::invalid(format!(
                 "plugin {} declares nothing this build can use: expected `provides.themes`, \
-                 `provides.layouts` or `provides.readers`",
+                 `provides.layouts`, `provides.readers` or `provides.taxonomies`",
                 manifest.id
             )));
         }
@@ -365,6 +433,15 @@ impl Plugins {
             )?;
         }
 
+        // A classification set proves itself the same way, and needs no expectation of its own:
+        // the file *is* the data, so an expectation would be a copy of it. What it must show is
+        // that it reads as a tree at all and leaves nothing invalid behind.
+        for def in &manifest.provides.taxonomies {
+            let csv = std::fs::read(safe_join(source, &def.file)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.file)))?;
+            check_taxonomy(&def.id, &csv)?;
+        }
+
         let target = self.folder_of(&manifest.id);
         // A reinstall replaces: the id is the identity, and two copies of one plugin is not a
         // state the list could explain.
@@ -391,7 +468,8 @@ impl Plugins {
                     .readers
                     .iter()
                     .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
-            );
+            )
+            .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()));
         for file in files {
             let from = safe_join(source, &file)?;
             let to = safe_join(&target, &file)?;
@@ -409,6 +487,7 @@ impl Plugins {
             themes: manifest.provides.themes,
             layouts: manifest.provides.layouts,
             readers: manifest.provides.readers,
+            taxonomies: manifest.provides.taxonomies,
         })
     }
 
@@ -423,6 +502,31 @@ impl Plugins {
         }
         std::fs::remove_dir_all(folder).map_err(io)
     }
+}
+
+/// What a classification set must prove before the package carrying it is installed. No store is
+/// touched and no instrument is matched — the securities list is empty on purpose, because a set
+/// is checked for being a tree, not for fitting this portfolio.
+fn check_taxonomy(id: &str, csv: &[u8]) -> UiResult<()> {
+    use sq_core::import::{ParseConfig, Severity, build_taxonomy_preview, detect_taxonomy_config, parse_csv};
+
+    let parsed = parse_csv(csv, &ParseConfig::default())
+        .map_err(|e| UiError::invalid(format!("classification set {id}: {e}")))?;
+    let config = detect_taxonomy_config(&parsed);
+    let preview = build_taxonomy_preview(&parsed, &config, &[], None);
+
+    if preview.nodes.is_empty() {
+        return Err(UiError::invalid(format!(
+            "classification set {id} reads as no tree at all"
+        )));
+    }
+    if let Some(problem) = preview.problems.iter().find(|p| p.severity == Severity::Error) {
+        return Err(UiError::invalid(format!(
+            "classification set {id} does not read: {}",
+            problem.message
+        )));
+    }
+    Ok(())
 }
 
 fn status_of(manifest: &Manifest) -> Status {

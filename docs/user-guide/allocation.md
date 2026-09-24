@@ -32,4 +32,9 @@ does not double it), or seeded from an instrument attribute: one branch per dist
 instrument carrying that value assigned whole. What a tree already classifies by hand is left
 alone — a typed split outranks a column. A tree can be exported to CSV as well.
 
+A plugin can bring a **ready classification set** — a tree already laid out, offered by name beside
+`Import from CSV…`. It goes through the same preview and the same write as a file, so it extends an
+existing tree or creates a new one exactly as an import does, and a set that matches none of the
+portfolio's instruments still gives the tree, leaving the assignments to be made by hand.
+
 Targets are edited here and used on the Rebalance screen.

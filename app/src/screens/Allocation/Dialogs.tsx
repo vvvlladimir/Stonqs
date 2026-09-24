@@ -42,8 +42,10 @@ export function useAllocationDialogs(opts: Options) {
   const [taxonomyDialog, setTaxonomyDialog] = useState<{ taxonomy: TaxonomyData | null } | null>(null);
   const [removing, setRemoving] = useState<TaxonomyData | null>(null);
   const [grouping, setGrouping] = useState<TaxonomyData | null>(null);
+  // A file is a path and a plugin's set is bytes; the dialog above them is the same one, so the
+  // difference is carried here rather than in two dialogs.
   const [importing, setImporting] = useState<{
-    path: string;
+    source: { path: string } | { content: number[] };
     preview: TaxonomyPreview;
     into: TaxonomyData | null;
   } | null>(null);
@@ -75,7 +77,19 @@ export function useAllocationDialogs(opts: Options) {
     if (typeof path !== "string") return;
     setBusy("import");
     try {
-      setImporting({ path, into, preview: await api.taxonomyImportPreviewPath(path) });
+      setImporting({ source: { path }, into, preview: await api.taxonomyImportPreviewPath(path) });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** The same import, over a ready set a plugin brought: same preview, same commit, same dialog. */
+  const importSet = async (key: string, into: TaxonomyData | null) => {
+    const [plugin, set] = key.split("/");
+    setBusy("import");
+    try {
+      const content = await api.pluginTaxonomyCsv(plugin, set);
+      setImporting({ source: { content }, into, preview: await api.taxonomyImportPreview(content) });
     } finally {
       setBusy(null);
     }
@@ -146,12 +160,11 @@ export function useAllocationDialogs(opts: Options) {
           onImport={async (name, withTargets) => {
             setBusy("commit");
             try {
-              const saved = await api.taxonomyImportCommitPath(
-                importing.path,
-                name,
-                importing.into?.id ?? null,
-                withTargets,
-              );
+              const into = importing.into?.id ?? null;
+              const saved =
+                "path" in importing.source
+                  ? await api.taxonomyImportCommitPath(importing.source.path, name, into, withTargets)
+                  : await api.taxonomyImportCommit(importing.source.content, name, into, withTargets);
               setImporting(null);
               opts.onSelect(saved.id);
               opts.onChanged();
@@ -231,6 +244,7 @@ export function useAllocationDialogs(opts: Options) {
     openDelete: setRemoving,
     openGroup: setGrouping,
     pickImport,
+    importSet,
     exportCsv,
   };
 }

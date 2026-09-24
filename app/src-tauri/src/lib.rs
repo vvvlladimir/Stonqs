@@ -63,6 +63,7 @@ pub fn run() {
             commands::plugins::plugin_install,
             commands::plugins::plugin_remove,
             commands::plugins::plugin_theme_css,
+            commands::plugins::plugin_taxonomy_csv,
             commands::profiles::profiles_list,
             commands::profiles::profile_create,
             commands::profiles::profile_rename,

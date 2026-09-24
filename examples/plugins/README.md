@@ -7,8 +7,8 @@ into its own plugin directory, so the folder you picked is free to move afterwar
 See [ADR-0070](../../docs/decisions/0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md)
 for what a plugin may and may not be, and
 [ADR-0073](../../docs/decisions/0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
-for the file reader. This build honours three kinds of content: themes, broker import layouts and
-file readers.
+for the file reader. This build honours four kinds of content: themes, broker import layouts,
+classification sets and file readers.
 
 ## `midnight` — a theme
 
@@ -74,6 +74,40 @@ answer the same questions, plus a third — the exact operations they produce �
 A layout from a plugin appears in the wizard's list under **From plugins**, after the user's own
 and before the shipped ones. It cannot be deleted there: it arrived with the plugin and it leaves
 with it.
+
+## `regions` — a classification set
+
+A ready classification tree, shipped as the same CSV the taxonomy import already reads. Installing
+it puts **Regions** beside `Import from CSV…` on the Allocation screen; pressing it opens the same
+preview a file opens, with the same choice of extending an existing tree or creating a new one.
+
+```json
+{
+  "id": "app.stonqs.regions",
+  "api": 1,
+  "name": "Regions classification",
+  "version": "1.0.0",
+  "provides": {
+    "taxonomies": [{ "id": "regions", "name": "Regions", "file": "regions.csv" }]
+  }
+}
+```
+
+The CSV is read by meaning rather than by template: level columns are found by their headers
+(`Levels 1`, `Levels 2`, … or `Category`), a row with a ticker or an ISIN is a security, and the
+first level repeats on every row and is therefore the tree's own name. A security is matched by
+ISIN first and by ticker second, so a set works on a portfolio that bought the same fund on another
+exchange.
+
+`name` is what the tree is called when it is created, and only then: a classification's name is the
+user's data from that moment on, renamed freely and never translated by the app.
+
+There is **no** `expected` here, unlike a reader's. The file *is* the data, so an expectation would
+be a copy of it. What the install checks instead is that the set reads as a tree at all and that no
+row of it is invalid — against an empty instrument list, so nothing about the open portfolio is
+touched and a set is judged for being a tree rather than for fitting this particular portfolio. A
+set that matches none of your instruments still installs: the tree is there and the assignments are
+yours to make.
 
 ## `mt940` — a file reader
 
@@ -153,6 +187,7 @@ Installation is the check, and it refuses rather than half-installs:
 | The layout does not recognise its own sample, leaves a wording of it unmapped, or reads a row of it as invalid | Refused, saying which |
 | A reader's `file` is not a WebAssembly component, or the module fails to start | Refused |
 | A reader does not recognise its own sample, produces something that is not a transaction file, or produces a different one from `expected` | Refused, saying which |
+| A classification set's CSV does not read as a tree, or leaves a row invalid | Refused, saying which |
 
 A field the manifest carries that this build does not know is **ignored**, not refused — that is
 what lets a package add something for a later version without breaking this one. The cost is that a

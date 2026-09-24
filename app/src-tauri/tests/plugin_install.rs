@@ -182,3 +182,65 @@ fn a_reader_that_does_not_match_its_own_expectation_installs_nothing() {
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn the_example_classification_set_installs_and_reads_as_a_tree() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/regions");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let plugins = Plugins::new(&dir);
+    // Installing is the check: a set that reads as no tree, or leaves a row invalid, is refused.
+    let installed = plugins.install(&example).unwrap();
+    assert_eq!(installed.status, Status::Ok);
+
+    let sets = plugins.taxonomy_sets().unwrap();
+    assert_eq!(sets.len(), 1);
+    assert_eq!(sets[0].key, "app.stonqs.regions/regions");
+    assert_eq!(sets[0].name, "Regions");
+
+    // And the CSV goes back out to be previewed by the same code every taxonomy file goes
+    // through — the set has no path into the portfolio of its own.
+    let csv = plugins.taxonomy_csv("app.stonqs.regions", "regions").unwrap();
+    let parsed = sq_core::import::parse_csv(&csv, &sq_core::import::ParseConfig::default()).unwrap();
+    let config = sq_core::import::detect_taxonomy_config(&parsed);
+    let preview = sq_core::import::build_taxonomy_preview(&parsed, &config, &[], None);
+    assert_eq!(
+        preview.name, "Regions",
+        "the first level repeats and is the tree's name"
+    );
+    assert!(
+        preview
+            .nodes
+            .iter()
+            .any(|n| n.path.last().is_some_and(|last| last == "Emerging markets")),
+        "the tree carries its categories"
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_classification_set_that_is_not_a_tree_installs_nothing() {
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    let source = dir.join("package");
+    std::fs::create_dir_all(&source).unwrap();
+    std::fs::write(
+        source.join("plugin.json"),
+        r#"{"id":"com.example.flat","api":1,"name":"Flat",
+            "provides":{"taxonomies":[{"id":"flat","name":"Flat","file":"flat.csv"}]}}"#,
+    )
+    .unwrap();
+    // No level column anywhere: this is a price list, not a classification.
+    std::fs::write(source.join("flat.csv"), "Date,Close\n2024-01-01,100\n").unwrap();
+
+    let plugins = Plugins::new(&dir);
+    let failure = plugins.install(&source).unwrap_err();
+    assert!(
+        format!("{failure:?}").contains("classification set"),
+        "{failure:?}"
+    );
+    assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
