@@ -54,6 +54,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [19](0019-csv-detection-by-language-and-values.md) | CSV import detection is per language and arbitrated by values | Accepted |
 | [32](0032-a-taxonomy-is-seeded-from-an-attribute-not-derived-from-it.md) | A taxonomy is seeded from an attribute, never derived from it | Accepted |
 | [61](0061-a-flex-statement-is-a-second-reader-not-a-second-import.md) | A Flex statement is a second reader, not a second import | Accepted |
+| [73](0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md) | A file reader is a WASM component that produces the canonical file | Accepted |
 
 ## What the numbers mean
 
@@ -96,7 +97,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [45](0045-a-dashboard-tile-is-resized-from-the-edge-being-dragged.md) | A dashboard tile is resized from the edge being dragged | Accepted |
 | [59](0059-a-tile-may-hold-assumptions-and-a-ratio-is-a-rendering.md) | A tile may hold assumptions, and a ratio of two shown figures is a rendering | Accepted |
 | [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted |
-| [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins implemented, UI and compute not yet |
+| [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins and the file reader ([73](0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)) implemented, UI plugins not yet |
 
 ## Profiles, keys and encryption
 

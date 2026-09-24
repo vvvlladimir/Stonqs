@@ -6,8 +6,11 @@
 //! could explain. What belongs to a profile is what a plugin *stores*, which no theme does.
 //!
 //! Plain filesystem work over an explicitly passed root, so it is tested on a temporary folder.
-//! This build honours one kind of content — themes — and reads the rest of a manifest without
-//! acting on it, so a package built for a later version is listed rather than rejected.
+//! This build honours data content — themes and broker layouts — plus one kind of compute, the
+//! file reader (ADR-0073); the rest of a manifest is read without being acted on, so a package
+//! built for a later version is listed rather than rejected.
+
+pub mod reader;
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
@@ -49,6 +52,28 @@ pub struct Provides {
     pub themes: Vec<ThemeDef>,
     #[serde(default)]
     pub layouts: Vec<LayoutDef>,
+    #[serde(default)]
+    pub readers: Vec<ReaderDef>,
+}
+
+/// A file reader: a WASM component that turns bytes this app cannot read into the app's own
+/// transaction file (ADR-0073). It ships the sample it was written against **and** what that
+/// sample must come out as, because a layout that misreads a column shows up in the wizard while
+/// a reader that misreads one produces a document that looks perfectly correct.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReaderDef {
+    pub id: String,
+    /// The component, as a `.wasm` file inside the package.
+    pub file: String,
+    /// A redacted file of the kind this reader exists for.
+    pub sample: String,
+    /// What `sample` must read as: a `stonqs.transactions` document.
+    pub expected: String,
+    /// The file endings this reader is offered, lower case and with the dot (`.pdf`). Empty means
+    /// every file that the shipped readers did not already recognise — honest for a reader of a
+    /// format with no ending of its own, and expensive enough that a reader should say.
+    #[serde(default)]
+    pub extensions: Vec<String>,
 }
 
 /// A broker layout: the same JSON a shipped preset is written in, plus the sample it was made
@@ -108,6 +133,8 @@ pub struct PluginInfo {
     pub themes: Vec<ThemeDef>,
     #[serde(default)]
     pub layouts: Vec<LayoutDef>,
+    #[serde(default)]
+    pub readers: Vec<ReaderDef>,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -167,6 +194,7 @@ impl Plugins {
                     version: manifest.version,
                     themes: manifest.provides.themes,
                     layouts: manifest.provides.layouts,
+                    readers: manifest.provides.readers,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
@@ -174,6 +202,7 @@ impl Plugins {
                     version: String::new(),
                     themes: Vec::new(),
                     layouts: Vec::new(),
+                    readers: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -222,6 +251,45 @@ impl Plugins {
         Ok(out)
     }
 
+    /// The first loadable reader that claims this file, and what it read.
+    ///
+    /// Narrowed by the file's ending before anything is run: nothing hands twenty megabytes to
+    /// every installed plugin in turn. `not-mine` moves on to the next; a reader that claimed the
+    /// file and then failed is an error rather than a fall-through, because the reader after it
+    /// would be reading a file somebody has already said is not theirs.
+    pub fn read_file(&self, name: &str, bytes: &[u8]) -> UiResult<Option<(String, reader::Reading)>> {
+        let ending = name
+            .rsplit_once('.')
+            .map(|(_, end)| format!(".{}", end.to_lowercase()));
+        for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
+            let folder = self.folder_of(&plugin.id);
+            for def in plugin.readers {
+                let offered = def.extensions.is_empty()
+                    || ending
+                        .as_deref()
+                        .is_some_and(|end| def.extensions.iter().any(|x| x.eq_ignore_ascii_case(end)));
+                let Ok(module) = safe_join(&folder, &def.file) else {
+                    continue;
+                };
+                if !offered || !module.exists() {
+                    continue;
+                }
+                let id = format!("{}/{}", plugin.id, def.id);
+                match reader::read(&module, bytes, name, None) {
+                    Ok(mut reading) => {
+                        for warning in &mut reading.warnings {
+                            warning.plugin = id.clone();
+                        }
+                        return Ok(Some((id, reading)));
+                    }
+                    Err(reader::Refusal::NotMine) => continue,
+                    Err(refusal) => return Err(refusal.into_error(&id)),
+                }
+            }
+        }
+        Ok(None)
+    }
+
     /// A theme's stylesheet. Read on demand rather than at startup: only one is ever applied.
     pub fn theme_css(&self, plugin: &str, theme: &str) -> UiResult<String> {
         if !valid_id(plugin) {
@@ -258,10 +326,13 @@ impl Plugins {
         // package for a later version — `provides` misspelled, or a content kind this build does
         // not know. A missing required field already fails above; an optional one would otherwise
         // install in silence and leave the user looking for a theme that was never declared.
-        if manifest.provides.themes.is_empty() && manifest.provides.layouts.is_empty() {
+        if manifest.provides.themes.is_empty()
+            && manifest.provides.layouts.is_empty()
+            && manifest.provides.readers.is_empty()
+        {
             return Err(UiError::invalid(format!(
-                "plugin {} declares nothing this build can use: expected `provides.themes` or \
-                 `provides.layouts`",
+                "plugin {} declares nothing this build can use: expected `provides.themes`, \
+                 `provides.layouts` or `provides.readers`",
                 manifest.id
             )));
         }
@@ -275,6 +346,23 @@ impl Plugins {
             let sample = std::fs::read(safe_join(source, &layout.sample)?)
                 .map_err(|e| UiError::invalid(format!("{}: {e}", layout.sample)))?;
             crate::import_templates::check_layout(&layout.id, &preset, &sample, &layout.sample)?;
+        }
+
+        // And a reader proves itself the same way, against a stronger expectation: what its own
+        // sample must come out as. A reader nobody can check is a reader nobody can trust with
+        // somebody's ledger.
+        for def in &manifest.provides.readers {
+            let sample = std::fs::read(safe_join(source, &def.sample)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.sample)))?;
+            let expected = std::fs::read_to_string(safe_join(source, &def.expected)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.expected)))?;
+            reader::check(
+                &def.id,
+                &safe_join(source, &def.file)?,
+                &sample,
+                &def.sample,
+                &expected,
+            )?;
         }
 
         let target = self.folder_of(&manifest.id);
@@ -296,6 +384,13 @@ impl Plugins {
                     .layouts
                     .iter()
                     .flat_map(|layout| [layout.file.clone(), layout.sample.clone()]),
+            )
+            .chain(
+                manifest
+                    .provides
+                    .readers
+                    .iter()
+                    .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
             );
         for file in files {
             let from = safe_join(source, &file)?;
@@ -313,6 +408,7 @@ impl Plugins {
             version: manifest.version,
             themes: manifest.provides.themes,
             layouts: manifest.provides.layouts,
+            readers: manifest.provides.readers,
         })
     }
 

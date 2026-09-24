@@ -1,0 +1,19 @@
+# Not a member of the app's workspace: it builds for wasm32-wasip2, and a workspace resolves one
+# set of features for one target.
+[package]
+name = "stonqs-mt940-reader"
+version = "1.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = "0.62"
+
+[profile.release]
+opt-level = "s"
+strip = true
+lto = true
+panic = "abort"

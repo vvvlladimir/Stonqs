@@ -1,0 +1,46 @@
+// The one contract a compute plugin gets first (ADR-0073): bytes in, the app's own transaction
+// file out. The row schema is deliberately not restated here — `stonqs.transactions` carries its
+// own `format` and `version` (ADR-0066), so a document says what it is once rather than twice.
+
+package stonqs:reader@1.0.0;
+
+world reader {
+    /// What the host knows about the file besides its bytes.
+    record file-hints {
+        /// The name it arrived under, extension included. A reader may key off it; it may not
+        /// read it from anywhere, because it has no filesystem.
+        file-name: string,
+        /// A password the user typed for a sealed file. Absent until the reader has asked once.
+        password: option<string>,
+    }
+
+    /// Something worth telling the user that does not stop the file being read. A reader may
+    /// warn; refusing a row on the user's behalf is the wizard's job, not a plugin's.
+    record warning {
+        /// The row of the reader's own output it is about, when it is about one.
+        row: option<u32>,
+        /// A short identifier for the case. The app has no table of a stranger's codes, so it is
+        /// shown beside `message` rather than translated.
+        code: string,
+        /// English, one sentence.
+        message: string,
+    }
+
+    variant read-error {
+        /// Not a file this reader knows. The host moves on to the next one, and this is not a
+        /// failure.
+        not-mine,
+        /// Sealed, and the password was absent or wrong.
+        needs-password,
+        /// Recognised and unreadable. The string is shown as the reason.
+        malformed(string),
+    }
+
+    record reading {
+        /// A `stonqs.transactions` document, as text.
+        canonical: string,
+        warnings: list<warning>,
+    }
+
+    export read: func(bytes: list<u8>, hints: file-hints) -> result<reading, read-error>;
+}

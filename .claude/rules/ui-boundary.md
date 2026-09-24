@@ -25,6 +25,18 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   which is why a locked profile still has its colours; what a plugin *stores* belongs to the
   profile, in that profile's vault under the plugin's id. The host copies the manifest and the
   files it names and nothing else, and refuses a file name that leaves the package.
+- A plugin's **file reader** is the one piece of a stranger's *code* this host runs, and
+  `plugins/reader.rs` is the whole of what it is granted (ADR-0073): a WASM component with no
+  filesystem, no reachable address, a frozen clock and a seeded generator — linked at all only
+  because a guest carrying a language runtime will not instantiate without them — under a memory
+  ceiling and an epoch deadline. It runs **once**, in `import_load`, and what it produced replaces
+  the bytes in `AppState::import_file`, so every later preview and the commit read a
+  `stonqs.transactions` document through `parse_canonical`. Preview and commit therefore cannot
+  diverge, and `core` gains no dependency: the registry is `Plugins::read_file`, one layer above
+  `import::parse_file`, asked after the two self-describing shipped formats and before the CSV
+  reader, which accepts nearly anything. `not-mine` moves on; a reader that claimed the file and
+  failed is `UiError::Reader` naming the plugin, never a fall-through. The row schema is **not**
+  restated in WIT — the document carries its own `format` and `version` (ADR-0066).
 - `Store` is `Send`, not `Sync`, hence `Mutex<Store>`. Never hold that lock across a network call — background jobs open their own `Store` on `AppState::db_path` in a separate thread.
 - **Text never crosses IPC.** The host and the core send a code, a key and the values behind it;
   the sentence is written in the frontend, where the language is known — see ADR-0023. `ScopeOption`

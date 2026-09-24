@@ -675,6 +675,10 @@ msgstr "{owedTotal, plural, one {# взнос наступил и ещё не з
 msgid "{positiveDays} of {0}"
 msgstr "{positiveDays} из {0}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{readers, plural, one {# file reader} other {# file readers}}"
+msgstr "{readers, plural, one {# читатель файлов} few {# читателя файлов} many {# читателей файлов} other {# читателя файлов}}"
+
 #: src/screens/Rebalance/model.ts
 msgid "{sign}{size} pp"
 msgstr "{sign}{size} пп"
@@ -1032,8 +1036,12 @@ msgid "A plan is a contribution on a schedule: how much, how often, and what it 
 msgstr "План — это взнос по расписанию: сколько, как часто и что покупается. Он предлагает операции, а подтверждаете их вы, так что ничего не записывается втихую."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
-msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы и раскладки импорта."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+#~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы и раскладки импорта."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
+msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта и читатели для файлов, которые приложение само открыть не умеет."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -6874,6 +6882,10 @@ msgstr "достигнут {0}"
 msgid "Read {0}"
 msgstr "Прочитано: {0}"
 
+#: src/screens/Import/FilePreview.tsx
+msgid "Read by the {readBy} plugin, which turned it into the app's own transaction file."
+msgstr "Файл прочитан плагином {readBy} и превращён в собственный файл операций приложения."
+
 #. placeholder {0}: name(tool)
 #: src/components/domain/AiTools.tsx
 #~ msgid "Reading {0}…"
@@ -8186,6 +8198,12 @@ msgstr "Пароль неверный."
 msgid "The \"Total\" summary rows"
 msgstr "Итоговые строки «Всего»"
 
+#. placeholder {0}: detail.plugin
+#. placeholder {1}: detail.message
+#: src/components/ui/Async.tsx
+msgid "The {0} reader could not read this file: {1}"
+msgstr "Читатель {0} не смог прочитать этот файл: {1}"
+
 #: src/screens/Import/labels.ts
 msgid "the account is not mapped"
 msgstr "счёт не сопоставлен"
@@ -9044,6 +9062,10 @@ msgstr "У этой классификации нет цели"
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "This device opens the profile without asking; anyone using it can too."
 msgstr "Это устройство открывает профиль без пароля — и любой, кто им пользуется, тоже."
+
+#: src/components/ui/Async.tsx
+msgid "This file is password-protected and cannot be read."
+msgstr "Файл защищён паролем и не может быть прочитан."
 
 #: src/components/domain/ListingPicker.tsx
 #~ msgid "This instrument carries no ISIN, and the directory looks venues up by it — one ticker is reused by different companies on different exchanges. Add the ISIN under \"Edit\" and the venues appear here."

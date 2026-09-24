@@ -1,15 +1,20 @@
 [workspace]
 resolver = "3"
 members = ["core", "cli", "app/src-tauri"]
+# The example plugin's guest builds for wasm32-wasip2, and a workspace resolves one set of
+# features for one target. It is built by `examples/plugins/mt940/build.sh`, not by `cargo build`.
+exclude = ["examples/plugins/mt940/src"]
 
 # Dependency versions live in the workspace so core and cli always build
 # against the same crates.
 [workspace.package]
 version = "0.3.0"
 edition = "2024"
-# Edition 2024 needs 1.85, `is_multiple_of` needs 1.87. The pin in rust-toolchain.toml is what
-# CI and a clone actually use; this is the floor a dependency is resolved against.
-rust-version = "1.87"
+# Edition 2024 needs 1.85 and `is_multiple_of` needs 1.87, but `wasmtime` needs 1.96, so that is
+# the floor for everyone: one number the whole workspace is read against. The pin in
+# rust-toolchain.toml is what CI and a clone actually use; this is the floor a dependency is
+# resolved against.
+rust-version = "1.96"
 license = "AGPL-3.0-only"
 homepage = "https://stonqs.app"
 repository = "https://github.com/vvvlladimir/stonqs"
@@ -58,6 +63,19 @@ sys-locale = "0.3"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 # The profile vault (ADR-0048): Argon2id turns a password into a key, XChaCha20-Poly1305 seals.
 argon2 = "0.5"
+# A file reader plugin is a WASM component and the host is the only place that runs one
+# (ADR-0070/0073) — `core` stays a library that knows nothing about who calls it. Default features
+# off: the cache, the profiler, parallel compilation and the text format are all things a reader
+# of a broker file has no use for. Cranelift stays on everywhere, iOS included: there it compiles
+# to Pulley bytecode, which is interpreted rather than mapped executable.
+wasmtime = { version = "49", default-features = false, features = ["runtime", "std", "component-model", "cranelift", "async"] }
+# WASI itself is not granted — no preopened directory and no address is reachable. It is linked
+# because a guest carrying a language runtime will not instantiate without `wasi:clocks` and
+# `wasi:random`, which are handed over frozen and seeded instead (ADR-0073).
+wasmtime-wasi = { version = "49", default-features = false, features = ["p2"] }
+# Only ever seeded, never from the OS: it is what a plugin is handed in place of real
+# randomness, so two runs over one file answer the same (ADR-0073).
+rand = { version = "0.10", default-features = false, features = ["std", "std_rng"] }
 chacha20poly1305 = "0.10"
 zeroize = "1"
 base64 = "0.22"

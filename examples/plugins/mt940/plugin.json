@@ -1,0 +1,17 @@
+{
+  "id": "app.stonqs.mt940",
+  "api": 1,
+  "name": "MT940 bank statements",
+  "version": "1.0.0",
+  "provides": {
+    "readers": [
+      {
+        "id": "mt940",
+        "file": "reader.wasm",
+        "sample": "sample.sta",
+        "expected": "expected.json",
+        "extensions": [".sta", ".mt940", ".940"]
+      }
+    ]
+  }
+}

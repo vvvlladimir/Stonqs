@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "@phosphor-icons/react";
 import { api } from "../../lib/api";
-import { affects, useAccounts, useImportTemplates, useInvalidate } from "../../lib/queries";
+import { affects, useAccounts, useImportTemplates, useInvalidate, usePlugins } from "../../lib/queries";
 import { Page } from "../../components/Page";
 import { Banner, Buttons, Chip, QueryError } from "../../components/ui";
 import type {
@@ -58,6 +58,7 @@ export function Import() {
 
   const accounts = useAccounts();
   const templates = useImportTemplates();
+  const plugins = usePlugins();
 
   const load = useMutation({
     mutationFn: api.importLoadPath,
@@ -98,9 +99,17 @@ export function Import() {
   };
 
   const pickFile = async () => {
+    // A plugin's reader is only reachable if its files can be picked, so the filter is the app's
+    // own endings plus whatever the installed readers say they read.
+    const fromPlugins = (plugins.data?.plugins ?? [])
+      .filter((plugin) => plugin.status === "ok")
+      .flatMap((plugin) => plugin.readers)
+      .flatMap((reader) => reader.extensions)
+      .map((extension) => extension.replace(/^\./, "").toLowerCase());
+    const extensions = [...new Set(["csv", "txt", "xml", "json", ...fromPlugins])];
     const path = await open({
       multiple: false,
-      filters: [{ name: "Broker export", extensions: ["csv", "txt", "xml"] }],
+      filters: [{ name: "Broker export", extensions }],
     });
     if (typeof path !== "string") return;
     setFileName(path.split("/").pop() ?? path);

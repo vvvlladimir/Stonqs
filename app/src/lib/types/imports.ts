@@ -296,6 +296,19 @@ export interface ImportPreviewData extends ImportPreview {
   headers: string[];
   /** Id of the layout the file was recognised as; absent when nothing fitted. */
   applied_template?: string;
+  /** `<plugin id>/<reader id>` when a plugin's reader is what turned this file into something
+   *  the wizard can read. Absent for a file one of the app's own readers handled. */
+  reader?: string;
+  /** What that reader had to say. Its own words: the app has no table to translate them from. */
+  reader_warnings?: ReaderWarning[];
+}
+
+/** A file reader's own warning about the file it read. */
+export interface ReaderWarning {
+  plugin: string;
+  row?: number;
+  code: string;
+  message: string;
 }
 
 export interface ImportOptions {

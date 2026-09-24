@@ -287,3 +287,21 @@ fn attribute_import_preview_keys_match_the_typescript_types() {
     );
     assert_eq!(json["rows"][0]["matched_by"], Value::String("isin".into()));
 }
+
+/// What a plugin's reader adds to the wizard's payload, and nothing else: the preview itself is
+/// unchanged, because a reader produces the app's own transaction file and stops there (ADR-0073).
+#[test]
+fn a_reader_reaches_the_wizard_as_an_id_and_its_own_warnings() {
+    use sq_app_lib::plugins::reader::ReaderWarning;
+
+    let json = serde_json::to_value(ReaderWarning {
+        plugin: "app.stonqs.mt940/mt940".into(),
+        row: Some(3),
+        code: "unreadable-line".into(),
+        message: "a statement line was skipped".into(),
+    })
+    .unwrap();
+
+    assert_eq!(keys(&json), ["code", "message", "plugin", "row"]);
+    assert_eq!(json["row"], 3);
+}

@@ -57,6 +57,14 @@
   `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
   `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
   wrong pair erases a real deposit and a real withdrawal from every return figure at once.
+- A **reader** can arrive as a plugin too (ADR-0073), and it is the level that has no privileges:
+  it produces a `stonqs.transactions` document and everything after that is the one wizard, the one
+  identity check and the one commit. It is run by the host, once, at load — `import::parse_file`
+  itself never learns a plugin exists. The manifest declares the endings it is offered plus a
+  `sample` **and** an `expected`: a layout that misreads a column leaves a question in the wizard,
+  while a reader that misreads one hands over a document that looks perfectly correct, so it is
+  checked against an answer rather than against a shrug, and a package failing that installs
+  nothing.
 - A layout can arrive as a **plugin** (ADR-0070), and then it is identity that keeps it apart from
   the shipped ones: every layout in the wizard's list carries an `id` (`user:<name>`,
   `builtin:<name>`, or a plugin's `<plugin id>/<layout id>`), and the commands take that, never the

@@ -19,12 +19,23 @@ export interface PluginLayout {
   sample: string;
 }
 
+/** A file reader a plugin brings: a WebAssembly component that turns bytes the app cannot read
+ *  into its own transaction file. `extensions` is what it is offered; empty means anything. */
+export interface PluginReader {
+  id: string;
+  file: string;
+  sample: string;
+  expected: string;
+  extensions: string[];
+}
+
 export type Plugin = {
   id: string;
   name: string;
   version: string;
   themes: PluginTheme[];
   layouts: PluginLayout[];
+  readers: PluginReader[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */

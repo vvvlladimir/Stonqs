@@ -58,6 +58,10 @@ export function useUiErrorText(detail: UiError): string {
       return i18n._(
         msg`A quote refresh or an AI answer is still using the data. Try again when it finishes.`,
       );
+    case "file_protected":
+      return i18n._(msg`This file is password-protected and cannot be read.`);
+    case "reader":
+      return i18n._(msg`The ${detail.plugin} reader could not read this file: ${detail.message}`);
     case "internal":
       return i18n._(msg`Internal error: ${detail.message}`);
   }

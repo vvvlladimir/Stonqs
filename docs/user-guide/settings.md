@@ -97,6 +97,21 @@ beside the data, because the lock screen needs them before any password is typed
 removing a password can be refused while a quote refresh or an AI answer is running; it works once
 that finishes.
 
+**Plugins** — what the app has been extended with, and what each one brings. A plugin is installed
+from a folder on this machine; there is no catalogue to browse and nothing is downloaded. Three
+kinds of content are honoured: colour themes, which then appear under Appearance; broker import
+layouts, which appear in the import wizard's layout list; and readers for file formats the app
+cannot open by itself, which are used automatically when such a file is imported.
+
+A plugin never changes what a figure means — how a return, a cost basis or a position is computed
+is fixed in the app. A package built for another version of the app is listed with that as the
+reason and is not used, rather than half-loaded. Removing a plugin takes everything it brought with
+it, which is why a layout that came from one cannot be deleted on its own.
+
+A file reader in particular has no access to the internet, to the disk or to the clock, so it
+cannot send the statement it is reading anywhere, and it must prove itself against the sample it
+ships before it can be installed at all.
+
 **Updates** — which version is running, and whether the app may look for a newer one. With `Check
 for updates automatically` on, it asks once a day whether a newer version has been published;
 `Check for updates` asks straight away. Finding one changes nothing by itself: the app says what

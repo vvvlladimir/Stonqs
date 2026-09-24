@@ -1,7 +1,8 @@
 import { plural } from "@lingui/core/macro";
-import { useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { Buttons, Panel } from "../../components/ui";
+import { Banner, Buttons, Panel } from "../../components/ui";
+import { usePlugins } from "../../lib/queries";
 import type { ImportMapping, ImportPreviewData } from "../../lib/types";
 import { FileTable } from "./FileTable";
 
@@ -25,9 +26,16 @@ export function FilePreview({
 }) {
   const { t } = useLingui();
   const [all, setAll] = useState(false);
+  const plugins = usePlugins();
 
   const rows = all ? preview.rows : preview.rows.slice(0, SHOWN);
   const more = preview.rows.length > SHOWN;
+  // The table below is what the reader produced, not what was on disk — which is worth saying,
+  // because the columns in it are the app's own and not the ones the file had.
+  const readBy = preview.reader
+    ? (plugins.data?.plugins.find((p) => p.id === preview.reader?.split("/")[0])?.name ??
+      preview.reader.split("/")[0])
+    : null;
 
   return (
     <Panel
@@ -50,6 +58,18 @@ export function FilePreview({
       }
       table
     >
+      {readBy && (
+        <Banner>
+          <Trans>Read by the {readBy} plugin, which turned it into the app's own transaction file.</Trans>
+        </Banner>
+      )}
+      {preview.reader_warnings?.map((warning, index) => (
+        // The reader's own words, in its own language: the app has no table to translate a
+        // stranger's code from, so it is shown beside the sentence rather than instead of it.
+        <Banner key={index}>
+          {warning.message} ({warning.code})
+        </Banner>
+      ))}
       <FileTable preview={preview} mapping={mapping} rows={rows} />
     </Panel>
   );

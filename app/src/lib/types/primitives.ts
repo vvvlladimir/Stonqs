@@ -49,6 +49,10 @@ export type UiError =
   | { code: "password_required"; message: string }
   | { code: "wrong_password"; message: string }
   | { code: "busy"; message: string }
+  /** A plugin's file reader recognised the file and needs the password it is sealed with. */
+  | { code: "file_protected"; message: string }
+  /** A plugin's file reader failed over a file it claimed: `plugin` is which one. */
+  | { code: "reader"; plugin: string; message: string }
   | { code: "internal"; message: string };
 
 // Positions

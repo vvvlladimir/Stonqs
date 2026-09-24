@@ -34,6 +34,9 @@ uuid.workspace = true
 chrono.workspace = true
 rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
+wasmtime.workspace = true
+wasmtime-wasi.workspace = true
+rand.workspace = true
 
 # The updater replaces an installed bundle, which is a thing only a desktop OS lets an app do.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

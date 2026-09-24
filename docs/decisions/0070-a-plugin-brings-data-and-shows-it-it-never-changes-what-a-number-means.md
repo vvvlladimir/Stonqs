@@ -1,6 +1,7 @@
 # 70: A plugin brings data and shows it; it never changes what a number means
 
-- Status: Accepted; data plugins (themes, broker layouts) are implemented, UI and compute are not yet
+- Status: Accepted; data plugins (themes, broker layouts) and the file reader are implemented
+  (the reader's contract is ADR-0073), UI plugins and a quote source are not yet
 
 ## Context
 

@@ -5,8 +5,10 @@ A plugin is a folder holding a `plugin.json` and the files that manifest names. 
 into its own plugin directory, so the folder you picked is free to move afterwards.
 
 See [ADR-0070](../../docs/decisions/0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md)
-for what a plugin may and may not be. This build honours two kinds of content: themes and broker
-import layouts.
+for what a plugin may and may not be, and
+[ADR-0073](../../docs/decisions/0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
+for the file reader. This build honours three kinds of content: themes, broker import layouts and
+file readers.
 
 ## `midnight` — a theme
 
@@ -73,6 +75,69 @@ A layout from a plugin appears in the wizard's list under **From plugins**, afte
 and before the shipped ones. It cannot be deleted there: it arrived with the plugin and it leaves
 with it.
 
+## `mt940` — a file reader
+
+MT940 is the SWIFT bank statement most European banks still export: tagged text, one `:61:` line
+per entry, no columns anywhere. No import layout can express it, which is exactly the case a
+reader exists for.
+
+```json
+{
+  "id": "app.stonqs.mt940",
+  "api": 1,
+  "name": "MT940 bank statements",
+  "version": "1.0.0",
+  "provides": {
+    "readers": [
+      {
+        "id": "mt940",
+        "file": "reader.wasm",
+        "sample": "sample.sta",
+        "expected": "expected.json",
+        "extensions": [".sta", ".mt940", ".940"]
+      }
+    ]
+  }
+}
+```
+
+A reader is a **WebAssembly component**, and it is handed one thing and asked for one thing:
+
+```
+read(bytes, hints{ file-name, password }) -> result<{ canonical, warnings }, error>
+```
+
+`canonical` is one of the app's own transaction files — the same format **Export** writes, so
+there is nothing new to learn and nothing to keep in step. The contract itself is
+`app/src-tauri/wit/reader.wit`; `src/` here is the guest, about 250 lines of Rust with one
+dependency, built by `./build.sh` (`rustup target add wasm32-wasip2` once).
+
+What the module can reach is the whole of what it is given:
+
+- **No filesystem, no network, no address of any kind.** A reader of your bank statement is
+  *unable* to send it anywhere. That is the reason this is WebAssembly and not a plain library.
+- **No real clock and no real randomness.** Both are linked, because a language runtime will not
+  start without them, and both are frozen and seeded — so a reader cannot answer differently twice.
+- A ceiling on memory, and a deadline. A module that runs past either fails the import rather than
+  hanging the app.
+
+The reader runs **once**, when the file is loaded, and what it produced is what the wizard previews
+and what the commit writes. Nothing calls it a second time, so the preview cannot show one thing
+and the import write another.
+
+`extensions` is what the reader is offered. Empty means every file the app did not already
+recognise, which is honest for a format with no ending of its own and expensive for everyone else.
+
+`expected` is **required**, and it is stricter than a layout's `sample`: it is the document the
+sample must come out as. Before installing, the app runs the reader on its own sample and compares.
+A layout that misreads a column leaves a visible question in the wizard; a reader that misreads one
+hands over a file that looks perfectly correct, so it is checked against an answer rather than
+against a shrug.
+
+Returning `not-mine` is not a failure — the app moves on to the next reader and then to its own.
+Returning `malformed` is, and it says so with the reader's own reason. A warning does not stop
+anything: it is shown beside the preview, in the reader's words.
+
 ## When a package is wrong
 
 Installation is the check, and it refuses rather than half-installs:
@@ -86,6 +151,8 @@ Installation is the check, and it refuses rather than half-installs:
 | A file the manifest names is missing, or its name leaves the package (`../`) | Refused |
 | The layout file does not parse, or names a column or operation the app has no such thing as | Refused, and the message lists what the app does have |
 | The layout does not recognise its own sample, leaves a wording of it unmapped, or reads a row of it as invalid | Refused, saying which |
+| A reader's `file` is not a WebAssembly component, or the module fails to start | Refused |
+| A reader does not recognise its own sample, produces something that is not a transaction file, or produces a different one from `expected` | Refused, saying which |
 
 A field the manifest carries that this build does not know is **ignored**, not refused — that is
 what lets a package add something for a later version without breaking this one. The cost is that a

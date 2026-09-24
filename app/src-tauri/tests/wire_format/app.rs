@@ -41,6 +41,25 @@ fn error_codes_match_the_typescript_union() {
     assert_eq!(keys(&json), ["code", "date", "key", "kind", "message"]);
 }
 
+#[test]
+fn a_reader_failure_names_the_plugin_it_came_from() {
+    // Two codes rather than one, because the user's next action differs: type a password, or
+    // stop expecting this plugin to read this file (ADR-0073).
+    let json = serde_json::to_value(sq_app_lib::error::UiError::Reader {
+        plugin: "app.stonqs.mt940/mt940".into(),
+        message: "the statement holds no readable line".into(),
+    })
+    .unwrap();
+    assert_eq!(json["code"], "reader");
+    assert_eq!(keys(&json), ["code", "message", "plugin"]);
+
+    let json = serde_json::to_value(sq_app_lib::error::UiError::FileProtected {
+        message: "sealed".into(),
+    })
+    .unwrap();
+    assert_eq!(json["code"], "file_protected");
+}
+
 /// Progress events are discriminated by the `event` field.
 #[test]
 fn job_progress_is_tagged_by_event() {
@@ -344,7 +363,7 @@ fn profile_list_keys_match_the_typescript_types() {
 
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
-    use sq_app_lib::plugins::{Base, PluginInfo, Status, ThemeDef};
+    use sq_app_lib::plugins::{Base, PluginInfo, ReaderDef, Status, ThemeDef};
 
     let json = serde_json::to_value(PluginInfo {
         id: "com.example.midnight".into(),
@@ -357,6 +376,13 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             base: Base::Dark,
         }],
         layouts: Vec::new(),
+        readers: vec![ReaderDef {
+            id: "mt940".into(),
+            file: "reader.wasm".into(),
+            sample: "sample.sta".into(),
+            expected: "expected.json".into(),
+            extensions: vec![".sta".into()],
+        }],
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -366,9 +392,15 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     assert_eq!(
         keys(&json),
         [
-            "id", "layouts", "name", "speaks", "status", "themes", "version", "wants"
+            "id", "layouts", "name", "readers", "speaks", "status", "themes", "version", "wants"
         ]
     );
     assert_eq!(json["status"], "api");
     assert_eq!(json["themes"][0]["base"], "dark");
+    // A reader carries the sample *and* what that sample must read as: the pair is what makes a
+    // stranger's module checkable before it is installed (ADR-0073).
+    assert_eq!(
+        keys(&json["readers"][0]),
+        ["expected", "extensions", "file", "id", "sample"]
+    );
 }
