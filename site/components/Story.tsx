@@ -54,6 +54,11 @@ export function Brokers() {
           ))}
         </div>
       </div>
+      <Wrap>
+        <p className="mt-6 text-center text-xs text-ink-3">
+          Broker names are trademarks of their owners. Stonqs is not affiliated with or endorsed by any of them.
+        </p>
+      </Wrap>
     </section>
   );
 }
