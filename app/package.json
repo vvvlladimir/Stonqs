@@ -9,6 +9,7 @@
     "dev": "vite",
     "dev:app": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "record:ipc": "VITE_RECORD_IPC=1 tauri dev --config src-tauri/tauri.dev.conf.json",
+    "record:tour": "node scripts/record-tour.mjs",
     "build": "tsc --noEmit && vite build",
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",

@@ -6,7 +6,7 @@ import { lingui } from "@lingui/vite-plugin";
 const IPC_FIXTURE = "e2e/fixtures/ipc.json";
 
 /**
- * Collects what `pnpm record:ipc` sends (src/lib/ipcRecord.ts) into one fixture the website's
+ * Collects what `pnpm record:tour` (or `record:ipc`, clicked by hand) sends (src/lib/ipcRecord.ts) into one fixture the website's
  * screenshot script replays. The latest answer per command and arguments wins, so clicking
  * through a screen twice does not grow the file.
  */
@@ -20,12 +20,21 @@ function ipcRecorder(): Plugin {
         recorded_at: new Date().toISOString(),
         calls: {},
       };
-      try {
-        fixture = { ...JSON.parse(readFileSync(IPC_FIXTURE, "utf8")), recorded_at: fixture.recorded_at };
-      } catch {
-        mkdirSync("e2e/fixtures", { recursive: true });
+      mkdirSync("e2e/fixtures", { recursive: true });
+      // A tour records everything from scratch; clicking by hand adds to what is there.
+      if (!process.env.VITE_RECORD_TOUR) {
+        try {
+          fixture = { ...JSON.parse(readFileSync(IPC_FIXTURE, "utf8")), recorded_at: fixture.recorded_at };
+        } catch {}
       }
       let timer: ReturnType<typeof setTimeout> | undefined;
+      // The tour's last request: write at once and mark the file complete for scripts/record-tour.mjs.
+      server.middlewares.use("/__ipc-record/done", (_req, res) => {
+        clearTimeout(timer);
+        writeFileSync(IPC_FIXTURE, JSON.stringify({ ...fixture, complete: true }, null, 1));
+        res.statusCode = 204;
+        res.end();
+      });
       server.middlewares.use("/__ipc-record", (req, res) => {
         let body = "";
         req.on("data", (chunk) => (body += chunk));

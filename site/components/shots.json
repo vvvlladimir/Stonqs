@@ -1,11 +1,32 @@
 {
+  "allocation": {
+    "width": 2324,
+    "height": 730,
+    "small": 800
+  },
   "chart": {
     "width": 2324,
-    "height": 746
+    "height": 1060,
+    "small": 800
+  },
+  "goals": {
+    "width": 2324,
+    "height": 640,
+    "small": 800
+  },
+  "income": {
+    "width": 2324,
+    "height": 660,
+    "small": 800
   },
   "kpis": {
     "width": 2324,
-    "height": 186
+    "height": 202,
+    "small": 800
+  },
+  "mobile": {
+    "width": 900,
+    "height": 1759
   },
   "nav": {
     "width": 460,
@@ -13,6 +34,17 @@
   },
   "overview": {
     "width": 1800,
-    "height": 1146
+    "height": 1146,
+    "small": 800
+  },
+  "performance": {
+    "width": 2324,
+    "height": 452,
+    "small": 800
+  },
+  "rebalance": {
+    "width": 2324,
+    "height": 672,
+    "small": 800
   }
 }

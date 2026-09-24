@@ -68,29 +68,42 @@ export function Reveal({
 }
 
 /**
- * A real screenshot of the app, in the colour scheme the visitor's OS asks for. Its size comes from
- * shots.json, which scripts/screenshots.mjs rewrites with the images.
+ * A real screenshot of the app, in the colour scheme the visitor's OS asks for. Its size, and
+ * whether an 800px copy exists, come from shots.json, which scripts/screenshots.mjs rewrites.
  */
 export function Shot({
   name,
   alt,
   className,
   priority,
+  sizes = "(min-width: 1240px) 1240px, 100vw",
 }: {
   name: keyof typeof shots;
   alt: string;
   className?: string;
   priority?: boolean;
+  /** How wide the image is drawn, so a phone picks the small copy. */
+  sizes?: string;
 }) {
-  const { width, height } = shots[name];
+  const shot: { width: number; height: number; small?: number } = shots[name];
+  const set = (scheme: string) =>
+    shot.small
+      ? `/assets/${name}-${scheme}-${shot.small}.webp ${shot.small}w, /assets/${name}-${scheme}.webp ${shot.width}w`
+      : undefined;
   return (
     <picture>
-      <source srcSet={`/assets/${name}-dark.webp`} media="(prefers-color-scheme: dark)" />
+      <source
+        srcSet={set("dark") ?? `/assets/${name}-dark.webp`}
+        sizes={shot.small ? sizes : undefined}
+        media="(prefers-color-scheme: dark)"
+      />
       <img
         src={`/assets/${name}-light.webp`}
+        srcSet={set("light")}
+        sizes={shot.small ? sizes : undefined}
         alt={alt}
-        width={width}
-        height={height}
+        width={shot.width}
+        height={shot.height}
         className={className}
         loading={priority ? "eager" : "lazy"}
         fetchPriority={priority ? "high" : "auto"}

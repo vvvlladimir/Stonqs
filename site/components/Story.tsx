@@ -119,11 +119,11 @@ export function Chart() {
           </p>
         </Reveal>
         <Reveal delay={0.1} className="mt-12">
-          <div className="shadow-frame overflow-hidden rounded-2xl border border-line bg-surface">
+          <div className="shadow-frame overflow-hidden rounded-2xl border border-line bg-bg p-3 md:p-5">
             <Shot
               name="chart"
               className="h-auto w-full"
-              alt="The Value and flows chart: portfolio value from June 2024 to September 2026, rising from about 5,000 to 6,800 EUR, with the deposits marked along the bottom."
+              alt="The Value and flows chart: portfolio value from September 2023 to September 2026, rising to about 68,000 EUR, with the deposits marked along the bottom and the pointer on December 9, 2025 at 44,036.28 EUR."
             />
           </div>
         </Reveal>

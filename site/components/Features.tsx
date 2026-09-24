@@ -102,7 +102,7 @@ export function Features() {
                 <Shot
                   name="nav"
                   className="absolute left-8 top-0 w-[240px] max-w-none rounded-tl-2xl border-l border-t border-line bg-surface"
-                  alt="The app's navigation: Overview, Positions, Transactions, Accounts, Instruments, Watchlist, Plans, Alerts, Performance, Trades, Risk, Allocation, Rebalance, Income, Import, Reports and Settings."
+                  alt="The app's navigation: Overview, Positions, Transactions and Allocation as favourites, then the Portfolio section with Accounts, Instruments, Watchlist and Alerts, and the Analysis, Planning and Data sections."
                 />
               </div>
             }
@@ -139,11 +139,11 @@ export function Features() {
             icon={CurrencyCircleDollarIcon}
             title="Any currency, any account."
             visual={
-              <div className="mt-auto border-t border-line">
+              <div className="mt-auto border-t border-line bg-bg p-3 md:p-4">
                 <Shot
                   name="kpis"
                   className="h-auto w-full"
-                  alt="Four figures from the Overview: value 6,793.68 EUR, today +32.88 EUR, time-weighted return +40.37%, earned over the period +1,953.68 EUR."
+                  alt="Four figures from the Overview: value 68,138.61 EUR, today +194.27 EUR, time-weighted return +53.37 %, earned over the period +17,795.20 EUR."
                 />
               </div>
             }

@@ -45,9 +45,11 @@ pnpm tauri dev           # desktop app against the release data dir (app.stonqs)
 pnpm dev:app             # same, but identifier app.stonqs.dev -> its own profiles/DB
 pnpm tauri build         # bundled desktop app
 pnpm build               # frontend only: tsc --noEmit && vite build
+pnpm record:tour         # fresh demo profile, every screen, IPC -> e2e/fixtures/ipc.json (for site screenshots)
 pnpm i18n:extract        # refresh src/locales/{en,ru}/messages.po from the code
 pnpm i18n:compile        # compile catalogs (the Vite plugin does this during a build)
 bash scripts/make-icons.sh    # regenerate every icon from app-icon.svg
+cd ../site && pnpm screenshots [--only a,b] [--preview]  # site images + og.jpg from that fixture
 bash scripts/dev-signing-cert.sh  # once per Mac: stable dev signature, so keychain "Always Allow" sticks
 ```
 

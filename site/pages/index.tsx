@@ -3,6 +3,7 @@ import { Features } from "@/components/Features";
 import { Download, Faq, Footer } from "@/components/Get";
 import { Header, Hero } from "@/components/Hero";
 import { Brokers, Chart, Returns } from "@/components/Story";
+import { Tour } from "@/components/Tour";
 import { Assistant, Privacy } from "@/components/Trust";
 
 const TITLE = "Stonqs: a private portfolio tracker for your desktop";
@@ -33,6 +34,7 @@ export default function Home() {
         <Brokers />
         <Returns />
         <Chart />
+        <Tour />
         <Features />
         <Assistant />
         <Privacy />

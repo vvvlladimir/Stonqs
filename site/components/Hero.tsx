@@ -81,7 +81,7 @@ export function Hero() {
             name="overview"
             priority
             className="h-auto w-full min-w-0"
-            alt="The Overview screen of Stonqs: portfolio value, today's change, time-weighted return and money earned, above a chart of value and deposits over two years."
+            alt="The Overview screen of Stonqs: value 68,138.61 EUR, today +194.27 EUR, time-weighted return +53.37 % and +17,795.20 EUR earned, above a chart of value and deposits over three years."
           />
         </motion.div>
       </Wrap>
