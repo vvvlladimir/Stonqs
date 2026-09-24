@@ -101,16 +101,18 @@ export function Num({ children, dim, className }: { children: ReactNode } & Valu
 
 /**
  * A date as a stacked block — day, month, year. A one-line date wraps into three lines in a
- * narrow table column; this shape is the same height whatever the column width is.
+ * narrow table column; this shape is the same height whatever the column width is. A list that
+ * only ever looks a few months ahead drops the year (`year={false}`): inside a dashboard tile
+ * the third line costs a row of the list and says nothing the list does not already imply.
  */
-export function DayMark({ date }: { date: string }) {
+export function DayMark({ date, year: withYear = true }: { date: string; year?: boolean }) {
   const [year, month, day] = date.split("-");
   if (!year || !month || !day) return <span className="daymark">{date}</span>;
   return (
     <span className="daymark">
       <b className="num">{Number(day)}</b>
       <span>{formatMonthShort(Number(month))}</span>
-      <span className="num">{year}</span>
+      {withYear && <span className="num">{year}</span>}
     </span>
   );
 }

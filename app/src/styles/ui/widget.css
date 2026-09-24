@@ -6,7 +6,15 @@
 }
 
 /* Two columns on a phone, six on a tablet, twelve on a desktop. A widget stores one width in
-   twelfths and the board scales it — see `screens/dashboard/grid.ts`. */
+   twelfths and the board scales it — see `screens/dashboard/grid.ts`.
+
+   The board is a container and so is every tile: a tile is laid out by its OWN width, never by
+   the window's. With the assistant panel open the board is half the screen, and a rule that
+   asked the window would give a 400px board twelve columns and a 300px tile a wide layout. */
+.wboard {
+  container-type: inline-size;
+  container-name: board;
+}
 .wgrid.is-moving,
 .wgrid.is-moving * {
   user-select: none;
@@ -21,11 +29,12 @@
   gap: var(--w-gap);
 }
 .w {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: var(--sp-5);
-  min-width: 0;
+  /* The frame, the radius and the padding are `.box` (`styles/ui/surface.css`), shared with a
+     screen's panel. `size`, not the box's `inline-size`: a tile's height is its row span, so it
+     is already independent of its content, and a block wanting to know whether it is short can
+     ask. A plain tile is sized BY its content and so keeps the inline-only form. */
+  container-type: size;
+  container-name: w;
   /* A tile is its row span tall, so its own content scrolls rather than pushing the grid. */
   min-height: 0;
   display: flex;
@@ -40,6 +49,24 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
+  gap: var(--sp-4);
+  /* Chrome, not content: thin, and coloured only once the tile is under the pointer. */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.w:hover .w__body {
+  scrollbar-color: var(--border-strong) transparent;
+}
+/* A body with more in it than fits says so with a fade rather than with a scrollbar that only
+   exists under a mouse. `is-cut` is set by the tile (`lib/overflow.ts`). */
+.w__body.is-cut {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent 100%);
+}
+.w__body.is-cut.is-scrolled {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 20px), transparent 100%);
+}
+.w__body.is-cut.is-ended {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 100%);
 }
 /* The summary tile: the text takes the room the tile has, the footer stays under it. */
 .brief {
@@ -55,13 +82,23 @@
   overflow: auto;
 }
 .brief__foot {
+  /* Never a flex item to squeeze: the text above it is what scrolls, the footer is the tile's
+     own line and keeps its height. */
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   font-size: var(--fs-sm);
 }
+/* The button says one thing and says it on one line: squeezed, it broke "Write a summary" into
+   two lines that the tile then clipped. It gives up the room beside it, never its own label. */
+.brief__foot .btn {
+  flex: none;
+  white-space: nowrap;
+}
 
 .w--plain {
+  container-type: inline-size;
   background: none;
   border-color: transparent;
   padding: 0 var(--sp-1);
@@ -73,11 +110,21 @@
 .w__head {
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
-  margin-bottom: var(--sp-5);
-  /* Tall enough for the edit-mode tools, always: the header reserving their room is what keeps
-     a widget's body the same height whether the board is being edited or not. */
-  min-height: 26px;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  /* No reserve for the edit tools: they float over the tile (further down), so this is the
+     height of one title line in both modes, and every tile gets those 8px back. */
+  min-height: 0;
+}
+/* The catalog already carries an icon per widget and the header never used it. On a board of
+   twenty tiles it is what makes one findable without reading. */
+.w__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  font-size: var(--fs-lg);
+  line-height: 1;
 }
 .w__head--grab {
   cursor: grab;
@@ -88,8 +135,8 @@
    negative margin is paid back by equal padding, which leaves the box where it was. A plain
    tile has no vertical padding to reach into, so it keeps its own header. */
 .w:not(.w--plain) .w__head--grab {
-  margin: calc(var(--sp-5) * -1) calc(var(--sp-5) * -1) 0;
-  padding: var(--sp-5);
+  margin: calc(var(--box-pad) * -1) calc(var(--box-pad) * -1) 0;
+  padding: var(--box-pad);
 }
 .w__head--grab:active {
   cursor: grabbing;
@@ -99,13 +146,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-med);
+  letter-spacing: 0;
+  color: var(--text-2);
 }
+/* The period is a value, not a whisper: it wears the shape of a control, because "over which
+   window is this figure" is the most misread thing on a board. */
 .w__meta {
-  font-size: var(--fs-meta);
-  color: var(--text-3);
-  white-space: nowrap;
+  flex: none;
   margin-left: auto;
+  padding: 1px var(--sp-3);
+  border-radius: var(--r-chip);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
 }
 .w__tools {
   display: none;
@@ -119,9 +175,26 @@
   font-size: var(--fs-lg);
 }
 .w__foot {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
   font-size: var(--fs-meta);
   color: var(--text-3);
-  margin-top: var(--sp-3);
+}
+/* A figure's own note is one line under the number and owns no rule: a hairline there would cut
+   a three-row tile in half. It also never wraps — the tile may be as short as the number. */
+.w__foot--bare {
+  display: block;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .wbtn {
   width: 26px;
@@ -144,7 +217,10 @@
   border-color: color-mix(in srgb, var(--neg) 35%, var(--border));
 }
 .is-editing .w {
-  border-style: dashed;
+  border-color: var(--border);
+  box-shadow: inset 0 0 0 1px var(--surface-3);
+}
+.is-editing .w:hover {
   border-color: var(--border-strong);
 }
 /* While editing a tile is arranged, not read: a press that misses a handle by a pixel must not
@@ -156,8 +232,27 @@
 .is-editing .w__grip {
   display: inline-flex;
 }
+/* Floating, so the header keeps its height and a two-word title is not ellipsised the moment
+   the board is arranged. */
+.is-editing .w__tools {
+  position: absolute;
+  top: var(--sp-3);
+  right: var(--sp-3);
+  z-index: 2;
+  padding: var(--sp-1);
+  border-radius: var(--r-input);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+  margin-left: 0;
+}
+.is-editing .w__grip {
+  color: var(--border-strong);
+}
+/* The period stays readable while the board is arranged: hiding it made a tile's identity
+   change under the gesture. */
 .is-editing .w__meta {
-  display: none;
+  opacity: 0.4;
 }
 .is-editing .w--plain {
   background: var(--surface-2);
@@ -167,6 +262,7 @@
    so the landing place is visible before the drop. It must not be hit-testable — the board asks
    what is under the cursor, and the answer may not be the tile riding on it. */
 .w.is-drag {
+  border-radius: var(--r-lg);
   z-index: 30;
   pointer-events: none;
   cursor: grabbing;
@@ -177,7 +273,7 @@
 }
 .wslot {
   border: 1px dashed var(--accent);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
   background: var(--accent-softer);
   min-width: 0;
   min-height: 0;
@@ -284,7 +380,7 @@
   gap: var(--sp-4);
   min-height: 0;
   border: 1px dashed var(--border-strong);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
   background: none;
   cursor: pointer;
   color: var(--text-2);
@@ -298,14 +394,140 @@
   display: flex;
 }
 
-@media (min-width: 700px) {
+@container board (min-width: 700px) {
   .wgrid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1000px) {
+@container board (min-width: 1000px) {
   .wgrid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
+    --w-gap: var(--sp-6);
+  }
+}
+
+/* ------------------------------------------------------------ density, by tile width */
+
+/* A narrow tile is not a small wide one. It drops the icon and the chip, and tightens its
+   padding, before anything it is showing gets smaller. Thresholds are content-box widths,
+   which is what a container query measures — the tile itself is `--box-pad` wider. */
+@container w (max-width: 200px) {
+  .w__icon,
+  .w__meta {
+    display: none;
+  }
+}
+/* Padding is asked of the BOARD, not of the tile: an element cannot answer a container query it
+   declares itself, so the rules that set this on `.w` inside `@container w` matched nothing. A
+   phone board is where every tile is narrow, which is the case those rules were written for. */
+@container board (max-width: 699px) {
+  .w {
+    --box-pad: var(--sp-5);
+  }
+}
+
+/* A row inside a tile is denser than a row on a screen: the tile has its own padding, and a
+   list showing five names instead of three is the reason the widget exists. */
+.w .rows > .row {
+  padding: var(--sp-3) var(--sp-2);
+  gap: var(--sp-4);
+  border-top: 0;
+}
+.w .rows > .row + .row {
+  border-top: 1px solid var(--border);
+}
+.w .row__name {
+  font-size: var(--fs-sm);
+}
+
+@container w (max-width: 260px) {
+  .w__head h2 {
+    font-size: var(--fs-meta);
+  }
+}
+
+/* A phone column, and nothing inside the tile competes for the line any more: the name takes
+   the line and the figure goes under it. The threshold is the width at which a name and a
+   figure side by side really do stop fitting — a 3/12 tile on a wide board is above it and
+   keeps the two-column reading, which is where this used to fire a whole tile too early. */
+@container w (max-width: 200px) {
+  /* Two explicit rows, so `1 / -1` is a line that exists: without a row template the explicit
+     grid has none, `-1` resolves back to line 1, and the marker sat in the first row instead of
+     standing beside both of them. */
+  .w .rows > .row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: var(--sp-4);
+    row-gap: 0;
+    padding: var(--sp-4) var(--sp-2);
+  }
+  /* The marker stands against the whole row, not against its first line. */
+  .w .row__lead {
+    grid-area: 1 / 1 / 3 / 2;
+  }
+  .w .row__main {
+    grid-area: 1 / 2 / 2 / 3;
+  }
+  .w .row__side {
+    grid-area: 2 / 2 / 3 / 3;
+    display: block;
+  }
+  /* A row that also carries a foot puts it under both, across the whole width — the grid has
+     two explicit rows, so a third is implicit and the foot is what asks for it. */
+  .w .row__foot {
+    grid-row: 3;
+    grid-column: 1 / -1;
+  }
+  /* The figure goes under the name and its second line under the figure: three short lines
+     read down a phone column, where one line of three columns is three ellipses. */
+  .w .row__vals {
+    justify-items: start;
+    text-align: left;
+    gap: 0;
+  }
+  .w .row__name {
+    white-space: normal;
+  }
+  .w .row__sub {
+    display: none;
+  }
+  /* A figure never wraps: "-4.1" over "2%" is a different number. */
+  .w .facts {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sp-3) var(--sp-4);
+    font-size: var(--fs-meta);
+  }
+  .w .facts dd,
+  .w .num {
+    white-space: nowrap;
+  }
+  /* The summary's footer: the button takes the line rather than being squeezed until its own
+     label wraps under its icon, and what it says about the text sits above it. */
+  .w .brief {
+    font-size: var(--fs-sm);
+  }
+  .w .brief__foot {
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    font-size: var(--fs-meta);
+  }
+  .w .brief__foot .spacer {
+    display: none;
+  }
+  .w .brief__foot .btn {
+    flex: 1 0 100%;
+    justify-content: center;
+    /* It has the line to itself here, and the label still has to fit on it. */
+    font-size: var(--fs-meta);
+    padding-inline: var(--sp-3);
+  }
+  /* A chart's legend gives up its gaps before it gives up its figures. */
+  .w .chart__legend {
+    gap: var(--sp-2) var(--sp-4);
+    font-size: var(--fs-micro);
+    margin-bottom: var(--sp-2);
   }
 }

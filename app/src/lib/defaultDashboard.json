@@ -9,7 +9,7 @@
         "id": "w-mu1of2l9-2",
         "type": "metric",
         "w": 3,
-        "h": 3,
+        "h": 4,
         "cfg": {
           "metric": "value"
         }
@@ -18,7 +18,7 @@
         "id": "w-mu1of2l9-3",
         "type": "metric",
         "w": 3,
-        "h": 3,
+        "h": 4,
         "cfg": {
           "metric": "day"
         }
@@ -27,7 +27,7 @@
         "id": "w-mu1of2l9-4",
         "type": "metric",
         "w": 3,
-        "h": 3,
+        "h": 4,
         "cfg": {
           "metric": "twr"
         }
@@ -36,7 +36,7 @@
         "id": "w-mu1of2l9-5",
         "type": "metric",
         "w": 3,
-        "h": 3,
+        "h": 4,
         "cfg": {
           "metric": "delta"
         }

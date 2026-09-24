@@ -13,7 +13,7 @@ import type { DateString } from "../../lib/types";
  * The date the reading screens answer for, beside the scope picker and wearing its look: two
  * lenses, one control shape. The date is not stored — see `lib/asOf`.
  */
-export function AsOfPicker({ variant }: { variant: "nav" | "dock" }) {
+export function AsOfPicker() {
   const { t } = useLingui();
   const { date, isToday, set, reset } = useAsOf();
   const [open, setOpen] = useState(false);
@@ -25,8 +25,9 @@ export function AsOfPicker({ variant }: { variant: "nav" | "dock" }) {
   };
 
   const Icon = isToday ? CalendarBlankIcon : ClockCounterClockwiseIcon;
-  const button =
-    variant === "nav" ? (
+
+  return (
+    <>
       <button
         type="button"
         className="scope scope--row"
@@ -37,20 +38,6 @@ export function AsOfPicker({ variant }: { variant: "nav" | "dock" }) {
         <span className="scope__label">{formatDayNumeric(date)}</span>
         <CaretUpDownIcon className="scope__caret" />
       </button>
-    ) : (
-      <button type="button" className="scope" onClick={() => setOpen(true)}>
-        <Icon className="scope__icon" />
-        <span className="min0">
-          <span className="scope__label">{isToday ? t`Today` : formatDay(date)}</span>
-          <span className="scope__sub">{isToday ? formatDay(date) : t`Past date`}</span>
-        </span>
-        <CaretUpDownIcon className="scope__caret" />
-      </button>
-    );
-
-  return (
-    <>
-      {button}
 
       {open && (
         <Modal title={t`Date`} onClose={() => setOpen(false)}>

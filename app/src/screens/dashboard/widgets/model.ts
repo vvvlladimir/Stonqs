@@ -43,6 +43,7 @@ export type Field =
   | "source"
   | "metric"
   | "ratio"
+  | "track"
   | "fire"
   | "period"
   | "foot"
@@ -147,6 +148,24 @@ export function ratioTerms(cfg: Record<string, unknown>): { top: string; bottom:
   const named = (key: string, fallback: string) =>
     typeof cfg[key] === "string" && cfg[key] in RATIO_TERMS ? (cfg[key] as string) : fallback;
   return { top: named("top", "income"), bottom: named("bottom", "value") };
+}
+
+/** What a progress tile tracks. One widget, three subjects — all three are a figure over a
+ * track, and which one it is belongs in the settings rather than in the catalog three times. */
+export type Track = "goal" | "limit" | "fire";
+
+const TRACKS: Track[] = ["goal", "limit", "fire"];
+
+/** What a progress tile calls itself: the subject it tracks, not the widget's own name. */
+export const TRACK_LABELS: Record<Track, MessageDescriptor> = {
+  goal: msg`Goal`,
+  limit: msg`Contribution limit`,
+  fire: msg`Financial independence`,
+};
+
+export function trackOf(cfg: Record<string, unknown>): Track {
+  const own = cfg.track;
+  return TRACKS.find((t) => t === own) ?? "goal";
 }
 
 /** The assumptions a FIRE tile was configured with; a blank one is not a zero. */

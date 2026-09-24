@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { slotVar } from "../../lib/plot";
+import { slotFor, slotVar, trackWidth } from "../../lib/plot";
+import { formatPercent } from "../../lib/format";
+import { Legend, LegendItem } from "./Legend";
 
 /**
  * Every horizontal track in the product: a single fill, a stacked split, or a
@@ -13,6 +15,7 @@ export interface BarSegment {
   width: string;
   /** Palette slot 1-8; falls back to the shared `--slot` of the bar. */
   slot?: number;
+  /** What the segment's tip says. */
   title?: string;
 }
 
@@ -25,6 +28,8 @@ export interface BarSpan {
 export interface BarProps {
   /** Single fill as a CSS width; ignored when `segments` are given. */
   fill?: string;
+  /** The same fill stated as a 0–1 share, clamped by `trackWidth`; `fill` wins if both are given. */
+  share?: string | number | null;
   segments?: BarSegment[];
   /** Palette slot for the fill and for segments that name none. */
   slot?: number;
@@ -49,6 +54,7 @@ export interface BarProps {
 
 export function Bar({
   fill,
+  share,
   segments,
   slot,
   tone,
@@ -65,6 +71,7 @@ export function Bar({
   if (tone) classes.push(`bar--${tone}`);
   if (open || segments) classes.push("bar--open");
   if (className) classes.push(className);
+  const filled = fill ?? (share === undefined || share === null ? undefined : trackWidth(share));
 
   return (
     <div
@@ -79,14 +86,81 @@ export function Bar({
               key={segment.key}
               className="bar__seg"
               style={{ ...slotVar(segment.slot), width: segment.width }}
-              title={segment.title}
+              data-tip={segment.title}
             />
           ))
-        : fill !== undefined && <i className="bar__fill" style={{ width: fill }} />}
+        : filled !== undefined && <i className="bar__fill" style={{ width: filled }} />}
       {over && <i className="bar__over" style={{ left: over.left, width: over.width }} />}
       {gap && <i className="bar__gap" style={{ left: gap.left, width: gap.width }} />}
       {tick !== undefined && <i className="bar__tick" style={{ left: tick }} />}
     </div>
+  );
+}
+
+/** One slice of a whole: what it is, how much of it there is, and what its tip says. */
+export interface ShareSlice {
+  key: string;
+  /** Legend text — a name, a chip, a link to the instrument. */
+  label: ReactNode;
+  /** Share of the whole, "0.25" = 25%. */
+  share: string | number;
+  /** Palette slot; falls back to the slice's place in the list. */
+  slot?: number;
+  /** Plain text for the tip, when `label` is not one — a link cannot go in an attribute. */
+  name?: string;
+  /** Replaces the share in the tip: for a composition of money, the amount reads better. */
+  tip?: string;
+}
+
+/**
+ * A stacked track and the legend that names it — one shape for every "what is this made of":
+ * a plan's split across instruments, a year's income by kind, a level's shares.
+ *
+ * The segments, the clamping, the fallback colours and the wording of the tip are built here
+ * rather than at each call site, which is where they had drifted into three spellings of one
+ * thing. Colour is still a palette slot on the track, never a class on the row.
+ */
+export function ShareBar({
+  slices,
+  size = "sm",
+  width,
+  label,
+  legend = true,
+}: {
+  slices: ShareSlice[];
+  size?: BarProps["size"];
+  /** Width of the track itself, for bars scaled against a peak rather than against their own. */
+  width?: string;
+  label?: string;
+  /** Off where the names are already beside the bar — a table, a row of its own. */
+  legend?: boolean;
+}) {
+  const tipOf = (slice: ShareSlice, subject: string) =>
+    slice.tip ?? `${subject}: ${formatPercent(String(slice.share), { digits: 1 })}`;
+
+  return (
+    <>
+      <Bar
+        size={size}
+        width={width}
+        label={label}
+        segments={slices.map((slice, index) => ({
+          key: slice.key,
+          slot: slice.slot ?? slotFor(index),
+          width: trackWidth(slice.share),
+          title: tipOf(slice, slice.name ?? (typeof slice.label === "string" ? slice.label : "")),
+        }))}
+      />
+      {legend && (
+        <Legend>
+          {slices.map((slice, index) => (
+            <LegendItem key={slice.key} slot={slice.slot ?? slotFor(index)}>
+              {slice.label}
+            </LegendItem>
+          ))}
+        </Legend>
+      )}
+    </>
   );
 }
 

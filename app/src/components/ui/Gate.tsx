@@ -17,7 +17,7 @@ export function Gate({
 }) {
   return (
     <div className="gate">
-      <section className="panel gate__card">
+      <section className="box panel gate__card">
         <header className="gate__head">
           <h1>{title}</h1>
           {lead && <p className="gate__lead">{lead}</p>}

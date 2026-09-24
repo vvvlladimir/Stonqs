@@ -28,8 +28,8 @@ import {
 import { BriefWidget } from "./ai";
 import { METRICS } from "./metrics";
 import { HeadingWidget, MetricWidget } from "./tiles";
-import { FireWidget, GoalWidget, LimitWidget, RatioWidget } from "./value";
-import { RATIO_TERMS, ratioTerms } from "./model";
+import { ProgressWidget, RatioWidget } from "./value";
+import { RATIO_TERMS, TRACK_LABELS, ratioTerms, trackOf } from "./model";
 import {
   AllocationWidget,
   BenchWidget,
@@ -135,7 +135,7 @@ export const WIDGETS: Record<string, WidgetDef> = {
     icon: GaugeIcon,
     description: msg`One number from the catalog: value, return, drawdown.`,
     group: msg`Numbers`,
-    size: { w: 3, h: 3 },
+    size: { w: 3, h: 4 },
     min: { w: 2, h: 3 },
     fields: ["title", "source", "metric", "period", "foot"],
     defaults: { metric: "value" },
@@ -151,7 +151,7 @@ export const WIDGETS: Record<string, WidgetDef> = {
     icon: DivideIcon,
     description: msg`One figure over another: a yield, a cost share, how much of it is cash.`,
     group: msg`Numbers`,
-    size: { w: 3, h: 3 },
+    size: { w: 3, h: 4 },
     min: { w: 2, h: 3 },
     fields: ["title", "source", "ratio", "period", "foot"],
     defaults: { top: "income", bottom: "value" },
@@ -165,36 +165,17 @@ export const WIDGETS: Record<string, WidgetDef> = {
     },
     Render: RatioWidget,
   },
-  fire: {
-    label: msg`Financial independence`,
+  progress: {
+    label: msg`Progress`,
     icon: FlagCheckeredIcon,
-    description: msg`How far the portfolio is from covering a year of spending, and when this pace gets there.`,
+    description: msg`A figure over a track: a savings goal, a contribution limit, or financial independence.`,
     group: msg`Numbers`,
-    size: { w: 4, h: 4 },
-    min: { w: 3, h: 3 },
-    fields: ["title", "fire"],
-    defaults: { withdrawal: "0.04", return: "0.05" },
-    Render: FireWidget,
-  },
-  goal: {
-    label: msg`Goal`,
-    icon: FlagCheckeredIcon,
-    description: msg`How far one savings goal is along, and what it would take to arrive on time.`,
-    group: msg`Numbers`,
-    size: { w: 4, h: 3 },
-    min: { w: 2, h: 3 },
-    fields: ["title", "goal"],
-    Render: GoalWidget,
-  },
-  limit: {
-    label: msg`Contribution limit`,
-    icon: FlagCheckeredIcon,
-    description: msg`What one account has paid in this limit year against what it is allowed.`,
-    group: msg`Numbers`,
-    size: { w: 4, h: 3 },
-    min: { w: 2, h: 3 },
-    fields: ["title", "limit"],
-    Render: LimitWidget,
+    size: { w: 4, h: 5 },
+    min: { w: 2, h: 4 },
+    fields: ["title", "track", "goal", "limit", "fire"],
+    defaults: { track: "goal", withdrawal: "0.04", return: "0.05" },
+    titleOf: (i18n, cfg) => i18n._(TRACK_LABELS[trackOf(cfg)]),
+    Render: ProgressWidget,
   },
   chart: {
     label: msg`Value and flows`,

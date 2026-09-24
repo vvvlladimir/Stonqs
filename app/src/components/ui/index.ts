@@ -1,6 +1,8 @@
 /** Shared design-system primitives. */
 export { Panel } from "./Panel";
-export { Metric, Metrics } from "./Metric";
+export { Fact, Facts, Metric, Metrics } from "./Metric";
+export { Figure, Delta, type FigureProps, type Tone } from "./Figure";
+export { Progress, type ProgressProps } from "./Progress";
 export { Seg, Choice, type Option } from "./Seg";
 export { Chip, Chips } from "./Chip";
 export { Tag, Badge, type BadgeTone } from "./Tag";
@@ -19,7 +21,7 @@ export {
   type SortState,
   type SortValue,
 } from "./DataTable";
-export { Bar, BarKey, type BarProps, type BarSegment, type BarSpan } from "./Bar";
+export { Bar, BarKey, ShareBar, type BarProps, type BarSegment, type BarSpan, type ShareSlice } from "./Bar";
 export { Swatch } from "./Swatch";
 export { Legend, LegendItem } from "./Legend";
 export { SearchBox } from "./SearchBox";

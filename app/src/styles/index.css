@@ -3,6 +3,7 @@
 @import "./base.css";
 @import "./layout.css";
 @import "./nav.css";
+@import "./ui/surface.css";
 @import "./ui/panel.css";
 @import "./ui/table.css";
 @import "./ui/list.css";
@@ -11,6 +12,7 @@
 @import "./ui/tabs.css";
 @import "./ui/tag.css";
 @import "./ui/metric.css";
+@import "./ui/figure.css";
 @import "./ui/bar.css";
 @import "./ui/calendar.css";
 @import "./ui/chart.css";

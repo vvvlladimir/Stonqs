@@ -270,18 +270,28 @@ function migrateWidget(raw: unknown, from: number): Widget | null {
   if (!widget || typeof widget.id !== "string" || typeof widget.type !== "string") return null;
   const fallback = FALLBACK_SIZE[widget.type] ?? { w: 6, h: 6 };
   const stored = size(widget.h);
+  const track = MERGED_TRACKS[widget.type];
+  const cfg = widget.cfg && typeof widget.cfg === "object" ? widget.cfg : {};
   return {
     id: widget.id,
-    type: widget.type,
+    type: track ? "progress" : widget.type,
     w: size(widget.w) ?? (size(widget.span) ? size(widget.span)! * 3 : fallback.w),
     // Version 3 cut the row to a third of its height, so a height written before it counts
     // three of today's rows. A widget that never had one takes the fallback, already in rows.
     h: stored === null ? fallback.h : from >= 3 ? stored : stored * 3,
     ...offset("x", widget.x),
     ...offset("y", widget.y),
-    cfg: widget.cfg && typeof widget.cfg === "object" ? widget.cfg : {},
+    cfg: track ? { ...cfg, track } : cfg,
   };
 }
+
+/**
+ * The three tiles that became one. A goal, a contribution limit and financial independence are
+ * one shape — a figure over a track — so the subject moved into the widget's own settings; the
+ * old type is what names it. Type-based rather than version-gated, so a board file exported by
+ * an older build reads the same way a stored one does.
+ */
+const MERGED_TRACKS: Record<string, string> = { goal: "goal", limit: "limit", fire: "fire" };
 
 /** The format a blob was written by; anything unmarked predates the versioning. */
 function version(value: unknown): number {

@@ -1,0 +1,137 @@
+/* One figure, one progress track: the two shapes every "single number" block in the product
+   wears. `Figure` and `Progress` (`components/ui`) are the only writers of these classes.
+
+   The figure sizes itself off the box it is in, so a tile dragged twice as wide is a legible
+   change rather than more whitespace around the same 26px. Every top-level surface is a
+   container (`.box`), so "the box it is in" is the tile or the panel either way; outside one
+   entirely `cqw`/`cqh` fall back to the viewport, which the clamp bounds turn into "the largest
+   size allowed". A panel contains only its inline axis, so `cqh` and the short-box rule below
+   do not fire there — a panel is as tall as what it holds, which is the right answer. */
+.fig {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  gap: var(--sp-2);
+}
+.fig__v {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+}
+.fig__n {
+  /* Both axes: a box three rows tall is as much a constraint as a narrow one, and a figure
+     sized off width alone is what pushes its own note out of a short tile. The floor is the
+     old fixed size, so the smallest tile the catalog offers still reads as a headline. */
+  font-size: clamp(var(--fs-2xl), min(13cqw, 44cqh), 42px);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.028em;
+  line-height: 1.05;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* A figure standing on a page, not in a tile: there is no box to read, so it takes the size the
+   heading scale gives it. */
+.fig--fixed .fig__n {
+  font-size: var(--fs-3xl);
+  letter-spacing: -0.022em;
+}
+
+/* In a box too short for both, the note is what gives way — never the number it describes. */
+@container (max-height: 86px) {
+  .fig__note {
+    display: none;
+  }
+}
+
+/* The note is one line and never wraps: the box may be as short as the number itself. */
+.fig__note {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The change beside a figure is a chip, not coloured text: at 11px a red number and a green one
+   are the same shape, and the tone is the whole message. */
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 1px var(--sp-3);
+  border-radius: var(--r-chip);
+  font-size: var(--fs-meta);
+  font-weight: var(--fw-med);
+  white-space: nowrap;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.delta.pos {
+  background: var(--pos-soft);
+  color: var(--pos);
+}
+.delta.neg {
+  background: var(--neg-soft);
+  color: var(--neg);
+}
+.delta.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+/* A goal, a contribution limit and a savings target are one shape: a figure, a track, and the
+   two facts that read it. In a card the figure is the row's own and the block is the foot, so it
+   takes the line the way the stack it replaced did. */
+.prog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+}
+.row__foot > .prog {
+  flex: 1;
+  min-width: 0;
+}
+/* The line under the whole block: what to do about the figure above it. */
+.prog__note {
+  margin-top: auto;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+.prog__legend {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+/* In a tile as narrow as a phone column the figure stops stretching and the two facts go.
+   Stacked, they were two lines of 11px money under a 40px percentage — the figure and the track
+   already say how far along it is, and what it is out of is read on the screen that owns it. */
+@container (max-width: 260px) {
+  .prog {
+    justify-content: flex-start;
+    gap: var(--sp-3);
+  }
+  .prog .fig {
+    flex: none;
+  }
+  /* Only where a figure is already shouting the same thing: in a card the facts ARE the block,
+     and a bare track says nothing at all. */
+  .w .prog__legend {
+    display: none;
+  }
+}
+/* Under a phone column, a progress block shows the figure, the track, and nothing else. */
+@container (max-width: 260px) and (max-height: 150px) {
+  .prog__note {
+    display: none;
+  }
+}

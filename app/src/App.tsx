@@ -27,8 +27,7 @@ import { Onboarding } from "./screens/Onboarding";
 import { AiToggle } from "./components/domain/AiToggle";
 import { AlertNotifier } from "./components/domain/AlertNotifier";
 import { SyncChip } from "./components/domain/MarketRefresh";
-import { ScopePicker } from "./components/domain/ScopePicker";
-import { AsOfBanner, AsOfPicker } from "./components/domain/AsOfPicker";
+import { AsOfBanner } from "./components/domain/AsOfPicker";
 import { Nav } from "./components/Nav";
 import { SCREENS } from "./components/Nav/model";
 import { Commands } from "./components/domain/Commands";
@@ -221,8 +220,6 @@ export function App() {
                   <div className="dock">
                     {/* Screens portal dock controls here without changing page layout. */}
                     <DockSlot />
-                    <AsOfPicker variant="dock" />
-                    <ScopePicker variant="dock" />
                     <SyncChip />
                     <AiToggle open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />
                   </div>

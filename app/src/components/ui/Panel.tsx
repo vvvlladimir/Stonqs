@@ -18,7 +18,8 @@ interface Props {
 }
 
 export function Panel({ title, tools, note, info, table, chart, className, children }: Props) {
-  const classes = ["panel", table ? "panel--table" : "", chart ? "panel--chart" : "", className ?? ""]
+  // `box` is the surface a panel shares with a dashboard tile; `panel` is what it adds to it.
+  const classes = ["box", "panel", table ? "panel--table" : "", chart ? "panel--chart" : "", className ?? ""]
     .filter(Boolean)
     .join(" ");
   return (

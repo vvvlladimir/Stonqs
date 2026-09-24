@@ -254,3 +254,14 @@ export function valueAxis(values: number[], frame: Frame, includeZero = false) {
   );
   return { y, ticks, min, max };
 }
+
+/**
+ * A 0–1 share as a CSS width. A track cannot be more than full or less than empty, and every
+ * caller was clamping that by hand — `Math.min(Math.max(Number(x) ?? 0, 0), 1)`, five times,
+ * once with the `Number("")` that reads an empty string as zero rather than as absent.
+ */
+export function trackWidth(share: string | number | null | undefined): string {
+  const value = Number(share);
+  if (!Number.isFinite(value)) return "0%";
+  return `${Math.min(Math.max(value, 0), 1) * 100}%`;
+}

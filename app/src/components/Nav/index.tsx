@@ -208,8 +208,8 @@ export function Nav({ screen, go, alertsDot }: Props) {
           <div className="nav__foot">
             {row(SETTINGS, "settings", "")}
             <div className="nav__lenses">
-              <AsOfPicker variant="nav" />
-              <ScopePicker variant="nav" />
+              <AsOfPicker />
+              <ScopePicker />
             </div>
           </div>
         </div>

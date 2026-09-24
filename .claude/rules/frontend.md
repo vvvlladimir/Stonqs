@@ -63,6 +63,14 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   panel file each, `index.tsx` only switches. `Tabs` (`components/ui`) owns that layout — one shape at
   every width, the strip scrolling sideways rather than becoming a side rail.
 - CSS lives one file per primitive under `styles/ui/`; `tokens.css` holds variables only. A screen does not declare its own classes: if a look is missing, the primitive gains a prop, never a copy.
+- **A top-level surface is `.box`** (`styles/ui/surface.css`, ADR-0075): the border, the large
+  radius, `--box-pad` and its padding, and `container-type: inline-size`. A dashboard tile and a
+  screen's panel are both `.box` plus what each adds — `.w` overrides the containment to `size`
+  (its height is a row span), a panel does not. A box that must be tighter names `--box-pad`; it
+  never writes a padding shorthand of its own, and it never tries to set that variable from a
+  container query on *itself* — an element cannot answer a query it declares (that is what made
+  the tile's old `--w-pad` steps dead), so the tile asks `@container board`. Anything inside a box
+  wears `--r`/`--r-input`: one shape scale, three steps.
 - Enum labels live in `lib/kinds.ts` alone — a screen never declares its own `KIND_LABELS`; counted nouns go through Lingui's `<Plural>`/`plural()`, never a per-screen form table.
 
 ## Keyboard, palette, menu bar
@@ -91,12 +99,50 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   `data-search` (`SearchBox` sets it), and a period strip answers `[` / `]`. `mod+Enter` saves a
   `FormDialog`, and ↑/↓ move between rows of a `DataTable` in the same column.
 
+## Width is a box, not a window (ADR-0073)
+
+- A block that changes shape with width **declares its own container** (`container-type`), so the
+  rule holds in a widget tile, in a panel and in a dialog alike: `.wfall`, `.drift`, `.calbox` do.
+  A container query measures the **content box**, so a threshold is the box minus its padding.
+- The board is `.wboard` and `useBoardColumns(gridRef)` measures the grid element; the stylesheet
+  reads the same width with `@container board`. Never `window.innerWidth` — with the assistant
+  panel open the board is half the screen.
+- A tile is `container-type: size`, so a block can ask how *short* it is too. A figure that grows
+  with its box (`clamp(…, min(11cqw, 26cqh), …)`) is why dragging a metric wider means something.
+- On a two-column board a widget whose smallest width is 4/12 or more takes the row
+  (`grid.shownSpan`) — every chart declares one, and a 150px plot is a texture. That width is
+  `grid.limitsOf`: the widget's own `cfg.min_w` if it has one, else the catalog's `min.w`
+  (ADR-0074). It is also where a resize drag stops, and it is offered by every non-plain widget's
+  dialog rather than named in `WidgetDef::fields` — how small a tile may get belongs to the board,
+  not to what the tile shows. Never a per-widget "wide on mobile" flag.
+- `app/mockups/widgets.html` renders every widget over the **real** stylesheets at any board
+  width (`pnpm mockup`). A new widget is checked there before the desktop app is started.
+
 ## The primitives own their shape
 
 - A screen does not hand-write `<table>`, `<form>`, a loading string, or `className="err"` — those are `DataTable`, `FormDialog`, `Async`.
 - Values are rendered by a component (`Money`, `Percent`, `Num`, `Quantity`, `Rate`, `Stat`), not by calling `format*` in markup: the `num` class and the sign colour belong to the value.
+- One number with a note under it is `Figure`; the change beside it is a `Delta` chip, never
+  coloured text (at 11px a red number and a green one are the same shape). A figure over a track
+  — a goal, a contribution limit, a target reached — is `Progress`: one shape, so a fifth of them
+  costs a declaration instead of a stylesheet. Its headline figure is **optional**: in a card the
+  value and the target are the row's own, so the block is the track plus the two facts that read
+  it, and the goal card, the limit card and the dashboard tile are then one component. Both size
+  themselves off the box they are in, which is why they work as a dashboard tile's body and as a
+  panel's headline figure.
+- A scrolling box says what it hides with `useOverflow` (`lib/overflow.ts`): a class, not state —
+  the fade is a look, and re-rendering on every scroll frame is the expensive way to draw one.
 - `ListRow` owns every list line: a `pick`, a `lead` (logo, date, dot, icon), `title`/`sub`, `value`/`meta`, `end`, `foot`. Slots that are absent are not rendered, so there are no per-shape column variants — only looks the row wears: `box` (a card), `onClick` (tappable), `on`, `big`, `wrap`, `top`. `DataTable`'s card mode is a `ListRow`.
-- `Bar` owns every horizontal track: a `fill`, `segments`, or a weight with its `tick`, `over` and `gap`. Colour is always a palette slot via `slotVar` (`lib/plot`), never a class on the bar — a slot class would paint the whole row.
+- `Bar` owns every horizontal track: a `fill`, `segments`, or a weight with its `tick`, `over` and
+  `gap`. Colour is always a palette slot via `slotVar` (`lib/plot`), never a class on the bar — a
+  slot class would paint the whole row. A caller states a 0–1 `share` rather than a CSS width and
+  never clamps it itself: `lib/plot.trackWidth` does, once, and reads an absent figure as empty
+  instead of as zero.
+- "What is this made of" is `ShareBar`: a stacked track and the legend that names it, built from
+  `ShareSlice`s (key, label, share, optional slot and tip). A plan's split across instruments, a
+  year's income by kind and a level's shares are one block — they had drifted into three spellings
+  of the same map. `legend={false}` where the names are already beside the bar; `tip` replaces the
+  share where money reads better; the slot falls back to the slice's order.
 - `Form` owns the only `<form>` and `FormDialog` is `Modal` + `Form`: a screen's form is a list of `Field`/`CheckField`/`FieldSet` and nothing else. Button wording lives in `components/ui/formLabels.ts` (`SUBMIT`, `SUBMITTING`, `CANCEL`) — a screen passes `ready` (what blocks saving), `busy`, `error`, and at most a `submitLabel`/`busyLabel` when the verb is not "Save". `FormDialog`'s submit sits in the modal footer but belongs to the form through `form=<id>`, so Enter saves; `lead` is for a button of its own meaning (delete, disable). `Field` renders the `<select>` itself when given `options` (with `placeholder` for the empty choice) — a screen never writes `<option>`.
 - `DataTable` owns the only `<table>`. A screen describes columns (`cell`, `align`, `width`, `only: "wide"`, `card`); column widths live there, never as a per-screen CSS rule. Below 700px the same columns render as cards — derived by default, or via a `card` presenter where a screen's card is its own shape; `card={false}` keeps a dense preview as a scrolling table. Not fitting is the table's own business, never a screen's: `DataTable` measures its wrapper and scrolls sideways only once the columns really do not fit, because a scroll container is also a sticky container and while it fits the sticky header must keep sticking to the page. `sizing="content"` opts out — there the caller owns the `Scrolly x`.
   Ordering is the table's too: a column declares `sort` (the value its rows compare by, never the
@@ -132,6 +178,13 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   takes what the notes above it leave. A screen's panel keeps a fixed height, because there the
   page is what scrolls. A list-shaped visual (`Contributions`, `DriftBars`) fills by letting its
   rows breathe up to a comfortable height, not by stretching them without end.
+- A widget is a declaration: a row in the catalog (label, icon, group, `size`, `min`, `fields`)
+  plus a `Render` built from the shared primitives. The tile draws the icon, the title and the
+  period chip; a widget body never writes a header, a footer or an empty state of its own.
+- One shape is one widget: a goal, a contribution limit and financial independence are all a
+  figure over a track, so they are one `progress` entry whose `track` setting picks the subject
+  (`model.trackOf`, `TRACK_LABELS`). The three old types migrate to it in `parseUiState`, by type
+  rather than by version, so an exported board file reads the same way a stored one does.
 - A widget configures itself: `WidgetDef::fields` names what its dialog offers, and every widget
   that reads data offers `source` (its own data scope) on top of whatever is specific to it —
   `period`, `taxonomy`, `count`, `benchmark`, `target`. `sourceOf` turns the stored `cfg.source`
