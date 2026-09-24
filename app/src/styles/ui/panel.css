@@ -1,9 +1,5 @@
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: var(--sp-6);
-}
+/* The frame, the radius and the padding are `.box` (`styles/ui/surface.css`), shared with the
+   dashboard tile. What is left here is what a panel adds: a head, a body and its tools. */
 .panel__head {
   display: flex;
   align-items: center;
@@ -52,8 +48,11 @@
   min-height: 0;
 }
 
+/* A table reaches the panel's edges: the cells carry the inset instead, so a column does not
+   shift when the panel gains or loses one. */
 .panel--table {
-  padding: var(--sp-6) var(--sp-3) var(--sp-3);
+  --box-pad: var(--sp-3);
+  padding-top: var(--sp-6);
 }
 /* Keep cell padding on the table so edge-to-edge panels do not shift columns. */
 .panel--table .tbl {
@@ -74,7 +73,7 @@
   margin-bottom: var(--sp-6);
   padding: var(--sp-5);
   border: 1px solid color-mix(in srgb, var(--neg) 45%, var(--border));
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
   background: var(--neg-soft);
   color: var(--neg);
   font-size: var(--fs-sm);
@@ -103,7 +102,7 @@
   align-items: center;
   gap: var(--sp-5);
   padding: var(--sp-5);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
   background: var(--warn-soft);
   border: 1px solid color-mix(in srgb, var(--warn) 30%, var(--border));
   font-size: var(--fs-base);
@@ -130,7 +129,7 @@
 }
 .empty {
   border: 1px dashed var(--border-strong);
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
   padding: var(--sp-8) var(--sp-6);
   text-align: center;
   color: var(--text-2);
@@ -152,7 +151,7 @@
 }
 
 .panel--bar {
-  padding: var(--sp-5);
+  --box-pad: var(--sp-5);
 }
 .panel--bar .panel__head {
   margin: 0;

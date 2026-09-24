@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useOverflow } from "../../lib/overflow";
 import { useLingui } from "@lingui/react/macro";
 import { DotsSixVerticalIcon, GearIcon, TrashIcon } from "@phosphor-icons/react";
 import type { Widget } from "../../lib/uiState";
@@ -8,6 +9,7 @@ import {
   draggedBox,
   fitSize,
   HANDLES,
+  limitsOf,
   placement,
   usePointerDrag,
   type GrowDirection,
@@ -68,7 +70,11 @@ export function WidgetTile({
   // Cached beside every other caller of the same date, so naming the period costs no query.
   const ranges = usePeriodRanges(date);
   const tile = useRef<HTMLElement | null>(null);
+  const body = useRef<HTMLDivElement | null>(null);
   const def = WIDGETS[widget.type];
+  // A tile showing less than it holds says so with a fade rather than with a scrollbar that
+  // only exists under a mouse.
+  useOverflow(body, [widget.type, widget.w, widget.h, cols, editing]);
 
   // One gesture for all eight handles: which one was pressed is the only thing that differs,
   // and a hook cannot be called per handle inside the map below.
@@ -91,7 +97,7 @@ export function WidgetTile({
     onMove: (dx, dy) => {
       if (!gridRef.current || !def) return;
       const { from, at, dir } = grab.current;
-      grab.current.box = draggedBox(gridRef.current, def, from, at, dir, dx, dy);
+      grab.current.box = draggedBox(gridRef.current, limitsOf(widget, def), from, at, dir, dx, dy);
       onResize(grab.current.box, false);
     },
     // A cancelled resize commits the box the tile started at, which drops the preview.
@@ -112,11 +118,12 @@ export function WidgetTile({
 
   if (!def) return null;
   const meta = widgetMeta(i18n, widget, def, period, ranges.data);
+  const min = limitsOf(widget, def);
 
   return (
     <section
       ref={tile}
-      className={`w${def.plain ? " w--plain" : ""}${float ? " is-drag" : ""}`}
+      className={`box w${def.plain ? " w--plain" : ""}${float ? " is-drag" : ""}`}
       data-id={widget.id}
       style={
         float
@@ -131,7 +138,7 @@ export function WidgetTile({
               transform: `translate(${float.dx}px, ${float.dy}px)`,
             }
           : // A span is a measurement, not a look: the stored twelfths scaled onto this board.
-            placement(widget, cols)
+            placement(widget, cols, min.w)
       }
     >
       <header
@@ -144,6 +151,11 @@ export function WidgetTile({
         }}
       >
         {editing && <DotsSixVerticalIcon className="w__grip" />}
+        {!def.plain && (
+          <span className="w__icon">
+            <def.icon />
+          </span>
+        )}
         {!def.plain && <h2>{widgetTitle(i18n, widget, def)}</h2>}
         {meta && !def.plain && <span className="w__meta">{meta}</span>}
         {editing && (
@@ -157,7 +169,7 @@ export function WidgetTile({
           </div>
         )}
       </header>
-      <div className="w__body">
+      <div className="w__body" ref={body}>
         <def.Render widget={widget} date={date} period={period} />
       </div>
       {editing &&
@@ -181,7 +193,7 @@ export function WidgetTile({
                 ];
                 if (!step) return;
                 e.preventDefault();
-                onResize(fitSize(def, widget.w + step[0], widget.h + step[1]), true);
+                onResize(fitSize(min, widget.w + step[0], widget.h + step[1]), true);
               }}
             />
           ) : (

@@ -109,7 +109,7 @@ export function UpdateDialog() {
         <VersionLine from={current} to={update.version} />
         <div className="upd__progress">
           {/* No size means no fraction: the bar says "working", not "this far along". */}
-          <Bar fill={progress === null ? "100%" : `${Math.round(progress * 100)}%`} size="lg" />
+          <Bar share={progress ?? 1} size="lg" />
           <p className="upd__progress-note">
             <span className="muted">
               {progress === null ? (

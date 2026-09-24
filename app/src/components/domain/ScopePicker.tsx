@@ -23,7 +23,7 @@ const ICONS: Record<string, Icon> = {
   account_with_cash: CertificateIcon,
 };
 
-export function ScopePicker({ variant }: { variant: "nav" | "dock" }) {
+export function ScopePicker() {
   const { t, i18n } = useLingui();
   const invalidate = useInvalidate();
   const [open, setOpen] = useState(false);
@@ -45,8 +45,9 @@ export function ScopePicker({ variant }: { variant: "nav" | "dock" }) {
   const CurrentIcon = ICONS[scope.data.scope.kind] ?? DatabaseIcon;
 
   const label = current ? scopeLabel(i18n, current) : t`Whole portfolio`;
-  const button =
-    variant === "nav" ? (
+
+  return (
+    <>
       <button
         type="button"
         className="scope scope--row"
@@ -60,22 +61,6 @@ export function ScopePicker({ variant }: { variant: "nav" | "dock" }) {
         </span>
         <CaretUpDownIcon className="scope__caret" />
       </button>
-    ) : (
-      <button type="button" className="scope" onClick={() => setOpen(true)} disabled={set.isPending}>
-        <CurrentIcon className="scope__icon" />
-        <span className="min0">
-          <span className="scope__label">{label}</span>
-          <span className="scope__sub">
-            <Subtitle option={current} />
-          </span>
-        </span>
-        <CaretUpDownIcon className="scope__caret" />
-      </button>
-    );
-
-  return (
-    <>
-      {button}
 
       {open && (
         <Modal title={t`Data source`} onClose={() => setOpen(false)}>

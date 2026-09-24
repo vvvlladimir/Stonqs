@@ -7,6 +7,7 @@
 pub mod ai;
 pub mod commands;
 pub mod dbfile;
+pub mod demo;
 pub mod error;
 pub mod events;
 pub mod import_templates;

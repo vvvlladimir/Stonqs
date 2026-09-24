@@ -2,7 +2,17 @@ import type { ReactNode } from "react";
 import type { I18n } from "@lingui/core";
 import { msg, plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Async, Bar, Money, Num, Percent, QueryError, Stat } from "../../../components/ui";
+import {
+  Async,
+  Figure as UiFigure,
+  Money,
+  Num,
+  Percent,
+  Progress,
+  QueryError,
+  Stat,
+  type Tone,
+} from "../../../components/ui";
 import {
   useDashboard,
   useFire,
@@ -32,6 +42,7 @@ import {
   periodOf,
   ratioTerms,
   sourceOf,
+  trackOf,
   type MetricCtx,
   type RatioData,
   type WidgetProps,
@@ -51,24 +62,18 @@ export function Figure({
   value,
   delta,
   tone,
+  deltaTone,
   foot,
 }: {
   ctx: MetricCtx;
   value: ReactNode;
   delta?: ReactNode;
-  tone?: string;
+  tone?: Tone;
+  deltaTone?: Tone;
   foot?: ReactNode;
 }) {
-  const note = useFoot(ctx, foot);
-  return (
-    <>
-      <div className="kpiline">
-        <span className={`kpiline__v num ${tone ?? ""}`}>{value}</span>
-        {delta && <span className="kpiline__d num">{delta}</span>}
-      </div>
-      {note && <div className="w__foot">{note}</div>}
-    </>
-  );
+  // What the line under the number says is this file's business; how a figure looks is not.
+  return <UiFigure value={value} tone={tone} delta={delta} deltaTone={deltaTone} note={useFoot(ctx, foot)} />;
 }
 
 /** What the line under the value says: the metric's own note unless the widget names another. */
@@ -297,7 +302,7 @@ export function FromRisk({
   ctx: MetricCtx;
   pick: (metrics: RiskMetrics) => ReactNode;
   foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined;
-  tone?: string;
+  tone?: Tone;
 }) {
   const { i18n } = useLingui();
   const range = useRange(ctx.date, ctx.period);
@@ -501,13 +506,28 @@ function RatioValue({
 }
 
 /**
+ * A figure over a track. Which figure is a setting, not a widget: a goal, a contribution limit
+ * and financial independence are one shape — a percentage, a bar and the facts that read it —
+ * and three catalog entries only made the picker longer.
+ */
+export function ProgressWidget(props: WidgetProps) {
+  switch (trackOf(props.widget.cfg)) {
+    case "limit":
+      return <LimitWidget {...props} />;
+    case "fire":
+      return <FireWidget {...props} />;
+    default:
+      return <GoalWidget {...props} />;
+  }
+}
+
+/**
  * How far the portfolio is from covering a year of spending, and when this pace would get
  * there. Every figure but today's value is an assumption — the return is not this portfolio's
  * measured return and is never read from it.
  */
-export function FireWidget({ widget, date, period }: WidgetProps) {
+function FireWidget({ widget }: WidgetProps) {
   const { t, i18n } = useLingui();
-  const ctx = { date, period: periodOf(widget, period) };
   const assumptions = fireCfg(widget.cfg);
   const query = useFire(assumptions);
 
@@ -523,23 +543,21 @@ export function FireWidget({ widget, date, period }: WidgetProps) {
       {(data) => {
         const months = data.months_to_target;
         return (
-          <>
-            <Figure
-              ctx={ctx}
-              value={<Percent value={data.progress} digits={0} />}
-              foot={
+          <Progress
+            value={<Percent value={data.progress} digits={0} />}
+            share={data.progress}
+            legend={{
+              left:
                 months === null
                   ? t`not within a hundred years at this pace`
                   : months === 0
                     ? t`already there`
                     : i18n._(
                         msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`,
-                      )
-              }
-            />
-            <Bar fill={`${Math.min(Math.max(Number(data.progress) * 100, 0), 100)}%`} size="lg" />
-            <FireNote data={data} />
-          </>
+                      ),
+            }}
+            note={<FireNote data={data} />}
+          />
         );
       }}
     </Async>
@@ -549,11 +567,12 @@ export function FireWidget({ widget, date, period }: WidgetProps) {
 function FireNote({ data }: { data: FireProjection }) {
   const { t } = useLingui();
   const currency = data.base_currency;
+  // Plain text: `Progress` puts it in its own note line, which already draws the rule above it.
   return (
-    <div className="w__foot">
+    <>
       {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`}
       {data.target_date && ` · ${formatDay(data.target_date)}`}
-    </div>
+    </>
   );
 }
 
@@ -562,10 +581,9 @@ function FireNote({ data }: { data: FireProjection }) {
  * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean
  * nothing here.
  */
-export function GoalWidget({ widget, date, period }: WidgetProps) {
+function GoalWidget({ widget, date }: WidgetProps) {
   const { t } = useLingui();
   const query = useGoals(date);
-  const ctx = { date, period: periodOf(widget, period) };
   const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : "";
 
   return (
@@ -580,35 +598,33 @@ export function GoalWidget({ widget, date, period }: WidgetProps) {
           );
         const { progress } = row;
         return (
-          <>
-            <Figure
-              ctx={ctx}
-              value={<Percent value={progress.progress} digits={0} />}
-              foot={
+          <Progress
+            value={<Percent value={progress.progress} digits={0} />}
+            share={progress.progress}
+            barTone={progress.on_track === false ? "neg" : undefined}
+            legend={{
+              left: (
+                <>
+                  <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "}
+                  <Money value={progress.target_base} currency={row.goal.currency} />
+                </>
+              ),
+              right:
                 progress.months_left !== null
                   ? plural(progress.months_left, { one: "# month left", other: "# months left" })
                   : progress.projected_date !== null
                     ? t`at this pace, ${formatDay(progress.projected_date)}`
-                    : t`no date and no pace stated`
-              }
-            />
-            <Bar
-              fill={`${Math.min(Math.max(Number(progress.progress) * 100, 0), 100)}%`}
-              size="lg"
-              tone={progress.on_track === false ? "neg" : undefined}
-            />
-            <p className="w__note">
-              <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "}
-              <Money value={progress.target_base} currency={row.goal.currency} />
-              {progress.required_monthly_base !== null && (
+                    : t`no date and no pace stated`,
+            }}
+            note={
+              progress.required_monthly_base !== null && (
                 <>
-                  {" · "}
                   <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "}
                   {t`a month needed`}
                 </>
-              )}
-            </p>
-          </>
+              )
+            }
+          />
         );
       }}
     </Async>
@@ -616,10 +632,9 @@ export function GoalWidget({ widget, date, period }: WidgetProps) {
 }
 
 /** One contribution limit as a track: spent against allowed, over its own limit year. */
-export function LimitWidget({ widget, date, period }: WidgetProps) {
+function LimitWidget({ widget, date }: WidgetProps) {
   const { t } = useLingui();
   const query = useLimits(date);
-  const ctx = { date, period: periodOf(widget, period) };
   const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : "";
 
   return (
@@ -634,22 +649,20 @@ export function LimitWidget({ widget, date, period }: WidgetProps) {
           );
         const over = Number(usage.share) > 1;
         return (
-          <>
-            <Figure
-              ctx={ctx}
-              value={<Percent value={usage.share} digits={0} />}
-              foot={t`of the allowance used`}
-            />
-            <Bar
-              fill={`${Math.min(Math.max(Number(usage.share) * 100, 0), 100)}%`}
-              size="lg"
-              tone={over ? "neg" : undefined}
-            />
-            <p className="w__note">
-              <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "}
-              <Money value={usage.allowance} currency={usage.currency} />
-            </p>
-          </>
+          <Progress
+            value={<Percent value={usage.share} digits={0} />}
+            share={usage.share}
+            barTone={over ? "neg" : undefined}
+            legend={{
+              left: (
+                <>
+                  <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "}
+                  <Money value={usage.allowance} currency={usage.currency} />
+                </>
+              ),
+            }}
+            note={t`of the allowance used`}
+          />
         );
       }}
     </Async>

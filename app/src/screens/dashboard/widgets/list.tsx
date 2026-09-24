@@ -1,5 +1,16 @@
-import { Trans, useLingui } from "@lingui/react/macro";
-import { Async, List, ListRow, Money, Percent, Rate, Stat } from "../../../components/ui";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
+import {
+  Async,
+  DayMark,
+  Fact,
+  Facts,
+  List,
+  ListRow,
+  Money,
+  Percent,
+  Rate,
+  Stat,
+} from "../../../components/ui";
 import {
   useDashboard,
   useExpectedDividends,
@@ -12,8 +23,10 @@ import {
 } from "../../../lib/queries";
 import { pickRange, usePeriodRanges } from "../../../lib/periods";
 import { formatDay } from "../../../lib/format";
+import { accountKindLabel } from "../../../lib/kinds";
 import type { RiskReport } from "../../../lib/types";
 import { periodOf, useWidgetRisk, useWidgetTarget, type WidgetProps, sourceOf } from "./model";
+import { Logo } from "../../../components/domain/Instrument";
 import { SecurityLink } from "../../../components/domain/SecurityCardProvider";
 import { CrossingLog, EventList } from "../../../components/domain/SecurityAlerts";
 import { useAlertCrossings, useSecurityEvents, useWatchlistRows, useWatchlists } from "../../../lib/queries";
@@ -61,6 +74,7 @@ export function WatchlistWidget({ widget, date, period }: WidgetProps) {
           {data.slice(0, count).map((row) => (
             <ListRow
               key={row.security_id}
+              lead={<Logo symbol={row.symbol} name={row.name} />}
               title={<SecurityLink id={row.security_id}>{row.symbol}</SecurityLink>}
               sub={row.name}
               value={row.price && row.currency ? <Money value={row.price} currency={row.currency} /> : "—"}
@@ -96,7 +110,7 @@ function Crossings({ count, dates }: { count: number; dates: boolean }) {
         </p>
       }
     >
-      {(rows) => <CrossingLog rows={family(rows).slice(0, count)} />}
+      {(rows) => <CrossingLog rows={family(rows).slice(0, count)} compact />}
     </Async>
   );
 }
@@ -113,7 +127,7 @@ export function EventsWidget({ widget }: WidgetProps) {
         </p>
       }
     >
-      {(rows) => <EventList rows={rows.slice(0, count)} named />}
+      {(rows) => <EventList rows={rows.slice(0, count)} named compact />}
     </Async>
   );
 }
@@ -142,10 +156,21 @@ export function PositionsWidget({ widget, date }: WidgetProps) {
             .map((row) => (
               <ListRow
                 key={row.security_id}
+                lead={<Logo symbol={row.symbol} name={row.name} />}
                 title={<SecurityLink id={row.security_id}>{row.symbol}</SecurityLink>}
-                sub={<Percent value={row.weight} digits={1} />}
+                sub={row.name}
                 value={<Money value={row.market_value_base} currency={data.base_currency} />}
-                meta={row.day_change ? <Percent value={row.day_change} signed /> : "—"}
+                meta={
+                  <>
+                    <Percent value={row.weight} digits={1} dim />
+                    {row.day_change && (
+                      <>
+                        {" · "}
+                        <Percent value={row.day_change} signed />
+                      </>
+                    )}
+                  </>
+                }
               />
             ))}
         </List>
@@ -155,6 +180,7 @@ export function PositionsWidget({ widget, date }: WidgetProps) {
 }
 
 export function CashWidget({ widget, date }: WidgetProps) {
+  const { i18n } = useLingui();
   const source = sourceOf(widget);
   const summary = useDashboard(date, source);
   return (
@@ -168,16 +194,27 @@ export function CashWidget({ widget, date }: WidgetProps) {
       }
     >
       {(data) => {
-        const nameOf = new Map(data.accounts.map((a) => [a.id, a.name]));
+        const accountOf = new Map(data.accounts.map((a) => [a.id, a]));
+        // An account holds a balance per currency it was ever paid in, so one account can be
+        // two rows — a euro deposit that settled a Hong Kong purchase is one. The currency then
+        // names the row: two lines reading "Test · Cash" look like two accounts.
+        const currencies = new Map<string, number>();
+        for (const balance of data.cash)
+          currencies.set(balance.account_id, (currencies.get(balance.account_id) ?? 0) + 1);
         return (
           <List>
-            {data.cash.map((balance) => (
-              <ListRow
-                key={`${balance.account_id}:${balance.currency}`}
-                title={nameOf.get(balance.account_id) ?? balance.account_id}
-                value={<Money value={balance.amount} currency={balance.currency} />}
-              />
-            ))}
+            {data.cash.map((balance) => {
+              const account = accountOf.get(balance.account_id);
+              const split = (currencies.get(balance.account_id) ?? 0) > 1;
+              return (
+                <ListRow
+                  key={`${balance.account_id}:${balance.currency}`}
+                  title={account?.name ?? balance.account_id}
+                  sub={split ? balance.currency : account ? accountKindLabel(i18n, account.kind) : undefined}
+                  value={<Money value={balance.amount} currency={balance.currency} digits={0} />}
+                />
+              );
+            })}
           </List>
         );
       }}
@@ -200,23 +237,31 @@ export function RiskWidget({ widget, date, period }: WidgetProps) {
 
 function RiskRows({ metrics }: { metrics: RiskReport["metrics"] }) {
   const { t } = useLingui();
+  const days = metrics.longest_drawdown_days;
   return (
-    <List>
-      <ListRow title={t`Volatility`} value={<Rate value={metrics.volatility} />} />
-      <ListRow title={t`Sharpe`} value={<Stat value={metrics.sharpe} />} />
-      <ListRow
-        title={t`Maximum drawdown`}
-        value={metrics.max_drawdown ? <Rate value={metrics.max_drawdown.depth} className="neg" /> : "—"}
+    <Facts>
+      <Fact label={t`Volatility`} value={<Rate value={metrics.volatility} />} />
+      <Fact label={t`Sharpe`} value={<Stat value={metrics.sharpe} />} />
+      {/* How far below the peak the period ENDS, which is the one a reader feels; the deepest
+          episode below it may have been recovered from years ago. */}
+      <Fact label={t`Now under peak`} value={<Rate value={metrics.current_drawdown} tone />} />
+      <Fact
+        label={t`Deepest`}
+        value={metrics.max_drawdown ? <Rate value={metrics.max_drawdown.depth} tone /> : "—"}
       />
-      {metrics.max_drawdown && (
-        <div className="w__foot">
-          <Trans>trough {formatDay(metrics.max_drawdown.trough)}</Trans> ·{" "}
-          {metrics.max_drawdown.recovered
-            ? t`recovered ${formatDay(metrics.max_drawdown.recovered)}`
-            : t`not recovered`}
-        </div>
-      )}
-    </List>
+      <Fact
+        label={t`Longest`}
+        value={
+          days === null ? (
+            "—"
+          ) : (
+            <span className="num">
+              <Plural value={days} one="# day" other="# days" />
+            </span>
+          )
+        }
+      />
+    </Facts>
   );
 }
 
@@ -254,6 +299,7 @@ export function TradesWidget({ widget, date, period }: WidgetProps) {
             .map((row, index) => (
               <ListRow
                 key={`${row.security_id}:${row.opened_at}:${index}`}
+                lead={<Logo symbol={row.symbol} name={row.name} />}
                 title={<SecurityLink id={row.security_id}>{row.symbol}</SecurityLink>}
                 sub={row.closed_at ? formatDay(row.closed_at) : undefined}
                 value={<Money value={row.pnl_base} currency={data.base_currency} signed />}
@@ -352,6 +398,7 @@ export function PerformersWidget({ widget, date, period }: WidgetProps) {
             .map((row) => (
               <ListRow
                 key={row.security_id}
+                lead={<Logo symbol={row.symbol} name={row.name} />}
                 title={<SecurityLink id={row.security_id}>{row.symbol}</SecurityLink>}
                 sub={row.name}
                 value={<Percent value={row.twr} signed />}
@@ -388,8 +435,8 @@ export function ContributionsWidget({ widget }: WidgetProps) {
           {data.contributions.slice(0, count).map((c, index) => (
             <ListRow
               key={`${c.plan_id}:${c.date}:${index}`}
+              lead={<DayMark date={c.date} year={false} />}
               title={c.plan_name}
-              sub={formatDay(c.date)}
               value={<Money value={c.amount} currency={c.currency} />}
               meta={
                 c.currency === data.base_currency ? undefined : (
@@ -431,8 +478,9 @@ export function ExpectedDividendsWidget({ widget }: WidgetProps) {
           {data.rows.slice(0, count).map((row) => (
             <ListRow
               key={`${row.security_id}:${row.ex_date}`}
+              lead={<DayMark date={row.pay_date ?? row.ex_date} year={false} />}
               title={<SecurityLink id={row.security_id}>{row.symbol}</SecurityLink>}
-              sub={row.pay_date ? formatDay(row.pay_date) : t`ex-date ${formatDay(row.ex_date)}`}
+              sub={row.pay_date ? row.name : t`ex-date ${formatDay(row.ex_date)}`}
               value={<Money value={row.net_base ?? row.gross_base} currency={data.base_currency} />}
               meta={row.reported ? t`announced` : t`estimated`}
             />

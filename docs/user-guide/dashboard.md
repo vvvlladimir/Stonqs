@@ -29,12 +29,20 @@ Left empty, a tile follows the account picker. Depending on the tile, its dialog
 period, a classification tree, a benchmark, a target, how many rows to show, and a title of the
 user's own.
 
+Every tile also offers a **smallest width**, in twelfths of the grid. It is where a drag stops, and
+it is what decides how the tile behaves on a phone: a tile asking for four twelfths or more takes a
+whole row there instead of half of one, which is how a chart avoids being drawn 150 pixels wide.
+Left at the number already in the field, the tile keeps the width the app thinks it reads at. The
+tile's own width is raised to this if it was smaller.
+
 **What can be placed**, from the palette:
 
 - *Numbers* — a single metric from a catalog (value, return, drawdown and so on), with an optional
   footnote showing the period's dates or name; a *Ratio* of any two of those figures, shown as a
-  percentage or as a multiple; and *Financial independence*, which reads a target off the spending
-  it is told to cover.
+  percentage or as a multiple; and *Progress*, one tile for the three things that are a figure over
+  a track. Its *What it tracks* setting picks which: a savings *Goal*, a *Contribution limit*, or
+  *Financial independence*, which reads a target off the spending it is told to cover. Only the
+  chosen subject's own settings are then asked for, and the tile titles itself after it.
 - *Charts* — value and flows, portfolio against a benchmark, drawdown by day, who made the result,
   a share map, a monthly return heatmap, an income calendar, composition as one bar, income by
   classification, and where each category stands against its target. *Income by classification*

@@ -19,6 +19,7 @@ import { BoardName, Config, DeleteBoard, Palette } from "./dialogs";
 import { EditBar } from "./EditBar";
 import {
   dropOrder,
+  limitsOf,
   placement,
   sameOrder,
   useBoardColumns,
@@ -27,7 +28,7 @@ import {
   type TileBox,
 } from "./grid";
 import { WidgetTile } from "./WidgetTile";
-import { makeWidget } from "./widgets";
+import { makeWidget, WIDGETS } from "./widgets";
 import { useAsOf } from "../../lib/asOf";
 
 type Dialog =
@@ -55,7 +56,8 @@ export function Dashboard() {
   // must not write settings on every pointer move.
   const [preview, setPreview] = useState<({ id: string } & TileBox) | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
-  const cols = useBoardColumns();
+  // The board, not the window: the grid element is what has the columns.
+  const cols = useBoardColumns(gridRef);
   const toast = useToast();
   // A rejected file is a lasting message beside the board, not a toast that fades.
   const [importError, setImportError] = useState<string | null>(null);
@@ -202,60 +204,68 @@ export function Dashboard() {
     >
       <ErrorText>{importError}</ErrorText>
 
-      <div
-        className={`wgrid${editing ? " is-editing" : ""}${drag || preview ? " is-moving" : ""}`}
-        ref={gridRef}
-      >
-        {shown.map((widget) => (
-          <Fragment key={widget.id}>
-            {drag?.id === widget.id && (
-              // The hole the tile left: it is what reorders, so the landing place is visible
-              // before the tile is dropped into it.
-              <div
-                className="wslot"
-                data-id={widget.id}
-                style={placement({ w: widget.w, h: widget.h }, cols)}
+      {/* `wboard` is the container the tiles' own stylesheet measures, so the columns the
+          layout draws and the columns this file counts are one width. */}
+      <div className="wboard">
+        <div
+          className={`wgrid${editing ? " is-editing" : ""}${drag || preview ? " is-moving" : ""}`}
+          ref={gridRef}
+        >
+          {shown.map((widget) => (
+            <Fragment key={widget.id}>
+              {drag?.id === widget.id && (
+                // The hole the tile left: it is what reorders, so the landing place is visible
+                // before the tile is dropped into it.
+                <div
+                  className="wslot"
+                  data-id={widget.id}
+                  style={placement(
+                    { w: widget.w, h: widget.h },
+                    cols,
+                    limitsOf(widget, WIDGETS[widget.type]).w,
+                  )}
+                />
+              )}
+              <WidgetTile
+                widget={sized(widget)}
+                cols={cols}
+                gridRef={gridRef}
+                date={date}
+                period={period}
+                editing={editing}
+                float={
+                  drag?.id === widget.id
+                    ? {
+                        x: drag.box.left,
+                        y: drag.box.top,
+                        w: drag.box.width,
+                        h: drag.box.height,
+                        dx: drag.dx,
+                        dy: drag.dy,
+                      }
+                    : null
+                }
+                onMoveStart={(box) => setDrag({ id: widget.id, box, dx: 0, dy: 0 })}
+                onMove={(dx, dy, x, y) => {
+                  point.current = { x, y };
+                  setDrag((current) => (current ? { ...current, dx, dy } : current));
+                  edge.follow(y);
+                  dragOver(widget.id);
+                }}
+                onMoveEnd={dropped}
+                onResize={(size, commit) => resize(widget, size, commit)}
+                onConfig={() => setDialog({ kind: "config", widget })}
+                onRemove={() => setBoard(board.widgets.filter((w) => w.id !== widget.id))}
               />
-            )}
-            <WidgetTile
-              widget={sized(widget)}
-              cols={cols}
-              gridRef={gridRef}
-              date={date}
-              period={period}
-              editing={editing}
-              float={
-                drag?.id === widget.id
-                  ? {
-                      x: drag.box.left,
-                      y: drag.box.top,
-                      w: drag.box.width,
-                      h: drag.box.height,
-                      dx: drag.dx,
-                      dy: drag.dy,
-                    }
-                  : null
-              }
-              onMoveStart={(box) => setDrag({ id: widget.id, box, dx: 0, dy: 0 })}
-              onMove={(dx, dy, x, y) => {
-                point.current = { x, y };
-                setDrag((current) => (current ? { ...current, dx, dy } : current));
-                edge.follow(y);
-                dragOver(widget.id);
-              }}
-              onMoveEnd={dropped}
-              onResize={(size, commit) => resize(widget, size, commit)}
-              onConfig={() => setDialog({ kind: "config", widget })}
-              onRemove={() => setBoard(board.widgets.filter((w) => w.id !== widget.id))}
-            />
-          </Fragment>
-        ))}
+            </Fragment>
+          ))}
 
-        {editing && (
-          <button type="button" className="wadd" onClick={() => setDialog({ kind: "palette" })}>
-            <PlusIcon /> <Trans>Add widget</Trans>
-          </button>
-        )}
+          {editing && (
+            <button type="button" className="wadd" onClick={() => setDialog({ kind: "palette" })}>
+              <PlusIcon /> <Trans>Add widget</Trans>
+            </button>
+          )}
+        </div>
       </div>
 
       {board.widgets.length === 0 && !editing && (
