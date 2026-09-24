@@ -1,0 +1,18 @@
+{
+  "chart": {
+    "width": 2324,
+    "height": 746
+  },
+  "kpis": {
+    "width": 2324,
+    "height": 186
+  },
+  "nav": {
+    "width": 460,
+    "height": 1720
+  },
+  "overview": {
+    "width": 1800,
+    "height": 1146
+  }
+}

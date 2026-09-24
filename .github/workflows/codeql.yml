@@ -6,6 +6,7 @@ on:
       - "**/*.md"
       - docs/**
       - local-docs/**
+      - site/**
       - LICENSE
       - .github/ISSUE_TEMPLATE/**
   schedule:

@@ -23,27 +23,54 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # A change to site/ alone touches nothing below. The jobs still run and pass rather than being
+  # skipped: `rust (ubuntu-latest)` and `frontend` are required checks, and a skipped matrix job
+  # never reports under its expanded name, which would leave such a pull request unmergeable.
+  scope:
+    if: github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    # paths-filter lists a pull request's files through the API.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - "!site/**"
+
   rust:
     name: rust (${{ matrix.os }})
+    needs: scope
     # A draft is work in progress and answers no question worth three runners. `draft` is absent
     # on a push to main, and absent is not `true`, so that half of the trigger is unaffected.
     if: github.event.pull_request.draft != true
     runs-on: ${{ matrix.os }}
+    env:
+      RUN: ${{ needs.scope.outputs.code }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7
+        if: env.RUN == 'true'
 
       # Tauri's build script refuses to run when `frontendDist` does not exist, and the Rust job
       # deliberately does not build the frontend — an empty directory is enough for `cargo test`.
       - name: Placeholder frontend output
+        if: env.RUN == 'true'
         shell: bash
         run: mkdir -p app/dist
 
       - name: Linux system libraries
-        if: matrix.os == 'ubuntu-latest'
+        if: env.RUN == 'true' && matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -58,28 +85,34 @@ jobs:
       # rustup reads rust-toolchain.toml and installs that version with its components; no action
       # is needed, and none may override it, or CI would test a compiler nobody develops against.
       - name: Install the pinned toolchain
+        if: env.RUN == 'true'
         run: rustup show
 
       - uses: Swatinem/rust-cache@v2
+        if: env.RUN == 'true'
         with:
           # SQLCipher vendors OpenSSL, so a cold build is minutes on every runner.
           shared-key: ci
 
       - name: Format
-        if: matrix.os == 'ubuntu-latest'
+        if: env.RUN == 'true' && matrix.os == 'ubuntu-latest'
         run: cargo fmt --all --check
 
       - name: Clippy
+        if: env.RUN == 'true'
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
       # No `--ignored`: those tests reach the network, and a CI run must not depend on a data
       # provider being up.
       - name: Test
+        if: env.RUN == 'true'
         run: cargo test --workspace --locked
 
   frontend:
     name: frontend
-    if: github.event.pull_request.draft != true
+    needs: scope
+    # Not a matrix, so a skip reports success under the required name.
+    if: needs.scope.outputs.code == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
