@@ -4228,6 +4228,11 @@ msgstr "Identifying…"
 msgid "Import"
 msgstr "Import"
 
+#. placeholder {0}: set.name
+#: src/screens/Allocation/TaxonomyDock.tsx
+msgid "Import {0}…"
+msgstr "Import {0}…"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "Import a classification"
 msgstr "Import a classification"

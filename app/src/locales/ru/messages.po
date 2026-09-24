@@ -4228,6 +4228,11 @@ msgstr "Опознаём…"
 msgid "Import"
 msgstr "Импорт"
 
+#. placeholder {0}: set.name
+#: src/screens/Allocation/TaxonomyDock.tsx
+msgid "Import {0}…"
+msgstr "Импортировать {0}…"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "Import a classification"
 msgstr "Импорт классификации"

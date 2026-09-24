@@ -78,8 +78,9 @@ with it.
 ## `regions` — a classification set
 
 A ready classification tree, shipped as the same CSV the taxonomy import already reads. Installing
-it puts **Regions** beside `Import from CSV…` on the Allocation screen; pressing it opens the same
-preview a file opens, with the same choice of extending an existing tree or creating a new one.
+it puts **Import Regions…** on each tree's menu on the Allocation screen, and — while no
+classification exists yet — beside `Import from CSV…` in the empty state. Either way it opens the
+same preview a file opens, extending the tree it was invoked on or creating a new one.
 
 ```json
 {

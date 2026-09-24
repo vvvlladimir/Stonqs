@@ -261,7 +261,9 @@ export function Allocation() {
         onSelect={select}
         onCreate={() => dialogs.openTaxonomy(null)}
         onEdit={dialogs.openTaxonomy}
+        sets={plugins.data?.taxonomy_sets ?? []}
         onImport={dialogs.pickImport}
+        onImportSet={dialogs.importSet}
         onGroup={dialogs.openGroup}
         onExport={dialogs.exportCsv}
         onDelete={dialogs.openDelete}
