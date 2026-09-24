@@ -48,13 +48,30 @@ fieldset.field > .btn {
 }
 .secret > input {
   width: 100%;
-  padding-right: var(--h-ctl);
+  padding-right: calc(var(--h-ctl) + var(--sp-2));
 }
+/* A ghost square inset evenly from the frame: a bordered button inside a bordered field read as
+   a second control glued on. */
 .secret > .iconbtn {
   position: absolute;
-  top: 50%;
-  right: var(--sp-2);
-  transform: translateY(-50%);
+  top: 4px;
+  right: 4px;
+  bottom: 4px;
+  height: auto;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--r-input) - 3px);
+  background: transparent;
+  color: var(--text-3);
+}
+.secret > .iconbtn:hover {
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.secret > .iconbtn:active {
+  transform: none;
 }
 
 .field > input,

@@ -92,6 +92,7 @@ main:focus,
 }
 
 input[type="text"],
+input[type="password"],
 input[type="number"],
 input[type="date"],
 select,
