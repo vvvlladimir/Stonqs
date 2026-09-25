@@ -2,6 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { save } from "@tauri-apps/plugin-dialog";
 import { api } from "../../lib/api";
+import { exportNote } from "../../lib/legal";
 import { useReports } from "../../lib/queries";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import { Page } from "../../components/Page";
@@ -64,7 +65,7 @@ export function Reports() {
     setSaving(true);
     setSaveError(null);
     try {
-      await api.reportSave(section, data.from, data.to, path);
+      await api.reportSave(section, data.from, data.to, path, exportNote());
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : String(error));
     } finally {

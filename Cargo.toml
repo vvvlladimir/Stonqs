@@ -41,6 +41,9 @@ quick-xml = { version = "0.42", default-features = false }
 tauri = { version = "2", features = [] }
 tauri-build = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
+# Opens a link in the user's own browser: a webview refuses `target="_blank"` on every platform,
+# so an external address is handed to the OS instead.
+tauri-plugin-opener = "2"
 # OS notifications for fired alerts; the frontend writes the text (ADR-0023, ADR-0034).
 tauri-plugin-notification = "2"
 # In-app updates over GitHub Releases, signed with the project's own key (the public half is in

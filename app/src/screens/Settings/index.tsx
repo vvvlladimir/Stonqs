@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useLingui } from "@lingui/react/macro";
+import { Command } from "../../lib/commands";
 import { Page } from "../../components/Page";
 import { Tabs } from "../../components/ui";
 import type { AppStatus } from "../../lib/types";
+import { AboutPanel } from "./AboutPanel";
 import { AccountsPanel } from "./AccountsPanel";
 import { AiPanel } from "./AiPanel";
 import { AppearancePanel } from "./AppearancePanel";
@@ -10,7 +12,6 @@ import { PluginsPanel } from "./PluginsPanel";
 import { AttributesPanel } from "./AttributesPanel";
 import { CATEGORIES, type CategoryId } from "./model";
 import { DataPanel } from "./DataPanel";
-import { HelpPanel } from "./HelpPanel";
 import { InflationPanel } from "./InflationPanel";
 import { KeyboardPanel } from "./KeyboardPanel";
 import { MarketDataPanel } from "./MarketDataPanel";
@@ -24,6 +25,8 @@ export function Settings({ status }: { status: AppStatus }) {
 
   return (
     <Page archetype="form" title={t`Settings`}>
+      {/* Reached from the macOS application menu and the palette, so it opens its own category. */}
+      <Command id="about" run={() => setCategory("about")} />
       <Tabs
         label={t`Settings sections`}
         value={category}
@@ -34,7 +37,6 @@ export function Settings({ status }: { status: AppStatus }) {
           icon: <Icon />,
         }))}
       >
-        {category === "help" && <HelpPanel />}
         {category === "portfolio" && (
           <>
             <PortfolioPanel />
@@ -51,6 +53,7 @@ export function Settings({ status }: { status: AppStatus }) {
         {category === "profiles" && <ProfilesPanel />}
         {category === "data" && <DataPanel status={status} />}
         {category === "updates" && <UpdatesPanel />}
+        {category === "about" && <AboutPanel />}
       </Tabs>
     </Page>
   );

@@ -141,6 +141,16 @@ textarea {
   display: grid;
   gap: var(--sp-5);
 }
+/* Running text. Paragraphs set their own rhythm, tighter than the grid gap a panel body puts
+   between two *parts* of an answer — several paragraphs are one part. */
+.prose {
+  display: grid;
+  gap: var(--sp-4);
+}
+.prose p {
+  margin: 0;
+  text-wrap: pretty;
+}
 
 textarea {
   padding: var(--sp-4) var(--sp-5);

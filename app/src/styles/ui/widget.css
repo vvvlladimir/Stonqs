@@ -81,6 +81,16 @@
   min-height: 0;
   overflow: auto;
 }
+/* The tile's own AI marker: what the text is, beside the text rather than in the footer, so it
+   is read with the answer and not with the button. */
+.brief__note {
+  flex: none;
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--fs-micro);
+  line-height: 1.35;
+  text-wrap: pretty;
+}
 .brief__foot {
   /* Never a flex item to squeeze: the text above it is what scrolls, the footer is the tile's
      own line and keeps its height. */

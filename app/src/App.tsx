@@ -16,6 +16,7 @@ import { needsPick } from "./lib/profiles";
 import { ProfilePicker } from "./components/domain/ProfilePicker";
 import { ProfileLock } from "./components/domain/ProfileLock";
 import { useLanguage } from "./lib/i18n";
+import { useExternalLinks } from "./lib/links";
 import { pluginTheme, useTheme } from "./lib/theme";
 import { useUiState } from "./lib/uiState";
 import { UpdatesProvider } from "./lib/updates";
@@ -84,6 +85,8 @@ export function App() {
   // Re-renders the shell when the saved preference or the OS language changes the catalog.
   const { i18n } = useLingui();
   useLanguage();
+  // A webview opens no window itself, so every outward link in the app goes to the OS from here.
+  useExternalLinks();
   // A theme installed as a plugin is a stylesheet on this machine plus the built-in scheme it
   // varies; both arrive a moment after the shell, which is why `useTheme` takes them separately.
   const theme = useUiState().ui.theme;

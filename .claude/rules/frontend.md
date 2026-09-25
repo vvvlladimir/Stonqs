@@ -60,8 +60,13 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   appears is skipped rather than waited for, and a step with no anchor is about its screen as a
   whole. The tour writes nothing but `UiState::tour`, is offered once per profile, and is started
   again by the `tour` command (palette, `?` list and the macOS **Help** menu for free) or from
-  Settings → *Getting started*. It ends by handing over the sources dialog while the sources are
+  Settings → *About*, whose first panel is it. It ends by handing over the sources dialog while the sources are
   unchosen — declining the offer hands it over too.
+- **A link out of the app is opened by the OS**, never by the webview: `target="_blank"` is
+  dropped on every platform this ships to, so `lib/links.ts` (`useExternalLinks`, mounted once in
+  `App`) catches any click on an `http(s)` anchor and hands the address to `api.openUrl`. A
+  component writes a plain `<a href>` and needs to know none of this — which is why the rule is one
+  delegated listener and not a link component nobody remembers to use.
 - The updater is the frontend's, not the host's (ADR-0063): `lib/updates.tsx` owns the check (once
   a calendar day, `UiState::updates`), `UpdateDialog` is the only place a version is offered, and
   `api.ts` keeps the plugin's handle so nothing else holds an installer. An automatic check that

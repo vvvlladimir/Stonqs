@@ -36,7 +36,7 @@ export const MENU: MenuSection[] = [
   {
     label: null,
     items: [
-      { native: "About", label: msg`About ${app}` },
+      { command: "about", label: msg`About ${app}` },
       "separator",
       { command: "checkUpdates", label: msg`Check for Updates…` },
       "separator",

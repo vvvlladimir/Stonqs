@@ -99,6 +99,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted |
 | [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins implemented, UI and compute not yet |
 | [77](0077-the-tour-is-a-declaration-over-the-real-screens.md) | The guided tour is a declaration over the real screens | Accepted |
+| [78](0078-the-app-states-what-it-is-not.md) | The app states what it is not, and carries its notices | Accepted |
 
 ## Profiles, keys and encryption
 

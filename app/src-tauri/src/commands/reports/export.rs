@@ -298,6 +298,10 @@ fn charges_detail(data: &ReportsData, c: &str) -> String {
     csv
 }
 
+/// `footer` is the disclaimer the file leaves with, written by the frontend because it is a
+/// sentence and the language is known only there (ADR-0023). It is one cell on a row of its own
+/// after a blank line, so a spreadsheet shows it and a parser reading the header sees the tables
+/// end first.
 #[tauri::command]
 pub fn report_save(
     state: State<AppState>,
@@ -305,8 +309,13 @@ pub fn report_save(
     from: String,
     to: String,
     path: String,
+    footer: Option<String>,
 ) -> UiResult<()> {
-    let csv = report_export(state, section, from, to)?;
+    let mut csv = report_export(state, section, from, to)?;
+    if let Some(note) = footer.as_deref().map(str::trim).filter(|n| !n.is_empty()) {
+        csv.push('\n');
+        csv.push_str(&row([note]));
+    }
     // Excel reads a semicolon-separated file as UTF-8 only when it opens with a BOM.
     let mut bytes = vec![0xEF, 0xBB, 0xBF];
     bytes.extend_from_slice(csv.as_bytes());

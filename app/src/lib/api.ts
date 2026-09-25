@@ -5,6 +5,7 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import type {
@@ -453,8 +454,14 @@ export const api = {
       source: source ?? null,
     }),
   /** `section` names one table of the report ("gains.detail", "charges.account", …). */
-  reportSave: (section: string, from: DateString, to: DateString, path: string) =>
-    call<void>("report_save", { section, from, to, path }),
+  reportSave: (section: string, from: DateString, to: DateString, path: string, footer: string) =>
+    call<void>("report_save", { section, from, to, path, footer }),
+
+  /** Writes the licence notices of every dependency where the user picked. */
+  noticesSave: (path: string) => call<void>("notices_save", { path }),
+
+  /** Hands an address to the OS: a webview opens no window of its own on any platform. */
+  openUrl: (url: string) => openUrl(url),
 
   importLoadPath: (path: string) => call<ImportPreviewData>("import_load_path", { path }),
   importPreview: (config: ParseConfig, mapping: ImportMapping | null, overrides: RowOverride[]) =>

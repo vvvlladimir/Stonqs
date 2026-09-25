@@ -60,6 +60,14 @@ export function Onboarding({ status }: { status: AppStatus }) {
             </button>
             <ErrorText error={seed.error} />
           </GateSection>
+          {/* Said once at the start, where the app is first trusted with a number; the whole of it
+              is in Settings, under About. */}
+          <p className="dim">
+            <Trans>
+              Stonqs records and analyses your own investments. It is not financial advice, and market data
+              comes from free sources that guarantee nothing. The full wording is in Settings, under About.
+            </Trans>
+          </p>
         </>
       }
     >

@@ -6,7 +6,11 @@ and under the account picker. Periods end at the date the app is set to, which i
 date picker was moved back.
 
 Every table here is a CSV away from a tax return, and the export follows the report on screen: it
-writes what is being looked at, for the window being looked at, to a file the user picks.
+writes what is being looked at, for the window being looked at, to a file the user picks. Each
+saved file ends with one line saying what it is: a record kept in a portfolio tracker, not
+investment advice, with figures derived from what was entered and from free data sources that
+guarantee nothing. The line sits after a blank row, under the last table, and is written in the
+interface's language.
 
 **Gains** are *realised* results only: a disposal that happened inside the period. What a holding
 is worth today, and what it would make if sold, is the Positions screen. The figures are proceeds,

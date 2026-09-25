@@ -28,6 +28,8 @@ pub fn run() {
     let builder = tauri::Builder::default()
         // The dialog plugin is only here for file pickers and save locations.
         .plugin(tauri_plugin_dialog::init())
+        // Links out of the app: a repository, a data source's own site.
+        .plugin(tauri_plugin_opener::init())
         // Notifications for fired alerts; the frontend asks for permission and writes the text.
         .plugin(tauri_plugin_notification::init());
 
@@ -169,6 +171,7 @@ pub fn run() {
             commands::reports::income_taxonomy,
             commands::reports::report_export,
             commands::reports::report_save,
+            commands::about::notices_save,
             commands::import::import_load,
             commands::import::import_load_path,
             commands::import::import_prices_load_path,

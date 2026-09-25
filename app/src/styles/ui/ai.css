@@ -698,3 +698,13 @@
 .ai-toggle:hover {
   background: color-mix(in srgb, var(--accent) 20%, var(--surface));
 }
+
+/* The standing notice under the composer: what the panel is, and what it is not. Article 50 of
+   the EU AI Act asks that a chat say it is one; a financial answer says it is not advice. */
+.ai-note {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--fs-micro);
+  line-height: 1.35;
+  text-wrap: pretty;
+}

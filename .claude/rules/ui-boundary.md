@@ -31,7 +31,10 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   carries names (`components/domain/scopeLabel.ts` composes), a refresh failure carries `code`/`subject`
   (`MarketRefresh.headline`), `ImportProblem` carries `code`/`params` (`Import/labels.problemDetail`),
   `UiError` carries `code` (`Async.useErrorText`). Every string left in Rust is English and is a
-  developer detail, never a headline.
+  developer detail, never a headline. A sentence the *host* must write into a file therefore
+  arrives as an argument: `report_save` takes the disclaimer footer (`lib/legal.ts`) rather than
+  spelling it, and a canonical export carries none at all — that file is read back by the import
+  (ADR-0078).
 - Commands hand the UI *inputs*, not tiles: `dashboard_summary` returns valuation + scope's accounts + a flat per-account cash list; the frontend sums/labels. A new tile must not require a new field here.
 - Mobile-first is structural: entry point lives in `lib.rs` behind `mobile_entry_point`, base CSS is the narrow layout (`@media (min-width: 700px)` for wide), every dense table ships with a card presenter (`components/ui/DataTable.tsx` derives one from the columns). Window `minWidth` is 380 so compact layout can be tested by resizing.
 - Where a preference lives follows who acts on it. `AppSettings` holds what the *host* must reason

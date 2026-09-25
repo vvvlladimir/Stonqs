@@ -49,6 +49,8 @@ pnpm record:tour         # fresh demo profile, every screen, IPC -> e2e/fixtures
                          # (read by the stonqs-site repository's `pnpm screenshots`)
 pnpm i18n:extract        # refresh src/locales/{en,ru}/messages.po from the code
 pnpm i18n:compile        # compile catalogs (the Vite plugin does this during a build)
+pnpm notices             # regenerate THIRD-PARTY-NOTICES.md + src/generated/notices.json
+                         # (`pnpm notices:check` is what the audit workflow runs)
 bash scripts/make-icons.sh    # regenerate every icon from app-icon.svg
 bash scripts/dev-signing-cert.sh  # once per Mac: stable dev signature, so keychain "Always Allow" sticks
 ```

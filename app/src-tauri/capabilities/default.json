@@ -3,5 +3,11 @@
   "identifier": "default",
   "description": "Permissions shared by every platform.",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:default", "notification:default"]
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "notification:default",
+    "opener:allow-open-url",
+    "opener:allow-default-urls"
+  ]
 }
