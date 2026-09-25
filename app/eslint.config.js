@@ -66,6 +66,7 @@ export default tseslint.config(
     files: [
       "src/lib/{asOf,dock,nav,updates}.tsx",
       "src/lib/commands/react.tsx",
+      "src/lib/tour/index.tsx",
       "src/components/ui/{Async,Menu,Selection,Toast}.tsx",
       "src/components/domain/{MarketRefresh,SecurityCardProvider}.tsx",
     ],

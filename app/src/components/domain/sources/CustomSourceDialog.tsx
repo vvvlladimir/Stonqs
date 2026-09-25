@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { api } from "../../../lib/api";
 import type { CustomSource } from "../../../lib/types";
-import { Field, FormDialog, List, ListRow, Money, QueryError } from "../../../components/ui";
+import { Field, FormDialog, List, ListRow, Money, QueryError } from "../../ui";
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- a URL scheme, not text
 const HTTPS = "https://";

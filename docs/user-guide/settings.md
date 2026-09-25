@@ -1,7 +1,14 @@
 # Settings
 
-A strip of categories, one panel each: Portfolio, Accounts, Attributes, Market data, AI assistant,
-Appearance, Keyboard, Profiles, Data and storage, Updates.
+A strip of categories, one panel each: Getting started, Portfolio, Accounts, Attributes, Market
+data, AI assistant, Appearance, Keyboard, Profiles, Data and storage, Updates.
+
+**Getting started** holds two things. `Start` runs the guided tour: a dozen short cards over the
+real screens, saying what each one is for. It writes nothing, changes no setting, and can be left
+at any point — the same tour is offered once in a new profile and is reachable afterwards from the
+command palette and, on macOS, the Help menu. `Open it` beside **Demo portfolio** switches to a
+separate profile filled with three years of made-up history, so anything tried there is nowhere
+near real data; the other profiles are unaffected and switching back is the profile picker.
 
 **Portfolio** — its name, the base currency every report converts into, and the **cost-basis
 method** (how a sale decides which lots it consumed). The method is what determines every realised
@@ -30,7 +37,28 @@ where the data ends, not the market. A valuation on a day without a quote uses t
 it, never a later one.
 
 **Data sources**, on the same panel, lists every source the app can ask and whether it does — on,
-off, or **Needs a key** — and **Your own sources** holds price addresses the user described. How
+off, or **Needs a key** — with the address each one's requests go to. **No source is on until you
+choose one.** Until then nothing is fetched at all: prices and exchange rates are only what was
+typed in by hand. The rows on that panel are the picker itself: `Turn on` beside a source is the
+whole of the answer, and from that press the source is asked. The panel shows an error while the
+sources on cannot price a portfolio — one that publishes prices and one that publishes exchange
+rates are both needed, and without the second anything held in another currency cannot be valued
+at all. The error goes as soon as both are on. The same question is asked by a dialog on a new
+profile and by the data chip beside the search box while nothing usable is chosen. In that dialog,
+`Select all and continue` turns on every source that answers without a key of its own and applies
+the choice in one press, `Add key` opens the field for the ones that need one, `Add source`
+describes a price address of your own, and `Use these sources` applies whatever is switched on.
+
+Two answers are needed before either applying button is allowed: something that publishes prices,
+and something that publishes exchange rates. Without both, holdings in a currency other than the
+portfolio's cannot be valued at all, so `Use these sources` stays disabled and says which of the
+two is missing. `Decide later` still leaves without choosing — the portfolio is then priced by
+hand, and the data chip beside the search box shows an error saying so until sources are chosen.
+
+Turning a source on means its own terms apply to the requests the app makes to it. An instrument
+added while no source was on has no price source and nothing fetches its prices; the dialog offers
+those instruments the first source you turn on, as a single checkbox, and an instrument you gave a
+source of its own keeps it. **Your own sources** holds price addresses the user described. How
 sources are chosen and combined is the `data-sources` topic.
 
 **AI assistant** — whether the panel exists at all, which provider new chats start on, whether the

@@ -73,13 +73,13 @@ export function BriefWidget({ widget, date, period }: WidgetProps) {
             case "done":
               // Written once, at the end: a half-streamed paragraph is not worth keeping, and
               // the board's state is saved to the host on every change.
-              void save({
+              void save((ui) => ({
                 ...ui,
                 ai_briefs: {
                   ...ui.ai_briefs,
                   [widget.id]: { text, at: new Date().toISOString(), from: range.from, to: range.to },
                 },
-              });
+              }));
               setLive(null);
               break;
             case "error":
@@ -97,7 +97,7 @@ export function BriefWidget({ widget, date, period }: WidgetProps) {
       failed.current = true;
       setLive(null);
     }
-  }, [range, widget, i18n.locale, save, ui]);
+  }, [range, widget, i18n.locale, save]);
 
   useEffect(() => {
     latest.current = { generate, at: brief?.at, busy: live !== null };

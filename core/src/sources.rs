@@ -13,8 +13,6 @@ use crate::market::{
 };
 use std::collections::HashMap;
 
-/// Where a new instrument's prices come from unless the user picks another source.
-pub const DEFAULT_QUOTES: &str = YahooProvider::ID;
 /// Which source answers a currency pair.
 pub const DEFAULT_FX: &str = EcbProvider::ID;
 /// Which source answers a consumer-price region.
@@ -53,8 +51,13 @@ type Make<T> = fn(Option<String>) -> Box<T>;
 pub struct SourceInfo {
     pub id: &'static str,
     pub key: KeyUse,
-    /// Registered unless the user switched it off. A source kept off still keeps its row, so a
-    /// security that names it is shown as a known, disabled source rather than an unknown string.
+    /// The provider's own site. Switching a source on is the owner's business with whoever
+    /// answers it, so the app says where its requests go rather than implying it is our service.
+    pub site: &'static str,
+    /// What the source does when nothing was recorded about it. A source kept off still keeps its
+    /// row, so a security that names it is shown as a known, disabled source rather than an
+    /// unknown string. The host records a switch per source once the owner has chosen, so this
+    /// answers only for a build nobody has answered for yet.
     pub on_by_default: bool,
     /// Requests a day the free plan allows; `None` for a source without a published allowance.
     pub per_day: Option<u32>,
@@ -81,12 +84,20 @@ impl SourceInfo {
 }
 
 /// Every source this build can talk to, in the order a chain would try them.
+///
+/// **No quote source is on by default.** Prices come from a service somebody else runs, and which
+/// of them to ask is the owner's decision, not a shipped one — see ADR-0076. The rate and
+/// price-index sources of public institutions, which publish for reuse, stay on.
 pub const CATALOG: &[SourceInfo] = &[
     SourceInfo {
         id: YahooProvider::ID,
+        site: "https://finance.yahoo.com",
         per_day: None,
         key: KeyUse::None,
-        on_by_default: true,
+        // Off: it is first in this list and last in the ones we choose for anybody. Its data is a
+        // service somebody else runs for their own visitors, so a build of ours must not start
+        // asking it on behalf of a user who never named it.
+        on_by_default: false,
         quotes: Some(|_| Box::new(YahooProvider::new())),
         search: Some(|_| Box::new(YahooProvider::new())),
         listings: None,
@@ -95,9 +106,12 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: KrakenProvider::ID,
+        site: "https://www.kraken.com",
         per_day: None,
         key: KeyUse::None,
-        on_by_default: true,
+        // Off for Yahoo's reason, and for one of its own: it answers for crypto alone, so a build
+        // that stamped new instruments with it would name it for shares it cannot price.
+        on_by_default: false,
         quotes: Some(|_| Box::new(KrakenProvider::new())),
         search: None,
         listings: None,
@@ -106,6 +120,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: TwelveDataProvider::ID,
+        site: "https://twelvedata.com",
         per_day: Some(800),
         key: KeyUse::Required,
         on_by_default: true,
@@ -117,6 +132,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: EodhdProvider::ID,
+        site: "https://eodhd.com",
         per_day: Some(20),
         key: KeyUse::Required,
         on_by_default: true,
@@ -128,6 +144,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: StooqProvider::ID,
+        site: "https://stooq.com",
         per_day: None,
         key: KeyUse::None,
         // Off: its CSV now sits behind a JavaScript challenge a plain HTTP client cannot pass.
@@ -140,6 +157,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: OpenFigiDirectory::ID,
+        site: "https://www.openfigi.com",
         per_day: None,
         key: KeyUse::Optional,
         on_by_default: true,
@@ -154,6 +172,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: EcbProvider::ID,
+        site: "https://www.ecb.europa.eu",
         per_day: None,
         key: KeyUse::None,
         on_by_default: true,
@@ -165,6 +184,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: FrankfurterProvider::ID,
+        site: "https://frankfurter.dev",
         per_day: None,
         key: KeyUse::None,
         on_by_default: true,
@@ -176,6 +196,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: EurostatProvider::ID,
+        site: "https://ec.europa.eu/eurostat",
         per_day: None,
         key: KeyUse::None,
         on_by_default: true,
@@ -187,6 +208,7 @@ pub const CATALOG: &[SourceInfo] = &[
     },
     SourceInfo {
         id: ImfProvider::ID,
+        site: "https://www.imf.org",
         per_day: None,
         key: KeyUse::None,
         on_by_default: true,
@@ -272,17 +294,22 @@ pub fn quote_service_with(setup: &Setup) -> MarketDataService {
     service
 }
 
-/// Quote sources that are on, `DEFAULT_QUOTES` first — the order a picker offers them in.
+/// Quote sources that are on, in catalogue order — the order a picker offers them in.
 pub fn quote_ids(setup: &Setup) -> Vec<String> {
-    let (first, rest): (Vec<_>, Vec<_>) = active(setup)
+    active(setup)
         .filter(|s| s.quotes.is_some())
-        .partition(|s| s.id == DEFAULT_QUOTES);
-    first
-        .into_iter()
-        .chain(rest)
         .map(|s| s.id.to_string())
         .chain(setup.custom(CustomRole::Quotes).map(|c| c.id.clone()))
         .collect()
+}
+
+/// The source a new instrument is stamped with: the first quote source that is on.
+///
+/// There is deliberately no constant behind this. A shipped build names no provider, so an
+/// instrument created before the owner has switched one on carries no source and is priced by
+/// hand until they do.
+pub fn default_quotes(setup: &Setup) -> Option<&'static str> {
+    active(setup).find(|s| s.quotes.is_some()).map(|s| s.id)
 }
 
 /// The order a currency pair is asked in: the central bank, its mirror, then the market's close.
@@ -383,24 +410,46 @@ mod tests {
 
     #[test]
     fn the_defaults_are_on_and_can_answer() {
-        let quotes = info(DEFAULT_QUOTES).unwrap();
-        assert!(quotes.on_by_default && quotes.capabilities().contains(&Capability::Quotes));
         let fx = info(DEFAULT_FX).unwrap();
         assert!(fx.on_by_default && fx.capabilities().contains(&Capability::FxRates));
+        let index = info(DEFAULT_INDEX).unwrap();
+        assert!(index.on_by_default && index.capabilities().contains(&Capability::PriceIndex));
+    }
+
+    /// The point of ADR-0076: a build nobody has answered for asks nobody for a price, and has no
+    /// provider to stamp a new instrument with.
+    #[test]
+    fn no_quote_source_is_on_until_one_is_chosen() {
+        // A keyed source is kept out by its missing key; the keyless ones by their own row.
+        assert_eq!(default_quotes(&Setup::default()), None);
+        assert!(quote_service().provider_ids().is_empty());
     }
 
     #[test]
     fn services_register_only_what_is_on() {
+        let mut setup = Setup::default();
+        setup.switched.insert(YahooProvider::ID.into(), true);
+        setup.switched.insert(KrakenProvider::ID.into(), true);
         assert_eq!(
-            quote_service().provider_ids(),
+            quote_service_with(&setup).provider_ids(),
             vec![KrakenProvider::ID, YahooProvider::ID]
         );
+        // The picker's order is the catalogue's, and Yahoo heads it whether or not it is the one
+        // a new instrument gets.
+        assert_eq!(quote_ids(&setup), vec![YahooProvider::ID, KrakenProvider::ID]);
+        assert_eq!(default_quotes(&setup), Some(YahooProvider::ID));
     }
 
     #[test]
     fn the_central_bank_is_asked_before_the_market() {
         assert_eq!(
             fx_service().provider_ids(),
+            vec![EcbProvider::ID, FrankfurterProvider::ID]
+        );
+        let mut setup = Setup::default();
+        setup.switched.insert(YahooProvider::ID.into(), true);
+        assert_eq!(
+            fx_service_with(&setup).provider_ids(),
             vec![EcbProvider::ID, FrankfurterProvider::ID, YahooProvider::ID]
         );
     }
@@ -463,6 +512,7 @@ mod tests {
         let mut setup = Setup::default();
         setup.switched.insert(KrakenProvider::ID.into(), false);
         setup.switched.insert(StooqProvider::ID.into(), true);
-        assert_eq!(quote_ids(&setup), vec![YahooProvider::ID, StooqProvider::ID]);
+        assert_eq!(quote_ids(&setup), vec![StooqProvider::ID]);
+        assert_eq!(default_quotes(&setup), Some(StooqProvider::ID));
     }
 }

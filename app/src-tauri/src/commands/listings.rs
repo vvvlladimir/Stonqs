@@ -76,6 +76,9 @@ pub fn security_set_listing(
     }
     let currency = crate::commands::portfolio::require_currency(&choice.currency)?;
 
+    // Taken before the store's lock: naming a venue for an instrument that has no source yet
+    // gives it the first one the owner switched on, and none at all while they have not.
+    let default_source = sq_core::sources::default_quotes(&state.market_setup());
     let store = state.store()?;
     let existing = store.get_security(&choice.security_id)?;
     let same_series = existing.provider_symbol() == symbol;
@@ -85,7 +88,7 @@ pub fn security_set_listing(
         data_source: existing
             .data_source
             .clone()
-            .or(Some(sq_core::sources::DEFAULT_QUOTES.to_string())),
+            .or(default_source.map(str::to_string)),
         data_symbol: None,
         mic: choice
             .mic

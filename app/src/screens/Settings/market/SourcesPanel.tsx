@@ -1,40 +1,66 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { msg } from "@lingui/core/macro";
-import { Trans, useLingui } from "@lingui/react/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { CloudArrowDownIcon, PlusIcon } from "@phosphor-icons/react";
 import { api } from "../../../lib/api";
-import { keys, useInvalidate, useMarketCustom, useMarketSources, useProfiles } from "../../../lib/queries";
-import { PasswordDialog } from "../../../components/domain/PasswordDialog";
-import type { CustomSource, MarketSourceRow } from "../../../lib/types";
-import { Badge, Empty, Field, FormDialog, ListRow, Panel, SecretInput } from "../../../components/ui";
-import { CustomSourceDialog } from "./CustomSourceDialog";
-
-const CAPABILITY = {
-  quotes: msg`quotes`,
-  search: msg`search`,
-  listings: msg`venues`,
-  fx_rates: msg`exchange rates`,
-} as const;
+import {
+  affects,
+  keys,
+  useInvalidate,
+  useMarketCustom,
+  useMarketSources,
+  useSecurities,
+  useSettings,
+} from "../../../lib/queries";
+import {
+  CustomSourceDialog,
+  SourceRow,
+  sourceNeeds,
+  useSourceKeys,
+} from "../../../components/domain/sources";
+import type { CustomSource } from "../../../lib/types";
+import { Banner, Empty, ListRow, Panel } from "../../../components/ui";
 
 /** Every source the app can ask, which of them it does, and the keys that open the rest. */
 export function SourcesPanel() {
   const { t } = useLingui();
   const sources = useMarketSources();
   const custom = useMarketCustom();
+  const settings = useSettings();
+  const securities = useSecurities();
   const invalidate = useInvalidate();
-  const profiles = useProfiles();
-  const isProtected = profiles.data?.profiles.find((p) => p.id === profiles.data?.open)?.protected ?? false;
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [protecting, setProtecting] = useState<string | null>(null);
   const [editingCustom, setEditingCustom] = useState<CustomSource | "new" | null>(null);
 
-  const refresh = () => invalidate(keys.marketSources(), keys.marketCustom(), keys.quoteProviders());
+  const rows = sources.data ?? [];
+  // Until the question is answered every source is off whatever its switch says, so the rows
+  // show the picks rather than a table of "Off" nobody chose.
+  const configured = settings.data?.sources_configured ?? false;
+
+  // `keys.settings()` with them: turning a source on is itself the answer to "where may data
+  // come from", so what the rest of the app reads off `sources_configured` changes with it.
+  const refresh = () =>
+    invalidate(keys.settings(), keys.marketSources(), keys.marketCustom(), keys.quoteProviders());
+  const keyDialogs = useSourceKeys(rows, refresh);
   const switchOne = useMutation({
     mutationFn: ({ id, on }: { id: string; on: boolean }) => api.marketSourceSwitch(id, on),
     onSuccess: refresh,
   });
-  const openKey = (id: string) => (isProtected ? setEditingKey(id) : setProtecting(id));
+
+  // The rows below *are* the picker: `Turn on` is the answer, and the notice says what the
+  // answer still lacks rather than asking for a second press to apply it (ADR-0076). It is
+  // about what cannot be priced, not about the switches — a set that is merely small is fine.
+  // Read through the same gate the host applies: while the question has never been answered
+  // every switch is off whatever it says, so a default-on rate source is not an answer to it.
+  const picked = sourceNeeds(rows, custom.data ?? [], settings.data?.market_sources ?? {});
+  const needs = configured ? picked : { quotes: false, rates: false, ok: false };
+
+  // An instrument added while nothing was on is priced by hand and no refresh would notice it.
+  const orphans = (securities.data ?? []).filter((s) => s.data_source === null).length;
+  const firstQuotes = rows.find((row) => row.active && row.capabilities.includes("quotes"))?.id;
+  const adopt = useMutation({
+    mutationFn: (source: string) => api.securitiesAdoptSource(source),
+    onSuccess: () => invalidate(keys.marketSources(), ...affects.securities),
+  });
 
   return (
     <>
@@ -42,13 +68,56 @@ export function SourcesPanel() {
         title={t`Data sources`}
         info={t`Where quotes and exchange rates come from; an instrument's own source is asked first.`}
       >
-        {(sources.data ?? []).map((row) => (
+        {!needs.ok && (
+          <Banner tone="bad">
+            {!needs.quotes && !needs.rates ? (
+              <Trans>
+                Nothing is fetched: no source of prices and none of exchange rates is on, so both are whatever
+                was typed in by hand. Turn on at least one of each below.
+              </Trans>
+            ) : !needs.quotes ? (
+              <Trans>
+                No source of prices is on, so quotes are whatever was typed in by hand. Turn one on below.
+              </Trans>
+            ) : (
+              <Trans>
+                No source of exchange rates is on, so anything held in a currency other than the
+                portfolio&apos;s cannot be valued. Turn one on below.
+              </Trans>
+            )}
+          </Banner>
+        )}
+        {orphans > 0 && firstQuotes && (
+          <Banner
+            action={
+              <button
+                type="button"
+                className="btn btn--sm"
+                disabled={adopt.isPending}
+                onClick={() => adopt.mutate(firstQuotes)}
+              >
+                {adopt.isPending ? <Trans>Saving…</Trans> : <Trans>Use {firstQuotes}</Trans>}
+              </button>
+            }
+          >
+            <Plural
+              value={orphans}
+              one="# instrument has no price source: it was added while nothing was on, so nothing fetches its prices."
+              few="# instruments have no price source: they were added while nothing was on, so nothing fetches their prices."
+              many="# instruments have no price source: they were added while nothing was on, so nothing fetches their prices."
+              other="# instruments have no price source: they were added while nothing was on, so nothing fetches their prices."
+            />{" "}
+            <Trans>An instrument you gave a source of its own keeps it.</Trans>
+          </Banner>
+        )}
+        {rows.map((row) => (
           <SourceRow
             key={row.id}
             row={row}
+            pending={!configured}
             busy={switchOne.isPending}
             onSwitch={(on) => switchOne.mutate({ id: row.id, on })}
-            onKey={() => openKey(row.id)}
+            onKey={() => keyDialogs.open(row.id)}
           />
         ))}
       </Panel>
@@ -88,28 +157,11 @@ export function SourcesPanel() {
         )}
       </Panel>
 
-      {protecting && (
-        <PasswordDialog
-          change={false}
-          reason={t`API keys are stored encrypted with this profile's password, so the profile needs one before the first key can be saved.`}
-          onClose={() => setProtecting(null)}
-          onDone={() => setEditingKey(protecting)}
-        />
-      )}
-      {editingKey && (
-        <SourceKeyDialog
-          source={editingKey}
-          saved={sources.data?.find((s) => s.id === editingKey)?.has_key ?? false}
-          onClose={() => {
-            refresh();
-            setEditingKey(null);
-          }}
-        />
-      )}
+      {keyDialogs.dialogs}
       {editingCustom && (
         <CustomSourceDialog
           source={editingCustom === "new" ? null : editingCustom}
-          onKey={openKey}
+          onKey={keyDialogs.open}
           onClose={() => {
             refresh();
             setEditingCustom(null);
@@ -117,97 +169,5 @@ export function SourcesPanel() {
         />
       )}
     </>
-  );
-}
-
-function SourceRow({
-  row,
-  busy,
-  onSwitch,
-  onKey,
-}: {
-  row: MarketSourceRow;
-  busy: boolean;
-  onSwitch: (on: boolean) => void;
-  onKey: () => void;
-}) {
-  const { t, i18n } = useLingui();
-  const roles = row.capabilities.map((c) => i18n._(CAPABILITY[c])).join(", ");
-  const needsKey = row.wanted && !row.active;
-
-  return (
-    <ListRow
-      box
-      title={row.id}
-      sub={roles}
-      end={
-        <>
-          <Badge tone={row.active ? "in" : needsKey ? "warn" : "neutral"}>
-            {row.active ? t`On` : needsKey ? t`Needs a key` : t`Off`}
-          </Badge>
-          {row.key !== "none" && (
-            <button type="button" className="btn btn--sm btn--ghost" onClick={onKey}>
-              {row.has_key ? <Trans>Replace key</Trans> : <Trans>Add key</Trans>}
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn btn--sm btn--ghost"
-            disabled={busy}
-            onClick={() => onSwitch(!row.wanted)}
-          >
-            {row.wanted ? <Trans>Turn off</Trans> : <Trans>Turn on</Trans>}
-          </button>
-        </>
-      }
-    />
-  );
-}
-
-/** The key never comes back: the field is always empty and always a replacement. */
-function SourceKeyDialog({
-  source,
-  saved,
-  onClose,
-}: {
-  source: string;
-  saved: boolean;
-  onClose: () => void;
-}) {
-  const { t } = useLingui();
-  const [key, setKey] = useState("");
-  const save = useMutation({ mutationFn: () => api.marketKeySave(source, key.trim()), onSuccess: onClose });
-  const remove = useMutation({ mutationFn: () => api.marketKeyDelete(source), onSuccess: onClose });
-
-  return (
-    <FormDialog
-      title={t`Key for ${source}`}
-      onClose={onClose}
-      onSubmit={() => save.mutate()}
-      busy={save.isPending}
-      error={save.error ?? remove.error}
-      ready={key.trim().length > 0}
-      submitLabel={t`Save key`}
-      busyLabel={t`Saving…`}
-      lead={
-        saved ? (
-          <button
-            type="button"
-            className="btn btn--sm btn--danger"
-            disabled={remove.isPending}
-            onClick={() => remove.mutate()}
-          >
-            <Trans>Delete key</Trans>
-          </button>
-        ) : undefined
-      }
-    >
-      <Field
-        label={t`Key`}
-        hint={t`It is sealed with the profile's password. The app never reads it back into this screen.`}
-      >
-        <SecretInput autoComplete="off" autoFocus value={key} onChange={setKey} />
-      </Field>
-    </FormDialog>
   );
 }

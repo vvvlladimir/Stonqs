@@ -27,6 +27,8 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-med);
   cursor: pointer;
+  /* A button is one line: its height is fixed, so a wrapped label leaves the box it is in. */
+  white-space: nowrap;
 }
 .btn--ghost {
   background: none;
@@ -97,6 +99,7 @@
 .iconbtn {
   height: var(--h-ctl);
   min-width: var(--h-ctl);
+  white-space: nowrap;
   padding: 0 var(--sp-5);
   display: inline-flex;
   align-items: center;

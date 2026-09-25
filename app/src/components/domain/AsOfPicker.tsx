@@ -31,6 +31,7 @@ export function AsOfPicker() {
       <button
         type="button"
         className="scope scope--row"
+        data-tour="asof"
         data-tip={isToday ? t`Today` : t`Past date`}
         onClick={() => setOpen(true)}
       >

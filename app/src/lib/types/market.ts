@@ -60,13 +60,15 @@ export type RefreshMode = "catch_up" | "full";
 /** One market-data source this build ships, with what the user decided about it. */
 export interface MarketSourceRow {
   id: string;
-  capabilities: ("quotes" | "search" | "listings" | "fx_rates")[];
+  /** The provider's own site: where this source's requests go, and whose terms apply. */
+  site: string;
+  capabilities: ("quotes" | "search" | "listings" | "fx_rates" | "price_index")[];
   key: "none" | "optional" | "required";
   has_key: boolean;
   on_by_default: boolean;
-  /** Switched on, by the user or by default. */
+  /** Switched on, by the user or by default — what was picked, whether or not it is asked yet. */
   wanted: boolean;
-  /** Actually asked: wanted and not missing a required key. */
+  /** Actually asked: wanted, not missing a required key, and the sources confirmed. */
   active: boolean;
 }
 

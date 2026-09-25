@@ -663,6 +663,10 @@ msgstr "{occurrences, plural, one {# row} other {# rows}}"
 msgid "{off, plural, one {# of {0} off target} other {# of {1} off target}}"
 msgstr "{off, plural, one {# of {0} off target} other {# of {1} off target}}"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "{orphans, plural, one {# instrument has no price source: it was added while nothing was on, so nothing fetches its prices.} few {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.} many {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.} other {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.}}"
+msgstr "{orphans, plural, one {# instrument has no price source: it was added while nothing was on, so nothing fetches its prices.} few {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.} many {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.} other {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.}}"
+
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{owed, plural, one {# contribution due} other {# contributions due}}"
 msgstr "{owed, plural, one {# contribution due} other {# contributions due}}"
@@ -822,7 +826,7 @@ msgstr "<0>{0}</0> instruments will get no quotes: their ticker field holds an I
 msgid "√252 over {0} trading days"
 msgstr "√252 over {0} trading days"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "0.01 for a feed that answers in cents"
 msgstr "0.01 for a feed that answers in cents"
 
@@ -968,6 +972,10 @@ msgstr "A divider line: it splits the dashboard into meaningful parts."
 msgid "A figure over a track: a savings goal, a contribution limit, or financial independence."
 msgstr "A figure over a track: a savings goal, a contribution limit, or financial independence."
 
+#: src/lib/tour/steps.ts
+msgid "A file from a broker, read through a wizard. Nothing is written until the last step, and a file imported twice adds nothing the second time."
+msgstr "A file from a broker, read through a wizard. Nothing is written until the last step, and a file imported twice adds nothing the second time."
+
 #: src/screens/Plans/Goals.tsx
 msgid "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
 msgstr "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
@@ -987,6 +995,10 @@ msgstr "A key is saved"
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "A key is saved · {added}"
 msgstr "A key is saved · {added}"
+
+#: src/lib/tour/steps.ts
+msgid "A lens over everything the app reports: one account, a group, or the whole portfolio. It changes which accounts the figures are read from — never what is stored, and never the list of operations."
+msgstr "A lens over everything the app reports: one account, a group, or the whole portfolio. It changes which accounts the figures are read from — never what is stored, and never the list of operations."
 
 #: src/screens/Accounts/LimitsPanel.tsx
 msgid "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
@@ -1060,6 +1072,10 @@ msgstr "A price feed you describe: its address and where the dates and closes ar
 msgid "A property of the broker, not the instrument: one allows fractions, another whole lots. Empty means take it from trade quantities, and from the instrument kind when there are none"
 msgstr "A property of the broker, not the instrument: one allows fractions, another whole lots. Empty means take it from trade quantities, and from the instrument kind when there are none"
 
+#: src/lib/tour/steps.ts
+msgid "A quick look around"
+msgstr "A quick look around"
+
 #: src/components/ui/Async.tsx
 msgid "A quote refresh or an AI answer is still using the data. Try again when it finishes."
 msgstr "A quote refresh or an AI answer is still using the data. Try again when it finishes."
@@ -1119,6 +1135,10 @@ msgstr "A saved set of accounts to pick as the data source; groups may overlap, 
 #~ msgid "A securities account holds instruments and settles through a cash account"
 #~ msgstr "A securities account holds instruments and settles through a cash account"
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "A separate profile filled with three years of made-up history, so nothing you try touches your own."
+msgstr "A separate profile filled with three years of made-up history, so nothing you try touches your own."
+
 #: src/screens/Allocation/NodeDialog.tsx
 msgid "A share inside the parent: \"equities 42 %, of which the core is 88 %\". Empty means no target."
 msgstr "A share inside the parent: \"equities 42 %, of which the core is 88 %\". Empty means no target."
@@ -1126,6 +1146,14 @@ msgstr "A share inside the parent: \"equities 42 %, of which the core is 88 %\".
 #: src/screens/Settings/AiPanel.tsx
 msgid "A short summary of its own reasoning, folded away above each answer. It costs a few extra tokens, and some provider accounts are not cleared to produce one."
 msgstr "A short summary of its own reasoning, folded away above each answer. It costs a few extra tokens, and some provider accounts are not cleared to produce one."
+
+#: src/components/domain/tour/TourLayer.tsx
+msgid "A short tour of what each screen is for. It changes nothing and can be left at any time; you can start it again from Settings."
+msgstr "A short tour of what each screen is for. It changes nothing and can be left at any time; you can start it again from Settings."
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "A short walk through what each screen is for. It changes nothing."
+msgstr "A short walk through what each screen is for. It changes nothing."
 
 #: src/screens/Settings/MarketDataPanel.tsx
 msgid "A startup within this window skips the request and uses what is already stored."
@@ -1234,6 +1262,7 @@ msgstr "accounts"
 
 #: src/components/domain/positionColumns.tsx
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Accounts/GroupForm.tsx
 #: src/screens/Accounts/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -1325,7 +1354,7 @@ msgstr "Add instruments"
 msgid "Add instruments…"
 msgstr "Add instruments…"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Add key"
 msgstr "Add key"
 
@@ -1342,6 +1371,7 @@ msgstr "Add note"
 msgid "Add or remove periods"
 msgstr "Add or remove periods"
 
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Add source"
 msgstr "Add source"
@@ -1373,8 +1403,8 @@ msgstr "added"
 msgid "Adding…"
 msgstr "Adding…"
 
+#: src/components/domain/sources/CustomSourceDialog.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
-#: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Address"
 msgstr "Address"
 
@@ -1506,6 +1536,7 @@ msgid "All-time high"
 msgstr "All-time high"
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Allocation/index.tsx
 msgid "Allocation"
 msgstr "Allocation"
@@ -1634,6 +1665,10 @@ msgstr "an instrument in your list"
 msgid "an instrument without a quote source"
 msgstr "an instrument without a quote source"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "An instrument you gave a source of its own keeps it."
+msgstr "An instrument you gave a source of its own keeps it."
+
 #: src/components/domain/aiToolLabels.ts
 msgid "an instrument's dividends and splits"
 msgstr "an instrument's dividends and splits"
@@ -1695,7 +1730,7 @@ msgstr "another currency than the account keeps"
 msgid "Another date"
 msgstr "Another date"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Answer format"
 msgstr "Answer format"
 
@@ -1714,6 +1749,10 @@ msgstr "Anthropic messages"
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Any JSON or CSV price endpoint can be added without an update of the app."
 msgstr "Any JSON or CSV price endpoint can be added without an update of the app."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Any JSON or CSV price endpoint: its address, and where the dates and closes sit in the answer."
+msgstr "Any JSON or CSV price endpoint: its address, and where the dates and closes sit in the answer."
 
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Any server speaking one of the supported API formats: a gateway, another vendor or a model on this machine."
@@ -1736,7 +1775,7 @@ msgstr "API format"
 #~ msgid "API key: {0}"
 #~ msgstr "API key: {0}"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/useSourceKeys.tsx
 msgid "API keys are stored encrypted with this profile's password, so the profile needs one before the first key can be saved."
 msgstr "API keys are stored encrypted with this profile's password, so the profile needs one before the first key can be saved."
 
@@ -1773,6 +1812,10 @@ msgstr "arrived {0}"
 #: src/screens/Income/MonthPanel.tsx
 msgid "arrived on the account"
 msgstr "arrived on the account"
+
+#: src/lib/tour/steps.ts
+msgid "As of"
+msgstr "As of"
 
 #: src/components/Page.tsx
 #~ msgid "as of {asOf}"
@@ -1818,7 +1861,7 @@ msgstr "Asking before reading your data"
 msgid "Asking the directory…"
 msgstr "Asking the directory…"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Asking…"
 msgstr "Asking…"
 
@@ -1879,6 +1922,7 @@ msgstr "Average cost of one share, in the currency it was paid for."
 msgid "Average holding"
 msgstr "Average holding"
 
+#: src/components/domain/tour/TourLayer.tsx
 #: src/screens/Allocation/BreakdownPanel.tsx
 #: src/screens/Import/index.tsx
 msgid "Back"
@@ -2111,6 +2155,10 @@ msgstr "Cash account"
 msgid "Cash accounts"
 msgstr "Cash accounts"
 
+#: src/lib/tour/steps.ts
+msgid "Cash accounts hold money; securities accounts hold instruments and settle through a cash account. Keeping them apart is what lets fees, dividends and interest land where they belong."
+msgstr "Cash accounts hold money; securities accounts hold instruments and settle through a cash account. Keeping them apart is what lets fees, dividends and interest land where they belong."
+
 #: src/screens/Plans/DuePanel.tsx
 msgid "Cash contribution"
 msgstr "Cash contribution"
@@ -2229,6 +2277,10 @@ msgstr "Choose a profile"
 msgid "Choose another"
 msgstr "Choose another"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Choose sources"
+#~ msgstr "Choose sources"
+
 #: src/screens/Performance/Metrics.tsx
 msgid "chosen in the header"
 msgstr "chosen in the header"
@@ -2269,6 +2321,7 @@ msgstr "Click to try again."
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/SecurityPopup.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/components/domain/UpdateDialog.tsx
 #: src/components/ui/Modal.tsx
 #: src/screens/dashboard/dialogs.tsx
@@ -2279,7 +2332,7 @@ msgstr "Close"
 msgid "Close a dialog, a menu or the assistant"
 msgstr "Close a dialog, a menu or the assistant"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Close column"
 msgstr "Close column"
 
@@ -2609,7 +2662,7 @@ msgstr "Currency"
 msgid "Currency list"
 msgstr "Currency list"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Currency of the closes"
 msgstr "Currency of the closes"
 
@@ -2665,6 +2718,7 @@ msgstr "Data and storage"
 #: src/components/domain/Commands.tsx
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/ScopePicker.tsx
+#: src/lib/tour/steps.ts
 #: src/screens/dashboard/dialogs.tsx
 msgid "Data source"
 msgstr "Data source"
@@ -2707,12 +2761,12 @@ msgstr "Date"
 #~ msgid "Date arrives"
 #~ msgstr "Date arrives"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Date column"
 msgstr "Date column"
 
+#: src/components/domain/sources/CustomSourceDialog.tsx
 #: src/screens/Import/ParseSettings.tsx
-#: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Date format"
 msgstr "Date format"
 
@@ -2767,6 +2821,10 @@ msgstr "Days the deepest fall lasted before the peak was regained."
 #: src/screens/Onboarding.tsx
 #~ msgid "Debug"
 #~ msgstr "Debug"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Decide later"
+msgstr "Decide later"
 
 #: src/screens/Import/ParseSettings.tsx
 msgid "Decimal mark"
@@ -2867,8 +2925,8 @@ msgstr "delete an investment plan"
 msgid "Delete dashboard"
 msgstr "Delete dashboard"
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Delete key"
 msgstr "Delete key"
 
@@ -2876,7 +2934,7 @@ msgstr "Delete key"
 msgid "Delete profile"
 msgstr "Delete profile"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Delete source"
 msgstr "Delete source"
 
@@ -2953,6 +3011,10 @@ msgstr "Delimiter"
 #: src/screens/Import/TargetSummary.tsx
 msgid "delimiter \"{0}\" · dates {1} · {2}"
 msgstr "delimiter \"{0}\" · dates {1} · {2}"
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Demo portfolio"
+msgstr "Demo portfolio"
 
 #: src/lib/kinds.ts
 msgid "Deposit"
@@ -3213,6 +3275,7 @@ msgstr "edit"
 
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/SecurityAlerts.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/dashboard/Dashboard.tsx
 #: src/screens/Plans/Goals.tsx
@@ -3263,7 +3326,7 @@ msgstr "Edit note"
 msgid "Edit plan"
 msgstr "Edit plan"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Edit source"
 msgstr "Edit source"
 
@@ -3335,11 +3398,11 @@ msgstr "Empty means no target. With one, the drift and the trades that close it 
 msgid "Empty means prices are entered by hand"
 msgstr "Empty means prices are entered by hand"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Empty means the instrument's own currency"
 msgstr "Empty means the instrument's own currency"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Empty reads ISO dates and Unix timestamps; otherwise e.g. %d.%m.%Y"
 msgstr "Empty reads ISO dates and Unix timestamps; otherwise e.g. %d.%m.%Y"
 
@@ -3484,9 +3547,17 @@ msgstr "Every instrument is classified under \"{taxonomyName}\"."
 msgid "Every instrument is identified. Their quotes will arrive automatically."
 msgstr "Every instrument is identified. Their quotes will arrive automatically."
 
+#: src/lib/tour/steps.ts
+msgid "Every operation, and where they are typed in. A purchase has two sides: the instrument arrives on a securities account while the money leaves a cash one."
+msgstr "Every operation, and where they are typed in. A purchase has two sides: the instrument arrives on a securities account while the money leaves a cash one."
+
 #: src/screens/Trades/index.tsx
 msgid "Every purchase has been sold out; only closed trades remain."
 msgstr "Every purchase has been sold out; only closed trades remain."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+#~ msgid "Every source that answers without a key of its own."
+#~ msgstr "Every source that answers without a key of its own."
 
 #: src/lib/kinds.ts
 msgid "Every two weeks"
@@ -3517,6 +3588,10 @@ msgstr "everything is mapped"
 #~ msgid "Everything the reports are computed from"
 #~ msgstr "Everything the reports are computed from"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Everything this build can ask. A source with a key of its own answers only once the key is saved."
+msgstr "Everything this build can ask. A source with a key of its own answers only once the key is saved."
+
 #: src/components/domain/positionColumns.tsx
 msgid "Everything this holding has ever paid, over what the shares cost."
 msgstr "Everything this holding has ever paid, over what the shares cost."
@@ -3546,11 +3621,13 @@ msgstr "Excess"
 msgid "Exchange"
 msgstr "Exchange"
 
+#: src/components/domain/sources/SourceRow.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "exchange rates"
 msgstr "exchange rates"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Exchange rates"
 msgstr "Exchange rates"
 
@@ -3736,13 +3813,21 @@ msgstr "File rows"
 msgid "Fill from attribute"
 msgstr "Fill from attribute"
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Fill it"
+msgstr "Fill it"
+
 #: src/screens/Onboarding.tsx
 msgid "Filling…"
 msgstr "Filling…"
 
 #: src/screens/Onboarding.tsx
-msgid "Fills this profile with a sample portfolio so you can see what the app does before importing anything of your own."
-msgstr "Fills this profile with a sample portfolio so you can see what the app does before importing anything of your own."
+msgid "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
+msgstr "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
+
+#: src/screens/Onboarding.tsx
+#~ msgid "Fills this profile with a sample portfolio so you can see what the app does before importing anything of your own."
+#~ msgstr "Fills this profile with a sample portfolio so you can see what the app does before importing anything of your own."
 
 #: src/screens/dashboard/widgets/model.ts
 msgid "Financial independence"
@@ -3755,6 +3840,10 @@ msgstr "Find a category"
 #: src/components/ui/ColumnPicker.tsx
 msgid "Find a column"
 msgstr "Find a column"
+
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Finish"
+msgstr "Finish"
 
 #: src/screens/Plans/index.tsx
 msgid "finished"
@@ -3790,11 +3879,11 @@ msgstr "Flows"
 msgid "Follow the picker"
 msgstr "Follow the picker"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "For example $.values[*].datetime"
 msgstr "For example $.values[*].datetime"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "For example EUR/USD"
 msgstr "For example EUR/USD"
 
@@ -3886,6 +3975,14 @@ msgstr "Gemini generateContent"
 msgid "General"
 msgstr "General"
 
+#: src/lib/tour/steps.ts
+msgid "Getting around"
+msgstr "Getting around"
+
+#: src/screens/Settings/model.ts
+msgid "Getting started"
+msgstr "Getting started"
+
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category a weight: under \"Edit tree\" every category has a \"Target weight\" field. The drift and the trades that close it will appear here."
 msgstr "Give at least one category a weight: under \"Edit tree\" every category has a \"Target weight\" field. The drift and the trades that close it will appear here."
@@ -3969,11 +4066,20 @@ msgstr "Groups"
 #~ msgid "Growth, not value: the portfolio has deposits and the benchmark has none — on a money axis the two lines would compare different things."
 #~ msgstr "Growth, not value: the portfolio has deposits and the benchmark has none — on a money axis the two lines would compare different things."
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/lib/commands/catalog.ts
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Guided tour"
+msgstr "Guided tour"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Guided Tour"
+msgstr "Guided Tour"
+
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Header name"
 msgstr "Header name"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Header value"
 msgstr "Header value"
 
@@ -4189,7 +4295,7 @@ msgstr "how the result adds up, step by step"
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "How widely this position's daily returns swing, stated for a year."
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "https only. Placeholders:"
 msgstr "https only. Placeholders:"
 
@@ -4219,6 +4325,7 @@ msgid "Identifying…"
 msgstr "Identifying…"
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/dashboard/EditBar.tsx
 #: src/screens/Securities/AttributeImportDialog.tsx
@@ -4348,6 +4455,10 @@ msgstr "Income kind"
 msgid "Income per paying instrument, in the same columns; fees and sales are not included."
 msgstr "Income per paying instrument, in the same columns; fees and sales are not included."
 
+#: src/components/domain/sources/SourceRow.tsx
+msgid "inflation"
+msgstr "inflation"
+
 #: src/screens/Settings/InflationPanel.tsx
 msgid "Inflation"
 msgstr "Inflation"
@@ -4410,7 +4521,7 @@ msgstr "Instrument attributes"
 msgid "Instrument card…"
 msgstr "Instrument card…"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Instrument currency"
 msgstr "Instrument currency"
 
@@ -4571,7 +4682,7 @@ msgstr "ISIN, ticker or name"
 msgid "It affects the realized result of every past sale"
 msgstr "It affects the realized result of every past sale"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "It answers"
 msgstr "It answers"
 
@@ -4579,8 +4690,8 @@ msgstr "It answers"
 #~ msgid "It goes straight to the keychain. The app never reads it back into this screen."
 #~ msgstr "It goes straight to the keychain. The app never reads it back into this screen."
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "It is sealed with the profile's password. The app never reads it back into this screen."
 msgstr "It is sealed with the profile's password. The app never reads it back into this screen."
 
@@ -4616,8 +4727,8 @@ msgstr "k"
 #~ msgid "Kept in your operating system's keychain, never in the app's database — the app only ever asks whether one is saved."
 #~ msgstr "Kept in your operating system's keychain, never in the app's database — the app only ever asks whether one is saved."
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Key"
 msgstr "Key"
 
@@ -4625,7 +4736,7 @@ msgstr "Key"
 msgid "Key for {name}"
 msgstr "Key for {name}"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceKeyDialog.tsx
 msgid "Key for {source}"
 msgstr "Key for {source}"
 
@@ -4752,6 +4863,10 @@ msgstr "Layout imported."
 #: src/screens/Import/TemplateBar.tsx
 msgid "Layout name"
 msgstr "Layout name"
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Learning the app"
+msgstr "Learning the app"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
 msgid "Leave empty"
@@ -5170,6 +5285,10 @@ msgstr "Move to the next or the previous control"
 msgid "Move up"
 msgstr "Move up"
 
+#: src/lib/tour/steps.ts
+msgid "Moves every reading screen to a past date, so you see the portfolio as it stood. Forms keep using today, so looking at the past cannot backdate what you type."
+msgstr "Moves every reading screen to a past date, so you see the portfolio as it stood. Forms keep using today, so looking at the past cannot backdate what you type."
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Moves with the calendar: tomorrow it covers one more day."
 msgstr "Moves with the calendar: tomorrow it covers one more day."
@@ -5182,7 +5301,7 @@ msgstr "Moving average"
 msgid "moving avg"
 msgstr "moving avg"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Multiply closes by"
 msgstr "Multiply closes by"
 
@@ -5197,6 +5316,7 @@ msgstr "name"
 
 #: src/components/domain/PeriodEditor.tsx
 #: src/components/domain/PlanForm.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 #: src/screens/Accounts/AccountForm.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/ImportDialog.tsx
@@ -5208,7 +5328,6 @@ msgstr "name"
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
 #: src/screens/Settings/AttributesPanel.tsx
-#: src/screens/Settings/market/CustomSourceDialog.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
 #: src/screens/Watchlist/ListDialog.tsx
 msgid "Name"
@@ -5235,7 +5354,7 @@ msgstr "Nearest level"
 msgid "needs a decision"
 msgstr "needs a decision"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Needs a key"
 msgstr "Needs a key"
 
@@ -5322,6 +5441,10 @@ msgstr "New goal"
 msgid "New group"
 msgstr "New group"
 
+#: src/components/domain/tour/TourLayer.tsx
+msgid "New here?"
+msgstr "New here?"
+
 #: src/screens/Securities/SecurityForm.tsx
 msgid "New instrument"
 msgstr "New instrument"
@@ -5384,7 +5507,7 @@ msgstr "new quantity"
 msgid "New shares"
 msgstr "New shares"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "New source"
 msgstr "New source"
 
@@ -5408,6 +5531,7 @@ msgstr "New transaction"
 msgid "New watchlist"
 msgstr "New watchlist"
 
+#: src/components/domain/tour/TourLayer.tsx
 #: src/screens/Import/index.tsx
 msgid "Next"
 msgstr "Next"
@@ -5496,6 +5620,14 @@ msgstr "no data"
 #: src/components/charts/ValueChart.tsx
 msgid "No data for this period."
 msgstr "No data for this period."
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No data source"
+msgstr "No data source"
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No data source has been chosen, so no prices or exchange rates are fetched at all. Click to choose."
+msgstr "No data source has been chosen, so no prices or exchange rates are fetched at all. Click to choose."
 
 #: src/screens/dashboard/widgets/value.tsx
 msgid "no date and no pace stated"
@@ -5714,6 +5846,22 @@ msgid "No shares."
 msgstr "No shares."
 
 #: src/screens/Settings/market/SourcesPanel.tsx
+msgid "No source of exchange rates is on, so anything held in a currency other than the portfolio's cannot be valued. Turn one on below."
+msgstr "No source of exchange rates is on, so anything held in a currency other than the portfolio's cannot be valued. Turn one on below."
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No source of exchange rates is on, so anything held in another currency cannot be valued. Click to choose."
+msgstr "No source of exchange rates is on, so anything held in another currency cannot be valued. Click to choose."
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No source of prices is on, so quotes are whatever was typed in by hand. Click to choose."
+msgstr "No source of prices is on, so quotes are whatever was typed in by hand. Click to choose."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "No source of prices is on, so quotes are whatever was typed in by hand. Turn one on below."
+msgstr "No source of prices is on, so quotes are whatever was typed in by hand. Turn one on below."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "No sources of your own"
 msgstr "No sources of your own"
 
@@ -5894,6 +6042,10 @@ msgstr "not mapped: {0}"
 msgid "Not more often than once every, hours"
 msgstr "Not more often than once every, hours"
 
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Not now"
+msgstr "Not now"
+
 #: src/screens/Import/CommitStep.tsx
 msgid "Not parsed"
 msgstr "Not parsed"
@@ -5977,6 +6129,18 @@ msgstr "Nothing installed"
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "nothing is classified yet"
 msgstr "nothing is classified yet"
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Nothing is fetched yet: no source has been chosen, so prices and rates are whatever was typed in by hand."
+#~ msgstr "Nothing is fetched yet: no source has been chosen, so prices and rates are whatever was typed in by hand."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Nothing is fetched yet: prices and rates are whatever was typed in by hand. Turn on the sources you want below — at least one of prices and one of exchange rates — and apply them."
+#~ msgstr "Nothing is fetched yet: prices and rates are whatever was typed in by hand. Turn on the sources you want below — at least one of prices and one of exchange rates — and apply them."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "Nothing is fetched: no source of prices and none of exchange rates is on, so both are whatever was typed in by hand. Turn on at least one of each below."
+msgstr "Nothing is fetched: no source of prices and none of exchange rates is on, so both are whatever was typed in by hand. Turn on at least one of each below."
 
 #: src/screens/Trades/index.tsx
 msgid "Nothing is held"
@@ -6109,7 +6273,7 @@ msgstr "of the trades closed here"
 msgid "Of the whole portfolio that is <0/>."
 msgstr "Of the whole portfolio that is <0/>."
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Off"
 msgstr "Off"
 
@@ -6121,7 +6285,7 @@ msgstr "Offer it again"
 msgid "Old shares"
 msgstr "Old shares"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "On"
 msgstr "On"
 
@@ -6255,6 +6419,10 @@ msgstr "open an account"
 msgid "Open in the directory"
 msgstr "Open in the directory"
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Open it"
+msgstr "Open it"
+
 #: src/lib/commands/catalog.ts
 msgid "Open or close the AI assistant"
 msgstr "Open or close the AI assistant"
@@ -6301,7 +6469,7 @@ msgstr "operation"
 msgid "optional"
 msgstr "optional"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Optional, e.g. Authorization; {KEY} in its value is replaced by the saved key"
 msgstr "Optional, e.g. Authorization; {KEY} in its value is replaced by the saved key"
 
@@ -6356,6 +6524,7 @@ msgid "Overrides the dashboard period for this widget alone."
 msgstr "Overrides the dashboard period for this widget alone."
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 msgid "Overview"
 msgstr "Overview"
 
@@ -6430,11 +6599,11 @@ msgstr "Paste"
 msgid "Path copied"
 msgstr "Path copied"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Path to the closes"
 msgstr "Path to the closes"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Path to the dates"
 msgstr "Path to the dates"
 
@@ -6484,6 +6653,7 @@ msgid "Perf. %"
 msgstr "Perf. %"
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Performance/index.tsx
 msgid "Performance"
 msgstr "Performance"
@@ -6495,6 +6665,7 @@ msgstr "period"
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/PeriodControl.tsx
 #: src/components/domain/PeriodEditor.tsx
+#: src/lib/tour/steps.ts
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Risk.tsx
@@ -6519,6 +6690,18 @@ msgstr "period TWR, per year"
 #: src/components/domain/PeriodEditor.tsx
 msgid "Periods"
 msgstr "Periods"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Pick a source of exchange rates first."
+msgstr "Pick a source of exchange rates first."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Pick a source of prices and one of exchange rates first."
+msgstr "Pick a source of prices and one of exchange rates first."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Pick a source of prices first."
+msgstr "Pick a source of prices first."
 
 #: src/screens/Performance/index.tsx
 msgid "Pick a wider period or add transactions — contribution counts the instruments held inside the period."
@@ -6629,6 +6812,7 @@ msgstr "Portfolio yield"
 #~ msgstr "Position contribution to the return as a staircase, largest first."
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Positions/index.tsx
 msgid "Positions"
 msgstr "Positions"
@@ -6688,9 +6872,13 @@ msgstr "Price-index region"
 msgid "prices"
 msgstr "prices"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Prices of instruments"
 msgstr "Prices of instruments"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
+msgstr "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
 
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Reports/index.tsx
@@ -6862,6 +7050,8 @@ msgstr "Quote source"
 msgid "Quote source for unidentified instruments"
 msgstr "Quote source for unidentified instruments"
 
+#: src/components/domain/sources/SourceRow.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "quotes"
 msgstr "quotes"
@@ -7175,7 +7365,7 @@ msgstr "repeated inside the file"
 msgid "Replace"
 msgstr "Replace"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Replace key"
 msgstr "Replace key"
 
@@ -7327,6 +7517,10 @@ msgstr "Return by position"
 msgid "Return heatmap"
 msgstr "Return heatmap"
 
+#: src/lib/tour/steps.ts
+msgid "Return measured two ways, because they answer different questions: one ignores your deposits and withdrawals, the other is built around when they happened. Ask the assistant which one you want."
+msgstr "Return measured two ways, because they answer different questions: one ignores your deposits and withdrawals, the other is built around when they happened. Ask the assistant which one you want."
+
 #: src/components/domain/positionColumns.tsx
 msgid "Return of the instrument itself, unaffected by what was paid in or out."
 msgstr "Return of the instrument itself, unaffected by what was paid in or out."
@@ -7452,8 +7646,8 @@ msgstr "Save a dialog, also from a multi-line field"
 msgid "Save as a layout"
 msgstr "Save as a layout"
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Save key"
 msgstr "Save key"
 
@@ -7461,6 +7655,8 @@ msgstr "Save key"
 msgid "Save the current layout as a template"
 msgstr "Save the current layout as a template"
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/components/ui/formLabels.ts
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -7481,8 +7677,12 @@ msgstr "screen"
 msgid "Screens"
 msgstr "Screens"
 
+#: src/lib/tour/steps.ts
+msgid "Screens are grouped here, and the ones you pin sit at the top. Press ⌘K for the command palette if you would rather type where you are going."
+msgstr "Screens are grouped here, and the ones you pin sit at the top. Press ⌘K for the command palette if you would rather type where you are going."
+
 #: src/components/domain/aiToolLabels.ts
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "search"
 msgstr "search"
 
@@ -7621,6 +7821,14 @@ msgstr "Select all"
 msgid "Select All"
 msgstr "Select All"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Select all and continue"
+msgstr "Select all and continue"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+#~ msgid "Select all available"
+#~ msgstr "Select all available"
+
 #. placeholder {0}: year.year
 #: src/screens/Transactions/JournalTable.tsx
 msgid "Select all transactions of {0}"
@@ -7686,7 +7894,7 @@ msgstr "Set a password for this profile first: keys are kept only behind one."
 msgid "Set by hand"
 msgstr "Set by hand"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Set key"
 msgstr "Set key"
 
@@ -7766,6 +7974,10 @@ msgstr "Sharpe"
 msgid "Shipped"
 msgstr "Shipped"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Shipped sources"
+msgstr "Shipped sources"
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Shipped with the app"
 msgstr "Shipped with the app"
@@ -7800,6 +8012,10 @@ msgstr "Show how the assistant got there"
 #: src/components/ui/Metric.tsx
 msgid "Show less"
 msgstr "Show less"
+
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Show me around"
+msgstr "Show me around"
 
 #: src/screens/Import/ProblemList.tsx
 msgid "show rows"
@@ -7870,6 +8086,10 @@ msgstr "Single-key shortcuts are turned off in Settings, Keyboard."
 #: src/components/domain/PeriodEditor.tsx
 msgid "Six months"
 msgstr "Six months"
+
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Skip"
+msgstr "Skip"
 
 #: src/components/domain/UpdateDialog.tsx
 msgid "Skip this version"
@@ -7961,6 +8181,10 @@ msgstr "Standalone fees and taxes only, never a commission inside a trade."
 #: src/screens/Risk.tsx
 msgid "Standard deviation of daily returns, annualised."
 msgstr "Standard deviation of daily returns, annualised."
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Start"
+msgstr "Start"
 
 #: src/components/domain/PlanForm.tsx
 msgid "start and end"
@@ -8193,7 +8417,7 @@ msgstr "Taxes, all time"
 msgid "Taxonomy"
 msgstr "Taxonomy"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Test"
 msgstr "Test"
 
@@ -8876,9 +9100,13 @@ msgstr "The sign of the amount agrees with the transaction direction in only {0}
 msgid "the sign of the amount only partly agrees with the kinds"
 msgstr "the sign of the amount only partly agrees with the kinds"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "The source answered, but nothing in the last 30 days"
 msgstr "The source answered, but nothing in the last 30 days"
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "The sources chosen publish neither prices nor exchange rates, so nothing is fetched. Click to choose."
+msgstr "The sources chosen publish neither prices nor exchange rates, so nothing is fetched. Click to choose."
 
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "the split will not be written"
@@ -9007,6 +9235,10 @@ msgstr "the whole portfolio down to instruments, area is share"
 msgid "The whole portfolio is one file; a copy of it is a full backup."
 msgstr "The whole portfolio is one file; a copy of it is a full backup."
 
+#: src/lib/tour/steps.ts
+msgid "The window a figure is measured over. The strip is yours to edit: periods can be added and the shipped ones hidden."
+msgstr "The window a figure is measured over. The strip is yours to edit: periods can be added and the shipped ones hidden."
+
 #: src/screens/Risk.tsx
 msgid "The worst falls from a high to a low, deepest first rather than latest first."
 msgstr "The worst falls from a high to a low, deepest first rather than latest first."
@@ -9050,6 +9282,10 @@ msgstr "These values appear only on rows that need no instrument: a transfer, a 
 #: src/screens/Import/CommitStep.tsx
 msgid "they are written, but worth a look"
 msgstr "they are written, but worth a look"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
+msgstr "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
 
 #: src/components/domain/AiTools.tsx
 #: src/screens/Settings/ai/UsagePanel.tsx
@@ -9125,6 +9361,10 @@ msgstr "This position's share of everything the current scope holds."
 msgid "This profile is locked. Enter its password to continue."
 msgstr "This profile is locked. Enter its password to continue."
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "This profile is the demo one. Your own data lives in the other profiles."
+msgstr "This profile is the demo one. Your own data lives in the other profiles."
+
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "This profile's data and API keys are encrypted with it."
 msgstr "This profile's data and API keys are encrypted with it."
@@ -9172,6 +9412,10 @@ msgstr "ticker in the database"
 #: src/screens/Watchlist/AddDialog.tsx
 msgid "Ticker, name or ISIN"
 msgstr "Ticker, name or ISIN"
+
+#: src/lib/tour/steps.ts
+msgid "Tiles you arrange yourself: drag one by its header to move it, any edge to resize it. Each tile can read a different period and a different set of accounts."
+msgstr "Tiles you arrange yourself: drag one by its header to move it, any edge to resize it. Each tile can read a different period and a different set of accounts."
 
 #: src/screens/Risk.tsx
 msgid "Time-weighted return as a yearly rate."
@@ -9339,6 +9583,7 @@ msgid "Transaction kind for \"{value}\""
 msgstr "Transaction kind for \"{value}\""
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -9362,6 +9607,10 @@ msgstr "tree"
 msgid "Tree"
 msgstr "Tree"
 
+#: src/lib/tour/steps.ts
+msgid "Trees you define — asset class, region, sector, or anything else — with each instrument split across them. Targets set here are what the rebalancing screen compares against."
+msgstr "Trees you define — asset class, region, sector, or anything else — with each instrument split across them. Targets set here are what the rebalancing screen compares against."
+
 #: src/components/domain/AlertDialogs.tsx
 msgid "Trigger"
 msgstr "Trigger"
@@ -9380,11 +9629,11 @@ msgstr "trough {0}"
 msgid "Try again"
 msgstr "Try again"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Try it with a pair"
 msgstr "Try it with a pair"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Try it with a symbol"
 msgstr "Try it with a symbol"
 
@@ -9397,16 +9646,32 @@ msgid "Try the ISIN, or the full name. The instrument can also be left as it is,
 msgstr "Try the ISIN, or the full name. The instrument can also be left as it is, with prices entered by hand."
 
 #: src/screens/Onboarding.tsx
-msgid "Try with demo portfolio"
-msgstr "Try with demo portfolio"
+msgid "Try with a demo portfolio"
+msgstr "Try with a demo portfolio"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/screens/Onboarding.tsx
+#~ msgid "Try with demo portfolio"
+#~ msgstr "Try with demo portfolio"
+
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Turn off"
 msgstr "Turn off"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Turn on"
 msgstr "Turn on"
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Turn on a source of exchange rates first."
+#~ msgstr "Turn on a source of exchange rates first."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Turn on a source of prices and one of exchange rates first."
+#~ msgstr "Turn on a source of prices and one of exchange rates first."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Turn on a source of prices first."
+#~ msgstr "Turn on a source of prices first."
 
 #: src/screens/dashboard/widgets/ai.tsx
 msgid "Turn the assistant on in Settings to use this tile."
@@ -9417,6 +9682,10 @@ msgstr "Turn the assistant on in Settings to use this tile."
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "Turnover"
 msgstr "Turnover"
+
+#: src/lib/tour/steps.ts
+msgid "Twelve stops, about a minute. Leave at any time with Escape — the tour writes nothing and changes no setting."
+msgstr "Twelve stops, about a minute. Leave at any time with Escape — the tour writes nothing and changes no setting."
 
 #: src/lib/kinds.ts
 msgid "Twice a year"
@@ -9557,6 +9826,18 @@ msgstr "Update now"
 msgid "Updates"
 msgstr "Updates"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "Use {firstQuotes}"
+msgstr "Use {firstQuotes}"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Use {firstQuotes} for the {orphans} instruments that have no price source"
+msgstr "Use {firstQuotes} for the {orphans} instruments that have no price source"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Use these sources"
+msgstr "Use these sources"
+
 #: src/components/charts/ValueChart.tsx
 #: src/screens/Allocation/Header.tsx
 #: src/screens/Allocation/MembersPanel.tsx
@@ -9612,7 +9893,7 @@ msgstr "Venue"
 msgid "Venue not checked — refresh the list to learn its currency"
 msgstr "Venue not checked — refresh the list to learn its currency"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "venues"
 msgstr "venues"
 
@@ -9776,6 +10057,10 @@ msgstr "what each instrument earned"
 #: src/screens/Performance/index.tsx
 msgid "What each instrument earned over the period and how much of the portfolio return it accounts for."
 msgstr "What each instrument earned over the period and how much of the portfolio return it accounts for."
+
+#: src/lib/tour/steps.ts
+msgid "What is held right now, one row per instrument. Which columns you see is your choice, and the purchase figures name the method they were counted by."
+msgstr "What is held right now, one row per instrument. Which columns you see is your choice, and the purchase figures name the method they were counted by."
 
 #: src/screens/Import/FilePreview.tsx
 msgid "What is in the file"
@@ -9979,6 +10264,10 @@ msgstr "Where am I off my target allocation?"
 msgid "where an instrument's prices come from"
 msgstr "where an instrument's prices come from"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Where data comes from"
+msgstr "Where data comes from"
+
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Where each category stands against its target weight."
 msgstr "Where each category stands against its target weight."
@@ -10014,6 +10303,10 @@ msgstr "Where the price stands between the period's low and high."
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Where this app looks for a newer version, and whether it may look on its own."
 msgstr "Where this app looks for a newer version, and whether it may look on its own."
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Where to start, and what to try it on."
+msgstr "Where to start, and what to try it on."
 
 #: src/screens/Settings/InflationPanel.tsx
 msgid "Where you spend, which need not be where your base currency is legal tender. Left empty, no real returns are shown."
@@ -10162,6 +10455,10 @@ msgstr "Withheld at the source, so it never reaches the account."
 #: src/components/domain/PlanForm.tsx
 msgid "Without an instrument the contribution stays as cash on the account."
 msgstr "Without an instrument the contribution stays as cash on the account."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Without both, holdings in another currency cannot be valued at all. Leaving with Decide later is an answer too: prices are then typed in by hand."
+msgstr "Without both, holdings in another currency cannot be valued at all. Leaving with Decide later is an answer too: prices are then typed in by hand."
 
 #: src/components/domain/positionColumns.tsx
 msgid "WKN"
@@ -10317,6 +10614,7 @@ msgstr "Your own notes, plus the dividends and splits reported by the quote sour
 msgid "Your own provider"
 msgstr "Your own provider"
 
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Your own sources"
 msgstr "Your own sources"

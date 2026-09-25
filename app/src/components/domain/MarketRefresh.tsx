@@ -4,9 +4,17 @@ import type { I18n } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { api, onMarketProgress } from "../../lib/api";
-import { affects, keys, useInvalidate } from "../../lib/queries";
+import {
+  affects,
+  keys,
+  useInvalidate,
+  useMarketCustom,
+  useMarketSources,
+  useSettings,
+} from "../../lib/queries";
 import { formatDateTime } from "../../lib/format";
 import { Buttons, ErrorText, ListRow } from "../ui";
+import { SourcesSetup, sourceNeeds } from "./sources";
 import type { JobFailure, Progress, RefreshMode, RefreshStatus } from "../../lib/types";
 
 /** Combines initial refresh status with live progress events. */
@@ -185,11 +193,27 @@ export function MarketRefresh() {
   );
 }
 
-/** Persistent refresh status chip with idle, loading, and error states. */
+/**
+ * Persistent refresh status chip with idle, loading, and error states.
+ *
+ * A fourth state sits ahead of those three: a set of sources that cannot price a portfolio is
+ * an error of its own, and the loudest place to say so is the control that would otherwise
+ * claim data is being kept up to date. Nothing is refreshed from there — pressing it opens the
+ * question instead (ADR-0076), which is the only thing that would fix it.
+ */
 export function SyncChip() {
   const { t, i18n } = useLingui();
   const { status, live, running } = useRefreshStatus();
   const refresh = useMutation({ mutationFn: (mode: RefreshMode) => api.marketRefresh(mode) });
+  const settings = useSettings();
+  const sources = useMarketSources();
+  const custom = useMarketCustom();
+  const [choosing, setChoosing] = useState(false);
+
+  const configured = settings.data?.sources_configured ?? true;
+  const needs = sourceNeeds(sources.data ?? [], custom.data ?? [], settings.data?.market_sources ?? {});
+  // Answered but unusable counts as unset: the app fetches nothing either way.
+  const unset = settings.data !== undefined && sources.data !== undefined && (!configured || !needs.ok);
 
   const failures = running ? [] : live?.event === "finished" ? live.failed : (status?.failures ?? []);
   const failed = failures.length > 0;
@@ -203,27 +227,39 @@ export function SyncChip() {
           t`Click to try again.`,
         ].join("\n\n")
       : t`Refresh quotes and rates`;
-  const state = running ? "loading" : failed ? "error" : "idle";
+  const state = running ? "loading" : unset || failed ? "error" : "idle";
   const label =
     running && live?.event === "item"
       ? `${live.done}/${live.total}`
       : running
         ? "…"
-        : failed
-          ? t`Errors`
-          : t`Data`;
+        : unset
+          ? t`No data source`
+          : failed
+            ? t`Errors`
+            : t`Data`;
+  const unsetTip = !configured
+    ? t`No data source has been chosen, so no prices or exchange rates are fetched at all. Click to choose.`
+    : !needs.quotes && !needs.rates
+      ? t`The sources chosen publish neither prices nor exchange rates, so nothing is fetched. Click to choose.`
+      : !needs.quotes
+        ? t`No source of prices is on, so quotes are whatever was typed in by hand. Click to choose.`
+        : t`No source of exchange rates is on, so anything held in another currency cannot be valued. Click to choose.`;
 
   return (
-    <button
-      type="button"
-      className="iconbtn chip-sync"
-      data-state={state}
-      data-tip={tip}
-      disabled={running}
-      onClick={() => refresh.mutate("catch_up")}
-    >
-      <span className="dot" />
-      <span className="chip-sync__text">{label}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        className="iconbtn chip-sync"
+        data-state={state}
+        data-tip={unset ? unsetTip : tip}
+        disabled={running}
+        onClick={() => (unset ? setChoosing(true) : refresh.mutate("catch_up"))}
+      >
+        <span className="dot" />
+        <span className="chip-sync__text">{label}</span>
+      </button>
+      {choosing && <SourcesSetup onClose={() => setChoosing(false)} />}
+    </>
   );
 }

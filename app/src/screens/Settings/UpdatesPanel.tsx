@@ -27,7 +27,7 @@ export function UpdatesPanel() {
           label={t`Check for updates automatically`}
           hint={t`Once a day, over the internet. Nothing is downloaded before you say so.`}
           checked={ui.updates.auto}
-          onChange={(auto) => save({ ...ui, updates: { ...ui.updates, auto } })}
+          onChange={(auto) => save((ui) => ({ ...ui, updates: { ...ui.updates, auto } }))}
         />
 
         {skipped && (
@@ -36,7 +36,7 @@ export function UpdatesPanel() {
             <button
               type="button"
               className="btn btn--ghost"
-              onClick={() => save({ ...ui, updates: { ...ui.updates, skip: null } })}
+              onClick={() => save((ui) => ({ ...ui, updates: { ...ui.updates, skip: null } }))}
             >
               <Trans>Offer it again</Trans>
             </button>

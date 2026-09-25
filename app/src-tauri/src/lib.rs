@@ -215,6 +215,8 @@ pub fn run() {
             commands::ai::ai_key_save,
             commands::sources::market_sources_list,
             commands::sources::market_source_switch,
+            commands::sources::market_sources_confirm,
+            commands::securities::securities_adopt_source,
             commands::sources::market_key_save,
             commands::sources::market_key_delete,
             commands::sources::market_custom_list,

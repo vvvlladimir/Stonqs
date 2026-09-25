@@ -151,6 +151,12 @@ pub fn refresh_status(state: State<AppState>) -> UiResult<RefreshStatus> {
 
 /// Shared entry point for manual and startup refreshes.
 pub fn start(app: &AppHandle, state: &AppState, mode: RefreshMode) -> bool {
+    // Nobody has said where data may come from yet, so there is nobody to ask (ADR-0076). Refused
+    // here rather than inside the run: a refresh that started would report one failure per
+    // instrument for a state that is not a failure at all.
+    if !state.settings().map(|s| s.sources_configured).unwrap_or(false) {
+        return false;
+    }
     {
         let Ok(mut status) = state.refresh() else {
             return false;

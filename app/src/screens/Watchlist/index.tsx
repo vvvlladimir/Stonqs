@@ -243,7 +243,7 @@ export function Watchlist() {
                     currency={currency}
                     ctx={ctx}
                     sort={ui.watch_sort}
-                    onSortChange={(watch_sort) => saveUi({ ...ui, watch_sort })}
+                    onSortChange={(watch_sort) => saveUi((ui) => ({ ...ui, watch_sort }))}
                     menu={menu}
                     itemsFor={itemsFor}
                   />
@@ -279,8 +279,8 @@ export function Watchlist() {
           }))}
           groups={GROUPS.map((g) => ({ id: g.id, label: i18n._(g.label) }))}
           selected={shownColumns}
-          onChange={(watch_columns) => saveUi({ ...ui, watch_columns })}
-          onReset={() => saveUi({ ...ui, watch_columns: DEFAULT_UI.watch_columns })}
+          onChange={(watch_columns) => saveUi((ui) => ({ ...ui, watch_columns }))}
+          onReset={() => saveUi((ui) => ({ ...ui, watch_columns: DEFAULT_UI.watch_columns }))}
           onClose={() => setPicking(false)}
         />
       )}

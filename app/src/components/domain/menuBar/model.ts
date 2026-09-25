@@ -129,7 +129,11 @@ export const MENU: MenuSection[] = [
   },
   {
     label: msg`Help`,
-    items: [{ command: "help" }, { command: "ai", label: msg`Ask the Assistant`, keyless: true }],
+    items: [
+      { command: "tour", label: msg`Guided Tour` },
+      { command: "help" },
+      { command: "ai", label: msg`Ask the Assistant`, keyless: true },
+    ],
   },
 ];
 /* eslint-enable lingui/no-unlocalized-strings */

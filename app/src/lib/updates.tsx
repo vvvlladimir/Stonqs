@@ -90,7 +90,7 @@ export function UpdatesProvider({ children }: { children: ReactNode }) {
     if (!ready || startedRef.current) return;
     if (!ui.updates.auto || ui.updates.checked === today()) return;
     startedRef.current = true;
-    save({ ...ui, updates: { ...ui.updates, checked: today() } });
+    save((ui) => ({ ...ui, updates: { ...ui.updates, checked: today() } }));
     // After the render that started it, not inside it: the check is a network call, and its
     // answer is a dialog, so nothing about it belongs to painting the app for the first time.
     void Promise.resolve().then(() => run(false));
@@ -129,7 +129,7 @@ export function UpdatesProvider({ children }: { children: ReactNode }) {
       setStage("idle");
     },
     skip: () => {
-      if (update) save({ ...ui, updates: { ...ui.updates, skip: update.version } });
+      if (update) save((ui) => ({ ...ui, updates: { ...ui.updates, skip: update.version } }));
       setUpdate(null);
       setStage("idle");
     },

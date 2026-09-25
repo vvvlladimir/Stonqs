@@ -14,6 +14,12 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   `lib/types` and never from a file inside it. A new type joins the file of its subject and is
   re-exported by `index.ts` — a name that would collide with one already there is the sign that two
   different wire shapes are being given one name, not an invitation to merge them.
+- `UiState` is one document with a dozen writers and is saved whole, so a write is a **patch**,
+  never a rebuilt object: `save((ui) => ({ ...ui, … }))` runs against the freshest stored copy,
+  not the one the caller rendered with. A writer that spreads its own render's `ui` puts back
+  every field another writer changed since — the tour's "Not now" came back because the daily
+  update check landed a moment later carrying the blob from before it. A patch made before the
+  settings have arrived is dropped rather than stored over what is on disk.
 - The date every reading screen answers for is `lib/asOf.tsx` (`useAsOf`), a **session** context,
   not `UiState`: a date restored from disk would open the app in the past without anybody asking.
   `AsOfPicker` wears the `.scope` look beside `ScopePicker` — two lenses, one control shape — and
@@ -47,6 +53,15 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   file needs no origin and its author writes plain `:root` rules. A preference naming a plugin
   that is gone is **kept**, not dropped — the stylesheet simply never arrives and the base scheme
   is what shows.
+- The guided tour is `lib/tour/` (ADR-0077): `steps.ts` is the whole content — a screen, an
+  optional `data-tour` anchor, a title and a body — `index.tsx` holds the state and draws nothing,
+  `components/domain/tour/` draws and holds none. **A step names no instrument, amount or figure**:
+  the same steps run over the demo portfolio and over somebody's real one. An anchor that never
+  appears is skipped rather than waited for, and a step with no anchor is about its screen as a
+  whole. The tour writes nothing but `UiState::tour`, is offered once per profile, and is started
+  again by the `tour` command (palette, `?` list and the macOS **Help** menu for free) or from
+  Settings → *Getting started*. It ends by handing over the sources dialog while the sources are
+  unchosen — declining the offer hands it over too.
 - The updater is the frontend's, not the host's (ADR-0063): `lib/updates.tsx` owns the check (once
   a calendar day, `UiState::updates`), `UpdateDialog` is the only place a version is offered, and
   `api.ts` keeps the plugin's handle so nothing else holds an installer. An automatic check that

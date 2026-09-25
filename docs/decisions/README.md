@@ -43,6 +43,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [53](0053-market-sources-are-switched-and-keyed-by-the-user.md) | Market sources are switched and keyed by the user | Accepted |
 | [54](0054-a-quote-source-the-user-describes.md) | A quote source the user describes | Accepted |
 | [55](0055-a-keyed-source-s-daily-allowance-is-counted-in-the-profile.md) | A keyed source's daily allowance is counted in the profile | Accepted |
+| [76](0076-a-source-is-chosen-never-defaulted.md) | A data source is chosen, never defaulted | Accepted; supersedes the shipped default provider of [50](0050-a-market-data-source-is-a-catalogue-row.md) |
 
 ## Import
 
@@ -97,6 +98,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [59](0059-a-tile-may-hold-assumptions-and-a-ratio-is-a-rendering.md) | A tile may hold assumptions, and a ratio of two shown figures is a rendering | Accepted |
 | [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted |
 | [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins implemented, UI and compute not yet |
+| [77](0077-the-tour-is-a-declaration-over-the-real-screens.md) | The guided tour is a declaration over the real screens | Accepted |
 
 ## Profiles, keys and encryption
 

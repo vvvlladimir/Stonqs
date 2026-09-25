@@ -157,7 +157,7 @@ function usePanelWidth() {
     onEnd: (commit) => {
       setDragged((current) => {
         if (commit && current !== null && current !== ui.ai_panel_width) {
-          save({ ...ui, ai_panel_width: current });
+          save((ui) => ({ ...ui, ai_panel_width: current }));
         }
         return null;
       });

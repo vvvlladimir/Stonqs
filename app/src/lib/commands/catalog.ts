@@ -32,6 +32,7 @@ export const COMMANDS = {
   ai: { keys: ["mod+j"], label: msg`Open or close the AI assistant`, group: "general" },
   lock: { keys: ["mod+shift+l"], label: msg`Lock profile`, group: "general" },
   checkUpdates: { keys: [], label: msg`Check for updates`, group: "general" },
+  tour: { keys: [], label: msg`Guided tour`, group: "general" },
 
   newTransaction: {
     keys: ["mod+n"],

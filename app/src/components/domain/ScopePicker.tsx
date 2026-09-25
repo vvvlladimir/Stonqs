@@ -51,6 +51,7 @@ export function ScopePicker() {
       <button
         type="button"
         className="scope scope--row"
+        data-tour="scope"
         data-tip={label}
         onClick={() => setOpen(true)}
         disabled={set.isPending}

@@ -113,6 +113,20 @@
   font-size: var(--fs-lg);
   flex: none;
 }
+/* The sentence is the part that gives way: it wraps inside its own column so the mark stays at
+   its left and the action at the right of the same row, the way a list row's value does. */
+.banner > span:not(.spacer) {
+  min-width: 0;
+}
+/* Under a finger there is no room for a row: the action goes under the text, full width. */
+@media (max-width: 699px) {
+  .banner {
+    flex-wrap: wrap;
+  }
+  .banner .btn {
+    margin-left: auto;
+  }
+}
 .banner--info {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 30%, var(--border));

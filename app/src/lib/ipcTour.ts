@@ -1,4 +1,3 @@
-/* eslint-disable lingui/no-unlocalized-strings -- dev-only recorder: storage keys, names, log lines */
 /**
  * Dev-only tour for the website's screenshots, started by `pnpm record:tour`
  * (scripts/record-tour.mjs). It records from a fresh demo profile rather than whatever the dev
@@ -10,9 +9,11 @@
  *
  * Each stage ends in a reload, as switching profile does in the app, so the stage is kept in
  * sessionStorage. Absent from a release build: imported only behind `VITE_RECORD_TOUR`.
+ *
+ * The stages live here and the component that walks them in `ipcTourRecorder.tsx`: a module
+ * exporting both a component and the functions beside it loses fast refresh for the whole app.
  */
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type { ScreenId } from "./nav";
 import { markChosen } from "./profiles";
@@ -22,7 +23,7 @@ const PROFILE = "Screenshots";
 
 /** Every screen the website may shoot, in the order the tour opens them; the dashboard last,
  *  so the fixture's final answers for the shell are the ones it shows on arrival. */
-const SCREENS: ScreenId[] = [
+export const SCREENS: ScreenId[] = [
   "positions",
   "transactions",
   "accounts",
@@ -43,8 +44,13 @@ const SCREENS: ScreenId[] = [
 
 type Stage = "fresh" | "seed" | "visit" | "done";
 
-function tourStage(): Stage {
+export function tourStage(): Stage {
   return (sessionStorage.getItem(STAGE) as Stage | null) ?? "fresh";
+}
+
+/** The recorder's last act: the walk is over and the fixture is complete. */
+export function tourFinished() {
+  sessionStorage.setItem(STAGE, "done");
 }
 
 function next(stage: Stage) {
@@ -88,37 +94,10 @@ export async function prepareTour(): Promise<boolean> {
 }
 
 /** Nothing in flight for `ms` in a row: queries arrive in waves, a chart after its data. */
-async function quiet(client: QueryClient, ms = 1500) {
+export async function quiet(client: QueryClient, ms = 1500) {
   let since = Date.now();
   while (Date.now() - since < ms) {
     await pause(100);
     if (client.isFetching() + client.isMutating() > 0) since = Date.now();
   }
-}
-
-/** Walks the screens once the demo profile is open. Rendered by `App` in tour mode only. */
-export function RecordTour({ go }: { go: (screen: ScreenId) => void }) {
-  const client = useQueryClient();
-  useEffect(() => {
-    if (tourStage() !== "visit") return;
-    let cancelled = false;
-    void (async () => {
-      await quiet(client);
-      for (const screen of SCREENS) {
-        if (cancelled) return;
-        go(screen);
-        await quiet(client);
-        console.info(`tour: recorded ${screen}`);
-      }
-      sessionStorage.setItem(STAGE, "done");
-      await fetch("/__ipc-record/done", { method: "POST" });
-      document.title = "Recording finished";
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // `go` is a fresh closure every render; the tour runs once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return null;
 }

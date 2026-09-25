@@ -64,7 +64,7 @@ export function Dashboard() {
 
   const board = ui.dashboards.find((d) => d.id === ui.active_dashboard) ?? ui.dashboards[0];
 
-  const patch = (next: Partial<UiState>) => save({ ...ui, ...next });
+  const patch = (next: Partial<UiState>) => save((ui) => ({ ...ui, ...next }));
   const setBoard = (widgets: Widget[]) =>
     patch({ dashboards: ui.dashboards.map((d) => (d.id === board.id ? { ...d, widgets } : d)) });
 

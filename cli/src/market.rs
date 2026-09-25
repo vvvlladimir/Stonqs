@@ -84,10 +84,9 @@ pub fn quotes(args: &[String]) -> Result<()> {
             "usage: quotes <symbol> <from> <to> [yahoo|stooq]".into(),
         ));
     };
-    let source = args
-        .get(3)
-        .map(String::as_str)
-        .unwrap_or(sq_core::sources::DEFAULT_QUOTES);
+    // Named outright: the app ships no default source (ADR-0076), and this harness registers
+    // both providers two lines below whatever the argument says.
+    let source = args.get(3).map(String::as_str).unwrap_or(YahooProvider::ID);
     let range = DateRange::new(parse_date(from)?, parse_date(to)?);
 
     let store = Store::open_in_memory()?;

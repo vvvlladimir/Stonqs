@@ -421,7 +421,7 @@ pub(super) fn security_set_listing(context: &ToolContext, args: &Value) -> AiRes
         data_source: existing
             .data_source
             .clone()
-            .or(Some(sq_core::sources::DEFAULT_QUOTES.to_string())),
+            .or(context.quotes_source.map(str::to_string)),
         data_symbol: None,
         mic: optional(args, "mic").map(|m| m.trim().to_uppercase()),
         ..existing.clone()

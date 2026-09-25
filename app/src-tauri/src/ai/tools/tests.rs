@@ -95,6 +95,7 @@ fn every_tool_that_needs_no_name_answers_an_empty_portfolio() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -126,6 +127,7 @@ fn a_name_that_does_not_exist_is_reported_back_to_the_model() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -198,6 +200,7 @@ fn a_purchase_is_written_the_way_the_editor_writes_one_and_is_announced() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|scope| announced.0.borrow_mut().push(scope),
     };
@@ -242,6 +245,7 @@ fn an_operation_that_moves_shares_without_an_instrument_is_refused() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -272,6 +276,7 @@ fn a_watchlist_is_replaced_by_what_the_call_names_rather_than_added_to() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|scope| announced.0.borrow_mut().push(scope),
     };
@@ -308,6 +313,7 @@ fn an_instrument_is_filed_under_a_branch_and_a_share_over_all_of_it_is_refused()
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|scope| announced.0.borrow_mut().push(scope),
     };
@@ -341,6 +347,7 @@ fn a_rule_can_be_removed_but_only_when_the_call_says_which_one() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -378,6 +385,7 @@ fn a_write_card_carries_the_figures_of_the_change() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -419,6 +427,7 @@ fn a_write_tool_shows_the_change_on_its_card_not_merely_its_name() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -455,6 +464,7 @@ fn an_edit_names_one_row_and_refuses_when_two_answer_to_the_same_description() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|scope| announced.0.borrow_mut().push(scope),
     };
@@ -513,6 +523,7 @@ fn an_account_joins_the_portfolio_as_it_is_opened_and_a_depot_needs_somewhere_to
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|scope| announced.0.borrow_mut().push(scope),
     };
@@ -551,6 +562,7 @@ fn what_the_ledger_holds_is_not_deleted_by_a_sentence() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -593,6 +605,7 @@ fn a_target_that_does_not_add_up_is_refused_before_it_reweighs_anything() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|scope| announced.0.borrow_mut().push(scope),
     };
@@ -648,6 +661,7 @@ fn excluding_a_subject_leaves_its_filing_untouched() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };
@@ -683,6 +697,7 @@ fn a_plan_is_written_with_its_legs_and_proposes_nothing_by_itself() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|scope| announced.0.borrow_mut().push(scope),
     };
@@ -766,6 +781,7 @@ fn a_reason_in_the_arguments_changes_no_answer() {
     let context = ToolContext {
         store: &store,
         scope: &scope,
+        quotes_source: None,
         today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
         changed: &|_| {},
     };

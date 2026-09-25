@@ -51,7 +51,7 @@ export function AppearancePanel() {
             label={t`Colour scheme`}
             options={themes}
             value={pluginTheme(ui.theme) ? "system" : ui.theme}
-            onChange={(theme) => saveUi({ ...ui, theme })}
+            onChange={(theme) => saveUi((ui) => ({ ...ui, theme }))}
           />
         </Field>
 
@@ -65,7 +65,7 @@ export function AppearancePanel() {
             ]}
             value={pluginTheme(ui.theme) ? ui.theme : ""}
             onChange={(value) =>
-              saveUi({ ...ui, theme: value === "" ? "system" : (value as ThemePreference) })
+              saveUi((ui) => ({ ...ui, theme: value === "" ? "system" : (value as ThemePreference) }))
             }
           />
         )}

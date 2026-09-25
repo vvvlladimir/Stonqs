@@ -53,6 +53,16 @@ export interface UiState {
   nav: NavPrefs;
   /** Keyboard preferences; `lib/commands` is the only reader. */
   shortcuts: ShortcutPrefs;
+  /** Whether the guided tour has been offered and answered. */
+  tour: TourPrefs;
+}
+
+/**
+ * The tour is offered once. `done` is set whether it was taken or declined — an offer repeated
+ * after "no" is the same as not having asked. Starting it again is a command, never automatic.
+ */
+export interface TourPrefs {
+  done: boolean;
 }
 
 /**
@@ -147,6 +157,7 @@ export const DEFAULT_UI: UiState = {
     open: "portfolio",
   },
   shortcuts: { single_keys: true },
+  tour: { done: false },
 };
 
 /** Parses versioned or plugin-provided UI JSON with safe defaults. */
@@ -181,6 +192,9 @@ export function parseUiState(raw: unknown): UiState {
           ? value.shortcuts.single_keys
           : DEFAULT_UI.shortcuts.single_keys,
     },
+    // A board stored before the tour existed belongs to somebody already using the app: they
+    // are not a new user, so the offer is counted as answered.
+    tour: { done: typeof value.tour?.done === "boolean" ? value.tour.done : true },
   };
 }
 
@@ -329,6 +343,18 @@ function isDashboard(value: unknown): value is Dashboard {
   );
 }
 
+/**
+ * A write to the UI state, expressed as a change to whatever is stored *now*.
+ *
+ * The blob is one document with a dozen writers in it — the tour, the updater, the board, two
+ * column pickers — and it is saved whole. A writer that builds its next state out of the copy
+ * it rendered with therefore puts back every field another writer changed in the meantime,
+ * which is how declining the tour was undone by the daily update check landing a moment later.
+ * The patch runs against the freshest copy instead, so two writers touching different fields
+ * cannot overwrite each other.
+ */
+export type UiPatch = (current: UiState) => UiState;
+
 export function useUiState() {
   const queryClient = useQueryClient();
   const settings = useSettings();
@@ -349,12 +375,21 @@ export function useUiState() {
     },
   });
 
+  // The cache rather than this render's `settings.data`: an optimistic write by another writer
+  // one tick ago is already there, and that is the copy a patch has to be applied to. Nothing
+  // in it yet means the settings have not arrived, and a patch over the defaults would store
+  // them over whatever is really on disk, so the write is dropped instead.
+  const stored = () => queryClient.getQueryData(keys.settings()) as { ui?: unknown } | undefined;
+
   return {
     ui: parseUiState(settings.data?.ui),
     ready: settings.isSuccess,
     /** Exposes load errors instead of silently replacing persisted settings. */
     loadError: settings.error,
-    save: (next: UiState) => save.mutate(next),
+    save: (next: UiPatch) => {
+      const current = stored();
+      if (current) save.mutate(next(parseUiState(current.ui)));
+    },
     error: save.error,
   };
 }

@@ -51,12 +51,12 @@ export function Onboarding({ status }: { status: AppStatus }) {
           <GateSection title={t`Just looking`}>
             <p className="dim">
               <Trans>
-                Fills this profile with a sample portfolio so you can see what the app does before importing
-                anything of your own.
+                Fills this profile with a sample portfolio and offers a short tour, so you can see what the
+                app does before importing anything of your own.
               </Trans>
             </p>
             <button className="btn btn--ghost" onClick={() => seed.mutate()} disabled={seed.isPending}>
-              {seed.isPending ? t`Filling…` : t`Try with demo portfolio`}
+              {seed.isPending ? t`Filling…` : t`Try with a demo portfolio`}
             </button>
             <ErrorText error={seed.error} />
           </GateSection>

@@ -24,6 +24,7 @@ import type { DataScope, ScopeOption } from "../../lib/types";
 import { arrange, HOME, SCREENS } from "../Nav/model";
 import { Palette, type PaletteItem } from "../ui";
 import { MenuBar } from "./menuBar/MenuBar";
+import { useTour } from "../../lib/tour";
 import { useRefreshStatus } from "./MarketRefresh";
 import { scopeLabel } from "./scopeLabel";
 import { useSecurityCard } from "./SecurityCardProvider";
@@ -167,6 +168,7 @@ function useShellCommands({
   const favorites = arrange(ui.nav).favorites;
   const isProtected = profiles.data?.profiles.find((p) => p.id === profiles.data?.open)?.protected ?? false;
   const checking = updates?.stage === "checking" || updates?.stage === "installing";
+  const tour = useTour();
 
   useCommand("palette", openPalette, SHELL);
   useCommand("help", openHelp, SHELL);
@@ -186,6 +188,7 @@ function useShellCommands({
   useCommand("ai", onAi, { ...SHELL, enabled: (settings.data?.ai_enabled ?? false) || aiOpen });
   useCommand("lock", () => void api.profileLock().then(restart), { ...SHELL, enabled: isProtected });
   useCommand("checkUpdates", () => updates?.check(), { ...SHELL, enabled: updates !== null && !checking });
+  useCommand("tour", () => tour?.start(), { ...SHELL, enabled: tour !== null });
   useCommand("asOfToday", asOf.reset, { ...SHELL, enabled: !asOf.isToday });
   useCommand("screen", (arg) => typeof arg === "string" && go(arg as ScreenId), SHELL);
   useCommand(
@@ -231,7 +234,7 @@ function useShellChoices() {
         })),
       ],
       value: ui.theme,
-      pick: (theme) => save({ ...ui, theme: theme as ThemePreference }),
+      pick: (theme) => save((ui) => ({ ...ui, theme: theme as ThemePreference })),
     },
     0,
   );

@@ -10,6 +10,7 @@ import { PluginsPanel } from "./PluginsPanel";
 import { AttributesPanel } from "./AttributesPanel";
 import { CATEGORIES, type CategoryId } from "./model";
 import { DataPanel } from "./DataPanel";
+import { HelpPanel } from "./HelpPanel";
 import { InflationPanel } from "./InflationPanel";
 import { KeyboardPanel } from "./KeyboardPanel";
 import { MarketDataPanel } from "./MarketDataPanel";
@@ -33,6 +34,7 @@ export function Settings({ status }: { status: AppStatus }) {
           icon: <Icon />,
         }))}
       >
+        {category === "help" && <HelpPanel />}
         {category === "portfolio" && (
           <>
             <PortfolioPanel />

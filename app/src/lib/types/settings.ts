@@ -3,6 +3,8 @@
 import type { UserPeriod } from "./periods";
 import type { AiEffort } from "./ai";
 export interface AppSettings {
+  /** Which build's reading of the stored file applies. The host migrates; nothing here acts on it. */
+  version: number;
   auto_refresh_on_start: boolean;
   refresh_min_interval_hours: number;
   last_refresh: string | null;
@@ -33,6 +35,9 @@ export interface AppSettings {
   ai_custom: AiCustomProvider;
   /** Market-data sources switched away from their default; edited through `market_source_switch`. */
   market_sources: Record<string, boolean>;
+  /** Whether the owner has said where data may come from. Until then every source is off
+   * whatever `market_sources` says, and nothing is fetched. Sealed by `market_sources_confirm`. */
+  sources_configured: boolean;
 }
 
 /** Which shape of API a server speaks. `OPENAI_CHAT` is what "OpenAI-compatible" means outside

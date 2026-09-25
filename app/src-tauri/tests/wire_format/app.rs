@@ -109,7 +109,9 @@ fn settings_keys_match_the_typescript_types() {
             "periods",
             "refresh_min_interval_hours",
             "scope",
-            "ui"
+            "sources_configured",
+            "ui",
+            "version"
         ]
     );
     assert_eq!(json["language"], "system");
@@ -210,6 +212,7 @@ fn auto_refresh_respects_the_interval() {
 
     let now = chrono::Utc::now();
     let base = AppSettings {
+        version: sq_app_lib::settings::SETTINGS_VERSION,
         auto_refresh_on_start: true,
         refresh_min_interval_hours: 6,
         last_refresh: None,
@@ -227,6 +230,7 @@ fn auto_refresh_respects_the_interval() {
         ai_reasoning: false,
         ai_custom: Default::default(),
         market_sources: Default::default(),
+        sources_configured: true,
         market_custom: Vec::new(),
     };
 

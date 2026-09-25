@@ -23,8 +23,17 @@ pub struct PeriodSettings {
     pub hidden_presets: Vec<String>,
 }
 
+/// Bumped when a stored file has to be read differently than it was written.
+///
+/// 1: sources are chosen, never defaulted (ADR-0076). A file written before this carries the old
+/// catalogue's defaults in its silence, so `migrate` writes them down before they change meaning.
+pub const SETTINGS_VERSION: u32 = 1;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
+    /// Which build's reading of this file applies; `0` is anything written before it existed.
+    #[serde(default)]
+    pub version: u32,
     /// Refresh quotes and FX rates on startup.
     pub auto_refresh_on_start: bool,
     /// Minimum interval between automatic refreshes.
@@ -87,6 +96,12 @@ pub struct AppSettings {
     /// Host state: the host decides what leaves the machine. Own command, `market_source_switch`.
     #[serde(default)]
     pub market_sources: std::collections::BTreeMap<String, bool>,
+    /// Whether the owner has answered the question of where data comes from. Until they have,
+    /// **every** source is off however the catalogue or this map reads: a build of ours does not
+    /// start asking somebody else's service on behalf of a user who never named it (ADR-0076).
+    /// Set once, by `market_sources_confirm`; `settings_save` never rolls it back.
+    #[serde(default)]
+    pub sources_configured: bool,
     /// Quote sources the user described (ADR-0054); their keys sit in the vault, not here.
     #[serde(default)]
     pub market_custom: Vec<sq_core::market::CustomSource>,
@@ -95,6 +110,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
+            version: SETTINGS_VERSION,
             auto_refresh_on_start: true,
             refresh_min_interval_hours: 6,
             last_refresh: None,
@@ -113,6 +129,7 @@ impl Default for AppSettings {
             ai_reasoning: false,
             ai_custom: crate::ai::catalog::CustomProvider::default(),
             market_sources: Default::default(),
+            sources_configured: false,
             market_custom: Vec::new(),
         }
     }
@@ -156,11 +173,47 @@ pub fn path_for(db_path: &Path) -> PathBuf {
 }
 
 /// Load settings; missing or invalid files use defaults.
+///
+/// A file that is there is an installation that already works: it is migrated, never reset. One
+/// that is not is a profile nobody has set up, which starts with nothing switched on.
 pub fn load(db_path: &Path) -> AppSettings {
-    std::fs::read(path_for(db_path))
+    match std::fs::read(path_for(db_path))
         .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_default()
+        .and_then(|bytes| serde_json::from_slice::<AppSettings>(&bytes).ok())
+    {
+        Some(mut stored) => {
+            migrate(&mut stored);
+            stored
+        }
+        None => AppSettings::default(),
+    }
+}
+
+/// Sources that were on before ADR-0076 without anybody saying so. The list describes a past
+/// state, so it is written out rather than derived from a catalogue that no longer holds it.
+const ON_BEFORE_THE_SOURCES_WERE_CHOSEN: &[&str] = &[
+    sq_core::market::YahooProvider::ID,
+    sq_core::market::KrakenProvider::ID,
+];
+
+/// Brings a stored file up to `SETTINGS_VERSION`.
+///
+/// Version 0 is a file whose silence meant the old catalogue's defaults. Those defaults change
+/// with this build, so the state it *had* is written down and the owner is counted as having
+/// chosen it — somebody whose quotes arrive today must not find them stopped by an update.
+fn migrate(settings: &mut AppSettings) {
+    if settings.version >= SETTINGS_VERSION {
+        return;
+    }
+    for source in sq_core::sources::CATALOG {
+        let was_on = source.on_by_default || ON_BEFORE_THE_SOURCES_WERE_CHOSEN.contains(&source.id);
+        settings
+            .market_sources
+            .entry(source.id.to_string())
+            .or_insert(was_on);
+    }
+    settings.sources_configured = true;
+    settings.version = SETTINGS_VERSION;
 }
 
 pub fn store(db_path: &Path, settings: &AppSettings) -> UiResult<()> {
@@ -181,7 +234,17 @@ pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<
     let scope = state.scope()?.clone();
     // One guard for the whole read: the settings Mutex is not reentrant, and guards taken inside
     // a struct literal all live until the end of that statement, so locking twice deadlocks.
-    let (periods, hidden_presets, ui, custom, market_sources, market_custom, ai_models, ai_effort) = {
+    let (
+        periods,
+        hidden_presets,
+        ui,
+        custom,
+        market_sources,
+        sources_configured,
+        market_custom,
+        ai_models,
+        ai_effort,
+    ) = {
         let current = state.settings()?;
         (
             current.periods.clone(),
@@ -189,6 +252,7 @@ pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<
             current.ui.clone(),
             current.ai_custom.clone(),
             current.market_sources.clone(),
+            current.sources_configured,
             current.market_custom.clone(),
             current.ai_models.clone(),
             current.ai_effort,
@@ -202,11 +266,13 @@ pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<
         cached.remove(crate::ai::catalog::CUSTOM);
     }
     let settings = AppSettings {
+        version: SETTINGS_VERSION,
         scope,
         periods,
         hidden_presets,
         ui,
         market_sources,
+        sources_configured,
         market_custom,
         ai_models,
         ai_effort,
@@ -222,4 +288,58 @@ pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<
 pub fn ui_state_save(state: State<AppState>, ui: serde_json::Value) -> UiResult<()> {
     state.settings()?.ui = ui;
     state.persist_settings()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sq_core::market::{KrakenProvider, YahooProvider};
+    use sq_core::sources::{self, Setup};
+
+    /// A file from before ADR-0076 keeps fetching what it fetched: its defaults are written down
+    /// before the catalogue stops meaning them, and its owner counts as having chosen.
+    #[test]
+    fn an_older_file_keeps_the_sources_it_had() {
+        let stored: AppSettings = serde_json::from_str(
+            r#"{"auto_refresh_on_start":true,"refresh_min_interval_hours":6,"last_refresh":null}"#,
+        )
+        .unwrap();
+        assert_eq!(stored.version, 0);
+
+        let mut migrated = stored;
+        migrate(&mut migrated);
+        assert!(migrated.sources_configured);
+        assert_eq!(migrated.version, SETTINGS_VERSION);
+        assert!(migrated.market_sources[YahooProvider::ID]);
+        assert!(migrated.market_sources[KrakenProvider::ID]);
+
+        let setup = Setup {
+            switched: migrated.market_sources.clone().into_iter().collect(),
+            ..Setup::default()
+        };
+        assert_eq!(sources::default_quotes(&setup), Some(YahooProvider::ID));
+    }
+
+    /// A switch the owner made themselves is what it was: the migration fills silence, never a
+    /// recorded answer.
+    #[test]
+    fn a_recorded_switch_survives_the_migration() {
+        let mut settings = AppSettings {
+            version: 0,
+            ..AppSettings::default()
+        };
+        settings.market_sources.insert(YahooProvider::ID.into(), false);
+        migrate(&mut settings);
+        assert!(!settings.market_sources[YahooProvider::ID]);
+    }
+
+    /// A profile nobody has set up starts with the question unanswered, whatever the catalogue
+    /// would have defaulted to.
+    #[test]
+    fn a_new_profile_has_chosen_nothing() {
+        let fresh = AppSettings::default();
+        assert!(!fresh.sources_configured);
+        assert_eq!(fresh.version, SETTINGS_VERSION);
+        assert!(fresh.market_sources.is_empty());
+    }
 }

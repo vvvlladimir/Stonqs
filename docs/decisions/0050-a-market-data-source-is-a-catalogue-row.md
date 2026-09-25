@@ -1,6 +1,6 @@
 # 50: A market-data source is a catalogue row
 
-- Status: Accepted
+- Status: Accepted; `DEFAULT_QUOTES` and the on-by-default quote sources superseded by ADR-0076
 
 ## Context
 
@@ -26,6 +26,8 @@ by default, and one constructor per role it can play (quotes, search, listings, 
 capabilities are derived from those constructors rather than declared beside them.
 `sources::quote_service()` and `sources::fx_service()` build the services from the rows that are
 on; `DEFAULT_QUOTES` and `DEFAULT_FX` name the source a new instrument or a currency pair uses.
+(`DEFAULT_QUOTES` is gone since ADR-0076: which source prices a new instrument is the owner's
+answer, read from the switches by `sources::default_quotes`.)
 
 A provider's id is its `ID` constant, used by its `id()`, by the rows it writes, and by the
 catalogue — so the id stored in the database and the id in the catalogue cannot drift.
