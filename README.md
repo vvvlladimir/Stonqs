@@ -6,11 +6,15 @@
 
 ### Know how your investments are really doing.
 
-A private portfolio tracker with serious analytics — true returns, realised gains,
-multi-currency accounts and rebalancing. It runs on your computer, needs no account,
-and is free and open source.
+Stonqs is a free, open-source portfolio tracker for the desktop: true time-weighted and
+money-weighted returns, realised gains, multi-currency accounts, broker CSV import and
+rebalancing. It runs on your computer, needs no account, and stores your portfolio in a
+database file on your own disk.
+
+macOS 12+, Windows 10/11 64-bit, Linux x86-64. Licensed under AGPL-3.0.
 
 **[Download for macOS · Windows · Linux](https://github.com/vvvlladimir/stonqs/releases/latest)**
+&nbsp;·&nbsp; [stonqs.app — what Stonqs does, in full](https://stonqs.app)
 &nbsp;·&nbsp; [Build from source](CONTRIBUTING.md#getting-set-up)
 &nbsp;·&nbsp; [Discussions](https://github.com/vvvlladimir/stonqs/discussions)
 
@@ -36,6 +40,13 @@ couple of currencies, dividends arriving from everywhere — and the nagging que
 portfolio is actually doing well, or just growing because you keep paying into it.
 
 It answers that question properly, keeps everything on your machine, and never asks you to sign up.
+
+How it differs from the usual options: unlike a web tracker, Stonqs has no account and no server —
+the portfolio is a local database file, optionally encrypted with a password you set. Unlike a
+spreadsheet, it computes time-weighted and money-weighted returns, FIFO and average-cost realised
+gains, and currency effects for you, and reads broker exports instead of asking you to reshape them.
+Unlike a self-hosted tracker, there is nothing to deploy or keep running: it is a desktop
+application you install.
 
 ## Why Stonqs
 
@@ -88,7 +99,9 @@ portfolio, and asks again — every single time — before changing anything.
 ## Get started
 
 1. Download the build for your system from the
-   [latest release](https://github.com/vvvlladimir/stonqs/releases/latest).
+   [latest release](https://github.com/vvvlladimir/stonqs/releases/latest), or from
+   [the download page on stonqs.app](https://stonqs.app/download/), which also lists the system
+   requirements and walks through the first launch.
 2. Open it and choose **Try with demo portfolio** to explore with sample data first.
 3. When you're ready, create your own profile and import a broker export.
 
@@ -105,6 +118,8 @@ The builds are not code-signed yet, so your system will warn you the first time:
 
 Signing is on the list. Until then you can
 [build from source](CONTRIBUTING.md#getting-set-up) — which is exactly why the code is here.
+The same steps, with screenshots, are at
+[stonqs.app/download/#macos](https://stonqs.app/download/#macos).
 
 </details>
 
@@ -128,23 +143,34 @@ against.
 
 ## FAQ
 
-**Is it free?**
-Yes. The app and everything that runs locally are free and open source under the AGPL, and will
+**Is Stonqs free?**
+Yes. The app and everything that runs locally are free and open source under the AGPL-3.0, and will
 stay that way. If paid services ever appear, they will be things that genuinely cost money to run —
 device sync, hosted AI, licensed market data — never a paywall in front of what works today.
 
-**Can it import PDF statements?**
+**Where does Stonqs store my data?**
+In a SQLite database file on your own disk, inside the app's data folder; there is no account and no
+server. Give a profile a password and that database is encrypted. You can back it up, move it to
+another machine, or delete it, like any other file.
+
+**Does Stonqs work offline?**
+Yes. Every figure is calculated on your computer. Prices and exchange rates come from the data
+sources you turn on; until you choose one, nothing is fetched and prices are whatever you enter.
+
+**Can Stonqs import PDF statements?**
 Not yet — CSV and Interactive Brokers Flex XML only. If your broker's export does not import
 cleanly, [open an issue](https://github.com/vvvlladimir/stonqs/issues) with five anonymised rows
 and the header.
 
-**Does it sync between devices?**
+**Does Stonqs sync between devices?**
 No. There is no server, so there is nothing to sync through. Your data is one folder you can back
 up like any other.
 
 **Phone or tablet?**
 Not yet. The code is written to run on iOS and Android from the same source, but only desktop
 builds ship today.
+
+More answers are on [the FAQ page at stonqs.app](https://stonqs.app/faq/).
 
 ## Status
 
