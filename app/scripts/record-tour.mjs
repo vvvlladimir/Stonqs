@@ -1,6 +1,6 @@
 // Records the IPC fixture for the website's screenshots without anybody clicking:
 //
-//   cd app && pnpm record:tour        then   cd site && pnpm screenshots
+//   cd app && pnpm record:tour        then   pnpm screenshots in the stonqs-site repository
 //
 // Starts the dev app with the recorder and the tour on (src/lib/ipcTour.tsx), which opens a fresh
 // demo profile and visits every screen, and stops the app once e2e/fixtures/ipc.json is marked

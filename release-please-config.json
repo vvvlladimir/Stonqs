@@ -4,7 +4,6 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "exclude-paths": ["site"],
       "draft": true,
       "force-tag-creation": true,
       "changelog-path": "CHANGELOG.md",
