@@ -56,6 +56,11 @@ const Alerts = lazy(() => import("./screens/Alerts").then((m) => ({ default: m.A
 const Reports = lazy(() => import("./screens/Reports").then((m) => ({ default: m.Reports })));
 const Import = lazy(() => import("./screens/Import").then((m) => ({ default: m.Import })));
 
+// Dev-only: walks every screen for the website's screenshots (`pnpm record:tour`).
+const RecordTour = import.meta.env.VITE_RECORD_TOUR
+  ? lazy(() => import("./lib/ipcTour").then((m) => ({ default: m.RecordTour })))
+  : null;
+
 // The panel carries the markdown renderer, and it is mounted only once it is opened.
 const AiChatPanel = lazy(() =>
   import("./components/domain/AiChatPanel").then((m) => ({ default: m.AiChatPanel })),
@@ -234,6 +239,11 @@ export function App() {
                   <TooltipLayer />
                   <AlertNotifier />
                   <UpdateDialog />
+                  {RecordTour && (
+                    <Suspense fallback={null}>
+                      <RecordTour go={go} />
+                    </Suspense>
+                  )}
                 </div>
               </DockProvider>
             </SecurityCardProvider>

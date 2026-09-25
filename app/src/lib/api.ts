@@ -127,6 +127,15 @@ import type {
   WatchlistInput,
   WatchRow,
 } from "./types";
+import type { Outcome } from "./ipcRecord";
+
+// Folded to `undefined` unless recording, so a normal build does not even carry the chunk.
+const record = import.meta.env.VITE_RECORD_IPC
+  ? async (command: string, args: Record<string, unknown> | undefined, outcome: Outcome) => {
+      const { recordIpc } = await import("./ipcRecord");
+      recordIpc(command, args, outcome);
+    }
+  : undefined;
 
 /** Normalizes serialized host errors while preserving their structured detail. */
 export class ApiError extends Error {
@@ -142,8 +151,11 @@ function isUiError(value: unknown): value is UiError {
 
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   try {
-    return await invoke<T>(command, args);
+    const result = await invoke<T>(command, args);
+    void record?.(command, args, { ok: result });
+    return result;
   } catch (raw) {
+    void record?.(command, args, { err: raw });
     if (isUiError(raw)) throw new ApiError(raw);
     throw new ApiError({ code: "internal", message: String(raw) });
   }

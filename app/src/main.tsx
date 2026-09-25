@@ -25,7 +25,13 @@ applyTheme("system");
 
 // The saved preference arrives with the settings query; until then the OS language is the
 // best guess. Rendering waits for the catalog so no screen ever paints untranslated.
-void activateLocale(resolveLocale("system", null)).then(() => {
+// `pnpm record:tour` sets up a demo profile first and reloads; nothing renders until it is open.
+const ready = import.meta.env.VITE_RECORD_TOUR
+  ? import("./lib/ipcTour").then((m) => m.prepareTour())
+  : Promise.resolve(true);
+
+void Promise.all([ready, activateLocale(resolveLocale("system", null))]).then(([go]) => {
+  if (!go) return;
   ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <I18nProvider i18n={i18n}>

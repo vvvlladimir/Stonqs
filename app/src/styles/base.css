@@ -66,11 +66,12 @@ main:focus,
   border-radius: var(--r-sm);
   background: var(--surface);
   color: var(--text);
-  box-shadow: var(--shadow-pop);
   transform: translateY(-200%);
 }
+/* The shadow only while shown: moved off screen, its blur still reached into the nav's corner. */
 .skip:focus-visible {
   transform: none;
+  box-shadow: var(--shadow-pop);
 }
 .pos {
   color: var(--pos);
