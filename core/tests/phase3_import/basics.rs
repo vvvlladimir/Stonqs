@@ -35,12 +35,18 @@ fn plain_style_file_is_understood_out_of_the_box() {
     assert_eq!(preview.summary.ready, 1);
     assert_eq!(preview.unknown_symbols(), vec!["AAPL"]);
 
-    let result = service.commit(&preview, &ImportOptions::default()).unwrap();
+    // The caller names the source: the core ships no default one (ADR-0076), and an import
+    // that named none would create instruments nothing ever prices.
+    let options = ImportOptions {
+        new_security_source: Some("yahoo".into()),
+        ..ImportOptions::default()
+    };
+    let result = service.commit(&preview, &options).unwrap();
     assert_eq!(result.imported, 4);
     assert_eq!(result.skipped, 1); // SPLIT
     assert_eq!(result.created_securities, vec!["AAPL"]);
 
-    // A configured quote source makes the imported security refreshable.
+    // The named quote source makes the imported security refreshable.
     let created = store.find_security_by_symbol("AAPL").unwrap().unwrap();
     assert_eq!(created.data_source.as_deref(), Some("yahoo"));
     // The provider receives the same symbol that appeared in the file.

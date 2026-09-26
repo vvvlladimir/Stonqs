@@ -41,16 +41,23 @@ export function columnsAt(width: number): number {
   return BREAKPOINTS.find(([at]) => width >= at)?.[1] ?? 2;
 }
 
-/** The current column count, following the window. The one reactive read of `columnsAt`. */
-export function useBoardColumns(): number {
+/**
+ * The current column count, following the BOARD. Not the window: with the assistant panel open
+ * the board is half the screen, and asking the window gave a 600px board twelve columns. The
+ * stylesheet reads the same width through a container query, so the two never disagree.
+ */
+export function useBoardColumns(board: React.RefObject<HTMLElement | null>): number {
+  // The window is the first guess — it is never narrower than the board — and the observer
+  // corrects it on the first frame, before anything is painted twice.
   const [cols, setCols] = useState(() => columnsAt(window.innerWidth));
 
   useEffect(() => {
-    const lists = BREAKPOINTS.map(([at]) => window.matchMedia(`(min-width: ${at}px)`));
-    const onChange = () => setCols(columnsAt(window.innerWidth));
-    lists.forEach((list) => list.addEventListener("change", onChange));
-    return () => lists.forEach((list) => list.removeEventListener("change", onChange));
-  }, []);
+    const node = board.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setCols(columnsAt(node.clientWidth)));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [board]);
 
   return cols;
 }
@@ -61,11 +68,24 @@ export function spanAt(w: number, cols: number): number {
   return clamp(Math.round((w * cols) / GRID_COLS), 1, cols);
 }
 
+/**
+ * The smallest size this tile reads at: the catalog's, unless the board's owner named one.
+ *
+ * `cfg.min_w` is a width in twelfths like every other, and it is what decides whether the tile
+ * takes a whole phone row (`shownSpan`) — so a list nobody wants shrunk and a chart that is
+ * fine at a third of the board are the same setting, not a flag per widget.
+ */
+export function limitsOf(widget: Pick<Widget, "cfg">, def: WidgetDef): { w: number; h: number } {
+  const own = Number(widget.cfg?.min_w);
+  const w = Number.isInteger(own) && own >= 1 && own <= GRID_COLS ? own : def.min.w;
+  return { w, h: def.min.h };
+}
+
 /** A size the catalog allows: never under the widget's own minimum, never over the board. */
-export function fitSize(def: WidgetDef, w: number, h: number): { w: number; h: number } {
+export function fitSize(min: { w: number; h: number }, w: number, h: number): { w: number; h: number } {
   return {
-    w: clamp(Math.round(w), def.min.w, GRID_COLS),
-    h: clamp(Math.round(h), def.min.h, MAX_ROWS),
+    w: clamp(Math.round(w), min.w, GRID_COLS),
+    h: clamp(Math.round(h), min.h, MAX_ROWS),
   };
 }
 
@@ -73,12 +93,25 @@ export function fitSize(def: WidgetDef, w: number, h: number): { w: number; h: n
 export type TileBox = Pick<Widget, "w" | "h" | "x" | "y">;
 
 /**
+ * How wide a tile is actually drawn. The stored twelfths, except on a phone-width board: a
+ * widget whose own minimum is a third of the board cannot live in half a phone column — every
+ * chart declares `min.w >= 4`, and a plot 150px wide is a texture, not a reading. There it takes
+ * the row, and what stays side by side is what was always small: the figures and the lists.
+ *
+ * The rule is read off that minimum (`limitsOf`), so no widget gains a "wide on mobile" flag.
+ */
+export function shownSpan(box: TileBox, cols: number, minW: number): number {
+  if (cols <= 2 && minW >= 4) return cols;
+  return spanAt(box.w, cols);
+}
+
+/**
  * Where a widget sits on a board of `cols` columns. The flow still places it — `x` only says
  * which column it starts in (a start the flow has already passed wraps it to the next row), and
  * `y` rows of its own slot are left empty above it, which is how a bottom edge stays put.
  */
-export function placement(box: TileBox, cols: number): React.CSSProperties {
-  const span = spanAt(box.w, cols);
+export function placement(box: TileBox, cols: number, minW: number): React.CSSProperties {
+  const span = shownSpan(box, cols, minW);
   const top = box.y ?? 0;
   const start = box.x === undefined ? null : clamp(scaleDown(box.x, cols), 0, cols - span);
   return {
@@ -146,7 +179,7 @@ export interface GrowDirection {
  */
 export function draggedBox(
   grid: HTMLElement,
-  def: WidgetDef,
+  min: { w: number; h: number },
   start: TileBox,
   at: { start: number; free: number },
   dir: GrowDirection,
@@ -164,18 +197,18 @@ export function draggedBox(
   // The drag moves the *rendered* width; convert back so a tablet drag of one column is not
   // recorded as one twelfth of the board.
   if (dir.x === 1) {
-    next.w = fitSize(def, scaleUp(clamp(span + stepX, 1, cols), cols), start.h).w;
+    next.w = fitSize(min, scaleUp(clamp(span + stepX, 1, cols), cols), start.h).w;
   } else if (dir.x === -1) {
     const end = at.start + span;
-    next.w = fitSize(def, scaleUp(clamp(span - stepX, 1, end - at.free), cols), start.h).w;
+    next.w = fitSize(min, scaleUp(clamp(span - stepX, 1, end - at.free), cols), start.h).w;
     next.x = scaleUp(Math.max(end - spanAt(next.w, cols), 0), cols);
   }
 
   if (dir.y === 1) {
-    next.h = fitSize(def, start.w, start.h + stepY).h;
+    next.h = fitSize(min, start.w, start.h + stepY).h;
   } else if (dir.y === -1) {
     const bottom = top + start.h;
-    next.h = Math.min(fitSize(def, start.w, start.h - stepY).h, bottom);
+    next.h = Math.min(fitSize(min, start.w, start.h - stepY).h, bottom);
     next.y = bottom - next.h;
   }
   return next;

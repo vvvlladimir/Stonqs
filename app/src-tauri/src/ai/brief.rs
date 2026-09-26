@@ -225,6 +225,7 @@ mod tests {
         let context = ToolContext {
             store: &store,
             scope: &scope,
+            quotes_source: None,
             today: today(),
             changed: &|_| {},
         };
@@ -298,6 +299,7 @@ mod tests {
         let context = ToolContext {
             store: &store,
             scope: &scope,
+            quotes_source: None,
             today: today(),
             changed: &|_| {},
         };

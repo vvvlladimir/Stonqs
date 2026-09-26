@@ -8,7 +8,7 @@ import {
   useRealPerformance,
   useSecurities,
 } from "../../lib/queries";
-import { Calendar, ValueChart } from "../../components/charts";
+import { Calendar, ValueChart, returnCell } from "../../components/charts";
 import { Page } from "../../components/Page";
 import { Async, Choice, Empty, Panel, Pending, QueryError } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
@@ -16,7 +16,7 @@ import { formatPercent } from "../../lib/format";
 import { CalculationSheet } from "./CalculationSheet";
 import { PerformanceMetrics } from "./Metrics";
 import { PositionReturns } from "./PositionReturns";
-import { byContribution, monthCell } from "./model";
+import { byContribution } from "./model";
 import { useAsOf } from "../../lib/asOf";
 
 export function Performance() {
@@ -107,7 +107,7 @@ export function Performance() {
         <Async query={performance}>
           {(data) => (
             <Calendar
-              cells={data.monthly_returns.map(monthCell)}
+              cells={data.monthly_returns.map(returnCell)}
               totals={data.annual_returns.map((year) => ({
                 year: Number(year.from.slice(0, 4)),
                 text: formatPercent(year.twr, { digits: 0, signed: true }),

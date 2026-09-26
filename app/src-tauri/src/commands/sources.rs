@@ -31,6 +31,17 @@ impl AppState {
         if let Ok(settings) = self.settings() {
             setup.switched = settings.market_sources.clone().into_iter().collect();
             setup.custom = settings.market_custom.clone();
+            // Nothing is asked of anybody until the owner has said who may be asked (ADR-0076).
+            // Written over the switches rather than beside them, so every reader of a `Setup` —
+            // the services, `quote_ids`, `default_quotes` — is gated by the one line.
+            if !settings.sources_configured {
+                setup.switched = sources::CATALOG
+                    .iter()
+                    .map(|s| s.id.to_string())
+                    .chain(setup.custom.iter().map(|c| c.id.clone()))
+                    .map(|id| (id, false))
+                    .collect();
+            }
         }
         for custom in &setup.custom {
             if let Ok(key) = self.key_for_call(&account(&custom.id))
@@ -46,6 +57,8 @@ impl AppState {
 #[derive(Debug, Clone, Serialize)]
 pub struct MarketSourceRow {
     pub id: &'static str,
+    /// The provider's own site: where this source's requests go, and whose terms apply to them.
+    pub site: &'static str,
     /// `quotes | search | listings | fx_rates`.
     pub capabilities: Vec<&'static str>,
     /// `none | optional | required`.
@@ -61,10 +74,15 @@ pub struct MarketSourceRow {
 #[tauri::command]
 pub fn market_sources_list(state: State<AppState>) -> UiResult<Vec<MarketSourceRow>> {
     let setup = state.market_setup();
+    // What the owner picked, ungated: while the sources have not been confirmed the gate reads
+    // every switch as off, and a picker that answered "off" to what was just switched on would
+    // look broken. `active` is the gated answer, which is the one that decides a request.
+    let picked = state.settings()?.market_sources.clone();
     Ok(sources::CATALOG
         .iter()
         .map(|s| MarketSourceRow {
             id: s.id,
+            site: s.site,
             capabilities: s
                 .capabilities()
                 .into_iter()
@@ -83,13 +101,30 @@ pub fn market_sources_list(state: State<AppState>) -> UiResult<Vec<MarketSourceR
             },
             has_key: setup.keys.contains_key(s.id),
             on_by_default: s.on_by_default,
-            wanted: setup.switched.get(s.id).copied().unwrap_or(s.on_by_default),
+            wanted: picked.get(s.id).copied().unwrap_or(s.on_by_default),
             active: setup.is_on(s),
         })
         .collect())
 }
 
+/// Records that the owner has answered where data may come from, whatever they answered.
+///
+/// Turning nothing on is an answer too: the portfolio is then priced by hand. Nothing here
+/// switches a source — `market_source_switch` already did, one row at a time.
+#[tauri::command]
+pub fn market_sources_confirm(state: State<AppState>) -> UiResult<()> {
+    state.settings()?.sources_configured = true;
+    state.persist_settings()
+}
+
 /// Switches a source on or off; a switch back to the default is forgotten rather than stored.
+///
+/// Turning one **on** answers the question `sources_configured` records: the owner named a
+/// service that may be asked, which is the whole of what is being asked for (ADR-0076). Without
+/// this the settings panel would need a second press meaning "yes, the switches I just set", and
+/// a switch that changes nothing until it is confirmed elsewhere reads as broken. Turning one
+/// off answers nothing: it is a narrowing of an answer already given, and the last source off is
+/// still an answered state, priced by hand.
 #[tauri::command]
 pub fn market_source_switch(state: State<AppState>, source: String, on: bool) -> UiResult<()> {
     let default = match sources::info(&source) {
@@ -103,6 +138,9 @@ pub fn market_source_switch(state: State<AppState>, source: String, on: bool) ->
             settings.market_sources.remove(&source);
         } else {
             settings.market_sources.insert(source, on);
+        }
+        if on {
+            settings.sources_configured = true;
         }
     }
     state.persist_settings()

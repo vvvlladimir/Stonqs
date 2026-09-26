@@ -7,9 +7,23 @@ name: Audit
 on:
   push:
     branches: [main]
-    paths: [Cargo.toml, Cargo.lock, deny.toml, .github/workflows/audit.yml]
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - deny.toml
+      - app/package.json
+      - app/pnpm-lock.yaml
+      - scripts/notices.mjs
+      - .github/workflows/audit.yml
   pull_request:
-    paths: [Cargo.toml, Cargo.lock, deny.toml, .github/workflows/audit.yml]
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - deny.toml
+      - app/package.json
+      - app/pnpm-lock.yaml
+      - scripts/notices.mjs
+      - .github/workflows/audit.yml
   schedule:
     - cron: "0 6 * * 1"
 
@@ -28,3 +42,24 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check advisories licenses bans sources
+
+  notices:
+    # MIT, BSD and ISC ask that their text travel with a compiled copy, and the app ships those
+    # texts from a generated file — a dependency added without regenerating it would ship a notice
+    # that is missing somebody.
+    name: notices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: app/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: app
+      - name: Third-party notices are up to date
+        run: node scripts/notices.mjs --check

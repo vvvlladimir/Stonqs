@@ -12,5 +12,6 @@ export { Sunburst } from "./Sunburst";
 export { Trail } from "./Trail";
 export { Contributions, type Contribution } from "./Contributions";
 export { Calendar, type CalendarCell } from "./Calendar";
+export { fullLabel, returnCell } from "./labels";
 export { DriftBars } from "./DriftBars";
 export { Spark } from "./Spark";

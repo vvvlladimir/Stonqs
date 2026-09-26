@@ -28,7 +28,7 @@ export function EditBar({
 }) {
   const { t } = useLingui();
   return (
-    <div className="panel panel--bar">
+    <div className="box panel panel--bar">
       <div className="panel__head">
         <span className="panel__note inline">
           <span>

@@ -171,7 +171,7 @@ export function Positions() {
             securityOf={securityOf}
             method={method}
             sort={ui.position_sort}
-            onSortChange={(position_sort) => save({ ...ui, position_sort })}
+            onSortChange={(position_sort) => save((ui) => ({ ...ui, position_sort }))}
             menu={menu}
             itemsFor={itemsFor}
           />
@@ -188,8 +188,8 @@ export function Positions() {
           }))}
           groups={GROUPS.map((g) => ({ id: g.id, label: i18n._(g.label) }))}
           selected={chosen}
-          onChange={(position_columns) => save({ ...ui, position_columns })}
-          onReset={() => save({ ...ui, position_columns: DEFAULT_UI.position_columns })}
+          onChange={(position_columns) => save((ui) => ({ ...ui, position_columns }))}
+          onReset={() => save((ui) => ({ ...ui, position_columns: DEFAULT_UI.position_columns }))}
           onClose={() => setPicking(false)}
         />
       )}

@@ -1,7 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { formatPercent } from "../../lib/format";
 import { slotFor, slotVar } from "../../lib/plot";
-import { Bar, Money, Percent, Swatch } from "../ui";
+import { Bar, Money, Percent, ShareBar, Swatch } from "../ui";
 
 /**
  * Level shares: a stacked bar plus per-row tracks.
@@ -27,11 +26,17 @@ interface Props {
   currency: string;
   /** Legend rows to list; the bar keeps every segment either way. */
   limit?: number;
+  /**
+   * The per-row track under each legend line. Off where the block is read at a glance rather
+   * than compared row by row — a dashboard tile: the stacked bar above already carries the
+   * shares, and a second track per row halves how many rows the tile can show.
+   */
+  tracks?: boolean;
   /** Row click: drill into a category, or open a security's card. */
   onPick?: (key: string) => void;
 }
 
-export function AllocationBar({ items, total, currency, limit, onPick }: Props) {
+export function AllocationBar({ items, total, currency, limit, tracks = true, onPick }: Props) {
   const { t } = useLingui();
   const rows = [...items].sort((a, b) => Number(b.value) - Number(a.value));
   if (rows.length === 0)
@@ -45,15 +50,18 @@ export function AllocationBar({ items, total, currency, limit, onPick }: Props) 
   // The bar keeps every segment — the whole is the whole — and only the legend is cut.
   const listed = limit ? rows.slice(0, limit) : rows;
 
+  // Its own container: the legend reshapes by ITS width, so the rule holds in a widget tile,
+  // in a panel on a screen and in a dialog alike, and no caller declares anything (ADR-0073).
   return (
-    <>
-      <Bar
+    <div className="alloc">
+      <ShareBar
         label={t`Shares of this level`}
-        segments={rows.map((row, i) => ({
+        legend={false}
+        slices={rows.map((row) => ({
           key: row.key,
-          slot: row.slot ?? slotFor(i),
-          width: `${Math.max(Number(row.weight) * 100, 0)}%`,
-          title: `${row.label}: ${formatPercent(row.weight, { digits: 1 })}`,
+          label: row.label,
+          slot: row.slot,
+          share: row.weight,
         }))}
       />
 
@@ -79,7 +87,7 @@ export function AllocationBar({ items, total, currency, limit, onPick }: Props) 
             <Money value={row.value} currency={currency} digits={0} className="bars__val" />
             <Percent value={row.weight} digits={1} className="bars__pct" />
             {/* Tracks are scaled to the largest share so small slices stay visible. */}
-            <Bar size="sm" fill={`${(Math.max(Number(row.weight), 0) / peak) * 100}%`} />
+            {tracks && <Bar size="sm" share={Number(row.weight) / peak} />}
           </div>
         ))}
       </div>
@@ -93,6 +101,6 @@ export function AllocationBar({ items, total, currency, limit, onPick }: Props) 
           <Money value={total} currency={currency} />
         </div>
       )}
-    </>
+    </div>
   );
 }

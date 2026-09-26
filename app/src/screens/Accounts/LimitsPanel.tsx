@@ -9,7 +9,6 @@ import { formatDay, formatPercent, toNumber } from "../../lib/format";
 import { affects, useInvalidate, useLimits } from "../../lib/queries";
 import {
   Async,
-  Bar,
   CheckField,
   Empty,
   ErrorText,
@@ -20,6 +19,7 @@ import {
   ListRow,
   Money,
   Panel,
+  Progress,
 } from "../../components/ui";
 import type { AccountRow, LimitInput, LimitUsage } from "../../lib/types";
 
@@ -146,7 +146,6 @@ function LimitCard({
   onDelete: () => void;
 }) {
   const { t } = useLingui();
-  const share = Math.min(Math.max(toNumber(usage.share) ?? 0, 0), 1);
   const over = (toNumber(usage.share) ?? 0) > 1;
 
   return (
@@ -177,22 +176,29 @@ function LimitCard({
         </>
       }
       foot={
-        <span className="stack">
-          <Bar fill={`${share * 100}%`} size="sm" tone={over ? "neg" : undefined} />
-          <span>
-            {formatPercent(usage.share)}
-            {" · "}
-            <Trans>
-              <Money value={usage.remaining} currency={usage.currency} /> left
-            </Trans>
-            {" · "}
-            <span className="dim">
-              <Trans>
-                year {formatDay(usage.from)} — {formatDay(usage.to)}
-              </Trans>
-            </span>
-          </span>
-        </span>
+        <Progress
+          size="sm"
+          share={usage.share}
+          barTone={over ? "neg" : undefined}
+          legend={{
+            left: (
+              <>
+                {formatPercent(usage.share)}
+                {" · "}
+                <Trans>
+                  <Money value={usage.remaining} currency={usage.currency} /> left
+                </Trans>
+              </>
+            ),
+            right: (
+              <span className="dim">
+                <Trans>
+                  year {formatDay(usage.from)} — {formatDay(usage.to)}
+                </Trans>
+              </span>
+            ),
+          }}
+        />
       }
     />
   );

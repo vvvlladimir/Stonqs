@@ -52,7 +52,6 @@
 .dock__slot:empty {
   display: none;
 }
-.dock .scope,
 .dock .iconbtn {
   box-shadow: var(--shadow);
 }
@@ -276,9 +275,6 @@
     left: calc(230px + 24px);
     right: 24px;
     bottom: 24px;
-  }
-  .dock .scope {
-    display: none;
   }
 }
 

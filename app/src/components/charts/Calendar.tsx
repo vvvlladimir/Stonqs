@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { formatMonth, formatMonthNarrow, formatMonthShort } from "../../lib/format";
 import type { ChartHeight } from "./Chart";
@@ -49,36 +50,43 @@ export function Calendar({ cells, totals, full, height, selected, onPick, footer
   // Month heads come from Intl, so a language change renames them without a table here.
   const heads = MONTH_NUMBERS.map((m) => (full ? formatMonthShort(m) : formatMonthNarrow(m)));
 
+  // Every cell states its month and its year, and the stylesheet places it from them: the same
+  // markup then reads months-across in a wide box and months-down in a narrow one, where twelve
+  // columns would be twelve smudges. See `styles/ui/calendar.css`.
   return (
-    <div
-      className={`cal${full ? " cal--full" : ""}${height === "fill" ? " cal--fill" : ""}`}
-      role="table"
-      aria-label={t`Calendar by year and month`}
-    >
-      <span className="cal__y" />
-      {heads.map((month, i) => (
-        <span className="cal__h" key={`${month}-${i}`}>
-          {month}
+    <div className={`calbox${height === "fill" ? " cal--fillbox" : ""}`}>
+      <div
+        className={`cal${full ? " cal--full" : ""}${height === "fill" ? " cal--fill" : ""}`}
+        style={{ "--years": years.length } as CSSProperties}
+        role="table"
+        aria-label={t`Calendar by year and month`}
+      >
+        <span className="cal__y cal__corner" />
+        {heads.map((month, i) => (
+          <span className="cal__h" key={`${month}-${i}`} style={{ "--m": i } as CSSProperties}>
+            {month}
+          </span>
+        ))}
+        <span className="cal__h cal__h--total">
+          <Trans>Year</Trans>
         </span>
-      ))}
-      <span className="cal__h">
-        <Trans>Year</Trans>
-      </span>
 
-      {years.map((year) => (
-        <Row
-          key={year}
-          year={year}
-          byKey={byKey}
-          peak={peak}
-          total={totalOf.get(year)}
-          full={full}
-          selected={selected}
-          onPick={onPick}
-        />
-      ))}
+        {years.map((year, index) => (
+          <Row
+            key={year}
+            year={year}
+            index={index}
+            byKey={byKey}
+            peak={peak}
+            total={totalOf.get(year)}
+            full={full}
+            selected={selected}
+            onPick={onPick}
+          />
+        ))}
 
-      {footer && <Footer cells={footer} total={footerTotal} />}
+        {footer && <Footer cells={footer} total={footerTotal} />}
+      </div>
     </div>
   );
 }
@@ -88,21 +96,22 @@ function Footer({ cells, total }: { cells: Array<{ month: number; text: string }
   const textOf = new Map(cells.map((c) => [c.month, c.text]));
   return (
     <>
-      <span className="cal__y">
+      <span className="cal__f cal__f--head">
         <Trans>all</Trans>
       </span>
-      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-        <span className="cal__f num" key={month}>
+      {MONTH_NUMBERS.map((month) => (
+        <span className="cal__f num" key={month} style={{ "--m": month - 1 } as CSSProperties}>
           {textOf.get(month) ?? ""}
         </span>
       ))}
-      <span className="cal__f num">{total ?? ""}</span>
+      <span className="cal__f cal__f--total num">{total ?? ""}</span>
     </>
   );
 }
 
 function Row({
   year,
+  index,
   byKey,
   peak,
   total,
@@ -111,6 +120,8 @@ function Row({
   onPick,
 }: {
   year: number;
+  /** Which row of the grid this year is; the stylesheet turns it into a row or a column. */
+  index: number;
   byKey: Map<string, CalendarCell>;
   peak: number;
   total?: string;
@@ -119,18 +130,25 @@ function Row({
   onPick?: (year: number, month: number) => void;
 }) {
   const { t } = useLingui();
+  const at = { "--y": index } as CSSProperties;
   return (
     <>
-      <span className="cal__y">{full ? `’${String(year).slice(2)}` : year}</span>
-      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
+      <span className="cal__y" style={at}>
+        {full ? `’${String(year).slice(2)}` : year}
+      </span>
+      {MONTH_NUMBERS.map((month) => {
         const cell = byKey.get(`${year}-${month}`);
         const title = cell?.title ?? t`${formatMonth(year, month)}: no data`;
-        const style = cell ? { background: shade(cell.value, peak) } : undefined;
+        const style = {
+          ...at,
+          "--m": month - 1,
+          ...(cell ? { background: shade(cell.value, peak) } : {}),
+        } as CSSProperties;
         const body = cell?.text && <span className="cal__v">{cell.text}</span>;
 
         if (!onPick) {
           return (
-            <span key={month} className="cal__c" style={style} title={title}>
+            <span key={month} className="cal__c" style={style} data-tip={title}>
               {body}
             </span>
           );
@@ -141,7 +159,7 @@ function Row({
             type="button"
             className="cal__c"
             style={style}
-            title={title}
+            data-tip={title}
             aria-pressed={selected?.year === year && selected.month === month}
             onClick={() => onPick(year, month)}
           >
@@ -149,7 +167,9 @@ function Row({
           </button>
         );
       })}
-      <span className="cal__t">{total ?? ""}</span>
+      <span className="cal__t" style={at}>
+        {total ?? ""}
+      </span>
     </>
   );
 }

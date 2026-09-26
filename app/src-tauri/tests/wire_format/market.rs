@@ -258,6 +258,7 @@ fn watch_rows_flatten_the_quote_figures() {
 fn market_source_row_keys() {
     let json: Value = serde_json::to_value(sq_app_lib::commands::sources::MarketSourceRow {
         id: "twelvedata",
+        site: "https://twelvedata.com",
         capabilities: vec!["quotes", "fx_rates"],
         key: "required",
         has_key: false,
@@ -275,6 +276,7 @@ fn market_source_row_keys() {
             "id",
             "key",
             "on_by_default",
+            "site",
             "wanted"
         ]
     );

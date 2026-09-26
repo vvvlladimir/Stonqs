@@ -1,0 +1,23 @@
+/* One surface for every top-level box in the product.
+
+   A dashboard tile and a screen's panel are the same object seen in two places: the same border,
+   the same large radius, the same padding, the same density. They used to carry a copy each — a
+   10px radius and 16px of padding on one, a 16px radius and 12px on the other — so the same chart
+   read as two different drawings depending on which screen it was on.
+
+   Anything *inside* a box keeps `--r`/`--r-input`, so nesting reads as nesting: one shape scale,
+   three steps, no exceptions.
+
+   A box is also a container (ADR-0073): what it holds reshapes by the box, never by the window,
+   so a block in a half-width panel and the same block in a tile of that width behave alike. */
+.box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  /* Named rather than written out, so a box that has to be tighter — a table reaching its own
+     edges, a tile on a phone board — changes one value instead of a padding shorthand. */
+  --box-pad: var(--sp-6);
+  padding: var(--box-pad);
+  container-type: inline-size;
+  min-width: 0;
+}

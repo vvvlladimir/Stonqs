@@ -1,0 +1,128 @@
+/* The guided tour: one mask with a hole in it, and the card that explains the hole. */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+/*
+ * The dimming is the hole's own box shadow, so the lit area and the dark one are one element
+ * and cannot drift apart. With no anchor the box has no size and the shadow covers everything.
+ */
+.tour__mask {
+  position: absolute;
+  border-radius: var(--r);
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 55%);
+  opacity: 0;
+  transition:
+    left 0.15s ease,
+    top 0.15s ease,
+    width 0.15s ease,
+    height 0.15s ease;
+}
+
+/* The card is its own surface rather than a `.box`: it is placed by script and `--box-pad`
+   exists only inside a box, so the padding is stated here. */
+.tour__card {
+  position: absolute;
+  width: min(380px, calc(100vw - 2 * var(--sp-5)));
+  padding: var(--sp-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.tour__card--centred {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tour__card h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+}
+
+.tour__card p {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+}
+
+/* The dots and the buttons are one row on a wide card and two on a narrow one: three buttons
+   and a dozen dots do not share 320px without the text of one of them being cut. */
+.tour__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.tour__acts {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-left: auto;
+}
+
+.tour__dots {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tour__dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-chip);
+  background: var(--border-strong);
+}
+
+/* The stop you are on is a bar rather than a brighter dot: at 5px a colour is not a position. */
+.tour__dots i.on {
+  width: 16px;
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tour__dots i {
+    transition:
+      width var(--dur) var(--ease),
+      background-color var(--dur) var(--ease);
+  }
+  /* Opacity only: the centred card is centred *by* its transform, so animating one would
+     drop it off the middle of the window. */
+  .tour__card {
+    animation: tour-in 0.18s var(--ease);
+  }
+  @keyframes tour-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* No room beside anything: the card sits at the foot of the window and the hole still shows. */
+@media (max-width: 699px) {
+  .tour__card,
+  .tour__card--centred {
+    left: var(--sp-5);
+    right: var(--sp-5);
+    top: auto;
+    bottom: calc(var(--sp-5) + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    transform: none;
+  }
+}

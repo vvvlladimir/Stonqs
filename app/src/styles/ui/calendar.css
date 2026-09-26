@@ -1,7 +1,39 @@
+/* The box exists so the grid inside it can answer to its own width: an element cannot respond
+   to a container query it declares itself. */
+.calbox {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* A calendar told to fill passes that on: the box takes the room, the grid divides it. */
+.cal--fillbox {
+  flex: 1;
+}
+
+/* Every cell states its month and its year (`--m`, `--y`) and is placed from them, so one
+   markup reads either way round: months across on a wide box, months DOWN a narrow one. */
 .cal {
   display: grid;
   grid-template-columns: 30px repeat(12, minmax(0, 1fr)) 62px;
   gap: var(--sp-1);
+}
+.cal__h {
+  grid-row: 1;
+  grid-column: calc(var(--m) + 2);
+}
+.cal__h--total {
+  grid-column: 14;
+}
+.cal__y {
+  grid-column: 1;
+  grid-row: calc(var(--y) + 2);
+}
+.cal__f--head {
+  grid-column: 1;
+}
+.cal__f--total {
+  grid-column: 14;
 }
 /* The heatmap fills the tile it is in: the month heads keep their line and every year row
    shares what is left, never less than a cell. */
@@ -12,14 +44,20 @@
   grid-auto-rows: minmax(34px, 1fr);
 }
 .cal__c {
+  grid-column: calc(var(--m) + 2);
+  grid-row: calc(var(--y) + 2);
   aspect-ratio: auto;
   min-height: 34px;
   border-radius: var(--r-sm);
   border: 1px solid transparent;
-  padding: 0;
+  padding: 0 2px;
   display: grid;
   place-items: center;
   background: var(--surface-3);
+  /* A cell is a swatch first and a figure second: the figure is clipped by the colour it sits
+     in rather than printed over the neighbouring month. The whole reading is in the tip. */
+  min-width: 0;
+  overflow: hidden;
 }
 .cal__c[data-tip] {
   cursor: pointer;
@@ -39,13 +77,23 @@
   font-family: "Geist Mono Variable", ui-monospace, monospace;
   color: var(--text);
   opacity: 0.78;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  /* Digits of one width, so two months of the same length are the same length on screen. */
+  font-variant-numeric: tabular-nums;
 }
 .cal__t {
+  grid-column: 14;
+  grid-row: calc(var(--y) + 2);
   font-size: var(--fs-meta);
   display: grid;
   place-items: center;
   color: var(--text-2);
   font-family: "Geist Mono Variable", ui-monospace, monospace;
+  min-width: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 /* Full calendar: month names, room for the amount, cells pickable. */
 .cal--full {
@@ -69,11 +117,16 @@ button.cal__c {
   box-shadow: 0 0 0 1px var(--text);
 }
 .cal__f {
+  grid-row: calc(var(--years) + 2);
+  grid-column: calc(var(--m) + 2);
   font-size: var(--fs-micro);
   display: grid;
   place-items: center;
   color: var(--text-3);
   padding-top: var(--sp-2);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .monthnav {
   display: inline-flex;
@@ -105,4 +158,87 @@ button.cal__c {
 .cashline__after b {
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
+}
+
+/* Between a phone column and a full box there is room for the colour but not for the figure
+   inside it. The colour is the reading; the year's own total keeps its number. */
+@container (min-width: 301px) and (max-width: 560px) {
+  .cal {
+    grid-template-columns: 26px repeat(12, minmax(0, 1fr)) 50px;
+    gap: 2px;
+  }
+  .cal__v {
+    display: none;
+  }
+  .cal__t,
+  .cal__f {
+    font-size: var(--fs-micro);
+  }
+}
+
+/* Narrower than that the grid turns: months down the side, one column per year. Twelve columns
+   sharing 250px are twelve smudges; twelve rows are a list, and the figures fit again. */
+@container (max-width: 300px) {
+  .cal {
+    grid-template-columns: minmax(26px, auto) repeat(var(--years), minmax(0, 1fr)) auto;
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .cal__h {
+    grid-row: calc(var(--m) + 2);
+    grid-column: 1;
+    justify-items: start;
+  }
+  .cal__h--total {
+    grid-row: 14;
+    grid-column: 1;
+  }
+  .cal__y {
+    grid-row: 1;
+    grid-column: calc(var(--y) + 2);
+  }
+  .cal__c {
+    grid-row: calc(var(--m) + 2);
+    grid-column: calc(var(--y) + 2);
+    min-height: 0;
+  }
+  .cal__t {
+    grid-row: 14;
+    grid-column: calc(var(--y) + 2);
+  }
+  .cal__f {
+    grid-row: calc(var(--m) + 2);
+    grid-column: calc(var(--years) + 2);
+  }
+  .cal__f--head {
+    grid-row: 1;
+    grid-column: calc(var(--years) + 2);
+  }
+  .cal__f--total {
+    grid-row: 14;
+    grid-column: calc(var(--years) + 2);
+  }
+  .cal__v,
+  .cal__h,
+  .cal__y,
+  .cal__t,
+  .cal__f {
+    font-size: var(--fs-micro);
+  }
+  /* The month head is a word here, not a letter, and the totals row carries "Year": both keep
+     their line rather than being centred into the column beside them. */
+  .cal__h--total,
+  .cal__f--head {
+    justify-items: start;
+    white-space: nowrap;
+  }
+}
+
+/* Narrower than one year per 60px there is no figure to print: two columns of "+176 %" would
+   overlap whatever the font size, and the colour plus the tip say the same thing. The year's
+   own total keeps its number — it is one per column, not twelve. */
+@container (max-width: 240px) {
+  .cal__v {
+    display: none;
+  }
 }

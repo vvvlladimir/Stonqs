@@ -466,6 +466,9 @@ pub fn ai_send(
     };
     let today = chrono::Local::now().date_naive();
     let as_of = as_of.as_deref().map(crate::commands::parse_date).transpose()?;
+    // Read here for the same reason the lens is: the switches are the host's settings, and the
+    // turn runs on a thread that holds no lock on them.
+    let quotes_source = sq_core::sources::default_quotes(&state.market_setup());
     let access = state.db_access()?;
 
     state.ai_cancel.store(false, Ordering::Relaxed);
@@ -501,6 +504,7 @@ pub fn ai_send(
             let session = session::Session {
                 store: &store,
                 scope: &scope,
+                quotes_source,
                 today,
                 as_of,
                 screen,
@@ -587,6 +591,8 @@ pub fn ai_brief(
             let context = ToolContext {
                 store: &store,
                 scope: &scope,
+                // The brief neither creates an instrument nor re-points one.
+                quotes_source: None,
                 today,
                 // The brief only reads: its readings are a fixed list of read tools (ADR-0039).
                 changed: &|_| {},

@@ -11,6 +11,7 @@ import {
   Underwater,
   ValueChart,
   Contributions,
+  returnCell,
   type CalendarCell,
 } from "../../../components/charts";
 import {
@@ -263,16 +264,7 @@ export function ReturnsWidget({ widget, date, period }: WidgetProps) {
       {(data) => (
         <Calendar
           height="fill"
-          cells={data.monthly_returns.map((month) => {
-            const [year, m] = month.from.split("-").map(Number);
-            return {
-              year,
-              month: m,
-              value: Number(month.twr),
-              text: formatPercent(month.twr, { digits: 0, signed: true }),
-              title: `${month.from} — ${month.to}: ${formatPercent(month.twr, { digits: 2, signed: true })}`,
-            };
-          })}
+          cells={data.monthly_returns.map(returnCell)}
           totals={data.annual_returns.map((year) => ({
             year: Number(year.from.slice(0, 4)),
             text: formatPercent(year.twr, { digits: 0, signed: true }),
@@ -300,9 +292,9 @@ export function AllocationWidget({ widget, date }: WidgetProps) {
             value: bucket.value_base,
             weight: bucket.weight,
           }))}
-          total={data.total_base}
           currency={portfolio.data?.base_currency ?? ""}
           limit={Number(widget.cfg.count) || 8}
+          tracks={false}
         />
       )}
     </Async>
@@ -353,6 +345,7 @@ export function IncomeTaxonomyWidget({ widget, date, period }: WidgetProps) {
           total={data.total.net_base}
           currency={data.base_currency}
           limit={Number(widget.cfg.count) || 8}
+          tracks={false}
         />
       )}
     </Async>

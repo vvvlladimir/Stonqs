@@ -1,5 +1,6 @@
 //! Tauri commands exposed to the frontend.
 
+pub mod about;
 pub mod accounts;
 pub mod ai;
 pub mod alerts;

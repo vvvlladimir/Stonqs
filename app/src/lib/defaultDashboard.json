@@ -2,11 +2,11 @@
   "kind": "stonqs.dashboard",
   "version": 3,
   "dashboard": {
-    "id": "d-mu1of2l9-1",
+    "id": "d-mufwy4c6-1",
     "name": "Main",
     "widgets": [
       {
-        "id": "w-mu1of2l9-2",
+        "id": "w-mufwy4c7-2",
         "type": "metric",
         "w": 3,
         "h": 3,
@@ -15,7 +15,7 @@
         }
       },
       {
-        "id": "w-mu1of2l9-3",
+        "id": "w-mufwy4c7-3",
         "type": "metric",
         "w": 3,
         "h": 3,
@@ -24,7 +24,7 @@
         }
       },
       {
-        "id": "w-mu1of2l9-4",
+        "id": "w-mufwy4c7-4",
         "type": "metric",
         "w": 3,
         "h": 3,
@@ -33,7 +33,7 @@
         }
       },
       {
-        "id": "w-mu1of2l9-5",
+        "id": "w-mufwy4c7-5",
         "type": "metric",
         "w": 3,
         "h": 3,
@@ -42,14 +42,14 @@
         }
       },
       {
-        "id": "w-mu1of2l9-6",
+        "id": "w-mufwy4c7-6",
         "type": "chart",
         "w": 12,
-        "h": 11,
+        "h": 14,
         "cfg": {}
       },
       {
-        "id": "w-mu1of2l9-7",
+        "id": "w-mufwy4c7-7",
         "type": "heading",
         "w": 12,
         "h": 2,
@@ -58,23 +58,44 @@
         }
       },
       {
-        "id": "w-mu1of2l9-8",
+        "id": "w-mufwy4c7-8",
         "type": "allocation",
         "w": 6,
-        "h": 8,
-        "cfg": {}
-      },
-      {
-        "id": "w-mu1of2l9-9",
-        "type": "positions",
-        "w": 6,
-        "h": 8,
+        "h": 10,
         "cfg": {
           "count": 8
         }
       },
       {
-        "id": "w-mu1of2l9-a",
+        "id": "w-mufwy4c7-9",
+        "type": "positions",
+        "w": 6,
+        "h": 10,
+        "cfg": {
+          "count": 7
+        }
+      },
+      {
+        "id": "w-mufwy4c7-a",
+        "type": "treemap",
+        "w": 6,
+        "h": 8,
+        "cfg": {}
+      },
+      {
+        "id": "w-mufwy4c7-b",
+        "type": "cash",
+        "w": 6,
+        "h": 8,
+        "cfg": {
+          "source": {
+            "kind": "PORTFOLIO",
+            "id": null
+          }
+        }
+      },
+      {
+        "id": "w-mufwy4c7-c",
         "type": "heading",
         "w": 12,
         "h": 2,
@@ -83,61 +104,102 @@
         }
       },
       {
-        "id": "w-mu1of2l9-b",
+        "id": "w-mufwy4c7-d",
+        "type": "contribution",
+        "w": 6,
+        "h": 12,
+        "cfg": {
+          "count": 8
+        }
+      },
+      {
+        "id": "w-mufwy4c7-e",
+        "type": "performers",
+        "w": 6,
+        "h": 12,
+        "cfg": {
+          "count": 8
+        }
+      },
+      {
+        "id": "w-mufwy4c7-f",
         "type": "returns",
         "w": 12,
         "h": 8,
         "cfg": {}
       },
       {
-        "id": "w-mu1of2l9-c",
-        "type": "bench",
-        "w": 6,
-        "h": 12,
+        "id": "w-mufwy4c7-g",
+        "type": "heading",
+        "w": 12,
+        "h": 2,
         "cfg": {
-          "benchmarks": [
-            "b1dc8fee-d679-448e-9f44-679c912d9bc8"
-          ]
+          "title": "Risk and the market"
         }
       },
       {
-        "id": "w-mu1of2l9-d",
-        "type": "contribution",
+        "id": "w-mufwy4c7-h",
+        "type": "bench",
         "w": 6,
-        "h": 12,
+        "h": 11,
+        "cfg": {}
+      },
+      {
+        "id": "w-mufwy4c7-i",
+        "type": "drawdown",
+        "w": 6,
+        "h": 11,
+        "cfg": {}
+      },
+      {
+        "id": "w-mufwy4c7-j",
+        "type": "risk",
+        "w": 3,
+        "h": 6,
+        "cfg": {}
+      },
+      {
+        "id": "w-mufwy4c7-k",
+        "type": "incomecal",
+        "w": 9,
+        "h": 6,
+        "cfg": {}
+      },
+      {
+        "id": "w-mufwy4c7-l",
+        "type": "heading",
+        "w": 12,
+        "h": 2,
+        "cfg": {
+          "title": "What comes next"
+        }
+      },
+      {
+        "id": "w-mufwy4c7-m",
+        "type": "contributions",
+        "w": 4,
+        "h": 7,
         "cfg": {
           "count": 6
         }
       },
       {
-        "id": "w-mu1of2l9-e",
-        "type": "heading",
-        "w": 12,
-        "h": 2,
+        "id": "w-mufwy4c7-n",
+        "type": "dividends",
+        "w": 4,
+        "h": 7,
         "cfg": {
-          "title": "Risk and cash"
+          "count": 6
         }
       },
       {
-        "id": "w-mu1of2l9-f",
-        "type": "drawdown",
-        "w": 12,
-        "h": 11,
-        "cfg": {}
-      },
-      {
-        "id": "w-mu1of2l9-g",
-        "type": "risk",
-        "w": 6,
+        "id": "w-mufwy4c7-o",
+        "type": "events",
+        "w": 4,
         "h": 7,
-        "cfg": {}
-      },
-      {
-        "id": "w-mu1of2l9-h",
-        "type": "cash",
-        "w": 6,
-        "h": 7,
-        "cfg": {}
+        "cfg": {
+          "count": 6
+        }
       }
     ]
   }

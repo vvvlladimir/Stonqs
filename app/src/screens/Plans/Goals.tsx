@@ -6,12 +6,11 @@ import { PencilSimpleIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
 
 import { api } from "../../lib/api";
 import { useAsOf } from "../../lib/asOf";
-import { formatDay, formatPercent, toNumber } from "../../lib/format";
+import { formatDay, formatPercent } from "../../lib/format";
 import { affects, useAccounts, useGoals, useInvalidate } from "../../lib/queries";
 import {
   Async,
   Badge,
-  Bar,
   CheckField,
   Empty,
   ErrorText,
@@ -22,6 +21,7 @@ import {
   ListRow,
   Money,
   Panel,
+  Progress,
 } from "../../components/ui";
 import type { AccountRow, GoalInput, GoalRow } from "../../lib/types";
 
@@ -137,8 +137,6 @@ function GoalCard({ row, onEdit, onDelete }: { row: GoalRow; onEdit: () => void;
   const { t } = useLingui();
   const { goal, progress } = row;
   const currency = goal.currency;
-  // Above the target the bar is full and the overshoot is shown as a figure, not a longer track.
-  const share = Math.min(Math.max(toNumber(progress.progress) ?? 0, 0), 1);
 
   const pace =
     progress.required_monthly_base !== null ? (
@@ -181,28 +179,35 @@ function GoalCard({ row, onEdit, onDelete }: { row: GoalRow; onEdit: () => void;
         </>
       }
       foot={
-        <span className="stack">
-          <Bar fill={`${share * 100}%`} size="sm" label={formatPercent(progress.progress)} />
-          <span>
-            {formatPercent(progress.progress)}
-            {progress.months_left !== null && (
+        // The same block the dashboard's Progress tile draws: above the target the track is full
+        // and the overshoot is a figure, never a longer bar.
+        <Progress
+          size="sm"
+          share={progress.progress}
+          barTone={progress.on_track === false ? "neg" : undefined}
+          legend={{
+            left: (
               <>
-                {" · "}
-                {plural(progress.months_left, { one: "# month left", other: "# months left" })}
+                {formatPercent(progress.progress)}
+                {progress.months_left !== null && (
+                  <>
+                    {" · "}
+                    {plural(progress.months_left, { one: "# month left", other: "# months left" })}
+                  </>
+                )}
+                {progress.on_track !== null && (
+                  <>
+                    {" · "}
+                    <Badge tone={progress.on_track ? "in" : "warn"}>
+                      {progress.on_track ? t`on track` : t`behind`}
+                    </Badge>
+                  </>
+                )}
               </>
-            )}
-            {progress.on_track !== null && (
-              <>
-                {" · "}
-                <Badge tone={progress.on_track ? "in" : "warn"}>
-                  {progress.on_track ? t`on track` : t`behind`}
-                </Badge>
-              </>
-            )}
-            {" · "}
-            <span className="dim">{pace}</span>
-          </span>
-        </span>
+            ),
+            right: <span className="dim">{pace}</span>,
+          }}
+        />
       }
     />
   );

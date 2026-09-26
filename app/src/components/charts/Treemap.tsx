@@ -23,8 +23,9 @@ const VALUE_SIZE = 11.5;
 const PAD = 10;
 /** Tile radius, matching input controls. */
 const CORNER = 8;
-/** Minimum tile sizes for rendering labels. */
+/** Minimum tile sizes for rendering labels: each line needs its baseline plus a descent inside. */
 const FITS_NAME = { width: 54, height: 30 };
+const FITS_SHARE = { width: 54, height: 46 };
 const FITS_VALUE = { width: 78, height: 62 };
 
 /** Truncate labels rather than letting them overlap neighboring tiles. */
@@ -63,6 +64,7 @@ export function Treemap({
               const rect = rects[i];
               if (!rect || rect.width < 1 || rect.height < 1) return null;
               const name = rect.width > FITS_NAME.width && rect.height > FITS_NAME.height;
+              const share = rect.width > FITS_SHARE.width && rect.height > FITS_SHARE.height;
               const value = rect.width > FITS_VALUE.width && rect.height > FITS_VALUE.height;
               return (
                 <g
@@ -85,7 +87,7 @@ export function Treemap({
                       {fit(item.label, rect.width - 2 * PAD, NAME_SIZE)}
                     </text>
                   )}
-                  {name && (
+                  {share && (
                     <text className="chart__value" x={rect.x + PAD} y={rect.y + 37}>
                       {fit(formatPercent(item.weight, { digits: 1 }), rect.width - 2 * PAD, VALUE_SIZE)}
                     </text>

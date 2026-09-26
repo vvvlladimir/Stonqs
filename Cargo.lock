@@ -2403,6 +2403,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
+name = "is-docker"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "928bae27f42bc99b60d9ac7334e3a21d10ad8f1835a4e12ec3ec0464765ed1b3"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
+name = "is-wsl"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "173609498df190136aa7dea1a91db051746d339e18476eed5ca40521f02d7aa5"
+dependencies = [
+ "is-docker",
+ "once_cell",
 ]
 
 [[package]]
@@ -3270,6 +3286,17 @@ name = "opaque-debug"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
+
+[[package]]
+name = "open"
+version = "5.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa576c76302b7b808eecc68061e67336c47833ef9d22caa74dda10fa9675eebc"
+dependencies = [
+ "dunce",
+ "is-wsl",
+ "libc",
+]
 
 [[package]]
 name = "openssl-probe"
@@ -4594,7 +4621,7 @@ dependencies = [
 
 [[package]]
 name = "sq-app"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "argon2",
  "base64 0.22.1",
@@ -4612,6 +4639,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-notification",
+ "tauri-plugin-opener",
  "tauri-plugin-process",
  "tauri-plugin-updater",
  "ureq",
@@ -4623,7 +4651,7 @@ dependencies = [
 
 [[package]]
 name = "sq-cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "rust_decimal",
@@ -4633,7 +4661,7 @@ dependencies = [
 
 [[package]]
 name = "sq-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chardetng",
  "chrono",
@@ -5067,6 +5095,28 @@ dependencies = [
  "thiserror 2.0.20",
  "time",
  "url",
+]
+
+[[package]]
+name = "tauri-plugin-opener"
+version = "2.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60d60366174b745b4ef5824b8bbc1c457fd08f0ce101ff643c0a49181a9f4e91"
+dependencies = [
+ "dunce",
+ "glob",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "open",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.20",
+ "url",
+ "windows",
+ "zbus 5.19.0",
 ]
 
 [[package]]

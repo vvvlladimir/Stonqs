@@ -5,6 +5,7 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import type {
@@ -127,6 +128,15 @@ import type {
   WatchlistInput,
   WatchRow,
 } from "./types";
+import type { Outcome } from "./ipcRecord";
+
+// Folded to `undefined` unless recording, so a normal build does not even carry the chunk.
+const record = import.meta.env.VITE_RECORD_IPC
+  ? async (command: string, args: Record<string, unknown> | undefined, outcome: Outcome) => {
+      const { recordIpc } = await import("./ipcRecord");
+      recordIpc(command, args, outcome);
+    }
+  : undefined;
 
 /** Normalizes serialized host errors while preserving their structured detail. */
 export class ApiError extends Error {
@@ -142,8 +152,11 @@ function isUiError(value: unknown): value is UiError {
 
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   try {
-    return await invoke<T>(command, args);
+    const result = await invoke<T>(command, args);
+    void record?.(command, args, { ok: result });
+    return result;
   } catch (raw) {
+    void record?.(command, args, { err: raw });
     if (isUiError(raw)) throw new ApiError(raw);
     throw new ApiError({ code: "internal", message: String(raw) });
   }
@@ -452,8 +465,14 @@ export const api = {
       source: source ?? null,
     }),
   /** `section` names one table of the report ("gains.detail", "charges.account", …). */
-  reportSave: (section: string, from: DateString, to: DateString, path: string) =>
-    call<void>("report_save", { section, from, to, path }),
+  reportSave: (section: string, from: DateString, to: DateString, path: string, footer: string) =>
+    call<void>("report_save", { section, from, to, path, footer }),
+
+  /** Writes the licence notices of every dependency where the user picked. */
+  noticesSave: (path: string) => call<void>("notices_save", { path }),
+
+  /** Hands an address to the OS: a webview opens no window of its own on any platform. */
+  openUrl: (url: string) => openUrl(url),
 
   importLoadPath: (path: string) => call<ImportPreviewData>("import_load_path", { path }),
   importPreview: (config: ParseConfig, mapping: ImportMapping | null, overrides: RowOverride[]) =>
@@ -496,6 +515,10 @@ export const api = {
   quoteProviders: () => call<string[]>("quote_providers"),
   marketSources: () => call<MarketSourceRow[]>("market_sources_list"),
   marketSourceSwitch: (source: string, on: boolean) => call<void>("market_source_switch", { source, on }),
+  /** Seals the answer to "where may data come from"; until it is called nothing is fetched. */
+  marketSourcesConfirm: () => call<void>("market_sources_confirm"),
+  /** Gives every instrument with no price source the one named; returns how many took it. */
+  securitiesAdoptSource: (source: string) => call<number>("securities_adopt_source", { source }),
   marketKeySave: (source: string, key: string) => call<void>("market_key_save", { source, key }),
   marketKeyDelete: (source: string) => call<void>("market_key_delete", { source }),
   marketCustom: () => call<CustomSource[]>("market_custom_list"),

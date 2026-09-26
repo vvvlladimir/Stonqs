@@ -53,6 +53,16 @@ export interface UiState {
   nav: NavPrefs;
   /** Keyboard preferences; `lib/commands` is the only reader. */
   shortcuts: ShortcutPrefs;
+  /** Whether the guided tour has been offered and answered. */
+  tour: TourPrefs;
+}
+
+/**
+ * The tour is offered once. `done` is set whether it was taken or declined — an offer repeated
+ * after "no" is the same as not having asked. Starting it again is a command, never automatic.
+ */
+export interface TourPrefs {
+  done: boolean;
 }
 
 /**
@@ -147,6 +157,7 @@ export const DEFAULT_UI: UiState = {
     open: "portfolio",
   },
   shortcuts: { single_keys: true },
+  tour: { done: false },
 };
 
 /** Parses versioned or plugin-provided UI JSON with safe defaults. */
@@ -181,6 +192,9 @@ export function parseUiState(raw: unknown): UiState {
           ? value.shortcuts.single_keys
           : DEFAULT_UI.shortcuts.single_keys,
     },
+    // A board stored before the tour existed belongs to somebody already using the app: they
+    // are not a new user, so the offer is counted as answered.
+    tour: { done: typeof value.tour?.done === "boolean" ? value.tour.done : true },
   };
 }
 
@@ -270,18 +284,28 @@ function migrateWidget(raw: unknown, from: number): Widget | null {
   if (!widget || typeof widget.id !== "string" || typeof widget.type !== "string") return null;
   const fallback = FALLBACK_SIZE[widget.type] ?? { w: 6, h: 6 };
   const stored = size(widget.h);
+  const track = MERGED_TRACKS[widget.type];
+  const cfg = widget.cfg && typeof widget.cfg === "object" ? widget.cfg : {};
   return {
     id: widget.id,
-    type: widget.type,
+    type: track ? "progress" : widget.type,
     w: size(widget.w) ?? (size(widget.span) ? size(widget.span)! * 3 : fallback.w),
     // Version 3 cut the row to a third of its height, so a height written before it counts
     // three of today's rows. A widget that never had one takes the fallback, already in rows.
     h: stored === null ? fallback.h : from >= 3 ? stored : stored * 3,
     ...offset("x", widget.x),
     ...offset("y", widget.y),
-    cfg: widget.cfg && typeof widget.cfg === "object" ? widget.cfg : {},
+    cfg: track ? { ...cfg, track } : cfg,
   };
 }
+
+/**
+ * The three tiles that became one. A goal, a contribution limit and financial independence are
+ * one shape — a figure over a track — so the subject moved into the widget's own settings; the
+ * old type is what names it. Type-based rather than version-gated, so a board file exported by
+ * an older build reads the same way a stored one does.
+ */
+const MERGED_TRACKS: Record<string, string> = { goal: "goal", limit: "limit", fire: "fire" };
 
 /** The format a blob was written by; anything unmarked predates the versioning. */
 function version(value: unknown): number {
@@ -319,6 +343,18 @@ function isDashboard(value: unknown): value is Dashboard {
   );
 }
 
+/**
+ * A write to the UI state, expressed as a change to whatever is stored *now*.
+ *
+ * The blob is one document with a dozen writers in it — the tour, the updater, the board, two
+ * column pickers — and it is saved whole. A writer that builds its next state out of the copy
+ * it rendered with therefore puts back every field another writer changed in the meantime,
+ * which is how declining the tour was undone by the daily update check landing a moment later.
+ * The patch runs against the freshest copy instead, so two writers touching different fields
+ * cannot overwrite each other.
+ */
+export type UiPatch = (current: UiState) => UiState;
+
 export function useUiState() {
   const queryClient = useQueryClient();
   const settings = useSettings();
@@ -339,12 +375,21 @@ export function useUiState() {
     },
   });
 
+  // The cache rather than this render's `settings.data`: an optimistic write by another writer
+  // one tick ago is already there, and that is the copy a patch has to be applied to. Nothing
+  // in it yet means the settings have not arrived, and a patch over the defaults would store
+  // them over whatever is really on disk, so the write is dropped instead.
+  const stored = () => queryClient.getQueryData(keys.settings()) as { ui?: unknown } | undefined;
+
   return {
     ui: parseUiState(settings.data?.ui),
     ready: settings.isSuccess,
     /** Exposes load errors instead of silently replacing persisted settings. */
     loadError: settings.error,
-    save: (next: UiState) => save.mutate(next),
+    save: (next: UiPatch) => {
+      const current = stored();
+      if (current) save.mutate(next(parseUiState(current.ui)));
+    },
     error: save.error,
   };
 }

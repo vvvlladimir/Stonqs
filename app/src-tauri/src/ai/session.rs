@@ -67,6 +67,10 @@ pub struct Session<'a> {
     pub store: &'a Store,
     pub scope: &'a ScopeSelection,
     pub today: NaiveDate,
+    /// The source an instrument the model re-points is stamped with: the first quote source the
+    /// owner switched on, `None` while none is. Carried rather than looked up, because a turn
+    /// runs on its own thread and the switches live in the host's settings (ADR-0076).
+    pub quotes_source: Option<&'a str>,
     /// The date the user has the screens set to, when it is not today. Stated, never applied:
     /// the tools answer for today, so a model that does not say which date it means would
     /// contradict the figures the user is looking at.
@@ -364,6 +368,7 @@ fn run_one(
         store: session.store,
         scope: session.scope,
         today: session.today,
+        quotes_source: session.quotes_source,
         changed: session.changed,
     };
 
@@ -503,6 +508,7 @@ mod tests {
         Session {
             store,
             scope,
+            quotes_source: None,
             today: NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
             as_of: None,
             screen: None,

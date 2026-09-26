@@ -200,7 +200,7 @@ function weightCell(row: PlanRow, taxonomy: TaxonomyData | undefined) {
     <div className="tradeweight">
       <Percent value={after} digits={1} dim />
       {/* A 40 % target fills the track, so ordinary weights stay comparable. */}
-      <Bar size="sm" slot={slot} fill={`${Math.min(100, (Number(after) / 0.4) * 100)}%`} />
+      <Bar size="sm" slot={slot} share={Number(after) / 0.4} />
     </div>
   );
 }

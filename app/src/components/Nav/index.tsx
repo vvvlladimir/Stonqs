@@ -39,7 +39,7 @@ export function Nav({ screen, go, alertsDot }: Props) {
   const [opening, setOpening] = useState<string | null>(null);
   const [pull, setPull] = useState(0);
 
-  const store = (patch: Partial<NavPrefs>) => save({ ...ui, nav: { ...ui.nav, ...patch } });
+  const store = (patch: Partial<NavPrefs>) => save((ui) => ({ ...ui, nav: { ...ui.nav, ...patch } }));
 
   const onDrop = (item: DragItem, drop: Drop) => {
     const id = item.id as ScreenId;
@@ -177,6 +177,7 @@ export function Nav({ screen, go, alertsDot }: Props) {
       <nav
         ref={root}
         className={`nav${sheet ? " nav--sheet" : ""}${pull ? " nav--pulled" : ""}`}
+        data-tour="nav"
         style={pull ? ({ "--pull": `${pull}px` } as CSSProperties) : undefined}
         aria-label={t`Navigation`}
       >
@@ -208,8 +209,8 @@ export function Nav({ screen, go, alertsDot }: Props) {
           <div className="nav__foot">
             {row(SETTINGS, "settings", "")}
             <div className="nav__lenses">
-              <AsOfPicker variant="nav" />
-              <ScopePicker variant="nav" />
+              <AsOfPicker />
+              <ScopePicker />
             </div>
           </div>
         </div>

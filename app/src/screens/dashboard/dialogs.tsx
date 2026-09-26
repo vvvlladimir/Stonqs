@@ -21,9 +21,11 @@ import { periodLabel, usePeriodRanges } from "../../lib/periods";
 import { METRICS } from "./widgets/metrics";
 
 import { WIDGETS, type Field as WidgetField } from "./widgets";
+import { GRID_COLS, limitsOf } from "./grid";
 import {
   MAX_BENCHMARKS,
   RATIO_TERMS,
+  TRACK_LABELS,
   benchmarksOf,
   inflationOf,
   ratioTerms,
@@ -32,6 +34,8 @@ import {
   sourceFromKey,
   sourceKey,
   sourceOf,
+  trackOf,
+  type Track,
 } from "./widgets/model";
 import { scopeLabel } from "../../components/domain/scopeLabel";
 import { useAsOf } from "../../lib/asOf";
@@ -98,11 +102,21 @@ export function Config({
   const ranges = usePeriodRanges(useAsOf().date);
 
   const has = (field: WidgetField) => def.fields.includes(field);
+  // A tile that picks its subject offers only that subject's settings: a goal tile has no
+  // withdrawal rate, and a dialog listing all three at once asks about two of them for nothing.
+  const tracks = (track: Track) => has(track) && (!has("track") || trackOf(draft.cfg) === track);
   const set = (key: string, value: unknown) => setDraft({ ...draft, cfg: { ...draft.cfg, [key]: value } });
   const text = (key: string) => (typeof draft.cfg[key] === "string" ? (draft.cfg[key] as string) : "");
+  const min = limitsOf(draft, def);
 
   return (
-    <FormDialog title={i18n._(def.label)} onClose={onClose} onSubmit={() => onSave(draft)}>
+    <FormDialog
+      title={i18n._(def.label)}
+      onClose={onClose}
+      // A tile narrower than its own minimum is a minimum nothing enforces; the width is raised
+      // to it here rather than waiting for the next drag to notice.
+      onSubmit={() => onSave({ ...draft, w: Math.max(draft.w, min.w) })}
+    >
       {has("title") && (
         <Field label={t`Title`}>
           <input
@@ -167,7 +181,20 @@ export function Config({
         </>
       )}
 
-      {has("fire") && (
+      {has("track") && (
+        <Field
+          label={t`What it tracks`}
+          hint={t`All three read as one figure over a track; this picks which figure.`}
+          options={(Object.keys(TRACK_LABELS) as Track[]).map((track) => ({
+            value: track,
+            label: i18n._(TRACK_LABELS[track]),
+          }))}
+          value={trackOf(draft.cfg)}
+          onChange={(track) => set("track", track)}
+        />
+      )}
+
+      {tracks("fire") && (
         <>
           <Field
             label={t`Spending to cover, a year`}
@@ -298,7 +325,7 @@ export function Config({
         />
       )}
 
-      {has("goal") && (
+      {tracks("goal") && (
         <Field
           label={t`Goal`}
           hint={t`Left empty, the widget shows the first goal.`}
@@ -309,7 +336,7 @@ export function Config({
         />
       )}
 
-      {has("limit") && (
+      {tracks("limit") && (
         <Field
           label={t`Limit`}
           hint={t`Left empty, the widget shows the first limit.`}
@@ -386,6 +413,26 @@ export function Config({
             max={20}
             value={Number(draft.cfg.count) || 6}
             onChange={(e) => set("count", Math.min(Math.max(Number(e.target.value) || 6, 3), 20))}
+          />
+        </Field>
+      )}
+
+      {/* Offered by every tile rather than named in `fields`: how small a widget may get is a
+          property of the board, not of what the widget shows. */}
+      {!def.plain && (
+        <Field
+          label={t`Smallest width, in twelfths of the board`}
+          hint={t`Where a drag stops, and how the tile behaves on a phone: four twelfths or more takes the whole row there instead of half of it. Left at ${def.min.w}, the widget's own.`}
+        >
+          <input
+            type="number"
+            min={1}
+            max={GRID_COLS}
+            value={min.w}
+            onChange={(e) => {
+              const twelfths = Math.round(Number(e.target.value));
+              set("min_w", twelfths >= 1 && twelfths <= GRID_COLS ? twelfths : null);
+            }}
           />
         </Field>
       )}

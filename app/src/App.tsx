@@ -16,6 +16,7 @@ import { needsPick } from "./lib/profiles";
 import { ProfilePicker } from "./components/domain/ProfilePicker";
 import { ProfileLock } from "./components/domain/ProfileLock";
 import { useLanguage } from "./lib/i18n";
+import { useExternalLinks } from "./lib/links";
 import { pluginTheme, useTheme } from "./lib/theme";
 import { useUiState } from "./lib/uiState";
 import { UpdatesProvider } from "./lib/updates";
@@ -24,11 +25,12 @@ import { DockProvider, DockSlot } from "./lib/dock";
 import { NavProvider, type ScreenId } from "./lib/nav";
 import { noteChange } from "./lib/freshness";
 import { Onboarding } from "./screens/Onboarding";
+import { TourProvider } from "./lib/tour";
+import { TourLayer } from "./components/domain/tour/TourLayer";
 import { AiToggle } from "./components/domain/AiToggle";
 import { AlertNotifier } from "./components/domain/AlertNotifier";
 import { SyncChip } from "./components/domain/MarketRefresh";
-import { ScopePicker } from "./components/domain/ScopePicker";
-import { AsOfBanner, AsOfPicker } from "./components/domain/AsOfPicker";
+import { AsOfBanner } from "./components/domain/AsOfPicker";
 import { Nav } from "./components/Nav";
 import { SCREENS } from "./components/Nav/model";
 import { Commands } from "./components/domain/Commands";
@@ -57,6 +59,11 @@ const Alerts = lazy(() => import("./screens/Alerts").then((m) => ({ default: m.A
 const Reports = lazy(() => import("./screens/Reports").then((m) => ({ default: m.Reports })));
 const Import = lazy(() => import("./screens/Import").then((m) => ({ default: m.Import })));
 
+// Dev-only: walks every screen for the website's screenshots (`pnpm record:tour`).
+const RecordTour = import.meta.env.VITE_RECORD_TOUR
+  ? lazy(() => import("./lib/ipcTourRecorder").then((m) => ({ default: m.RecordTour })))
+  : null;
+
 // The panel carries the markdown renderer, and it is mounted only once it is opened.
 const AiChatPanel = lazy(() =>
   import("./components/domain/AiChatPanel").then((m) => ({ default: m.AiChatPanel })),
@@ -78,6 +85,8 @@ export function App() {
   // Re-renders the shell when the saved preference or the OS language changes the catalog.
   const { i18n } = useLingui();
   useLanguage();
+  // A webview opens no window itself, so every outward link in the app goes to the OS from here.
+  useExternalLinks();
   // A theme installed as a plugin is a stylesheet on this machine plus the built-in scheme it
   // varies; both arrive a moment after the shell, which is why `useTheme` takes them separately.
   const theme = useUiState().ui.theme;
@@ -172,74 +181,80 @@ export function App() {
       <NavProvider value={{ screen, go }}>
         <AsOfProvider>
           <UpdatesProvider>
-            <SecurityCardProvider>
-              <DockProvider>
-                <div className="shell">
-                  <a
-                    className="skip"
-                    href="#main"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      main.current?.focus();
-                    }}
-                  >
-                    <Trans>Skip to content</Trans>
-                  </a>
-                  <Nav screen={screen} go={go} alertsDot={(unseen.data ?? 0) > 0} />
-
-                  <div className="main">
-                    <AsOfBanner />
-                    <main
-                      ref={main}
-                      id="main"
-                      className="app"
-                      tabIndex={-1}
-                      aria-label={i18n._(SCREENS[screen].title)}
+            <TourProvider>
+              <SecurityCardProvider>
+                <DockProvider>
+                  <div className="shell">
+                    <a
+                      className="skip"
+                      href="#main"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        main.current?.focus();
+                      }}
                     >
-                      <Suspense fallback={<Pending />}>
-                        {screen === "dashboard" && <Dashboard />}
-                        {screen === "positions" && <Positions />}
-                        {screen === "transactions" && <Transactions key={focus} focus={focus} />}
-                        {screen === "performance" && <Performance />}
-                        {screen === "trades" && <Trades />}
-                        {screen === "risk" && <Risk />}
-                        {screen === "income" && <Income />}
-                        {screen === "allocation" && <Allocation />}
-                        {screen === "rebalance" && <Rebalance />}
-                        {screen === "plans" && <Plans />}
-                        {screen === "alerts" && <Alerts />}
-                        {screen === "watchlist" && <Watchlist />}
-                        {screen === "reports" && <Reports />}
-                        {screen === "import" && <Import />}
-                        {screen === "accounts" && <Accounts />}
-                        {screen === "securities" && <Securities key={focus} focus={focus} />}
-                        {screen === "settings" && <Settings status={status.data} />}
+                      <Trans>Skip to content</Trans>
+                    </a>
+                    <Nav screen={screen} go={go} alertsDot={(unseen.data ?? 0) > 0} />
+
+                    <div className="main">
+                      <AsOfBanner />
+                      <main
+                        ref={main}
+                        id="main"
+                        className="app"
+                        tabIndex={-1}
+                        aria-label={i18n._(SCREENS[screen].title)}
+                      >
+                        <Suspense fallback={<Pending />}>
+                          {screen === "dashboard" && <Dashboard />}
+                          {screen === "positions" && <Positions />}
+                          {screen === "transactions" && <Transactions key={focus} focus={focus} />}
+                          {screen === "performance" && <Performance />}
+                          {screen === "trades" && <Trades />}
+                          {screen === "risk" && <Risk />}
+                          {screen === "income" && <Income />}
+                          {screen === "allocation" && <Allocation />}
+                          {screen === "rebalance" && <Rebalance />}
+                          {screen === "plans" && <Plans />}
+                          {screen === "alerts" && <Alerts />}
+                          {screen === "watchlist" && <Watchlist />}
+                          {screen === "reports" && <Reports />}
+                          {screen === "import" && <Import />}
+                          {screen === "accounts" && <Accounts />}
+                          {screen === "securities" && <Securities key={focus} focus={focus} />}
+                          {screen === "settings" && <Settings status={status.data} />}
+                        </Suspense>
+                      </main>
+                    </div>
+
+                    <div className="dock">
+                      {/* Screens portal dock controls here without changing page layout. */}
+                      <DockSlot />
+                      <SyncChip />
+                      <AiToggle open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />
+                    </div>
+
+                    {aiOpen && (
+                      <Suspense fallback={null}>
+                        <AiChatPanel onClose={() => setAiOpen(false)} />
                       </Suspense>
-                    </main>
+                    )}
+
+                    <Commands aiOpen={aiOpen} onAi={() => setAiOpen((v) => !v)} />
+                    <TooltipLayer />
+                    <AlertNotifier />
+                    <UpdateDialog />
+                    <TourLayer />
+                    {RecordTour && (
+                      <Suspense fallback={null}>
+                        <RecordTour go={go} />
+                      </Suspense>
+                    )}
                   </div>
-
-                  <div className="dock">
-                    {/* Screens portal dock controls here without changing page layout. */}
-                    <DockSlot />
-                    <AsOfPicker variant="dock" />
-                    <ScopePicker variant="dock" />
-                    <SyncChip />
-                    <AiToggle open={aiOpen} onToggle={() => setAiOpen((v) => !v)} />
-                  </div>
-
-                  {aiOpen && (
-                    <Suspense fallback={null}>
-                      <AiChatPanel onClose={() => setAiOpen(false)} />
-                    </Suspense>
-                  )}
-
-                  <Commands aiOpen={aiOpen} onAi={() => setAiOpen((v) => !v)} />
-                  <TooltipLayer />
-                  <AlertNotifier />
-                  <UpdateDialog />
-                </div>
-              </DockProvider>
-            </SecurityCardProvider>
+                </DockProvider>
+              </SecurityCardProvider>
+            </TourProvider>
           </UpdatesProvider>
         </AsOfProvider>
       </NavProvider>

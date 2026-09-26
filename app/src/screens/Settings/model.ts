@@ -6,6 +6,7 @@ import {
   BriefcaseIcon,
   CloudArrowDownIcon,
   DatabaseIcon,
+  InfoIcon,
   KeyboardIcon,
   PaletteIcon,
   PuzzlePieceIcon,
@@ -28,7 +29,8 @@ export type CategoryId =
   | "plugins"
   | "profiles"
   | "data"
-  | "updates";
+  | "updates"
+  | "about";
 
 export const CATEGORIES: { id: CategoryId; label: MessageDescriptor; icon: Icon }[] = [
   { id: "portfolio", label: msg`Portfolio`, icon: BriefcaseIcon },
@@ -42,6 +44,7 @@ export const CATEGORIES: { id: CategoryId; label: MessageDescriptor; icon: Icon 
   { id: "profiles", label: msg`Profiles`, icon: UsersIcon },
   { id: "data", label: msg`Data and storage`, icon: DatabaseIcon },
   { id: "updates", label: msg`Updates`, icon: ArrowsClockwiseIcon },
+  { id: "about", label: msg`About`, icon: InfoIcon },
 ];
 
 /**

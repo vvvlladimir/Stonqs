@@ -5,9 +5,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { CalendarBlankIcon, PencilSimpleIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { api, today } from "../../lib/api";
-import { formatDay, formatMoney, formatPercent } from "../../lib/format";
+import { formatDay, formatMoney } from "../../lib/format";
 import { planCadenceLabel } from "../../lib/kinds";
-import { slotFor } from "../../lib/plot";
 import { EMPTY_PLAN, planToInput } from "../../lib/plans";
 import { affects, useAccounts, useInvalidate, usePlans, useSecurities } from "../../lib/queries";
 import { Page } from "../../components/Page";
@@ -16,17 +15,15 @@ import { SecurityLink } from "../../components/domain/SecurityCardProvider";
 import {
   Badge,
   Banner,
-  Bar,
   Buttons,
   Empty,
   ErrorText,
-  Legend,
-  LegendItem,
   List,
   ListRow,
   Money,
   Pending,
   QueryError,
+  ShareBar,
 } from "../../components/ui";
 import type { PlanInput, PlanRow } from "../../lib/types";
 import { DuePanel } from "./DuePanel";
@@ -190,25 +187,15 @@ function PlanCard({
       </span>
     ) : (
       <span className="stack">
-        <Bar
-          size="sm"
+        <ShareBar
           label={t`How the contribution is split`}
-          segments={row.legs.map((leg, index) => ({
+          slices={row.legs.map((leg) => ({
             key: leg.security_id,
-            // A CSS width, not a formatted number: `formatPercent` would put the locale's
-            // separator and a space before the sign into a style attribute.
-            width: `${Number(leg.share) * 100}%`,
-            slot: slotFor(index),
-            title: `${leg.symbol}: ${formatPercent(leg.share, { digits: 1 })}`,
+            label: <SecurityLink id={leg.security_id}>{leg.symbol}</SecurityLink>,
+            name: leg.symbol,
+            share: leg.share,
           }))}
         />
-        <Legend>
-          {row.legs.map((leg, index) => (
-            <LegendItem key={leg.security_id} slot={slotFor(index)}>
-              <SecurityLink id={leg.security_id}>{leg.symbol}</SecurityLink>
-            </LegendItem>
-          ))}
-        </Legend>
       </span>
     );
 

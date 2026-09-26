@@ -3,6 +3,23 @@
 Prices and exchange rates come from outside sources, and the app can ask several of them. Which
 ones it asks is set in Settings under Market data, in **Data sources**.
 
+**Nothing is fetched until a source is chosen.** A new profile has every source off, keyless ones
+included, and asks nobody. So missing prices on a fresh setup usually mean no source has been
+chosen, not that a provider failed. Turning a source on in Settings is the choice itself — there
+is nothing else to apply — and `Select all and continue` in the dialog a new profile is shown does
+it for everything that answers without a key of its own.
+
+**Two kinds of source are needed, not one.** Something that publishes prices, and something that
+publishes exchange rates. Without the second, anything held in a currency other than the
+portfolio's has no value at all rather than a stale one, so the app reports the gap until both are
+on: the dialog refuses to apply such a set, and the data chip beside the search box shows an error
+saying which half is missing.
+
+**An instrument added while no source was on has no price source**, and nothing fetches its
+prices even after a source is turned on later — a refresh only asks about instruments that name
+one. Both the dialog and the Settings panel offer those instruments the first source turned on, in
+one press; an instrument given a source of its own keeps it.
+
 **Each instrument has its own price source** — the one chosen when it was added or identified.
 That source is always asked first. Another source is asked only when the instrument's own one
 fails (unreachable, throttling, a rejected key), and only if the instrument has a symbol at that

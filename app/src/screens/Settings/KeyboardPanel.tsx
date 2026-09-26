@@ -16,7 +16,7 @@ export function KeyboardPanel() {
           label={t`Single-key shortcuts`}
           hint={t`Keys without ⌘ or Ctrl, such as N for a new item or G then P for Positions. Turn them off if they are pressed by accident or interfere with speech input.`}
           checked={ui.shortcuts.single_keys}
-          onChange={(single_keys) => save({ ...ui, shortcuts: { ...ui.shortcuts, single_keys } })}
+          onChange={(single_keys) => save((ui) => ({ ...ui, shortcuts: { ...ui.shortcuts, single_keys } }))}
         />
       </Form>
       <ListRow

@@ -1,9 +1,9 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Bar, DataTable, Legend, LegendItem, Money, Num, Swatch } from "../../components/ui";
+import { DataTable, Legend, LegendItem, Money, Num, ShareBar, Swatch } from "../../components/ui";
 import { formatMoney, toNumber } from "../../lib/format";
 import { transactionLabel } from "../../lib/kinds";
 import type { IncomeData, TransactionKind, YearKindIncome } from "../../lib/types";
-import { WIDTH, kindSlots, share } from "./model";
+import { WIDTH, kindSlots, ratio, share } from "./model";
 
 export function KindLegend({ kinds }: { kinds: Array<{ kind: TransactionKind; slot: number }> }) {
   const { i18n } = useLingui();
@@ -40,14 +40,18 @@ export function Composition({
         {all.by_year.map((year) => (
           <div className="mix__row" key={year.year}>
             <Num dim>’{String(year.year).slice(2)}</Num>
-            <Bar
+            <ShareBar
               size="lg"
+              legend={false}
               width={share(year.net_base, peakYear)}
-              segments={partsOf(year.year).map((part) => ({
+              slices={partsOf(year.year).map((part) => ({
                 key: part.kind,
+                label: transactionLabel(i18n, part.kind),
                 slot: slots.get(part.kind),
-                width: share(part.net_base, year.net_base),
-                title: t`${transactionLabel(i18n, part.kind)} ${year.year}: ${formatMoney(part.net_base, currency)}`,
+                share: ratio(part.net_base, year.net_base),
+                // Money, not a share: the reader is comparing years, and 62 % of a bad year is
+                // not a figure anyone wants back.
+                tip: t`${transactionLabel(i18n, part.kind)} ${year.year}: ${formatMoney(part.net_base, currency)}`,
               }))}
             />
             <Money value={year.net_base} currency={currency} compact />

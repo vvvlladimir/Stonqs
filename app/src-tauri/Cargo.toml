@@ -20,6 +20,7 @@ tauri-build.workspace = true
 sq-core = { path = "../../core" }
 tauri.workspace = true
 tauri-plugin-dialog.workspace = true
+tauri-plugin-opener.workspace = true
 tauri-plugin-notification.workspace = true
 sys-locale.workspace = true
 keyring.workspace = true

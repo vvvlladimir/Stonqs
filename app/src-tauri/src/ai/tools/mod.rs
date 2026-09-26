@@ -59,6 +59,9 @@ pub struct ToolContext<'a> {
     pub store: &'a Store,
     pub scope: &'a ScopeSelection,
     pub today: NaiveDate,
+    /// Which source prices an instrument the model creates or re-points; `None` when the owner
+    /// has switched none on, and then the instrument is priced by hand (ADR-0076).
+    pub quotes_source: Option<&'a str>,
     /// Called with one of the host's change scopes ("transactions", "securities", ...).
     pub changed: &'a dyn Fn(&'static str),
 }

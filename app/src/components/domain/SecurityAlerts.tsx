@@ -130,8 +130,9 @@ function CrossingTrail({ crossings }: { crossings: AlertCrossing[] }) {
   );
 }
 
-/** The crossing log across rules, newest first; a crossing not looked at yet carries the dot. */
-export function CrossingLog({ rows }: { rows: CrossingRow[] }) {
+/** The crossing log across rules, newest first; a crossing not looked at yet carries the dot.
+ * `compact` drops the year from the date: inside a tile that third line costs a whole row. */
+export function CrossingLog({ rows, compact }: { rows: CrossingRow[]; compact?: boolean }) {
   const { t } = useLingui();
   return (
     <List>
@@ -140,7 +141,7 @@ export function CrossingLog({ rows }: { rows: CrossingRow[] }) {
         return (
           <ListRow
             key={row.id}
-            lead={<DayMark date={row.date} />}
+            lead={<DayMark date={row.date} year={!compact} />}
             title={<SecurityLink id={row.security_id}>{row.symbol}</SecurityLink>}
             sub={
               row.direction === "UP" ? (
@@ -167,10 +168,13 @@ export function CrossingLog({ rows }: { rows: CrossingRow[] }) {
 export function EventList({
   rows,
   named,
+  compact,
   onEditNote,
 }: {
   rows: SecurityEventRow[];
   named?: boolean;
+  /** Tile reading: no year on the date, and the kind joins the line under the instrument. */
+  compact?: boolean;
   onEditNote?: (event: SecurityEventRow) => void;
 }) {
   const { t, i18n } = useLingui();
@@ -209,16 +213,22 @@ export function EventList({
           return (
             <ListRow
               key={event.id}
-              lead={<DayMark date={event.date} />}
-              title={securityEventKindLabel(i18n, event.kind)}
+              lead={<DayMark date={event.date} year={!compact} />}
+              title={
+                named ? (
+                  <SecurityLink id={event.security_id}>{event.symbol}</SecurityLink>
+                ) : (
+                  securityEventKindLabel(i18n, event.kind)
+                )
+              }
               sub={
                 <>
+                  {named && <span>{securityEventKindLabel(i18n, event.kind)}</span>}
                   {figure}
                   {text}
                   {event.kind !== "NOTE" && event.note && <> · {event.note}</>}
                 </>
               }
-              value={named ? <SecurityLink id={event.security_id}>{event.symbol}</SecurityLink> : undefined}
               end={
                 <Buttons>
                   {event.kind === "SPLIT" &&

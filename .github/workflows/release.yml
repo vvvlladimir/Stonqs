@@ -104,6 +104,7 @@ jobs:
           key: ${{ matrix.target }}
 
       - uses: tauri-apps/tauri-action@v1
+        id: tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Signs the update artifacts with the project's key; the public half is in
@@ -121,3 +122,33 @@ jobs:
           # `latest.json`, the feed the updater reads. One per run, merged across the matrix.
           includeUpdaterJson: true
           args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
+
+      # The site links `releases/latest/download/<name>`, which needs a name that does not carry the
+      # version. Copies, not renames: the updater feed names the versioned files.
+      - name: Upload stable-named installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          PATHS: ${{ steps.tauri.outputs.artifactPaths }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p stable
+          while IFS= read -r path; do
+            path=${path%$'\r'}  # jq on the Windows runner ends lines with CRLF
+            case "$path" in
+              *.dmg)
+                case "$TARGET" in
+                  aarch64-*) name=Stonqs_macos_aarch64.dmg ;;
+                  *) name=Stonqs_macos_x64.dmg ;;
+                esac ;;
+              *-setup.exe) name=Stonqs_windows_x64-setup.exe ;;
+              *.AppImage) name=Stonqs_linux_x86_64.AppImage ;;
+              *.deb) name=Stonqs_linux_amd64.deb ;;
+              *.rpm) name=Stonqs_linux_x86_64.rpm ;;
+              *) continue ;;
+            esac
+            cp "$path" "stable/$name"
+          done < <(jq -r '.[]' <<<"$PATHS")
+          ls stable
+          gh release upload "$TAG" stable/* --clobber --repo "$GITHUB_REPOSITORY"

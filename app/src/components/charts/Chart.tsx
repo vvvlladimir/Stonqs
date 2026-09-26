@@ -41,6 +41,19 @@ interface Props {
 const AXIS = 18;
 /** Gap separating the plot from an optional lane. */
 const LANE_GAP = 10;
+/** Narrowest the value labels may be squeezed to: "-1.2 M" still fits. */
+const GUTTER_MIN = 34;
+
+/**
+ * Room kept to the right of the plot for the value labels. The caller's figure is sized for a
+ * full-width chart; on a phone column it was a fifth of the box left blank, because the axis
+ * prints compact labels ("4 k") there and never needed it. Never more than a ninth of the box,
+ * never less than a label.
+ */
+function sideRoom(gutter: number, width: number): number {
+  if (width <= 0) return gutter;
+  return Math.max(Math.min(gutter, Math.round(width / 9)), GUTTER_MIN);
+}
 
 export function Chart({
   height,
@@ -67,7 +80,7 @@ export function Chart({
     width,
     height: drawn,
     left: CH.pad.left,
-    right: Math.max(width - gutter, CH.pad.left + 10),
+    right: Math.max(width - sideRoom(gutter, width), CH.pad.left + 10),
     top: CH.pad.top,
     bottom,
     laneTop: lane > 0 ? bottom + LANE_GAP : bottom,

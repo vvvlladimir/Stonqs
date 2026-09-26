@@ -36,7 +36,7 @@ export const MENU: MenuSection[] = [
   {
     label: null,
     items: [
-      { native: "About", label: msg`About ${app}` },
+      { command: "about", label: msg`About ${app}` },
       "separator",
       { command: "checkUpdates", label: msg`Check for Updates…` },
       "separator",
@@ -129,7 +129,11 @@ export const MENU: MenuSection[] = [
   },
   {
     label: msg`Help`,
-    items: [{ command: "help" }, { command: "ai", label: msg`Ask the Assistant`, keyless: true }],
+    items: [
+      { command: "tour", label: msg`Guided Tour` },
+      { command: "help" },
+      { command: "ai", label: msg`Ask the Assistant`, keyless: true },
+    ],
   },
 ];
 /* eslint-enable lingui/no-unlocalized-strings */

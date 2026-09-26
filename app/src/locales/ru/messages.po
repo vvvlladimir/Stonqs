@@ -398,7 +398,7 @@ msgstr "{0} · {1} из {2}"
 msgid "{0} · {1} of {2} · {3} downloaded"
 msgstr "{0} · {1} из {2} · загружено {3}"
 
-#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Bar, Money, Num, Percent, QueryError, Stat } from "../../../components/ui"; import { useDashboard, useFire, useGoals, useLimits, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: string; foot?: ReactNode; }) { const note = useFoot(ctx, foot); return ( <> <div className="kpiline"> <span className={`kpiline__v num ${tone ?? ""}`}>{value}</span> {delta && <span className="kpiline__d num">{delta}</span>} </div> {note && <div className="w__foot">{note}</div>} </> ); } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: string; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ export function FireWidget({ widget, date, period }: WidgetProps) { const { t, i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period) }; const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <> <Figure ctx={ctx} value={<Percent value={data.progress} digits={0} />} foot={ months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ) } /> <Bar fill={`${Math.min(Math.max(Number(data.progress) * 100, 0), 100)}%`} size="lg" /> <FireNote data={data} /> </> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; return ( <div className="w__foot"> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </div> ); } /** * One goal as a track: where it is, and the single figure that answers "is this enough". * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean * nothing here. */ export function GoalWidget({ widget, date, period }: WidgetProps) { const { t } = useLingui(); const query = useGoals(date); const ctx = { date, period: periodOf(widget, period) }; const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : ""; return ( <Async query={query}> {(rows) => { const row = rows.find((r) => r.goal.id === wanted) ?? rows[0]; if (!row) return ( <p className="muted"> <Trans>No goals yet — one is added on the Plans screen.</Trans> </p> ); const { progress } = row; return ( <> <Figure ctx={ctx} value={<Percent value={progress.progress} digits={0} />} foot={ progress.months_left !== null ? plural(progress.months_left, { one: "# month left", other: "# months left" }) : progress.projected_date !== null ? t`at this pace, ${formatDay(progress.projected_date)}` : t`no date and no pace stated` } /> <Bar fill={`${Math.min(Math.max(Number(progress.progress) * 100, 0), 100)}%`} size="lg" tone={progress.on_track === false ? "neg" : undefined} /> <p className="w__note"> <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "} <Money value={progress.target_base} currency={row.goal.currency} /> {progress.required_monthly_base !== null && ( <> {" · "} <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "} {t`a month needed`} </> )} </p> </> ); }} </Async> ); } /** One contribution limit as a track: spent against allowed, over its own limit year. */ export function LimitWidget({ widget, date, period }: WidgetProps) { const { t } = useLingui(); const query = useLimits(date); const ctx = { date, period: periodOf(widget, period) }; const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : ""; return ( <Async query={query}> {(rows) => { const usage = rows.find((r) => r.limit_id === wanted) ?? rows[0]; if (!usage) return ( <p className="muted"> <Trans>No limits set — one is added on the Accounts screen.</Trans> </p> ); const over = Number(usage.share) > 1; return ( <> <Figure ctx={ctx} value={<Percent value={usage.share} digits={0} />} foot={t`of the allowance used`} /> <Bar fill={`${Math.min(Math.max(Number(usage.share) * 100, 0), 100)}%`} size="lg" tone={over ? "neg" : undefined} /> <p className="w__note"> <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "} <Money value={usage.allowance} currency={usage.currency} /> </p> </> ); }} </Async> ); } 
+#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Figure as UiFigure, Money, Num, Percent, Progress, QueryError, Stat, type Tone, } from "../../../components/ui"; import { useDashboard, useFire, useGoals, useLimits, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, trackOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, deltaTone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: Tone; deltaTone?: Tone; foot?: ReactNode; }) { // What the line under the number says is this file's business; how a figure looks is not. return <UiFigure value={value} tone={tone} delta={delta} deltaTone={deltaTone} note={useFoot(ctx, foot)} />; } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: Tone; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * A figure over a track. Which figure is a setting, not a widget: a goal, a contribution limit * and financial independence are one shape — a percentage, a bar and the facts that read it — * and three catalog entries only made the picker longer. */ export function ProgressWidget(props: WidgetProps) { switch (trackOf(props.widget.cfg)) { case "limit": return <LimitWidget {...props} />; case "fire": return <FireWidget {...props} />; default: return <GoalWidget {...props} />; } } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ function FireWidget({ widget }: WidgetProps) { const { t, i18n } = useLingui(); const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <Progress value={<Percent value={data.progress} digits={0} />} share={data.progress} legend={{ left: months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ), }} note={<FireNote data={data} />} /> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; // Plain text: `Progress` puts it in its own note line, which already draws the rule above it. return ( <> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </> ); } /** * One goal as a track: where it is, and the single figure that answers "is this enough". * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean * nothing here. */ function GoalWidget({ widget, date }: WidgetProps) { const { t } = useLingui(); const query = useGoals(date); const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : ""; return ( <Async query={query}> {(rows) => { const row = rows.find((r) => r.goal.id === wanted) ?? rows[0]; if (!row) return ( <p className="muted"> <Trans>No goals yet — one is added on the Plans screen.</Trans> </p> ); const { progress } = row; return ( <Progress value={<Percent value={progress.progress} digits={0} />} share={progress.progress} barTone={progress.on_track === false ? "neg" : undefined} legend={{ left: ( <> <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "} <Money value={progress.target_base} currency={row.goal.currency} /> </> ), right: progress.months_left !== null ? plural(progress.months_left, { one: "# month left", other: "# months left" }) : progress.projected_date !== null ? t`at this pace, ${formatDay(progress.projected_date)}` : t`no date and no pace stated`, }} note={ progress.required_monthly_base !== null && ( <> <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "} {t`a month needed`} </> ) } /> ); }} </Async> ); } /** One contribution limit as a track: spent against allowed, over its own limit year. */ function LimitWidget({ widget, date }: WidgetProps) { const { t } = useLingui(); const query = useLimits(date); const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : ""; return ( <Async query={query}> {(rows) => { const usage = rows.find((r) => r.limit_id === wanted) ?? rows[0]; if (!usage) return ( <p className="muted"> <Trans>No limits set — one is added on the Accounts screen.</Trans> </p> ); const over = Number(usage.share) > 1; return ( <Progress value={<Percent value={usage.share} digits={0} />} share={usage.share} barTone={over ? "neg" : undefined} legend={{ left: ( <> <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "} <Money value={usage.allowance} currency={usage.currency} /> </> ), }} note={t`of the allowance used`} /> ); }} </Async> ); } 
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{0} · previous period"
 msgstr "{0} · предыдущий период"
@@ -446,6 +446,12 @@ msgstr "{0} не похоже на код валюты."
 msgid "{0} has no price history at the provider, so its currency is unknown. Pick another listing."
 msgstr "У поставщика нет истории цен {0}, поэтому валюта неизвестна. Выберите другой листинг."
 
+#. placeholder {0}: COMPONENTS.rust
+#. placeholder {1}: COMPONENTS.js
+#: src/screens/Settings/AboutPanel.tsx
+msgid "{0} in the app and {1} in the interface, each under its own licence."
+msgstr "{0} в приложении и {1} в интерфейсе, у каждого своя лицензия."
+
 #. placeholder {0}: rows.length
 #: src/components/domain/SecurityPopup.tsx
 msgid "{0} in total"
@@ -477,6 +483,12 @@ msgstr "{0} из {1}"
 #: src/screens/Transactions/index.tsx
 msgid "{0} of {1} · net {2}"
 msgstr "{0} из {1} · нетто {2}"
+
+#. placeholder {0}: shown.length
+#. placeholder {1}: ALL.length
+#: src/screens/Settings/Dependencies.tsx
+#~ msgid "{0} of {1} components. Their full licence texts are in the saved notices."
+#~ msgstr "{0} из {1} компонентов. Полные тексты лицензий — в сохранённом файле уведомлений."
 
 #. placeholder {0}: shown.length
 #. placeholder {1}: securities.data.length
@@ -567,6 +579,13 @@ msgstr "Записано {0}, пропущено {1}."
 #~ msgid "{0}-day window, annualized"
 #~ msgstr "окно {0} дней, годовая"
 
+#. placeholder {0}: first + 1
+#. placeholder {1}: first + shown.length
+#. placeholder {2}: rows.length
+#: src/screens/Settings/Dependencies.tsx
+msgid "{0}–{1} of {2}"
+msgstr "{0}–{1} из {2}"
+
 #. placeholder {0}: worst.item.label
 #: src/screens/Rebalance/index.tsx
 msgid "{0}, above target"
@@ -616,6 +635,7 @@ msgid "{day} has arrived."
 msgstr "Наступила дата {day}."
 
 #: src/components/domain/positionColumns.tsx
+#: src/screens/dashboard/widgets/list.tsx
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, one {# день} few {# дня} many {# дней} other {# дня}}"
@@ -661,6 +681,10 @@ msgstr "{occurrences, plural, one {# строка} few {# строки} many {# 
 #: src/components/charts/DriftBars.tsx
 msgid "{off, plural, one {# of {0} off target} other {# of {1} off target}}"
 msgstr "{off, plural, one {# из {0} мимо цели} few {# из {1} мимо цели} many {# из {1} мимо цели} other {# из {1} мимо цели}}"
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "{orphans, plural, one {# instrument has no price source: it was added while nothing was on, so nothing fetches its prices.} few {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.} many {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.} other {# instruments have no price source: they were added while nothing was on, so nothing fetches their prices.}}"
+msgstr "{orphans, plural, one {У # инструмента нет источника цен: он добавлен, когда ничего не было включено, поэтому его цены никто не загружает.} few {У # инструментов нет источника цен: они добавлены, когда ничего не было включено, поэтому их цены никто не загружает.} many {У # инструментов нет источника цен: они добавлены, когда ничего не было включено, поэтому их цены никто не загружает.} other {У # инструментов нет источника цен: они добавлены, когда ничего не было включено, поэтому их цены никто не загружает.}}"
 
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{owed, plural, one {# contribution due} other {# contributions due}}"
@@ -829,7 +853,7 @@ msgstr "<0>{0}</0> бумаг не получат котировок: в пол�
 msgid "√252 over {0} trading days"
 msgstr "√252 по {0} торговым дням"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "0.01 for a feed that answers in cents"
 msgstr "0.01 для источника, отвечающего в центах"
 
@@ -971,6 +995,14 @@ msgstr "Строка-разделитель: делит дашборд на см
 #~ msgid "A feed of events: date, instrument and amount as the broker saw them."
 #~ msgstr "Лента событий: дата, бумага и сумма так, как их видел брокер."
 
+#: src/screens/dashboard/widgets/index.tsx
+msgid "A figure over a track: a savings goal, a contribution limit, or financial independence."
+msgstr "Показатель над полосой прогресса: накопительная цель, лимит взносов или финансовая независимость."
+
+#: src/lib/tour/steps.ts
+msgid "A file from a broker, read through a wizard. Nothing is written until the last step, and a file imported twice adds nothing the second time."
+msgstr "Файл от брокера, читается через мастер. До последнего шага ничего не записывается, а повторный импорт того же файла не добавляет ничего."
+
 #: src/screens/Plans/Goals.tsx
 msgid "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
 msgstr "Цель — это сумма к дате: взнос, машина, год запаса. В портфеле она ничего не меняет, а показывает, насколько выбранные счета далеки от этой суммы."
@@ -990,6 +1022,10 @@ msgstr "Ключ сохранён"
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "A key is saved · {added}"
 msgstr "Ключ сохранён · {added}"
+
+#: src/lib/tour/steps.ts
+msgid "A lens over everything the app reports: one account, a group, or the whole portfolio. It changes which accounts the figures are read from — never what is stored, and never the list of operations."
+msgstr "Линза для всех отчётов: один счёт, группа или весь портфель. Она меняет, по каким счетам считаются цифры, но не то, что хранится, и не список операций."
 
 #: src/screens/Accounts/LimitsPanel.tsx
 msgid "A limit is a yearly ceiling on what one account may take — an ISA, a 401(k), an ИИС. You state the amount and the day its year opens; the app counts what was paid in and never blocks anything."
@@ -1071,6 +1107,10 @@ msgstr "Источник цен, который вы описываете сам
 msgid "A property of the broker, not the instrument: one allows fractions, another whole lots. Empty means take it from trade quantities, and from the instrument kind when there are none"
 msgstr "Свойство брокера, а не инструмента: у одного дробные доли, у другого целые лоты. Пусто — взять из количеств сделок, а если их нет — из вида бумаги"
 
+#: src/lib/tour/steps.ts
+msgid "A quick look around"
+msgstr "Короткая экскурсия"
+
 #: src/components/ui/Async.tsx
 msgid "A quote refresh or an AI answer is still using the data. Try again when it finishes."
 msgstr "Данные ещё использует обновление котировок или ответ ИИ. Повторите, когда оно закончится."
@@ -1130,6 +1170,10 @@ msgstr "Сохранённый набор счетов для выбора ис�
 #~ msgid "A securities account holds instruments and settles through a cash account"
 #~ msgstr "Депо держит бумаги и рассчитывается через денежный счёт"
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "A separate profile filled with three years of made-up history, so nothing you try touches your own."
+msgstr "Отдельный профиль с тремя годами выдуманной истории — можно пробовать что угодно, не трогая свои данные."
+
 #: src/screens/Allocation/NodeDialog.tsx
 msgid "A share inside the parent: \"equities 42 %, of which the core is 88 %\". Empty means no target."
 msgstr "Доля внутри родителя: «акции 42 %, внутри них ядро 88 %». Пусто — цели нет."
@@ -1137,6 +1181,14 @@ msgstr "Доля внутри родителя: «акции 42 %, внутри 
 #: src/screens/Settings/AiPanel.tsx
 msgid "A short summary of its own reasoning, folded away above each answer. It costs a few extra tokens, and some provider accounts are not cleared to produce one."
 msgstr "Короткая сводка его собственных рассуждений, свёрнутая над каждым ответом. Стоит нескольких дополнительных токенов, и не всем аккаунтам у провайдера она доступна."
+
+#: src/components/domain/tour/TourLayer.tsx
+msgid "A short tour of what each screen is for. It changes nothing and can be left at any time; you can start it again from Settings."
+msgstr "Короткий рассказ о том, зачем нужен каждый экран. Ничего не меняет, выйти можно в любой момент, а запустить снова — из настроек."
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "A short walk through what each screen is for. It changes nothing."
+msgstr "Короткий проход по экранам: зачем нужен каждый. Ничего не меняет."
 
 #: src/screens/Settings/MarketDataPanel.tsx
 msgid "A startup within this window skips the request and uses what is already stored."
@@ -1198,9 +1250,18 @@ msgstr "в год"
 msgid "a zero amount"
 msgstr "нулевая сумма"
 
+#: src/screens/Settings/model.ts
+msgid "About"
+msgstr "О программе"
+
 #: src/components/domain/menuBar/model.ts
 msgid "About {app}"
 msgstr "О программе {app}"
+
+#: src/lib/commands/catalog.ts
+#: src/screens/Settings/AboutPanel.tsx
+msgid "About Stonqs"
+msgstr "О Stonqs"
 
 #: src/components/charts/DriftBars.tsx
 msgid "above target"
@@ -1245,6 +1306,7 @@ msgstr "счета"
 
 #: src/components/domain/positionColumns.tsx
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Accounts/GroupForm.tsx
 #: src/screens/Accounts/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -1336,7 +1398,7 @@ msgstr "Добавить инструменты"
 msgid "Add instruments…"
 msgstr "Добавить инструменты…"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Add key"
 msgstr "Добавить ключ"
 
@@ -1353,6 +1415,7 @@ msgstr "Добавить заметку"
 msgid "Add or remove periods"
 msgstr "Добавить или убрать периоды"
 
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Add source"
 msgstr "Добавить источник"
@@ -1384,8 +1447,8 @@ msgstr "внесено"
 msgid "Adding…"
 msgstr "Добавляем…"
 
+#: src/components/domain/sources/CustomSourceDialog.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
-#: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Address"
 msgstr "Адрес"
 
@@ -1495,6 +1558,10 @@ msgstr "все на цели"
 #~ msgid "All screens"
 #~ msgstr "Все экраны"
 
+#: src/screens/dashboard/dialogs.tsx
+msgid "All three read as one figure over a track; this picks which figure."
+msgstr "Все три читаются как показатель над полосой прогресса; здесь выбирается, какой именно."
+
 #: src/components/domain/SecurityPopup.tsx
 msgid "all time"
 msgstr "за всё время"
@@ -1513,6 +1580,7 @@ msgid "All-time high"
 msgstr "Исторический максимум"
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Allocation/index.tsx
 msgid "Allocation"
 msgstr "Аллокация"
@@ -1641,6 +1709,10 @@ msgstr "инструмент из вашего списка"
 msgid "an instrument without a quote source"
 msgstr "бумага без источника котировок"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "An instrument you gave a source of its own keeps it."
+msgstr "Инструмент, которому вы задали свой источник, сохраняет его."
+
 #: src/components/domain/aiToolLabels.ts
 msgid "an instrument's dividends and splits"
 msgstr "дивиденды и сплиты инструмента"
@@ -1702,7 +1774,7 @@ msgstr "валюта не та, что у счёта"
 msgid "Another date"
 msgstr "Другая дата"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Answer format"
 msgstr "Формат ответа"
 
@@ -1714,6 +1786,10 @@ msgstr "Длина ответа, токены"
 msgid "Answered"
 msgstr "Ответ"
 
+#: src/components/domain/AiChatPanel.tsx
+msgid "Answers are generated by AI from your own data and can be wrong. Not investment advice."
+msgstr "Ответы сгенерированы ИИ по вашим данным и могут быть неверными. Это не инвестиционная рекомендация."
+
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Anthropic messages"
 msgstr "Anthropic messages"
@@ -1721,6 +1797,10 @@ msgstr "Anthropic messages"
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Any JSON or CSV price endpoint can be added without an update of the app."
 msgstr "Любой источник цен в JSON или CSV можно добавить без обновления приложения."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Any JSON or CSV price endpoint: its address, and where the dates and closes sit in the answer."
+msgstr "Любой JSON- или CSV-адрес с ценами: сам адрес и то, где в ответе лежат даты и цены закрытия."
 
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Any server speaking one of the supported API formats: a gateway, another vendor or a model on this machine."
@@ -1743,7 +1823,7 @@ msgstr "Формат API"
 #~ msgid "API key: {0}"
 #~ msgstr "API-ключ: {0}"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/useSourceKeys.tsx
 msgid "API keys are stored encrypted with this profile's password, so the profile needs one before the first key can be saved."
 msgstr "API-ключи хранятся зашифрованными паролем профиля, поэтому перед сохранением первого ключа профилю нужен пароль."
 
@@ -1756,6 +1836,10 @@ msgstr "API-ключи хранятся зашифрованными парол�
 #: src/screens/Settings/ai/KeysPanel.tsx
 msgid "API keys are stored encrypted with this profile's password, so the profile needs one before the first key for {0} can be saved. The password also encrypts the profile's data, and it is asked once when the profile opens."
 msgstr "API-ключи хранятся зашифрованными паролем профиля, поэтому прежде чем сохранить первый ключ для {0}, профилю нужен пароль. Пароль также шифрует данные профиля и спрашивается один раз при его открытии."
+
+#: src/screens/Settings/Dependencies.tsx
+msgid "App"
+msgstr "Приложение"
 
 #: src/screens/Settings/AppearancePanel.tsx
 #: src/screens/Settings/model.ts
@@ -1780,6 +1864,10 @@ msgstr "пришло {0}"
 #: src/screens/Income/MonthPanel.tsx
 msgid "arrived on the account"
 msgstr "пришло на счёт"
+
+#: src/lib/tour/steps.ts
+msgid "As of"
+msgstr "На дату"
 
 #: src/components/Page.tsx
 #~ msgid "as of {asOf}"
@@ -1825,7 +1913,7 @@ msgstr "Спрашивает перед чтением ваших данных"
 msgid "Asking the directory…"
 msgstr "Спрашиваем справочник…"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Asking…"
 msgstr "Запрос…"
 
@@ -1886,6 +1974,7 @@ msgstr "Средняя цена одной бумаги в валюте поку
 msgid "Average holding"
 msgstr "Средний срок"
 
+#: src/components/domain/tour/TourLayer.tsx
 #: src/screens/Allocation/BreakdownPanel.tsx
 #: src/screens/Import/index.tsx
 msgid "Back"
@@ -2118,6 +2207,10 @@ msgstr "Денежный счёт"
 msgid "Cash accounts"
 msgstr "Денежные счета"
 
+#: src/lib/tour/steps.ts
+msgid "Cash accounts hold money; securities accounts hold instruments and settle through a cash account. Keeping them apart is what lets fees, dividends and interest land where they belong."
+msgstr "На денежных счетах лежат деньги, на брокерских — бумаги, а расчёты идут через денежный счёт. Именно это разделение позволяет комиссиям, дивидендам и процентам попадать туда, где им место."
+
 #: src/screens/Plans/DuePanel.tsx
 msgid "Cash contribution"
 msgstr "Пополнение деньгами"
@@ -2236,6 +2329,10 @@ msgstr "Выберите профиль"
 msgid "Choose another"
 msgstr "Выбрать другой"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Choose sources"
+#~ msgstr "Выбрать источники"
+
 #: src/screens/Performance/Metrics.tsx
 msgid "chosen in the header"
 msgstr "выбирается в шапке"
@@ -2276,6 +2373,7 @@ msgstr "Нажмите, чтобы повторить."
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/SecurityPopup.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/components/domain/UpdateDialog.tsx
 #: src/components/ui/Modal.tsx
 #: src/screens/dashboard/dialogs.tsx
@@ -2286,7 +2384,7 @@ msgstr "Закрыть"
 msgid "Close a dialog, a menu or the assistant"
 msgstr "Закрыть диалог, меню или ассистента"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Close column"
 msgstr "Колонка цены закрытия"
 
@@ -2418,6 +2516,14 @@ msgstr "Запись"
 #~ msgid "Compared with the latest close, the limit itself included. A quote in another currency is converted at the rate of its day."
 #~ msgstr "Сравнивается с последней ценой закрытия, включая сам лимит. Котировка в другой валюте пересчитывается по курсу своего дня."
 
+#: src/screens/Settings/Dependencies.tsx
+msgid "Component"
+msgstr "Компонент"
+
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Components"
+msgstr "Компоненты"
+
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Composition"
 msgstr "Состав"
@@ -2446,7 +2552,7 @@ msgstr "Вклад"
 #~ msgid "Contribution is a share, not money: dividing money by money in the frontend would bring back that very f64."
 #~ msgstr "Вклад — доля, а не деньги: делить деньги на деньги во фронтенде значило бы вернуть тот самый f64."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/model.ts
 msgid "Contribution limit"
 msgstr "Лимит пополнений"
 
@@ -2616,7 +2722,7 @@ msgstr "Валюта"
 msgid "Currency list"
 msgstr "Список валют"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Currency of the closes"
 msgstr "Валюта цен"
 
@@ -2672,6 +2778,7 @@ msgstr "Данные и хранилище"
 #: src/components/domain/Commands.tsx
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/ScopePicker.tsx
+#: src/lib/tour/steps.ts
 #: src/screens/dashboard/dialogs.tsx
 msgid "Data source"
 msgstr "Источник данных"
@@ -2714,12 +2821,12 @@ msgstr "Дата"
 #~ msgid "Date arrives"
 #~ msgstr "Наступает дата"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Date column"
 msgstr "Колонка даты"
 
+#: src/components/domain/sources/CustomSourceDialog.tsx
 #: src/screens/Import/ParseSettings.tsx
-#: src/screens/Settings/market/CustomSourceDialog.tsx
 msgid "Date format"
 msgstr "Формат даты"
 
@@ -2775,6 +2882,10 @@ msgstr "Сколько дней длилось самое глубокое па�
 #~ msgid "Debug"
 #~ msgstr "Отладка"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Decide later"
+msgstr "Решить позже"
+
 #: src/screens/Import/ParseSettings.tsx
 msgid "Decimal mark"
 msgstr "Десятичный знак"
@@ -2786,6 +2897,10 @@ msgstr "Отклонить"
 #: src/screens/Settings/ProfileSecurity.tsx
 #~ msgid "Decrypts the profile's data and deletes every API key saved in it."
 #~ msgstr "Расшифровывает данные профиля и удаляет все сохранённые в нём API-ключи."
+
+#: src/screens/dashboard/widgets/list.tsx
+msgid "Deepest"
+msgstr "Самая глубокая"
 
 #: src/screens/Risk.tsx
 msgid "Deepest drawdowns"
@@ -2870,8 +2985,8 @@ msgstr "удалить план инвестирования"
 msgid "Delete dashboard"
 msgstr "Удалить дашборд"
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Delete key"
 msgstr "Удалить ключ"
 
@@ -2879,7 +2994,7 @@ msgstr "Удалить ключ"
 msgid "Delete profile"
 msgstr "Удалить профиль"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Delete source"
 msgstr "Удалить источник"
 
@@ -2956,6 +3071,10 @@ msgstr "Разделитель"
 #: src/screens/Import/TargetSummary.tsx
 msgid "delimiter \"{0}\" · dates {1} · {2}"
 msgstr "разделитель «{0}» · даты {1} · {2}"
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Demo portfolio"
+msgstr "Демо-портфель"
 
 #: src/lib/kinds.ts
 msgid "Deposit"
@@ -3216,6 +3335,7 @@ msgstr "изменить"
 
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/SecurityAlerts.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/dashboard/Dashboard.tsx
 #: src/screens/Plans/Goals.tsx
@@ -3266,7 +3386,7 @@ msgstr "Изменить заметку"
 msgid "Edit plan"
 msgstr "Изменить план"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Edit source"
 msgstr "Изменить источник"
 
@@ -3338,11 +3458,11 @@ msgstr "Пусто — цели нет. С целью появляются от�
 msgid "Empty means prices are entered by hand"
 msgstr "Пусто — цены вводятся вручную"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Empty means the instrument's own currency"
 msgstr "Пусто — валюта самого инструмента"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Empty reads ISO dates and Unix timestamps; otherwise e.g. %d.%m.%Y"
 msgstr "Пусто — даты ISO и метки времени Unix; иначе, например, %d.%m.%Y"
 
@@ -3487,9 +3607,17 @@ msgstr "Все бумаги разложены по «{taxonomyName}»."
 msgid "Every instrument is identified. Their quotes will arrive automatically."
 msgstr "Все бумаги опознаны. Котировки к ним придут автоматически."
 
+#: src/lib/tour/steps.ts
+msgid "Every operation, and where they are typed in. A purchase has two sides: the instrument arrives on a securities account while the money leaves a cash one."
+msgstr "Все операции и место, где они вводятся. У покупки две стороны: бумага приходит на брокерский счёт, а деньги уходят с денежного."
+
 #: src/screens/Trades/index.tsx
 msgid "Every purchase has been sold out; only closed trades remain."
 msgstr "Все покупки распроданы — остались только закрытые сделки."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+#~ msgid "Every source that answers without a key of its own."
+#~ msgstr "Все источники, которые отвечают без собственного ключа."
 
 #: src/lib/kinds.ts
 msgid "Every two weeks"
@@ -3520,6 +3648,14 @@ msgstr "всё сопоставлено"
 #~ msgid "Everything the reports are computed from"
 #~ msgstr "Всё, из чего считаются отчёты"
 
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Everything this app was built from, and the licence each part keeps."
+msgstr "Всё, из чего собрано приложение, и лицензия каждой части."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Everything this build can ask. A source with a key of its own answers only once the key is saved."
+msgstr "Всё, что эта сборка умеет спрашивать. Источник со своим ключом отвечает только после того, как ключ сохранён."
+
 #: src/components/domain/positionColumns.tsx
 msgid "Everything this holding has ever paid, over what the shares cost."
 msgstr "Всё, что эта позиция когда-либо выплатила, к стоимости покупки акций."
@@ -3549,11 +3685,13 @@ msgstr "Опережение"
 msgid "Exchange"
 msgstr "Биржа"
 
+#: src/components/domain/sources/SourceRow.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "exchange rates"
 msgstr "курсы валют"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Exchange rates"
 msgstr "Курсы валют"
 
@@ -3739,15 +3877,23 @@ msgstr "Строки файла"
 msgid "Fill from attribute"
 msgstr "Заполнить из атрибута"
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Fill it"
+msgstr "Заполнить"
+
 #: src/screens/Onboarding.tsx
 msgid "Filling…"
 msgstr "Заполняем…"
 
 #: src/screens/Onboarding.tsx
-msgid "Fills this profile with a sample portfolio so you can see what the app does before importing anything of your own."
-msgstr "Заполняет профиль примерным портфелем, чтобы посмотреть, как всё работает, до импорта собственных данных."
+msgid "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
+msgstr "Заполняет профиль примерным портфелем и предлагает короткую экскурсию — посмотреть, что умеет приложение, до импорта своих данных."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/Onboarding.tsx
+#~ msgid "Fills this profile with a sample portfolio so you can see what the app does before importing anything of your own."
+#~ msgstr "Заполняет профиль примерным портфелем, чтобы посмотреть, как всё работает, до импорта собственных данных."
+
+#: src/screens/dashboard/widgets/model.ts
 msgid "Financial independence"
 msgstr "Финансовая независимость"
 
@@ -3758,6 +3904,10 @@ msgstr "Найти категорию"
 #: src/components/ui/ColumnPicker.tsx
 msgid "Find a column"
 msgstr "Найти колонку"
+
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Finish"
+msgstr "Готово"
 
 #: src/screens/Plans/index.tsx
 msgid "finished"
@@ -3793,11 +3943,11 @@ msgstr "Потоки"
 msgid "Follow the picker"
 msgstr "Как в переключателе"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "For example $.values[*].datetime"
 msgstr "Например, $.values[*].datetime"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "For example EUR/USD"
 msgstr "Например, EUR/USD"
 
@@ -3863,6 +4013,10 @@ msgstr "от пика"
 #~ msgid "Full"
 #~ msgstr "Вся"
 
+#: src/screens/Settings/Dependencies.tsx
+msgid "Full licence texts are in the saved notices."
+msgstr "Полные тексты лицензий — в сохранённом файле уведомлений."
+
 #: src/lib/kinds.ts
 msgid "Fund"
 msgstr "Фонд"
@@ -3888,6 +4042,18 @@ msgstr "Gemini generateContent"
 #: src/components/domain/ShortcutHelp.tsx
 msgid "General"
 msgstr "Общие"
+
+#: src/screens/dashboard/widgets/ai.tsx
+msgid "Generated by AI from your own data, and can be wrong. Not investment advice."
+msgstr "Сгенерировано ИИ по вашим данным и может быть неверным. Это не инвестиционная рекомендация."
+
+#: src/lib/tour/steps.ts
+msgid "Getting around"
+msgstr "Навигация"
+
+#: src/screens/Settings/model.ts
+#~ msgid "Getting started"
+#~ msgstr "С чего начать"
 
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category a weight: under \"Edit tree\" every category has a \"Target weight\" field. The drift and the trades that close it will appear here."
@@ -3926,7 +4092,7 @@ msgid "Go to Watchlist"
 msgstr "Перейти к списку наблюдения"
 
 #: src/screens/dashboard/dialogs.tsx
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/model.ts
 msgid "Goal"
 msgstr "Цель"
 
@@ -3972,11 +4138,20 @@ msgstr "Группы"
 #~ msgid "Growth, not value: the portfolio has deposits and the benchmark has none — on a money axis the two lines would compare different things."
 #~ msgstr "Рост, а не стоимость: у портфеля есть пополнения, у эталона их нет — на оси денег линии сравнивали бы разные вещи."
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/lib/commands/catalog.ts
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Guided tour"
+msgstr "Экскурсия по приложению"
+
+#: src/components/domain/menuBar/model.ts
+msgid "Guided Tour"
+msgstr "Экскурсия по приложению"
+
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Header name"
 msgstr "Имя заголовка"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Header value"
 msgstr "Значение заголовка"
 
@@ -4068,12 +4243,12 @@ msgid "How far below the last peak the portfolio stands now — not the depth of
 msgstr "Насколько портфель ниже последнего пика сейчас — не глубина ямы, из которой он выбирается."
 
 #: src/screens/dashboard/widgets/index.tsx
-msgid "How far one savings goal is along, and what it would take to arrive on time."
-msgstr "Насколько цель близка и что нужно, чтобы успеть к сроку."
+#~ msgid "How far one savings goal is along, and what it would take to arrive on time."
+#~ msgstr "Насколько цель близка и что нужно, чтобы успеть к сроку."
 
 #: src/screens/dashboard/widgets/index.tsx
-msgid "How far the portfolio is from covering a year of spending, and when this pace gets there."
-msgstr "Насколько портфель далёк от того, чтобы покрыть год расходов, и когда этот темп его туда приведёт."
+#~ msgid "How far the portfolio is from covering a year of spending, and when this pace gets there."
+#~ msgstr "Насколько портфель далёк от того, чтобы покрыть год расходов, и когда этот темп его туда приведёт."
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "How far the portfolio sits below its peak, by day."
@@ -4192,7 +4367,7 @@ msgstr "из чего сложился результат, по шагам"
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "Насколько сильно колеблется дневная доходность позиции, в пересчёте на год."
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "https only. Placeholders:"
 msgstr "Только https. Подстановки:"
 
@@ -4222,6 +4397,7 @@ msgid "Identifying…"
 msgstr "Опознаём…"
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Allocation/ImportDialog.tsx
 #: src/screens/dashboard/EditBar.tsx
 #: src/screens/Securities/AttributeImportDialog.tsx
@@ -4356,6 +4532,10 @@ msgstr "Вид дохода"
 msgid "Income per paying instrument, in the same columns; fees and sales are not included."
 msgstr "Доход по каждому платящему инструменту в тех же колонках; комиссии и продажи не входят."
 
+#: src/components/domain/sources/SourceRow.tsx
+msgid "inflation"
+msgstr "инфляция"
+
 #: src/screens/Settings/InflationPanel.tsx
 msgid "Inflation"
 msgstr "Инфляция"
@@ -4418,7 +4598,7 @@ msgstr "Атрибуты инструментов"
 msgid "Instrument card…"
 msgstr "Карточка бумаги…"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Instrument currency"
 msgstr "Валюта инструмента"
 
@@ -4529,6 +4709,10 @@ msgstr "Проценты уплаченные"
 msgid "Interest, all time"
 msgstr "Проценты за всё время"
 
+#: src/screens/Settings/Dependencies.tsx
+msgid "Interface"
+msgstr "Интерфейс"
+
 #: src/components/ErrorBoundary.tsx
 msgid "Interface failure"
 msgstr "Сбой интерфейса"
@@ -4579,7 +4763,7 @@ msgstr "ISIN, тикер или название"
 msgid "It affects the realized result of every past sale"
 msgstr "Влияет на реализованный доход по всем прошлым продажам"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "It answers"
 msgstr "Что отдаёт"
 
@@ -4587,8 +4771,8 @@ msgstr "Что отдаёт"
 #~ msgid "It goes straight to the keychain. The app never reads it back into this screen."
 #~ msgstr "Ключ уходит прямо в связку ключей. Приложение никогда не считывает его обратно на этот экран."
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "It is sealed with the profile's password. The app never reads it back into this screen."
 msgstr "Он шифруется паролем профиля. Приложение никогда не показывает его на этом экране."
 
@@ -4624,8 +4808,8 @@ msgstr "тыс."
 #~ msgid "Kept in your operating system's keychain, never in the app's database — the app only ever asks whether one is saved."
 #~ msgstr "Хранятся в связке ключей операционной системы, а не в базе приложения — приложение лишь проверяет, сохранён ли ключ."
 
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Key"
 msgstr "Ключ"
 
@@ -4633,7 +4817,7 @@ msgstr "Ключ"
 msgid "Key for {name}"
 msgstr "Ключ для {name}"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceKeyDialog.tsx
 msgid "Key for {source}"
 msgstr "Ключ для {source}"
 
@@ -4761,6 +4945,10 @@ msgstr "Раскладка загружена."
 msgid "Layout name"
 msgstr "Название шаблона"
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Learning the app"
+msgstr "Знакомство с приложением"
+
 #: src/screens/Allocation/TaxonomyDialog.tsx
 msgid "Leave empty"
 msgstr "Не заполнять"
@@ -4858,6 +5046,18 @@ msgstr "Уровни"
 msgid "levels: {0}"
 msgstr "уровней: {0}"
 
+#: src/screens/Settings/Dependencies.tsx
+msgid "Licence"
+msgstr "Лицензия"
+
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Licence notices"
+msgstr "Уведомления о лицензиях"
+
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Licensed under AGPL-3.0-only. You may run, study, change and share it; if you offer a modified version as a network service, that version's source must be available too."
+msgstr "Лицензия AGPL-3.0-only. Вы можете запускать, изучать, изменять и распространять программу; если вы предоставляете изменённую версию как сетевой сервис, её исходный код тоже должен быть доступен."
+
 #: src/components/domain/Commands.tsx
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "Light"
@@ -4940,6 +5140,10 @@ msgstr "Журнал"
 msgid "Logged and announced once, on this day."
 msgstr "Записывается и объявляется один раз, в этот день."
 
+#: src/screens/dashboard/widgets/list.tsx
+msgid "Longest"
+msgstr "Самая долгая"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Risk.tsx
 msgid "Longest drawdown"
@@ -5008,6 +5212,10 @@ msgstr "Рынок"
 msgid "Market data"
 msgstr "Рыночные данные"
 
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Market data comes from free third-party sources with no guarantee of accuracy, completeness or availability. Check anything that matters against your broker's own statements — especially anything you intend to put on a tax return."
+msgstr "Рыночные данные поступают из бесплатных сторонних источников без гарантии точности, полноты и доступности. Сверяйте всё важное с отчётами вашего брокера — особенно то, что попадёт в налоговую декларацию."
+
 #. placeholder {0}: countBy(matched, "isin")
 #. placeholder {1}: countBy(matched, "symbol")
 #. placeholder {2}: countBy(matched, "name")
@@ -5019,7 +5227,6 @@ msgstr "Совпадения: {0} по ISIN, {1} по тикеру, {2} по н�
 msgid "Max drawdown"
 msgstr "Макс. просадка"
 
-#: src/screens/dashboard/widgets/list.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Risk.tsx
 msgid "Maximum drawdown"
@@ -5170,6 +5377,10 @@ msgstr "Перейти к следующему или предыдущему э�
 msgid "Move up"
 msgstr "Выше"
 
+#: src/lib/tour/steps.ts
+msgid "Moves every reading screen to a past date, so you see the portfolio as it stood. Forms keep using today, so looking at the past cannot backdate what you type."
+msgstr "Переводит все отчётные экраны на прошлую дату — портфель показывается таким, каким он был. Формы продолжают использовать сегодняшний день, поэтому просмотр прошлого не проставит задним числом дату тому, что вы вводите."
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Moves with the calendar: tomorrow it covers one more day."
 msgstr "Сдвигается вместе с календарём: завтра охватит ещё один день."
@@ -5182,7 +5393,7 @@ msgstr "Скользящее среднее"
 msgid "moving avg"
 msgstr "средняя"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Multiply closes by"
 msgstr "Умножать цены на"
 
@@ -5197,6 +5408,7 @@ msgstr "название"
 
 #: src/components/domain/PeriodEditor.tsx
 #: src/components/domain/PlanForm.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 #: src/screens/Accounts/AccountForm.tsx
 #: src/screens/Accounts/LimitsPanel.tsx
 #: src/screens/Allocation/ImportDialog.tsx
@@ -5208,7 +5420,6 @@ msgstr "название"
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
 #: src/screens/Settings/AttributesPanel.tsx
-#: src/screens/Settings/market/CustomSourceDialog.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
 #: src/screens/Watchlist/ListDialog.tsx
 msgid "Name"
@@ -5235,7 +5446,7 @@ msgstr "Ближайший уровень"
 msgid "needs a decision"
 msgstr "требует решения"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Needs a key"
 msgstr "Нужен ключ"
 
@@ -5322,6 +5533,10 @@ msgstr "Новая цель"
 msgid "New group"
 msgstr "Новая группа"
 
+#: src/components/domain/tour/TourLayer.tsx
+msgid "New here?"
+msgstr "Первый раз здесь?"
+
 #: src/screens/Securities/SecurityForm.tsx
 msgid "New instrument"
 msgstr "Новая бумага"
@@ -5384,7 +5599,7 @@ msgstr "новое количество"
 msgid "New shares"
 msgstr "Новых бумаг"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "New source"
 msgstr "Новый источник"
 
@@ -5408,7 +5623,9 @@ msgstr "Новая операция"
 msgid "New watchlist"
 msgstr "Новый список наблюдения"
 
+#: src/components/domain/tour/TourLayer.tsx
 #: src/screens/Import/index.tsx
+#: src/screens/Settings/Dependencies.tsx
 msgid "Next"
 msgstr "Далее"
 
@@ -5496,6 +5713,14 @@ msgstr "нет данных"
 #: src/components/charts/ValueChart.tsx
 msgid "No data for this period."
 msgstr "За период нет данных."
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No data source"
+msgstr "Нет источника данных"
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No data source has been chosen, so no prices or exchange rates are fetched at all. Click to choose."
+msgstr "Источник данных не выбран, поэтому ни цены, ни курсы не загружаются. Нажмите, чтобы выбрать."
 
 #: src/screens/dashboard/widgets/value.tsx
 msgid "no date and no pace stated"
@@ -5714,6 +5939,22 @@ msgid "No shares."
 msgstr "Долей нет."
 
 #: src/screens/Settings/market/SourcesPanel.tsx
+msgid "No source of exchange rates is on, so anything held in a currency other than the portfolio's cannot be valued. Turn one on below."
+msgstr "Ни один источник курсов не включён, поэтому активы в валюте, отличной от валюты портфеля, оценить нельзя. Включите источник ниже."
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No source of exchange rates is on, so anything held in another currency cannot be valued. Click to choose."
+msgstr "Ни один источник курсов не включён, поэтому активы в другой валюте оценить нельзя. Нажмите, чтобы выбрать."
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "No source of prices is on, so quotes are whatever was typed in by hand. Click to choose."
+msgstr "Ни один источник цен не включён, поэтому котировки — только те, что введены вручную. Нажмите, чтобы выбрать."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "No source of prices is on, so quotes are whatever was typed in by hand. Turn one on below."
+msgstr "Ни один источник цен не включён, поэтому котировки — только те, что введены вручную. Включите источник ниже."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "No sources of your own"
 msgstr "Своих источников нет"
 
@@ -5894,11 +6135,14 @@ msgstr "не сопоставлено: {0}"
 msgid "Not more often than once every, hours"
 msgstr "Не чаще, чем раз в, часов"
 
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Not now"
+msgstr "Не сейчас"
+
 #: src/screens/Import/CommitStep.tsx
 msgid "Not parsed"
 msgstr "Не разобрано"
 
-#: src/screens/dashboard/widgets/list.tsx
 #: src/screens/Risk.tsx
 msgid "not recovered"
 msgstr "не восстановлена"
@@ -5979,6 +6223,18 @@ msgstr "Ничего не установлено"
 msgid "nothing is classified yet"
 msgstr "пока ничего не расклассифицировано"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Nothing is fetched yet: no source has been chosen, so prices and rates are whatever was typed in by hand."
+#~ msgstr "Ничего не загружается: источник не выбран, поэтому цены и курсы — только те, что введены вручную."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Nothing is fetched yet: prices and rates are whatever was typed in by hand. Turn on the sources you want below — at least one of prices and one of exchange rates — and apply them."
+#~ msgstr "Пока ничего не загружается: цены и курсы — только те, что введены вручную. Включите нужные источники ниже — минимум один источник цен и один курсов — и примените их."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "Nothing is fetched: no source of prices and none of exchange rates is on, so both are whatever was typed in by hand. Turn on at least one of each below."
+msgstr "Ничего не загружается: не включён ни источник цен, ни источник курсов, поэтому и то и другое — только введённое вручную. Включите хотя бы по одному ниже."
+
 #: src/screens/Trades/index.tsx
 msgid "Nothing is held"
 msgstr "Ничего не держим"
@@ -6019,6 +6275,10 @@ msgstr "Нечего показывать."
 msgid "Nothing to trade"
 msgstr "Торговать нечего"
 
+#: src/screens/Settings/Dependencies.tsx
+msgid "Nothing under that name or licence."
+msgstr "Ничего с таким названием или лицензией."
+
 #: src/screens/Trades/index.tsx
 msgid "Nothing was closed in this period"
 msgstr "За этот период ничего не закрыто"
@@ -6043,6 +6303,10 @@ msgstr "Сейчас <0/>. Каждое закрытие, пересёкшее �
 #: src/components/domain/AlertDialogs.tsx
 #~ msgid "Now <0/>. Every close that crosses the level, up or down, is logged and announced."
 #~ msgstr "Сейчас <0/>. Каждое закрытие, пересёкшее уровень вверх или вниз, записывается в журнал и объявляется."
+
+#: src/screens/dashboard/widgets/list.tsx
+msgid "Now under peak"
+msgstr "Сейчас ниже пика"
 
 #: src/screens/Securities/AttributeImportDialog.tsx
 msgid "number"
@@ -6106,7 +6370,7 @@ msgstr "из закрытых здесь сделок"
 msgid "Of the whole portfolio that is <0/>."
 msgstr "От всего портфеля это <0/>."
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Off"
 msgstr "Выкл."
 
@@ -6118,7 +6382,7 @@ msgstr "Предлагать снова"
 msgid "Old shares"
 msgstr "Старых бумаг"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "On"
 msgstr "Вкл."
 
@@ -6252,6 +6516,10 @@ msgstr "открыть счёт"
 msgid "Open in the directory"
 msgstr "Открыть в справочнике"
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Open it"
+msgstr "Открыть"
+
 #: src/lib/commands/catalog.ts
 msgid "Open or close the AI assistant"
 msgstr "Открыть или закрыть ИИ-ассистента"
@@ -6298,7 +6566,7 @@ msgstr "операция"
 msgid "optional"
 msgstr "необязательно"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Optional, e.g. Authorization; {KEY} in its value is replaced by the saved key"
 msgstr "Необязательно, например Authorization; {KEY} в значении заменяется сохранённым ключом"
 
@@ -6353,6 +6621,7 @@ msgid "Overrides the dashboard period for this widget alone."
 msgstr "Переопределяет период дашборда только для этого виджета."
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 msgid "Overview"
 msgstr "Обзор"
 
@@ -6392,6 +6661,10 @@ msgstr "Замечания разбора"
 msgid "Parsing"
 msgstr "Разбор"
 
+#: src/screens/Settings/Dependencies.tsx
+msgid "Part"
+msgstr "Часть"
+
 #: src/screens/Settings/ai/UsagePanel.tsx
 msgid "Part of what was received that the model thought but never showed."
 msgstr "Часть полученного: модель это обдумала, но не показала."
@@ -6427,11 +6700,11 @@ msgstr "Вставить"
 msgid "Path copied"
 msgstr "Путь скопирован"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Path to the closes"
 msgstr "Путь к ценам закрытия"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Path to the dates"
 msgstr "Путь к датам"
 
@@ -6481,6 +6754,7 @@ msgid "Perf. %"
 msgstr "Дох. %"
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Performance/index.tsx
 msgid "Performance"
 msgstr "Доходность"
@@ -6492,6 +6766,7 @@ msgstr "период"
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/PeriodControl.tsx
 #: src/components/domain/PeriodEditor.tsx
+#: src/lib/tour/steps.ts
 #: src/screens/dashboard/dialogs.tsx
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Risk.tsx
@@ -6516,6 +6791,18 @@ msgstr "TWR за период, в год"
 #: src/components/domain/PeriodEditor.tsx
 msgid "Periods"
 msgstr "Периоды"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Pick a source of exchange rates first."
+msgstr "Сначала выберите источник курсов валют."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Pick a source of prices and one of exchange rates first."
+msgstr "Сначала выберите источник цен и источник курсов валют."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Pick a source of prices first."
+msgstr "Сначала выберите источник цен."
 
 #: src/screens/Performance/index.tsx
 msgid "Pick a wider period or add transactions — contribution counts the instruments held inside the period."
@@ -6626,6 +6913,7 @@ msgstr "Доходность портфеля"
 #~ msgstr "Вклад позиций в доходность лесенкой, от большего к меньшему."
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Positions/index.tsx
 msgid "Positions"
 msgstr "Позиции"
@@ -6637,6 +6925,10 @@ msgstr "Нажмите «Правка» и добавьте виджеты — �
 #: src/screens/Watchlist/AddDialog.tsx
 msgid "Press Enter to search the provider."
 msgstr "Нажмите Enter, чтобы искать у поставщика котировок."
+
+#: src/screens/Settings/Dependencies.tsx
+msgid "Previous"
+msgstr "Назад"
 
 #: src/screens/Income/MonthPanel.tsx
 msgid "Previous month"
@@ -6685,9 +6977,13 @@ msgstr "Регион индекса цен"
 msgid "prices"
 msgstr "цены"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Prices of instruments"
 msgstr "Цены инструментов"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
+msgstr "Цены, курсы и сведения об инструментах загружаются из сервисов, которыми управляют другие люди. Пока ни один не включён, приложение не обращается ни к кому, а цены вводятся вручную. Включая источник, вы соглашаетесь с его собственными условиями для этих запросов."
 
 #: src/screens/Reports/Gains.tsx
 #: src/screens/Reports/index.tsx
@@ -6711,6 +7007,10 @@ msgstr "Профиль"
 #: src/screens/Settings/ProfilesPanel.tsx
 msgid "Profiles"
 msgstr "Профили"
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Progress"
+msgstr "Прогресс"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "provider"
@@ -6855,6 +7155,8 @@ msgstr "Источник котировок"
 msgid "Quote source for unidentified instruments"
 msgstr "Источник котировок для неопознанных бумаг"
 
+#: src/components/domain/sources/SourceRow.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "quotes"
 msgstr "котировки"
@@ -7023,10 +7325,14 @@ msgstr "Записать сплит"
 msgid "Recorded"
 msgstr "Записан"
 
+#: src/lib/legal.ts
+msgid "Recorded with Stonqs, a portfolio tracker — not investment advice. Figures are derived from data you entered and from free third-party sources, with no guarantee of accuracy."
+msgstr "Подготовлено в Stonqs, программе учёта портфеля, — это не инвестиционная рекомендация. Цифры получены из введённых вами данных и бесплатных сторонних источников без гарантии точности."
+
 #. placeholder {0}: formatDay(metrics.max_drawdown.recovered)
 #: src/screens/dashboard/widgets/list.tsx
-msgid "recovered {0}"
-msgstr "восстановлена {0}"
+#~ msgid "recovered {0}"
+#~ msgstr "восстановлена {0}"
 
 #: src/screens/Risk.tsx
 msgid "recovery"
@@ -7172,7 +7478,7 @@ msgstr "повтор внутри файла"
 msgid "Replace"
 msgstr "Заменить"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Replace key"
 msgstr "Заменить ключ"
 
@@ -7324,6 +7630,10 @@ msgstr "Доходность по позициям"
 msgid "Return heatmap"
 msgstr "Карта доходности"
 
+#: src/lib/tour/steps.ts
+msgid "Return measured two ways, because they answer different questions: one ignores your deposits and withdrawals, the other is built around when they happened. Ask the assistant which one you want."
+msgstr "Доходность считается двумя способами, потому что они отвечают на разные вопросы: один не замечает ваши пополнения и снятия, другой построен вокруг того, когда они произошли. Спросите у ассистента, какой нужен вам."
+
 #: src/components/domain/positionColumns.tsx
 msgid "Return of the instrument itself, unaffected by what was paid in or out."
 msgstr "Доходность самого инструмента, не зависящая от вводов и выводов."
@@ -7449,8 +7759,12 @@ msgstr "Сохранить диалог, в том числе из многос�
 msgid "Save as a layout"
 msgstr "Сохранить как шаблон"
 
+#: src/screens/Settings/AboutPanel.tsx
+#~ msgid "Save full notices…"
+#~ msgstr "Сохранить полные уведомления…"
+
+#: src/components/domain/sources/SourceKeyDialog.tsx
 #: src/screens/Settings/ai/KeysPanel.tsx
-#: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Save key"
 msgstr "Сохранить ключ"
 
@@ -7458,6 +7772,12 @@ msgstr "Сохранить ключ"
 msgid "Save the current layout as a template"
 msgstr "Сохранить текущую раскладку как шаблон"
 
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Save to a file…"
+msgstr "Сохранить в файл…"
+
+#: src/components/domain/sources/SourceKeyDialog.tsx
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/components/ui/formLabels.ts
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -7478,8 +7798,12 @@ msgstr "экран"
 msgid "Screens"
 msgstr "Экраны"
 
+#: src/lib/tour/steps.ts
+msgid "Screens are grouped here, and the ones you pin sit at the top. Press ⌘K for the command palette if you would rather type where you are going."
+msgstr "Экраны сгруппированы здесь, закреплённые — наверху. ⌘K открывает палитру команд, если проще набрать, куда идти."
+
 #: src/components/domain/aiToolLabels.ts
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "search"
 msgstr "поиск"
 
@@ -7494,6 +7818,14 @@ msgstr "искать заново"
 #: src/screens/Import/AssetsStep.tsx
 msgid "Search again"
 msgstr "Искать заново"
+
+#: src/screens/Settings/Dependencies.tsx
+msgid "Search by name or licence"
+msgstr "Поиск по названию или лицензии"
+
+#: src/screens/Settings/Dependencies.tsx
+#~ msgid "Search components"
+#~ msgstr "Поиск компонентов"
 
 #: src/lib/commands/catalog.ts
 msgid "Search on this screen"
@@ -7618,6 +7950,14 @@ msgstr "Выбрать все"
 msgid "Select All"
 msgstr "Выбрать все"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Select all and continue"
+msgstr "Выбрать все и продолжить"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+#~ msgid "Select all available"
+#~ msgstr "Выбрать все доступные"
+
 #. placeholder {0}: year.year
 #: src/screens/Transactions/JournalTable.tsx
 msgid "Select all transactions of {0}"
@@ -7683,7 +8023,7 @@ msgstr "Сначала задайте пароль профиля: ключи х
 msgid "Set by hand"
 msgstr "Задан вручную"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Set key"
 msgstr "Задать ключ"
 
@@ -7763,6 +8103,10 @@ msgstr "Sharpe"
 msgid "Shipped"
 msgstr "Встроенные"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Shipped sources"
+msgstr "Встроенные источники"
+
 #: src/components/domain/PeriodEditor.tsx
 msgid "Shipped with the app"
 msgstr "Встроенный период"
@@ -7798,6 +8142,14 @@ msgstr "Показывать, как ассистент к этому пришё
 msgid "Show less"
 msgstr "Свернуть"
 
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Show list"
+msgstr "Показать список"
+
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Show me around"
+msgstr "Показать"
+
 #: src/screens/Import/ProblemList.tsx
 msgid "show rows"
 msgstr "показать строки"
@@ -7809,6 +8161,11 @@ msgstr "Показать их"
 #: src/components/domain/SecurityPopup.tsx
 msgid "Show transactions"
 msgstr "Показать сделки"
+
+#. placeholder {0}: found.length
+#: src/screens/Settings/Dependencies.tsx
+#~ msgid "Showing {SHOWN} of {0} — search for a name or a licence to narrow it. Every component and its full licence text is in the saved notices."
+#~ msgstr "Показано {SHOWN} из {0} — уточните поиск по названию или лицензии. Все компоненты и полные тексты их лицензий есть в сохранённом файле уведомлений."
 
 #. placeholder {0}: formatDay(date)
 #: src/components/domain/AsOfPicker.tsx
@@ -7868,6 +8225,10 @@ msgstr "Одиночные клавиши выключены в настройк
 msgid "Six months"
 msgstr "Полгода"
 
+#: src/components/domain/tour/TourLayer.tsx
+msgid "Skip"
+msgstr "Пропустить"
+
 #: src/components/domain/UpdateDialog.tsx
 msgid "Skip this version"
 msgstr "Пропустить эту версию"
@@ -7892,6 +8253,10 @@ msgstr "Пропущено по решению"
 #: src/screens/Allocation/NodeDialog.tsx
 msgid "Slot {slot}"
 msgstr "Слот {slot}"
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "Smallest width, in twelfths of the board"
+msgstr "Минимальная ширина, в двенадцатых долях доски"
 
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "sold"
@@ -7955,6 +8320,10 @@ msgstr "Только отдельные комиссии и налоги, без
 msgid "Standard deviation of daily returns, annualised."
 msgstr "Стандартное отклонение дневных доходностей в годовом выражении."
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Start"
+msgstr "Запустить"
+
 #: src/components/domain/PlanForm.tsx
 msgid "start and end"
 msgstr "начало и конец"
@@ -7996,6 +8365,14 @@ msgstr "Акция"
 #: src/lib/kinds.ts
 msgid "Stocks"
 msgstr "Акции"
+
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Stonqs is a tool for recording and analysing your own investments. It is not financial advice, and neither are the answers of the built-in assistant, which are generated by AI and can be wrong."
+msgstr "Stonqs — программа для учёта и анализа собственных инвестиций. Она не даёт финансовых советов, как и встроенный ассистент: его ответы сгенерированы ИИ и могут быть неверными."
+
+#: src/screens/Onboarding.tsx
+msgid "Stonqs records and analyses your own investments. It is not financial advice, and market data comes from free sources that guarantee nothing. The full wording is in Settings, under About."
+msgstr "Stonqs ведёт учёт и анализ ваших собственных инвестиций. Это не финансовая рекомендация, а рыночные данные поступают из бесплатных источников, которые ничего не гарантируют. Полный текст — в разделе «Настройки», на вкладке «О программе»."
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/MarketRefresh.tsx
@@ -8186,7 +8563,7 @@ msgstr "Налоги за всё время"
 msgid "Taxonomy"
 msgstr "Таксономия"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Test"
 msgstr "Проверить"
 
@@ -8516,6 +8893,10 @@ msgstr "Первая цель"
 #: src/screens/Performance/Metrics.tsx
 msgid "The flows never change sign — the equation has no root"
 msgstr "Знак потоков не меняется — уравнение без корня"
+
+#: src/screens/Settings/AboutPanel.tsx
+msgid "The full text each component asks to travel with a copy of the app."
+msgstr "Полный текст, который каждый компонент требует передавать вместе с копией приложения."
 
 #: src/screens/Securities/SecurityForm.tsx
 msgid "The German securities number, when the broker prints one"
@@ -8875,9 +9256,13 @@ msgstr "Знак суммы совпадает с направлением оп�
 msgid "the sign of the amount only partly agrees with the kinds"
 msgstr "знак суммы согласуется с видами лишь отчасти"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "The source answered, but nothing in the last 30 days"
 msgstr "Источник ответил, но за последние 30 дней ничего нет"
+
+#: src/components/domain/MarketRefresh.tsx
+msgid "The sources chosen publish neither prices nor exchange rates, so nothing is fetched. Click to choose."
+msgstr "Выбранные источники не публикуют ни цены, ни курсы, поэтому ничего не загружается. Нажмите, чтобы выбрать."
 
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "the split will not be written"
@@ -9006,6 +9391,10 @@ msgstr "весь портфель до бумаг, площадь — доля"
 msgid "The whole portfolio is one file; a copy of it is a full backup."
 msgstr "Весь портфель — один файл; его копия и есть полная резервная копия."
 
+#: src/lib/tour/steps.ts
+msgid "The window a figure is measured over. The strip is yours to edit: periods can be added and the shipped ones hidden."
+msgstr "Окно, за которое считается показатель. Полосу можно править: свои периоды добавляются, встроенные — скрываются."
+
 #: src/screens/Risk.tsx
 msgid "The worst falls from a high to a low, deepest first rather than latest first."
 msgstr "Худшие падения от максимума до минимума, по глубине, а не по дате."
@@ -9050,6 +9439,10 @@ msgstr "Эти значения встретились только в стро�
 msgid "they are written, but worth a look"
 msgstr "записываются, но стоит просмотреть"
 
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
+msgstr "Они добавлены, когда ни один источник не был включён, поэтому их цены никто не загружает. Инструмент, которому вы задали источник сами, сохранит его."
+
 #: src/components/domain/AiTools.tsx
 #: src/screens/Settings/ai/UsagePanel.tsx
 msgid "Thinking"
@@ -9058,6 +9451,10 @@ msgstr "Размышление"
 #: src/components/domain/AiTools.tsx
 msgid "Thinking…"
 msgstr "Думает…"
+
+#: src/screens/Settings/AboutPanel.tsx
+msgid "Third-party software"
+msgstr "Стороннее программное обеспечение"
 
 #: src/screens/Allocation/BreakdownPanel.tsx
 msgid "this branch down to instruments, a ring is a level"
@@ -9128,6 +9525,10 @@ msgstr "Доля позиции во всём, что охватывает те�
 msgid "This profile is locked. Enter its password to continue."
 msgstr "Профиль заблокирован. Введите его пароль, чтобы продолжить."
 
+#: src/screens/Settings/HelpPanel.tsx
+msgid "This profile is the demo one. Your own data lives in the other profiles."
+msgstr "Это и есть демо-профиль. Ваши собственные данные — в других профилях."
+
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "This profile's data and API keys are encrypted with it."
 msgstr "Данные и API-ключи профиля зашифрованы этим паролем."
@@ -9175,6 +9576,10 @@ msgstr "тикер в базе"
 #: src/screens/Watchlist/AddDialog.tsx
 msgid "Ticker, name or ISIN"
 msgstr "Тикер, название или ISIN"
+
+#: src/lib/tour/steps.ts
+msgid "Tiles you arrange yourself: drag one by its header to move it, any edge to resize it. Each tile can read a different period and a different set of accounts."
+msgstr "Плитки расставляете вы: за заголовок — перенести, за любой край — изменить размер. Каждая плитка может читать свой период и свой набор счетов."
 
 #: src/screens/Risk.tsx
 msgid "Time-weighted return as a yearly rate."
@@ -9342,6 +9747,7 @@ msgid "Transaction kind for \"{value}\""
 msgstr "Вид операции для «{value}»"
 
 #: src/components/Nav/model.ts
+#: src/lib/tour/steps.ts
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Reports/index.tsx
 #: src/screens/Settings/DataPanel.tsx
@@ -9365,6 +9771,10 @@ msgstr "дерево"
 msgid "Tree"
 msgstr "Дерево"
 
+#: src/lib/tour/steps.ts
+msgid "Trees you define — asset class, region, sector, or anything else — with each instrument split across them. Targets set here are what the rebalancing screen compares against."
+msgstr "Деревья, которые задаёте вы, — класс актива, регион, сектор или что угодно ещё, — и доля каждого инструмента в них. С целями, заданными здесь, сравнивает экран ребалансировки."
+
 #: src/components/domain/AlertDialogs.tsx
 msgid "Trigger"
 msgstr "Триггер"
@@ -9374,8 +9784,6 @@ msgid "Trigger level"
 msgstr "Уровень триггера"
 
 #. placeholder {0}: formatDay(m.max_drawdown.trough)
-#. placeholder {0}: formatDay(metrics.max_drawdown.trough)
-#: src/screens/dashboard/widgets/list.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "trough {0}"
 msgstr "дно {0}"
@@ -9385,11 +9793,11 @@ msgstr "дно {0}"
 msgid "Try again"
 msgstr "Попробовать снова"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Try it with a pair"
 msgstr "Проверить на паре"
 
-#: src/screens/Settings/market/CustomSourceDialog.tsx
+#: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Try it with a symbol"
 msgstr "Проверить на тикере"
 
@@ -9402,16 +9810,32 @@ msgid "Try the ISIN, or the full name. The instrument can also be left as it is,
 msgstr "Попробуйте ISIN или название целиком. Бумагу можно оставить как есть и вводить цены вручную."
 
 #: src/screens/Onboarding.tsx
-msgid "Try with demo portfolio"
-msgstr "Открыть демо-портфель"
+msgid "Try with a demo portfolio"
+msgstr "Попробовать на демо-портфеле"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/screens/Onboarding.tsx
+#~ msgid "Try with demo portfolio"
+#~ msgstr "Открыть демо-портфель"
+
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Turn off"
 msgstr "Выключить"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "Turn on"
 msgstr "Включить"
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Turn on a source of exchange rates first."
+#~ msgstr "Сначала включите источник курсов валют."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Turn on a source of prices and one of exchange rates first."
+#~ msgstr "Сначала включите источник цен и источник курсов валют."
+
+#: src/screens/Settings/market/SourcesPanel.tsx
+#~ msgid "Turn on a source of prices first."
+#~ msgstr "Сначала включите источник цен."
 
 #: src/screens/dashboard/widgets/ai.tsx
 msgid "Turn the assistant on in Settings to use this tile."
@@ -9422,6 +9846,10 @@ msgstr "Включите ассистента в настройках, чтоб�
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "Turnover"
 msgstr "Оборот"
+
+#: src/lib/tour/steps.ts
+msgid "Twelve stops, about a minute. Leave at any time with Escape — the tour writes nothing and changes no setting."
+msgstr "Двенадцать остановок, примерно минута. Выйти — Escape: экскурсия ничего не записывает и не меняет ни одной настройки."
 
 #: src/lib/kinds.ts
 msgid "Twice a year"
@@ -9562,6 +9990,18 @@ msgstr "Обновить"
 msgid "Updates"
 msgstr "Обновления"
 
+#: src/screens/Settings/market/SourcesPanel.tsx
+msgid "Use {firstQuotes}"
+msgstr "Использовать {firstQuotes}"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Use {firstQuotes} for the {orphans} instruments that have no price source"
+msgstr "Использовать {firstQuotes} для инструментов без источника цен: {orphans}"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Use these sources"
+msgstr "Использовать эти источники"
+
 #: src/components/charts/ValueChart.tsx
 #: src/screens/Allocation/Header.tsx
 #: src/screens/Allocation/MembersPanel.tsx
@@ -9617,7 +10057,7 @@ msgstr "Площадка"
 msgid "Venue not checked — refresh the list to learn its currency"
 msgstr "Площадка не проверена — обновите список, чтобы узнать валюту"
 
-#: src/screens/Settings/market/SourcesPanel.tsx
+#: src/components/domain/sources/SourceRow.tsx
 msgid "venues"
 msgstr "площадки"
 
@@ -9629,6 +10069,10 @@ msgstr "Площадки · {0}"
 #: src/screens/Securities/index.tsx
 msgid "Venues…"
 msgstr "Площадки…"
+
+#: src/screens/Settings/Dependencies.tsx
+msgid "Version"
+msgstr "Версия"
 
 #. placeholder {0}: update.version
 #: src/components/domain/UpdateDialog.tsx
@@ -9782,6 +10226,10 @@ msgstr "сколько заработал каждый инструмент"
 msgid "What each instrument earned over the period and how much of the portfolio return it accounts for."
 msgstr "Сколько заработал каждый инструмент за период и какую часть доходности портфеля он дал."
 
+#: src/lib/tour/steps.ts
+msgid "What is held right now, one row per instrument. Which columns you see is your choice, and the purchase figures name the method they were counted by."
+msgstr "Что есть сейчас, по строке на инструмент. Какие колонки показывать — ваш выбор, а суммы покупки подписаны методом, которым посчитаны."
+
 #: src/screens/Import/FilePreview.tsx
 msgid "What is in the file"
 msgstr "Что в файле"
@@ -9811,12 +10259,16 @@ msgid "What it is made of"
 msgstr "Из чего складывается"
 
 #: src/screens/dashboard/dialogs.tsx
+msgid "What it tracks"
+msgstr "Что отслеживать"
+
+#: src/screens/dashboard/dialogs.tsx
 msgid "What moved the portfolio this period"
 msgstr "Что двигало портфель за период"
 
 #: src/screens/dashboard/widgets/index.tsx
-msgid "What one account has paid in this limit year against what it is allowed."
-msgstr "Сколько счёт внёс за год лимита против того, что ему позволено."
+#~ msgid "What one account has paid in this limit year against what it is allowed."
+#~ msgstr "Сколько счёт внёс за год лимита против того, что ему позволено."
 
 #: src/screens/Accounts/LimitsPanel.tsx
 msgid "What one account may take in a year, against what it has taken. Nothing is blocked."
@@ -9919,6 +10371,10 @@ msgstr "Во что обошлись имеющиеся бумаги по это
 msgid "What the small line beneath the number says."
 msgstr "Что написано в строке под числом."
 
+#: src/screens/Settings/AboutPanel.tsx
+msgid "What this app does with your figures, and what it does not promise about them."
+msgstr "Что приложение делает с вашими цифрами и чего оно о них не обещает."
+
 #: src/components/domain/positionColumns.tsx
 msgid "What this position has actually been paid, in the base currency."
 msgstr "Что позиция фактически получила, в базовой валюте."
@@ -9967,6 +10423,11 @@ msgstr "Когда приходят деньги"
 msgid "when your income arrived"
 msgstr "когда приходил доход"
 
+#. placeholder {0}: def.min.w
+#: src/screens/dashboard/dialogs.tsx
+msgid "Where a drag stops, and how the tile behaves on a phone: four twelfths or more takes the whole row there instead of half of it. Left at {0}, the widget's own."
+msgstr "Где останавливается перетаскивание и как плитка ведёт себя на телефоне: от четырёх двенадцатых она занимает там всю строку, а не половину. Значение {0} — собственное значение виджета."
+
 #: src/components/domain/AiChatPanel.tsx
 msgid "Where am I off my target allocation?"
 msgstr "Где я отклонился от целевой аллокации?"
@@ -9974,6 +10435,10 @@ msgstr "Где я отклонился от целевой аллокации?"
 #: src/components/domain/aiToolLabels.ts
 msgid "where an instrument's prices come from"
 msgstr "откуда берутся цены инструмента"
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Where data comes from"
+msgstr "Откуда берутся данные"
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Where each category stands against its target weight."
@@ -10010,6 +10475,10 @@ msgstr "Где стоит цена между минимумом и максим
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Where this app looks for a newer version, and whether it may look on its own."
 msgstr "Где приложение ищет новую версию и может ли искать само."
+
+#: src/screens/Settings/HelpPanel.tsx
+msgid "Where to start, and what to try it on."
+msgstr "С чего начать и на чём потренироваться."
 
 #: src/screens/Settings/InflationPanel.tsx
 msgid "Where you spend, which need not be where your base currency is legal tender. Left empty, no real returns are shown."
@@ -10158,6 +10627,10 @@ msgstr "Удержан у источника и до счёта не доход�
 #: src/components/domain/PlanForm.tsx
 msgid "Without an instrument the contribution stays as cash on the account."
 msgstr "Без инструментов взнос остаётся деньгами на счёте."
+
+#: src/components/domain/sources/SourcesSetup.tsx
+msgid "Without both, holdings in another currency cannot be valued at all. Leaving with Decide later is an answer too: prices are then typed in by hand."
+msgstr "Без обоих активы в другой валюте оценить невозможно. Уйти через «Решить позже» — тоже ответ: тогда цены вводятся вручную."
 
 #: src/components/domain/positionColumns.tsx
 msgid "WKN"
@@ -10313,6 +10786,7 @@ msgstr "Ваши заметки, а также дивиденды и сплит�
 msgid "Your own provider"
 msgstr "Свой провайдер"
 
+#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Your own sources"
 msgstr "Свои источники"

@@ -20,7 +20,9 @@ pub struct ImportOptions {
 
     pub new_security_kind: SecurityKind,
 
-    #[serde(default = "default_new_security_source")]
+    /// Which source prices the instruments the import creates. `None` is priced by hand: the
+    /// caller names a source, because the core ships no default one (ADR-0076).
+    #[serde(default)]
     pub new_security_source: Option<String>,
 
     pub import_duplicates: bool,
@@ -31,16 +33,12 @@ pub struct ImportOptions {
     pub import_similar: bool,
 }
 
-fn default_new_security_source() -> Option<String> {
-    Some(crate::sources::DEFAULT_QUOTES.to_string())
-}
-
 impl Default for ImportOptions {
     fn default() -> Self {
         ImportOptions {
             create_missing_securities: true,
             new_security_kind: SecurityKind::Other,
-            new_security_source: default_new_security_source(),
+            new_security_source: None,
             import_duplicates: false,
             import_similar: false,
         }

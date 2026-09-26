@@ -2,6 +2,9 @@
    against its target. Height is the only variant; colour is always a slot. */
 .bar {
   position: relative;
+  /* Never a flex item to squeeze: in a tile whose body overflows, a track 10px tall with the
+     default `flex-shrink` is squashed to nothing and the block loses its bar entirely. */
+  flex: none;
   height: var(--bar-h);
   min-width: 2px;
   border-radius: var(--r-chip);
@@ -87,6 +90,14 @@
   border: 1px dashed var(--border-strong);
   background: none;
 }
+/* The shares block declares its own container, so its legend reshapes by the box it is in — a
+   widget tile, a panel, a dialog — and never by the window (ADR-0073). */
+.alloc {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .bars {
   display: grid;
   gap: var(--sp-5);
@@ -132,6 +143,41 @@
   font-size: var(--fs-base);
 }
 
+/* Under about a phone column the three columns stop being three: the name is the whole point of
+   the legend, and the figures beside it squeezed it to nothing — a row of a dot, no name, and
+   two clipped numbers. The name takes the line, the money and the share go under it. */
+@container (max-width: 300px) {
+  .bars {
+    gap: var(--sp-4);
+  }
+  .bars__row {
+    grid-template-columns: var(--dot) minmax(0, 1fr) auto;
+    column-gap: var(--sp-3);
+    row-gap: 1px;
+    align-items: center;
+  }
+  /* Placed, not flowed: the DOM order is swatch, name, money, share, and auto-placement would
+     read those as one row of four. */
+  .bars__name {
+    grid-area: 1 / 2 / 2 / 4;
+    font-size: var(--fs-sm);
+  }
+  .bars__val {
+    grid-area: 2 / 2 / 3 / 3;
+    min-width: 0;
+    text-align: left;
+  }
+  .bars__pct {
+    grid-area: 2 / 3 / 3 / 4;
+    min-width: 0;
+    font-size: var(--fs-sm);
+  }
+  .bars__total {
+    margin-top: var(--sp-4);
+    font-size: var(--fs-sm);
+  }
+}
+
 /* Yearly composition: one stacked bar per year, scaled against the best year. */
 .mix {
   display: grid;
@@ -149,6 +195,7 @@
 }
 
 .drift {
+  container-type: inline-size;
   display: grid;
   gap: var(--sp-1);
 }
@@ -159,7 +206,7 @@
   flex-wrap: wrap;
   font-size: var(--fs-meta);
   color: var(--text-3);
-  padding: 0 var(--sp-2) var(--sp-8);
+  padding: 0 var(--sp-2) var(--sp-5);
 }
 .drift__legend span {
   display: inline-flex;
@@ -259,7 +306,37 @@
   margin-top: var(--sp-2);
 }
 
-@media (min-width: 1000px) {
+/* Whether these rows are a three-column table or a stack is the TILE's business, not the
+   window's: a 3/12 tile on a wide screen was given the table and had no room for it, and the
+   same tile filling a phone row was given the stack it does not need. Both readings are stated
+   here over the container, and the window is not asked. */
+@container (max-width: 560px) {
+  .drift__grid {
+    display: block;
+  }
+  .drift__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: var(--sp-2);
+  }
+  .drift__row > * {
+    padding-block: 0;
+  }
+  .drift__name {
+    align-items: baseline;
+  }
+  .drift__label {
+    max-width: none;
+  }
+  .drift__side {
+    grid-auto-flow: column;
+    justify-content: space-between;
+    justify-items: stretch;
+    text-align: left;
+  }
+}
+
+@container (min-width: 561px) {
   .drift__grid {
     display: grid;
     grid-template-columns: minmax(0, max-content) minmax(120px, 1fr) max-content;
@@ -307,6 +384,9 @@
 /* Contributions: ranked rows on one scale, the total beneath them. The block fills the tile it
    is in, rows breathing up to a comfortable height rather than stretching without end. */
 .wfall {
+  /* Its own container: the block reshapes by ITS width, so the rule holds in a widget tile, in
+     a panel on a screen and in a dialog alike, and no caller has to declare anything. */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -314,6 +394,11 @@
   gap: var(--sp-3);
 }
 .wfall__rows {
+  /* Fixed enough to say where the lane's middle is, so the zero can be placed without
+     measuring: name, gap, lane, gap, figure. */
+  --wf-name: 27%;
+  --wf-val: 96px;
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -321,9 +406,21 @@
   gap: var(--sp-2);
   overflow: auto;
 }
+/* The zero is one line belonging to the block. Drawn inside each row instead, the gaps between
+   rows cut it into dashes. */
+.wfall__rows--signed::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--wf-name) + var(--sp-4) + (100% - var(--wf-name) - var(--wf-val) - 2 * var(--sp-4)) / 2);
+  width: 1px;
+  background: var(--border-strong);
+  pointer-events: none;
+}
 .wfall__row {
   display: grid;
-  grid-template-columns: minmax(64px, 27%) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(64px, var(--wf-name)) minmax(0, 1fr) var(--wf-val);
   align-items: center;
   gap: var(--sp-4);
   /* Rows share the tile rather than leaving a gap under the last one; the track grows with the
@@ -343,26 +440,56 @@
   min-width: 0;
   height: 100%;
 }
+/* Every bar carries two geometries and the block picks one: `--sl`/`--sw` place it against a
+   zero in the middle of the lane, `--ll`/`--lw` run it from the left edge. */
 .wfall__bar {
   position: absolute;
   top: 50%;
+  left: var(--sl, 0%);
+  width: var(--sw, 0%);
   transform: translateY(-50%);
   height: clamp(10px, 42%, 22px);
 }
 .wfall__bar .bar {
   height: 100%;
 }
-/* Drawn only when something is negative: with every contribution positive the zero line is the
-   left edge, and a rule there would read as a border. */
-.wfall__zero {
-  position: absolute;
-  top: -2px;
-  bottom: -2px;
-  width: 1px;
-  background: var(--border-strong);
-}
 .wfall__v {
   font-size: var(--fs-sm);
+  text-align: right;
+}
+
+/* A ranked bar needs a lane to rank in. Under about a phone column there is none: the name and
+   the figure take the line, the track moves under them, and it runs from the left edge with the
+   colour and the figure carrying the sign — halving the lane as well as the scale leaves
+   nothing to compare. */
+@container (max-width: 380px) {
+  .wfall__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    row-gap: var(--sp-2);
+    align-content: center;
+    min-height: 42px;
+  }
+  /* Placed, not flowed: the DOM order is name, lane, figure, which auto-placement would read as
+     three cells of one row. */
+  .wfall__name {
+    grid-area: 1 / 1;
+  }
+  .wfall__v {
+    grid-area: 1 / 2;
+  }
+  .wfall__lane {
+    grid-area: 2 / 1 / 3 / -1;
+    height: 8px;
+  }
+  .wfall__bar {
+    height: 8px;
+    left: var(--ll, 0%);
+    width: var(--lw, 0%);
+  }
+  .wfall__rows--signed::before {
+    display: none;
+  }
 }
 .wfall__foot {
   display: flex;

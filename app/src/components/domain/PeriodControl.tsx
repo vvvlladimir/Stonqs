@@ -42,7 +42,7 @@ export function PeriodControl({
   return (
     // A box of its own: the strip sits at the end of the controls row on every screen, and it
     // is what scrolls when the row runs out of width, so whatever stands beside it stays put.
-    <div className="period">
+    <div className="period" data-tour="period">
       <Seg
         label={t`Period`}
         value={value}

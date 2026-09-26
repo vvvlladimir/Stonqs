@@ -156,6 +156,35 @@ pub fn security_save(app: AppHandle, state: State<AppState>, input: SecurityInpu
     Ok(security)
 }
 
+/// Gives every instrument with no price source the one named, and fetches what they now owe.
+///
+/// Only the ones with none: a source the user chose for an instrument is their decision, and a
+/// bulk answer must not overwrite a particular one.
+#[tauri::command]
+pub fn securities_adopt_source(app: AppHandle, state: State<AppState>, source: String) -> UiResult<usize> {
+    let adopted = {
+        let store = state.store()?;
+        let mut adopted = 0;
+        for security in store.list_securities()? {
+            if security.data_source.is_some() {
+                continue;
+            }
+            store.save_security(&Security {
+                data_source: Some(source.clone()),
+                ..security
+            })?;
+            adopted += 1;
+        }
+        adopted
+    };
+
+    if adopted > 0 {
+        crate::jobs::fetch_missing(&app, &state);
+        emit_changed(&app, "securities")?;
+    }
+    Ok(adopted)
+}
+
 #[tauri::command]
 pub async fn security_identify(app: AppHandle, state: State<'_, AppState>, id: String) -> UiResult<Security> {
     let existing = state.store()?.get_security(&id)?;
