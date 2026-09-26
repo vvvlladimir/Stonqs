@@ -450,7 +450,25 @@ fn run(
         let from = start_from(mode, known, today, asked_from(&store, &security.id), held);
         let range = DateRange::new(from, today);
         match quotes.ensure_history_through(&store, security, range, settled_through) {
-            Ok(saved) => fetched += saved,
+            Ok(saved) => {
+                fetched += saved;
+                // History first, then the days its source has not published yet (ADR-0079). A
+                // failure here leaves the series intact and is named after the source that failed.
+                match quotes.ensure_latest(&store, security, today) {
+                    Ok(saved) => fetched += saved,
+                    Err(e) => failed.push(Failure {
+                        code: FailureCode::Quote,
+                        cause: FailureCause::from(&e),
+                        subject: security.symbol.clone(),
+                        detail: e.to_string(),
+                        source: store
+                            .latest_symbol(&security.id)
+                            .ok()
+                            .flatten()
+                            .map(|(source, _)| source),
+                    }),
+                }
+            }
             Err(e) => failed.push(Failure {
                 code: FailureCode::Quote,
                 cause: FailureCause::from(&e),

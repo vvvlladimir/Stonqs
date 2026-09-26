@@ -137,6 +137,11 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
         "limit_withdrawals",
         include_str!("../../migrations/0029_limit_withdrawals.sql"),
     ),
+    (
+        30,
+        "latest_source",
+        include_str!("../../migrations/0030_latest_source.sql"),
+    ),
 ];
 
 /// Applies all pending migrations.

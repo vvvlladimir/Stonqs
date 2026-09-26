@@ -81,6 +81,10 @@ msgstr "— not mapped —"
 msgid "— not used —"
 msgstr "— not used —"
 
+#: src/screens/Securities/SecurityForm.tsx
+msgid "— own source —"
+msgstr "— own source —"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "— weights in such files are given inside the parent (\"equities 42 %, of which the core is 88 %\"), and that is how they are stored"
 msgstr "— weights in such files are given inside the parent (\"equities 42 %, of which the core is 88 %\"), and that is how they are stored"
@@ -3893,6 +3897,10 @@ msgstr "Fill it"
 msgid "Filling…"
 msgstr "Filling…"
 
+#: src/screens/Securities/SecurityForm.tsx
+msgid "Fills the days the own source has not published yet"
+msgstr "Fills the days the own source has not published yet"
+
 #: src/screens/Onboarding.tsx
 msgid "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
 msgstr "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
@@ -4935,6 +4943,10 @@ msgstr "Last year's payments over today's value."
 #: src/components/domain/UpdateDialog.tsx
 msgid "Later"
 msgstr "Later"
+
+#: src/screens/Securities/SecurityForm.tsx
+msgid "Latest price from"
+msgstr "Latest price from"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "Layout"

@@ -81,6 +81,10 @@ msgstr "— не сопоставлено —"
 msgid "— not used —"
 msgstr "— не используется —"
 
+#: src/screens/Securities/SecurityForm.tsx
+msgid "— own source —"
+msgstr "— свой источник —"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "— weights in such files are given inside the parent (\"equities 42 %, of which the core is 88 %\"), and that is how they are stored"
 msgstr "— веса в таких файлах заданы внутри родителя («акции 42 %, внутри них ядро 88 %»), так они и сохранятся"
@@ -3893,6 +3897,10 @@ msgstr "Заполнить"
 msgid "Filling…"
 msgstr "Заполняем…"
 
+#: src/screens/Securities/SecurityForm.tsx
+msgid "Fills the days the own source has not published yet"
+msgstr "Заполняет дни, которые свой источник ещё не опубликовал"
+
 #: src/screens/Onboarding.tsx
 msgid "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
 msgstr "Заполняет профиль примерным портфелем и предлагает короткую экскурсию — посмотреть, что умеет приложение, до импорта своих данных."
@@ -4935,6 +4943,10 @@ msgstr "Выплаты за год к сегодняшней стоимости.
 #: src/components/domain/UpdateDialog.tsx
 msgid "Later"
 msgstr "Позже"
+
+#: src/screens/Securities/SecurityForm.tsx
+msgid "Latest price from"
+msgstr "Последняя цена из"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "Layout"

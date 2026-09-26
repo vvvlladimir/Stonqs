@@ -101,6 +101,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins and the file reader ([73](0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)) implemented, UI plugins not yet |
 | [77](0077-the-tour-is-a-declaration-over-the-real-screens.md) | The guided tour is a declaration over the real screens | Accepted |
 | [78](0078-the-app-states-what-it-is-not.md) | The app states what it is not, and carries its notices | Accepted |
+| [79](0079-a-latest-close-source-extends-the-tail-and-never-rewrites-the-history.md) | A latest-close source extends the tail and never rewrites the history | Accepted |
 
 ## Profiles, keys and encryption
 
