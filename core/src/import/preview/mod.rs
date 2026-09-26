@@ -15,7 +15,7 @@ mod tally;
 
 use super::checks::{self, BasisVote, CheckContext, SignVote};
 use super::dedupe::KnownRow;
-use super::mapping::{AmountBasis, AmountSign, ImportField, ImportMapping};
+use super::mapping::{AmountBasis, AmountSign, ImportField, ImportMapping, KindWords};
 use super::parse::{ImportProblem, ParseConfig, ParsedCsv, ProblemCode, parse_decimal};
 use super::securities::SecurityDraft;
 use crate::error::{Error, Result};
@@ -188,6 +188,9 @@ pub struct ImportContext<'a> {
 
     pub base_currency: Option<&'a str>,
     pub today: Option<NaiveDate>,
+
+    /// Wordings added to the shipped keywords — an installed plugin's dictionary.
+    pub kind_words: &'a KindWords,
 }
 
 impl Default for ImportContext<'_> {
@@ -195,6 +198,7 @@ impl Default for ImportContext<'_> {
         static NO_SECURITIES: &[Security] = &[];
         static NO_ACCOUNTS: &[Account] = &[];
         static NO_EXTERNAL: &[KnownRow] = &[];
+        static NO_WORDS: KindWords = KindWords::empty();
 
         ImportContext {
             securities: NO_SECURITIES,
@@ -204,6 +208,7 @@ impl Default for ImportContext<'_> {
             known_loose: Box::leak(Box::new(HashSet::new())),
             base_currency: None,
             today: None,
+            kind_words: &NO_WORDS,
         }
     }
 }
@@ -342,7 +347,7 @@ pub fn build_preview(
     let mapping = &match mapping.column(ImportField::Kind) {
         Some(column) => mapping
             .clone()
-            .with_detected_kinds(parsed.column_values(column).into_iter()),
+            .with_detected_kinds_using(parsed.column_values(column).into_iter(), context.kind_words),
         None => mapping.clone(),
     };
 

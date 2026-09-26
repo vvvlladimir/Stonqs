@@ -1,0 +1,12 @@
+{
+  "words": [
+    { "word": "Nosto", "kind": "WITHDRAWAL" },
+    { "word": "Osto", "kind": "BUY" },
+    { "word": "Myynti", "kind": "SELL" },
+    { "word": "Osinko", "kind": "DIVIDEND" },
+    { "word": "Korko", "kind": "INTEREST" },
+    { "word": "Talletus", "kind": "DEPOSIT" },
+    { "word": "Palkkio", "kind": "FEE" },
+    { "word": "Vero", "kind": "TAX" }
+  ]
+}

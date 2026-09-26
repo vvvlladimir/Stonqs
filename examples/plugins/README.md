@@ -7,8 +7,8 @@ into its own plugin directory, so the folder you picked is free to move afterwar
 See [ADR-0070](../../docs/decisions/0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md)
 for what a plugin may and may not be, and
 [ADR-0073](../../docs/decisions/0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
-for the file reader. This build honours four kinds of content: themes, broker import layouts,
-classification sets and file readers.
+for the file reader. This build honours five kinds of content: themes, broker import layouts,
+classification sets, operation dictionaries and file readers.
 
 ## `midnight` — a theme
 
@@ -110,6 +110,49 @@ touched and a set is judged for being a tree rather than for fitting this partic
 set that matches none of your instruments still installs: the tree is there and the assignments are
 yours to make.
 
+## `finnish-words` — an operation dictionary
+
+The import recognises an operation by its wording — `Buy`, `Kauf`, `Verkoop`, `Покупка` — from a
+dictionary kept **per language, never per broker**, because a word learned from one broker's file
+helps every broker writing in that language. A dictionary plugin adds a language the app does not
+speak. This one is Finnish: `Osto`, `Myynti`, `Osinko`, `Talletus`, `Nosto`, …
+
+```json
+{
+  "id": "app.stonqs.finnish-words",
+  "api": 1,
+  "name": "Finnish operation words",
+  "version": "1.0.0",
+  "provides": {
+    "dictionaries": [{ "id": "fi", "file": "words.json", "sample": "sample.csv" }]
+  }
+}
+```
+
+`words.json` is an ordered list:
+
+```json
+{ "words": [{ "word": "Nosto", "kind": "WITHDRAWAL" }, { "word": "Osto", "kind": "BUY" }] }
+```
+
+A word matches any wording that **contains** it, case and spacing aside, and the first match wins —
+which is why `Nosto` (withdrawal) comes before `Osto` (buy), the word it contains. `kind` is one of
+the operation names the app's own transaction file uses (`BUY`, `SELL`, `DIVIDEND`, `INTEREST`,
+`DEPOSIT`, `WITHDRAWAL`, `FEE`, `TAX`, …).
+
+The app's own words are always asked **first**. An added word only answers a wording the app would
+otherwise leave to the user, so a dictionary can never turn a `Buy` into a sale — and one that tries
+is refused at install rather than kept as a word that would silently never apply. The words are
+read at every preview and are not copied into a layout, so removing the plugin removes them; a
+layout the user saved keeps only the answers it was saved with.
+
+A dictionary brings operation words only. Column headers are a different dictionary, so the sample
+here uses English headers and Finnish operations.
+
+`sample` is **required**, and it has to be a file only this dictionary can read: the install checks
+that the app alone leaves some of its wordings unanswered, and that with the dictionary none is left
+and no row is invalid. A sample the app already reads by itself would prove nothing about the words.
+
 ## `mt940` — a file reader
 
 MT940 is the SWIFT bank statement most European banks still export: tagged text, one `:61:` line
@@ -189,6 +232,8 @@ Installation is the check, and it refuses rather than half-installs:
 | A reader's `file` is not a WebAssembly component, or the module fails to start | Refused |
 | A reader does not recognise its own sample, produces something that is not a transaction file, or produces a different one from `expected` | Refused, saying which |
 | A classification set's CSV does not read as a tree, or leaves a row invalid | Refused, saying which |
+| A dictionary carries no words, or a word the app already reads as another operation | Refused, naming the words |
+| A dictionary's sample reads without it, or still leaves a wording unmapped or a row invalid with it | Refused, saying which |
 
 A field the manifest carries that this build does not know is **ignored**, not refused — that is
 what lets a package add something for a later version without breaking this one. The cost is that a

@@ -36,6 +36,14 @@ export interface PluginTaxonomy {
   file: string;
 }
 
+/** Operation wordings for a language the app does not speak, read after its own words and never
+ *  instead of them. */
+export interface PluginDictionary {
+  id: string;
+  file: string;
+  sample: string;
+}
+
 export type Plugin = {
   id: string;
   name: string;
@@ -44,6 +52,7 @@ export type Plugin = {
   layouts: PluginLayout[];
   readers: PluginReader[];
   taxonomies: PluginTaxonomy[];
+  dictionaries: PluginDictionary[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */

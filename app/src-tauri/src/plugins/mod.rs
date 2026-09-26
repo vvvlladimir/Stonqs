@@ -6,7 +6,8 @@
 //! could explain. What belongs to a profile is what a plugin *stores*, which no theme does.
 //!
 //! Plain filesystem work over an explicitly passed root, so it is tested on a temporary folder.
-//! This build honours data content — themes and broker layouts — plus one kind of compute, the
+//! This build honours data content — themes, broker layouts, classification sets and operation
+//! dictionaries — plus one kind of compute, the
 //! file reader (ADR-0073); the rest of a manifest is read without being acted on, so a package
 //! built for a later version is listed rather than rejected.
 
@@ -14,7 +15,7 @@ pub mod reader;
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
-use sq_core::import::BrokerPreset;
+use sq_core::import::{BrokerPreset, KindWords};
 use std::path::{Path, PathBuf};
 
 const FOLDER: &str = "plugins";
@@ -56,6 +57,20 @@ pub struct Provides {
     pub readers: Vec<ReaderDef>,
     #[serde(default)]
     pub taxonomies: Vec<TaxonomyDef>,
+    #[serde(default)]
+    pub dictionaries: Vec<DictionaryDef>,
+}
+
+/// Operation wordings for a language the shipped keywords do not speak: per language, never per
+/// broker, like the shipped table. Read after it and never instead of it (`KindWords`), and fed to
+/// the preview rather than into a layout, so removing the plugin removes the words.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DictionaryDef {
+    pub id: String,
+    /// `{ "words": [{ "word", "kind" }] }`, in order — the first word a wording contains wins.
+    pub file: String,
+    /// A file whose every wording the dictionary answers and the app alone does not.
+    pub sample: String,
 }
 
 /// A ready classification tree: the same CSV the taxonomy import reads, so the file *is* the
@@ -152,6 +167,8 @@ pub struct PluginInfo {
     pub readers: Vec<ReaderDef>,
     #[serde(default)]
     pub taxonomies: Vec<TaxonomyDef>,
+    #[serde(default)]
+    pub dictionaries: Vec<DictionaryDef>,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -222,6 +239,7 @@ impl Plugins {
                     layouts: manifest.provides.layouts,
                     readers: manifest.provides.readers,
                     taxonomies: manifest.provides.taxonomies,
+                    dictionaries: manifest.provides.dictionaries,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
@@ -231,6 +249,7 @@ impl Plugins {
                     layouts: Vec::new(),
                     readers: Vec::new(),
                     taxonomies: Vec::new(),
+                    dictionaries: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -277,6 +296,27 @@ impl Plugins {
             }
         }
         Ok(out)
+    }
+
+    /// Every loadable plugin's words as one dictionary, in the list's order. A file that no longer
+    /// parses is skipped, like a layout: the other plugins' words are not its business.
+    pub fn kind_words(&self) -> UiResult<KindWords> {
+        let mut words = KindWords::empty();
+        for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
+            let folder = self.folder_of(&plugin.id);
+            for def in plugin.dictionaries {
+                let Ok(path) = safe_join(&folder, &def.file) else {
+                    continue;
+                };
+                let parsed = std::fs::read_to_string(&path)
+                    .ok()
+                    .and_then(|text| serde_json::from_str::<KindWords>(&text).ok());
+                if let Some(parsed) = parsed {
+                    words.extend(parsed);
+                }
+            }
+        }
+        Ok(words)
     }
 
     /// The first loadable reader that claims this file, and what it read.
@@ -397,10 +437,12 @@ impl Plugins {
             && manifest.provides.layouts.is_empty()
             && manifest.provides.readers.is_empty()
             && manifest.provides.taxonomies.is_empty()
+            && manifest.provides.dictionaries.is_empty()
         {
             return Err(UiError::invalid(format!(
                 "plugin {} declares nothing this build can use: expected `provides.themes`, \
-                 `provides.layouts`, `provides.readers` or `provides.taxonomies`",
+                 `provides.layouts`, `provides.readers`, `provides.taxonomies` or \
+                 `provides.dictionaries`",
                 manifest.id
             )));
         }
@@ -442,6 +484,16 @@ impl Plugins {
             check_taxonomy(&def.id, &csv)?;
         }
 
+        // A dictionary proves itself against a sample only it can read: one the app already
+        // reads by itself shows nothing about the words the package brings.
+        for def in &manifest.provides.dictionaries {
+            let words = std::fs::read_to_string(safe_join(source, &def.file)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.file)))?;
+            let sample = std::fs::read(safe_join(source, &def.sample)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.sample)))?;
+            crate::import_templates::check_dictionary(&def.id, &words, &sample)?;
+        }
+
         let target = self.folder_of(&manifest.id);
         // A reinstall replaces: the id is the identity, and two copies of one plugin is not a
         // state the list could explain.
@@ -469,7 +521,14 @@ impl Plugins {
                     .iter()
                     .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
             )
-            .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()));
+            .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()))
+            .chain(
+                manifest
+                    .provides
+                    .dictionaries
+                    .iter()
+                    .flat_map(|def| [def.file.clone(), def.sample.clone()]),
+            );
         for file in files {
             let from = safe_join(source, &file)?;
             let to = safe_join(&target, &file)?;
@@ -488,6 +547,7 @@ impl Plugins {
             layouts: manifest.provides.layouts,
             readers: manifest.provides.readers,
             taxonomies: manifest.provides.taxonomies,
+            dictionaries: manifest.provides.dictionaries,
         })
     }
 

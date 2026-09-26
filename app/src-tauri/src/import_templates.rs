@@ -5,7 +5,10 @@
 use crate::error::{UiError, UiResult};
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use sq_core::import::{ImportMapping, ImportService, ParseConfig, PresetMatch, best_match, builtin_presets};
+use sq_core::import::{
+    ImportMapping, ImportService, KindWords, ParseConfig, PresetMatch, best_match, builtin_presets,
+    parse_file,
+};
 use sq_core::model::Account;
 use sq_core::storage::Store;
 use std::path::{Path, PathBuf};
@@ -236,7 +239,7 @@ pub fn check_layout(id: &str, preset_json: &str, sample: &[u8], sample_name: &st
     let preset: sq_core::import::BrokerPreset =
         serde_json::from_str(preset_json).map_err(|e| UiError::invalid(format!("layout {id}: {e}")))?;
 
-    let parsed = sq_core::import::parse_file(sample, &preset.config)
+    let parsed = parse_file(sample, &preset.config)
         .map_err(|e| UiError::invalid(format!("layout {id}: its own sample does not parse: {e}")))?;
     let head = String::from_utf8_lossy(&sample[..sample.len().min(2048)]).into_owned();
     if preset
@@ -249,18 +252,8 @@ pub fn check_layout(id: &str, preset_json: &str, sample: &[u8], sample_name: &st
         )));
     }
 
-    // An in-memory database, so nothing here can touch the open portfolio.
-    let store = Store::open_in_memory().map_err(|e| UiError::internal(e.to_string()))?;
-    let cash = Account::deposit("Check", "EUR");
-    store
-        .save_account(&cash)
-        .map_err(|e| UiError::internal(e.to_string()))?;
-    let depot = Account::securities("Check", "EUR", &cash.id);
-    store
-        .save_account(&depot)
-        .map_err(|e| UiError::internal(e.to_string()))?;
-
-    let mapping = preset.mapping().with_account(&depot.id);
+    let (store, depot) = check_store()?;
+    let mapping = preset.mapping().with_account(&depot);
     let preview = ImportService::new(&store)
         .preview(sample, &preset.config, Some(&mapping), &[])
         .map_err(|e| UiError::invalid(format!("layout {id}: its own sample does not read: {e}")))?;
@@ -280,6 +273,74 @@ pub fn check_layout(id: &str, preset_json: &str, sample: &[u8], sample_name: &st
         )));
     }
     Ok(())
+}
+
+/// What an operation dictionary must prove before a package carrying it is installed: every word
+/// is one the app's own keywords leave to it, and its sample reads without a question **only**
+/// with it — a sample the app already reads by itself proves nothing about the words.
+pub fn check_dictionary(id: &str, words_json: &str, sample: &[u8]) -> UiResult<()> {
+    let words: KindWords =
+        serde_json::from_str(words_json).map_err(|e| UiError::invalid(format!("dictionary {id}: {e}")))?;
+    if words.is_empty() {
+        return Err(UiError::invalid(format!("dictionary {id} carries no words")));
+    }
+    let shadowed = words.shadowed();
+    if !shadowed.is_empty() {
+        let listed: Vec<String> = shadowed
+            .iter()
+            .map(|(word, kind)| format!("{word} (already {kind:?})"))
+            .collect();
+        return Err(UiError::invalid(format!(
+            "dictionary {id} names words the app already reads as another operation: {}",
+            listed.join(", ")
+        )));
+    }
+
+    let config = ParseConfig::default();
+    let parsed = parse_file(sample, &config)
+        .map_err(|e| UiError::invalid(format!("dictionary {id}: its own sample does not parse: {e}")))?;
+    let (store, depot) = check_store()?;
+    let mapping = ImportMapping::detect_with_values(&parsed.headers, &parsed.rows).with_account(&depot);
+
+    let preview = |service: ImportService| {
+        service
+            .preview(sample, &config, Some(&mapping), &[])
+            .map_err(|e| UiError::invalid(format!("dictionary {id}: its own sample does not read: {e}")))
+    };
+    let alone = preview(ImportService::new(&store))?;
+    if alone.unknown_kinds().is_empty() {
+        return Err(UiError::invalid(format!(
+            "dictionary {id} ships a sample the app reads without it"
+        )));
+    }
+    let with = preview(ImportService::new(&store).with_kind_dictionary(words))?;
+    let unknown = with.unknown_kinds();
+    if !unknown.is_empty() {
+        return Err(UiError::invalid(format!(
+            "dictionary {id} leaves {} wording(s) of its own sample unmapped: {}",
+            unknown.len(),
+            unknown.join(", ")
+        )));
+    }
+    if with.summary.invalid > 0 {
+        return Err(UiError::invalid(format!(
+            "dictionary {id} reads {} row(s) of its own sample as invalid",
+            with.summary.invalid
+        )));
+    }
+    Ok(())
+}
+
+/// An in-memory database with one broker account, so an install check cannot touch the open
+/// portfolio. Returns the depot's id.
+fn check_store() -> UiResult<(Store, String)> {
+    let internal = |e: sq_core::Error| UiError::internal(e.to_string());
+    let store = Store::open_in_memory().map_err(internal)?;
+    let cash = Account::deposit("Check", "EUR");
+    store.save_account(&cash).map_err(internal)?;
+    let depot = Account::securities("Check", "EUR", &cash.id);
+    store.save_account(&depot).map_err(internal)?;
+    Ok((store, depot.id))
 }
 
 #[tauri::command]

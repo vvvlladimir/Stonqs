@@ -648,6 +648,10 @@ msgstr "{dead, plural, one {# площадка скрыта: инструмен�
 #~ msgid "{delta, plural, one {# day} other {# days}}"
 #~ msgstr "{delta, plural, one {# дн.} few {# дн.} many {# дн.} other {# дн.}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{dictionaries, plural, one {# operation dictionary} other {# operation dictionaries}}"
+msgstr "{dictionaries, plural, one {# словарь операций} few {# словаря операций} many {# словарей операций} other {# словаря операций}}"
+
 #: src/components/domain/SecurityPopup.tsx
 msgid "{effective} (from the kind)"
 msgstr "{effective} (по виду)"
@@ -1084,8 +1088,12 @@ msgstr "План — это взнос по расписанию: сколько
 #~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта и читатели для файлов, которые приложение само открыть не умеет."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself."
-msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации и читатели для файлов, которые приложение само открыть не умеет."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself."
+#~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации и читатели для файлов, которые приложение само открыть не умеет."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language and readers for files the app cannot open by itself."
+msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации, названия операций на другом языке и читатели для файлов, которые приложение само открыть не умеет."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."

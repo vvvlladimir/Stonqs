@@ -367,7 +367,7 @@ fn profile_list_keys_match_the_typescript_types() {
 
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
-    use sq_app_lib::plugins::{Base, PluginInfo, ReaderDef, Status, TaxonomyDef, ThemeDef};
+    use sq_app_lib::plugins::{Base, DictionaryDef, PluginInfo, ReaderDef, Status, TaxonomyDef, ThemeDef};
 
     let json = serde_json::to_value(PluginInfo {
         id: "com.example.midnight".into(),
@@ -392,6 +392,11 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             name: "Regions".into(),
             file: "regions.csv".into(),
         }],
+        dictionaries: vec![DictionaryDef {
+            id: "fi".into(),
+            file: "words.json".into(),
+            sample: "sample.csv".into(),
+        }],
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -401,6 +406,7 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     assert_eq!(
         keys(&json),
         [
+            "dictionaries",
             "id",
             "layouts",
             "name",
@@ -423,4 +429,5 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     );
     // A classification set ships no expectation: the file *is* the data, so one would be a copy.
     assert_eq!(keys(&json["taxonomies"][0]), ["file", "id", "name"]);
+    assert_eq!(keys(&json["dictionaries"][0]), ["file", "id", "sample"]);
 }

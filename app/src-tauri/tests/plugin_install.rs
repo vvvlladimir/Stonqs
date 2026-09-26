@@ -244,3 +244,106 @@ fn a_classification_set_that_is_not_a_tree_installs_nothing() {
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn the_example_dictionary_installs_and_answers_the_import() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/finnish-words");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let plugins = Plugins::new(&dir);
+    // Installing is the check: the sample must be one only this dictionary can read.
+    let installed = plugins.install(&example).unwrap();
+    assert_eq!(installed.status, Status::Ok);
+    assert_eq!(installed.dictionaries.len(), 1);
+
+    // And the installed words are what the import reads after its own.
+    let sample = std::fs::read(example.join("sample.csv")).unwrap();
+    let store = sq_core::storage::Store::open_in_memory().unwrap();
+    let preview = sq_core::import::ImportService::new(&store)
+        .with_kind_dictionary(plugins.kind_words().unwrap())
+        .preview(&sample, &sq_core::import::ParseConfig::default(), None, &[])
+        .unwrap();
+    let kind = |value: &str| {
+        preview
+            .kinds
+            .iter()
+            .find(|k| k.value == value)
+            .and_then(|k| k.kind)
+    };
+    assert!(
+        preview.unknown_kinds().is_empty(),
+        "{:?}",
+        preview.unknown_kinds()
+    );
+    assert_eq!(kind("Osto"), Some(sq_core::model::TransactionKind::Buy));
+    assert_eq!(
+        kind("Nosto"),
+        Some(sq_core::model::TransactionKind::Withdrawal),
+        "listed before the word it contains"
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_dictionary_whose_sample_the_app_already_reads_installs_nothing() {
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    let source = dir.join("package");
+    std::fs::create_dir_all(&source).unwrap();
+    std::fs::write(
+        source.join("plugin.json"),
+        r#"{"id":"com.example.words","api":1,"name":"Words",
+            "provides":{"dictionaries":[{"id":"w","file":"words.json","sample":"sample.csv"}]}}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        source.join("words.json"),
+        r#"{"words":[{"word":"Osto","kind":"BUY"}]}"#,
+    )
+    .unwrap();
+    // Every wording here is the app's own, so the sample proves nothing about the words.
+    std::fs::write(
+        source.join("sample.csv"),
+        "Date,Type,Amount,Currency\n2024-01-02,DEPOSIT,100,EUR\n",
+    )
+    .unwrap();
+
+    let plugins = Plugins::new(&dir);
+    let failure = plugins.install(&source).unwrap_err();
+    assert!(format!("{failure:?}").contains("reads without it"), "{failure:?}");
+    assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_dictionary_claiming_the_apps_own_word_installs_nothing() {
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    let source = dir.join("package");
+    std::fs::create_dir_all(&source).unwrap();
+    std::fs::write(
+        source.join("plugin.json"),
+        r#"{"id":"com.example.words","api":1,"name":"Words",
+            "provides":{"dictionaries":[{"id":"w","file":"words.json","sample":"sample.csv"}]}}"#,
+    )
+    .unwrap();
+    // The shipped keywords read "Sell" first, so this word would never be reached.
+    std::fs::write(
+        source.join("words.json"),
+        r#"{"words":[{"word":"Osto","kind":"BUY"},{"word":"Sell","kind":"BUY"}]}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        source.join("sample.csv"),
+        "Date,Type,Amount,Currency\n2024-01-02,Osto,100,EUR\n",
+    )
+    .unwrap();
+
+    let plugins = Plugins::new(&dir);
+    let failure = plugins.install(&source).unwrap_err();
+    assert!(format!("{failure:?}").contains("already reads"), "{failure:?}");
+    assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+
+    std::fs::remove_dir_all(&dir).ok();
+}

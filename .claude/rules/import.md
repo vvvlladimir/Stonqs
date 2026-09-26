@@ -74,6 +74,14 @@
   is. Installing one runs `import_templates::check_layout` against the sample the package is
   obliged to carry — recognised, every wording mapped, no invalid row — and a package failing it
   installs nothing at all.
+- Operation wordings can arrive as a **plugin** dictionary (`provides.dictionaries`,
+  `KindWords`), still per language and never per broker. It is asked **after** the shipped
+  keywords, so it fills a gap and never re-answers a wording the app reads — a package cannot turn
+  a buy into a sale, and a word the shipped table reads as another kind is refused at install
+  (`KindWords::shadowed`). The words reach `build_preview` through `ImportContext::kind_words`
+  (`ImportService::with_kind_dictionary`), never through the mapping the host sends, so removing
+  the plugin removes them. Its sample must be one the app **cannot** read alone
+  (`import_templates::check_dictionary`).
 - A shipped layout is only as good as the file it was tried against: `core/tests/fixtures/presets/`
   holds one folder per layout — the redacted export, what it must be recognised as, and the
   operations it must produce, written in the canonical format so the expectation needs no second

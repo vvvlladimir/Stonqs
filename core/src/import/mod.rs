@@ -29,7 +29,7 @@ pub use dedupe::{KnownRow, fingerprint, fingerprint_of};
 pub use grouping::group_by_attribute;
 pub use ibflex::{is_flex, parse_flex};
 pub use mapping::{
-    AmountBasis, AmountSign, Condition, Emit, ImportField, ImportMapping, ImportRule, Sign, Test,
+    AmountBasis, AmountSign, Condition, Emit, ImportField, ImportMapping, ImportRule, KindWords, Sign, Test,
     default_kind_aliases, normalize_alias,
 };
 pub use parse::{

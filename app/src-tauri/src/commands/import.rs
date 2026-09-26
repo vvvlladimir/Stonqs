@@ -156,6 +156,7 @@ fn service<'a>(store: &'a Store, state: &State<AppState>) -> UiResult<ImportServ
     let base = state.portfolio()?.base_currency.clone();
     Ok(ImportService::new(store)
         .with_base_currency(&base)
+        .with_kind_dictionary(state.plugins.kind_words()?)
         .as_of(Local::now().date_naive()))
 }
 
