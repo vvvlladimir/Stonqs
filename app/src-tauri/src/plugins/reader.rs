@@ -1,54 +1,24 @@
 //! Running a plugin's file reader (ADR-0073): bytes in, a `stonqs.transactions` document out.
 //!
-//! The module is the whole of what this app grants a stranger's code. There is no filesystem, no
-//! preopened directory, no reachable address and no real clock; what WASI is linked for at all is
-//! that a guest carrying a language runtime will not instantiate without `wasi:clocks` and
-//! `wasi:random`, and those two are handed over frozen and seeded — so a reader is not merely
-//! denied the time, it is unable to answer differently twice.
+//! What the module may reach is `sandbox.rs`, shared with the writer.
 //!
 //! Nothing here touches the store or the portfolio. A reader is run once, by `import_load`, and
 //! what it produced is what every later preview and the commit read.
 
+use super::sandbox;
 use crate::error::{UiError, UiResult};
-use rand::SeedableRng;
 use std::path::Path;
-use std::sync::OnceLock;
-use std::sync::mpsc::RecvTimeoutError;
-use std::time::Duration;
-use wasmtime::component::{Component, Linker, ResourceTable};
-use wasmtime::{Config, Engine, Store, StoreLimits, StoreLimitsBuilder};
-use wasmtime_wasi::clocks::{HostMonotonicClock, HostWallClock};
-use wasmtime_wasi::p2::add_to_linker_sync;
-use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
 /// The generated side of the contract, kept in a module of its own: the world's `reading` and
 /// `warning` become Rust types with the names this file also wants for the host's own.
 mod wit {
     wasmtime::component::bindgen!({
-        path: "wit",
+        path: "wit/reader.wit",
         world: "reader",
     });
 }
 
 use wit::{FileHints, ReadError};
-
-/// How long a reader may take over one file. Generous, because it is an interpreter on a phone
-/// and a statement can be long; finite, because a stranger's loop must fail the import rather
-/// than hang the app.
-const DEADLINE: Duration = Duration::from_secs(20);
-
-/// What a reader may allocate. A broker file is measured in megabytes, and everything the reader
-/// builds out of it lives in this same allowance.
-const MEMORY: usize = 256 * 1024 * 1024;
-
-/// The moment every reader is told it is. Not today's date: a reader that dated a row from the
-/// clock would produce a file that changed under the user, and the one date a statement is about
-/// is printed in the statement.
-const FROZEN: Duration = Duration::from_secs(0);
-
-/// The seed every reader is given. One constant, because the point is that there is no entropy
-/// here at all, not that each run has its own.
-const SEED: u64 = 0x5109_1173;
 
 /// What a reader produced, in the host's own words.
 #[derive(Debug, Clone)]
@@ -98,60 +68,6 @@ impl Refusal {
     }
 }
 
-/// Compiling a module needs one, and building one is the expensive part of this file — so it is
-/// built once and shared. It holds no state of any guest: every run gets its own `Store`.
-fn engine() -> UiResult<&'static Engine> {
-    static ENGINE: OnceLock<Result<Engine, String>> = OnceLock::new();
-    ENGINE
-        .get_or_init(|| {
-            let mut config = Config::new();
-            // The deadline below is a thread bumping the epoch; without this the module would
-            // never look at it.
-            config.epoch_interruption(true);
-            Engine::new(&config).map_err(|e| e.to_string())
-        })
-        .as_ref()
-        .map_err(|e| UiError::internal(format!("the plugin runtime is unavailable: {e}")))
-}
-
-struct Host {
-    table: ResourceTable,
-    wasi: WasiCtx,
-    limits: StoreLimits,
-}
-
-impl WasiView for Host {
-    fn ctx(&mut self) -> WasiCtxView<'_> {
-        WasiCtxView {
-            ctx: &mut self.wasi,
-            table: &mut self.table,
-        }
-    }
-}
-
-/// A clock that says the same thing every time it is asked.
-struct Frozen;
-
-impl HostWallClock for Frozen {
-    fn resolution(&self) -> Duration {
-        Duration::from_secs(1)
-    }
-
-    fn now(&self) -> Duration {
-        FROZEN
-    }
-}
-
-impl HostMonotonicClock for Frozen {
-    fn resolution(&self) -> u64 {
-        1
-    }
-
-    fn now(&self) -> u64 {
-        0
-    }
-}
-
 /// Runs one reader over one file.
 ///
 /// `module` is a path inside the plugin's own folder, already checked by `safe_join`. Everything
@@ -164,56 +80,20 @@ pub fn read(
     file_name: &str,
     password: Option<&str>,
 ) -> Result<Reading, Refusal> {
-    let engine = engine().map_err(|e| Refusal::Failed(format!("{e:?}")))?;
-    let component = Component::from_file(engine, module)
-        .map_err(|e| Refusal::Failed(format!("not a readable plugin module: {e}")))?;
-
-    let mut linker: Linker<Host> = Linker::new(engine);
-    add_to_linker_sync(&mut linker).map_err(|e| Refusal::Failed(e.to_string()))?;
-
-    let mut wasi = WasiCtxBuilder::new();
-    wasi.wall_clock(Frozen)
-        .monotonic_clock(Frozen)
-        .secure_random(rand::rngs::StdRng::seed_from_u64(SEED))
-        .insecure_random(rand::rngs::StdRng::seed_from_u64(SEED))
-        .insecure_random_seed(u128::from(SEED));
-    // Everything a `WasiCtxBuilder` is not told stays off: no preopened directory, no inherited
-    // standard input, and an address list that is empty. Output is swallowed — a reader writes
-    // its findings into the warnings it returns, not onto a console nobody reads.
-    let host = Host {
-        table: ResourceTable::new(),
-        wasi: wasi.build(),
-        limits: StoreLimitsBuilder::new().memory_size(MEMORY).build(),
-    };
-
-    let mut store = Store::new(engine, host);
-    store.limiter(|host| &mut host.limits);
-    store.set_epoch_deadline(1);
-
-    // One bump of the epoch is the deadline. The channel is how the thread learns the call
-    // finished: a disconnect is not a timeout, so the two are told apart explicitly.
-    let (finished, waiting) = std::sync::mpsc::channel::<()>();
-    let ticker = engine.clone();
-    std::thread::spawn(move || {
-        if matches!(waiting.recv_timeout(DEADLINE), Err(RecvTimeoutError::Timeout)) {
-            ticker.increment_epoch();
-        }
-    });
-
-    let outcome = (|| {
-        let reader = wit::Reader::instantiate(&mut store, &component, &linker)
-            .map_err(|e| Refusal::Failed(format!("the module did not start: {e}")))?;
+    let outcome = sandbox::run(module, |store, component, linker| {
+        let reader = wit::Reader::instantiate(&mut *store, component, linker)
+            .map_err(|e| format!("the module did not start: {e}"))?;
         let hints = FileHints {
             file_name: file_name.to_string(),
             password: password.map(str::to_string),
         };
         reader
-            .call_read(&mut store, bytes, &hints)
-            .map_err(|e| Refusal::Failed(format!("the module stopped: {e}")))
-    })();
-    drop(finished);
+            .call_read(&mut *store, bytes, &hints)
+            .map_err(|e| format!("the module stopped: {e}"))
+    })
+    .map_err(Refusal::Failed)?;
 
-    match outcome? {
+    match outcome {
         Ok(reading) => Ok(Reading {
             canonical: reading.canonical,
             warnings: reading

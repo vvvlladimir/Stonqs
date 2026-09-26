@@ -1,0 +1,31 @@
+{
+  "format": "stonqs.transactions",
+  "version": 1,
+  "rows": [
+    { "date": "2024-01-02", "kind": "DEPOSIT", "account": "Broker", "amount": "5000", "currency": "USD" },
+    {
+      "date": "2024-01-15", "kind": "BUY", "account": "Broker", "symbol": "AAPL", "isin": "US0378331005",
+      "name": "Apple Inc.", "quantity": "10", "price": "185.5", "amount": "1855", "fee": "4.95",
+      "currency": "USD", "note": "Initial Apple purchase"
+    },
+    {
+      "date": "2024-02-01", "kind": "BUY", "account": "Broker", "symbol": "IWDA.L", "name": "iShares Core MSCI World",
+      "quantity": "20", "price": "85.1", "amount": "1702", "fee": "1.5", "fee_currency": "EUR", "currency": "USD"
+    },
+    {
+      "date": "2024-02-15", "kind": "DIVIDEND", "account": "Broker", "symbol": "AAPL", "amount": "2.4",
+      "tax": "0.36", "currency": "USD"
+    },
+    {
+      "date": "2024-03-15", "kind": "SELL", "account": "Broker", "symbol": "AAPL", "quantity": "5",
+      "price": "192", "amount": "960", "fee": "4.95", "currency": "USD"
+    },
+    { "date": "2024-03-31", "kind": "INTEREST", "account": "Broker", "amount": "3.1", "currency": "USD" },
+    { "date": "2024-04-01", "kind": "FEE", "account": "Broker", "amount": "2", "currency": "USD", "note": "Custody" },
+    {
+      "date": "2024-05-15", "kind": "DELIVERY_INBOUND", "account": "Broker", "symbol": "MSFT", "quantity": "3",
+      "price": "410", "amount": "1230", "currency": "USD", "note": "Moved in from another broker"
+    },
+    { "date": "2024-06-01", "kind": "WITHDRAWAL", "account": "Broker", "amount": "500", "currency": "USD" }
+  ]
+}

@@ -53,6 +53,14 @@ fn a_reader_failure_names_the_plugin_it_came_from() {
     assert_eq!(json["code"], "reader");
     assert_eq!(keys(&json), ["code", "message", "plugin"]);
 
+    let json = serde_json::to_value(sq_app_lib::error::UiError::Writer {
+        plugin: "app.stonqs.ledger/ledger".into(),
+        message: "version 9 is not a file this writer knows".into(),
+    })
+    .unwrap();
+    assert_eq!(json["code"], "writer");
+    assert_eq!(keys(&json), ["code", "message", "plugin"]);
+
     let json = serde_json::to_value(sq_app_lib::error::UiError::FileProtected {
         message: "sealed".into(),
     })
@@ -367,7 +375,9 @@ fn profile_list_keys_match_the_typescript_types() {
 
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
-    use sq_app_lib::plugins::{Base, DictionaryDef, PluginInfo, ReaderDef, Status, TaxonomyDef, ThemeDef};
+    use sq_app_lib::plugins::{
+        Base, DictionaryDef, PluginInfo, ReaderDef, Status, TaxonomyDef, ThemeDef, WriterDef, WriterInfo,
+    };
 
     let json = serde_json::to_value(PluginInfo {
         id: "com.example.midnight".into(),
@@ -397,6 +407,14 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             file: "words.json".into(),
             sample: "sample.csv".into(),
         }],
+        writers: vec![WriterDef {
+            id: "ledger".into(),
+            name: "Ledger journal".into(),
+            file: "writer.wasm".into(),
+            sample: "sample.json".into(),
+            expected: "expected.journal".into(),
+            extension: "journal".into(),
+        }],
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -416,7 +434,8 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             "taxonomies",
             "themes",
             "version",
-            "wants"
+            "wants",
+            "writers"
         ]
     );
     assert_eq!(json["status"], "api");
@@ -430,4 +449,19 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     // A classification set ships no expectation: the file *is* the data, so one would be a copy.
     assert_eq!(keys(&json["taxonomies"][0]), ["file", "id", "name"]);
     assert_eq!(keys(&json["dictionaries"][0]), ["file", "id", "sample"]);
+    // A writer carries its expectation like a reader, plus the ending a saved file gets (ADR-0080).
+    assert_eq!(
+        keys(&json["writers"][0]),
+        ["expected", "extension", "file", "id", "name", "sample"]
+    );
+
+    // What the export menu is offered: addressed the way the save command names it.
+    let json = serde_json::to_value(WriterInfo {
+        key: "app.stonqs.ledger/ledger".into(),
+        name: "Ledger journal".into(),
+        plugin: "app.stonqs.ledger".into(),
+        extension: "journal".into(),
+    })
+    .unwrap();
+    assert_eq!(keys(&json), ["extension", "key", "name", "plugin"]);
 }

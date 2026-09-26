@@ -62,6 +62,8 @@ export function useUiErrorText(detail: UiError): string {
       return i18n._(msg`This file is password-protected and cannot be read.`);
     case "reader":
       return i18n._(msg`The ${detail.plugin} reader could not read this file: ${detail.message}`);
+    case "writer":
+      return i18n._(msg`The ${detail.plugin} format could not be written: ${detail.message}`);
     case "internal":
       return i18n._(msg`Internal error: ${detail.message}`);
   }

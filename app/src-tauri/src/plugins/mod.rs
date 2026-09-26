@@ -7,11 +7,13 @@
 //!
 //! Plain filesystem work over an explicitly passed root, so it is tested on a temporary folder.
 //! This build honours data content — themes, broker layouts, classification sets and operation
-//! dictionaries — plus one kind of compute, the
-//! file reader (ADR-0073); the rest of a manifest is read without being acted on, so a package
+//! dictionaries — plus two kinds of compute over one sandbox, the file reader (ADR-0073) and the
+//! file writer (ADR-0080); the rest of a manifest is read without being acted on, so a package
 //! built for a later version is listed rather than rejected.
 
 pub mod reader;
+mod sandbox;
+pub mod writer;
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
@@ -59,6 +61,26 @@ pub struct Provides {
     pub taxonomies: Vec<TaxonomyDef>,
     #[serde(default)]
     pub dictionaries: Vec<DictionaryDef>,
+    #[serde(default)]
+    pub writers: Vec<WriterDef>,
+}
+
+/// A file writer: a WASM component that turns the app's own transaction file into another format
+/// (ADR-0080). It ships a sample document and the exact bytes that sample must become, for the
+/// reason a reader ships its expectation — a wrong file looks like a file.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WriterDef {
+    pub id: String,
+    /// What the export offers it as. The plugin's own words, like a classification set's name.
+    pub name: String,
+    /// The component, as a `.wasm` file inside the package.
+    pub file: String,
+    /// A `stonqs.transactions` document.
+    pub sample: String,
+    /// What `sample` must be written as, byte for byte.
+    pub expected: String,
+    /// The ending a saved file gets, without the dot (`journal`).
+    pub extension: String,
 }
 
 /// Operation wordings for a language the shipped keywords do not speak: per language, never per
@@ -169,6 +191,8 @@ pub struct PluginInfo {
     pub taxonomies: Vec<TaxonomyDef>,
     #[serde(default)]
     pub dictionaries: Vec<DictionaryDef>,
+    #[serde(default)]
+    pub writers: Vec<WriterDef>,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -180,6 +204,16 @@ pub struct TaxonomySetInfo {
     pub key: String,
     pub name: String,
     pub plugin: String,
+}
+
+/// One export format on offer, addressed the way a command names it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct WriterInfo {
+    /// `<plugin id>/<writer id>`.
+    pub key: String,
+    pub name: String,
+    pub plugin: String,
+    pub extension: String,
 }
 
 /// One installed theme, addressed the way the stored preference addresses it.
@@ -240,6 +274,7 @@ impl Plugins {
                     readers: manifest.provides.readers,
                     taxonomies: manifest.provides.taxonomies,
                     dictionaries: manifest.provides.dictionaries,
+                    writers: manifest.provides.writers,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
@@ -250,6 +285,7 @@ impl Plugins {
                     readers: Vec::new(),
                     taxonomies: Vec::new(),
                     dictionaries: Vec::new(),
+                    writers: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -358,6 +394,49 @@ impl Plugins {
         Ok(None)
     }
 
+    /// The export formats on offer, from plugins this build can load.
+    pub fn writers(&self) -> UiResult<Vec<WriterInfo>> {
+        Ok(self
+            .list()?
+            .into_iter()
+            .filter(|p| p.status == Status::Ok)
+            .flat_map(|p| {
+                p.writers.into_iter().map(move |def| WriterInfo {
+                    key: format!("{}/{}", p.id, def.id),
+                    name: def.name,
+                    plugin: p.id.clone(),
+                    extension: def.extension,
+                })
+            })
+            .collect())
+    }
+
+    /// Writes a transaction document through one installed writer, named `<plugin id>/<writer id>`.
+    pub fn write(&self, key: &str, canonical: &str) -> UiResult<Vec<u8>> {
+        let (plugin, writer) = key
+            .split_once('/')
+            .filter(|(plugin, _)| valid_id(plugin))
+            .ok_or_else(|| UiError::not_found(format!("writer {key}")))?;
+        let folder = self.folder_of(plugin);
+        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        if status_of(&manifest) != Status::Ok {
+            return Err(UiError::invalid(format!(
+                "plugin {plugin} is built for plugin API {}",
+                manifest.api
+            )));
+        }
+        let def = manifest
+            .provides
+            .writers
+            .into_iter()
+            .find(|w| w.id == writer)
+            .ok_or_else(|| UiError::not_found(format!("writer {key}")))?;
+        writer::write(&safe_join(&folder, &def.file)?, canonical).map_err(|message| UiError::Writer {
+            plugin: key.to_string(),
+            message,
+        })
+    }
+
     /// A theme's stylesheet. Read on demand rather than at startup: only one is ever applied.
     pub fn theme_css(&self, plugin: &str, theme: &str) -> UiResult<String> {
         if !valid_id(plugin) {
@@ -438,11 +517,12 @@ impl Plugins {
             && manifest.provides.readers.is_empty()
             && manifest.provides.taxonomies.is_empty()
             && manifest.provides.dictionaries.is_empty()
+            && manifest.provides.writers.is_empty()
         {
             return Err(UiError::invalid(format!(
                 "plugin {} declares nothing this build can use: expected `provides.themes`, \
-                 `provides.layouts`, `provides.readers`, `provides.taxonomies` or \
-                 `provides.dictionaries`",
+                 `provides.layouts`, `provides.readers`, `provides.writers`, \
+                 `provides.taxonomies` or `provides.dictionaries`",
                 manifest.id
             )));
         }
@@ -473,6 +553,26 @@ impl Plugins {
                 &def.sample,
                 &expected,
             )?;
+        }
+
+        // A writer proves itself the way a reader does, turned round: its sample written must be
+        // exactly the bytes the package says it becomes.
+        for def in &manifest.provides.writers {
+            // It becomes a save dialog's filter, so it is an ending and nothing else.
+            if def.extension.is_empty()
+                || def.extension.len() > 12
+                || !def.extension.chars().all(|c| c.is_ascii_alphanumeric())
+            {
+                return Err(UiError::invalid(format!(
+                    "writer {}: extension {:?} is not letters and digits without the dot",
+                    def.id, def.extension
+                )));
+            }
+            let sample = std::fs::read(safe_join(source, &def.sample)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.sample)))?;
+            let expected = std::fs::read(safe_join(source, &def.expected)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.expected)))?;
+            writer::check(&def.id, &safe_join(source, &def.file)?, &sample, &expected)?;
         }
 
         // A classification set proves itself the same way, and needs no expectation of its own:
@@ -521,6 +621,13 @@ impl Plugins {
                     .iter()
                     .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
             )
+            .chain(
+                manifest
+                    .provides
+                    .writers
+                    .iter()
+                    .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
+            )
             .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()))
             .chain(
                 manifest
@@ -548,6 +655,7 @@ impl Plugins {
             readers: manifest.provides.readers,
             taxonomies: manifest.provides.taxonomies,
             dictionaries: manifest.provides.dictionaries,
+            writers: manifest.provides.writers,
         })
     }
 

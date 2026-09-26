@@ -81,6 +81,12 @@ pub enum UiError {
         plugin: String,
         message: String,
     },
+    /// A plugin's file writer failed: it trapped, ran past its deadline, ran out of its memory, or
+    /// refused the document with a reason of its own (ADR-0080).
+    Writer {
+        plugin: String,
+        message: String,
+    },
     /// Host failure, such as an unavailable data directory or poisoned mutex.
     Internal {
         message: String,
@@ -193,6 +199,7 @@ impl std::fmt::Display for UiError {
             | UiError::Busy { message }
             | UiError::FileProtected { message }
             | UiError::Reader { message, .. }
+            | UiError::Writer { message, .. }
             | UiError::Internal { message } => message,
         };
         f.write_str(message)

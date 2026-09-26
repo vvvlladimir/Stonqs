@@ -32,6 +32,12 @@ anything, and it names accounts and instruments rather than internal identifiers
 carried to another portfolio or another machine. It holds operations only: it is an interchange,
 not a backup of the whole profile.
 
+When an installed plugin brings an export format, **Export** first asks which one: `Stonqs file`
+or the format by its plugin's name. A plugin format is written from that same file, so it holds the
+same operations; what it leaves out or how it spells them is the plugin's choice, and only the
+app's own file can be imported back. A format that fails says so under the heading, naming the
+plugin, and nothing is saved.
+
 A whole broker export does not belong here — that is the Import screen, which reads the file,
 matches the instruments and writes the rows in one pass.
 

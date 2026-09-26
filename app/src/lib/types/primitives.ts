@@ -53,6 +53,8 @@ export type UiError =
   | { code: "file_protected"; message: string }
   /** A plugin's file reader failed over a file it claimed: `plugin` is which one. */
   | { code: "reader"; plugin: string; message: string }
+  /** A plugin's file writer failed or refused the document: `plugin` is which one. */
+  | { code: "writer"; plugin: string; message: string }
   | { code: "internal"; message: string };
 
 // Positions

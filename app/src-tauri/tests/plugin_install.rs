@@ -347,3 +347,88 @@ fn a_dictionary_claiming_the_apps_own_word_installs_nothing() {
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+/// The writer half of the compute contract (ADR-0080): the app's own transaction file in, another
+/// program's format out. `UPDATE_FIXTURES=1` rewrites the expectation the package ships and then
+/// fails on purpose, so the diff is read rather than waved through.
+#[test]
+fn the_example_writer_installs_and_writes_its_own_sample() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/ledger");
+    let sample = std::fs::read_to_string(example.join("sample.json")).unwrap();
+
+    let written = sq_app_lib::plugins::writer::write(&example.join("writer.wasm"), &sample)
+        .expect("the writer writes the sample it ships");
+
+    if std::env::var("UPDATE_FIXTURES").is_ok() {
+        std::fs::write(example.join("expected.journal"), &written).unwrap();
+        panic!("expected.journal was rewritten — read the diff and run again without UPDATE_FIXTURES");
+    }
+
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let plugins = Plugins::new(&dir);
+    // Installing runs the fixture check: the sample must be written to exactly these bytes.
+    let installed = plugins.install(&example).unwrap();
+    assert_eq!(installed.status, Status::Ok);
+
+    let writers = plugins.writers().unwrap();
+    assert_eq!(writers.len(), 1);
+    assert_eq!(writers[0].key, "app.stonqs.ledger/ledger");
+    assert_eq!(writers[0].extension, "journal");
+
+    // And the installed copy is what the export asks.
+    let again = plugins.write("app.stonqs.ledger/ledger", &sample).unwrap();
+    assert_eq!(again, written);
+    assert_eq!(again, std::fs::read(example.join("expected.journal")).unwrap());
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_writer_that_does_not_match_its_own_expectation_installs_nothing() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/ledger");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    let source = dir.join("package");
+    std::fs::create_dir_all(&source).unwrap();
+    for file in ["plugin.json", "writer.wasm", "sample.json", "expected.journal"] {
+        std::fs::copy(example.join(file), source.join(file)).unwrap();
+    }
+    let expected = std::fs::read_to_string(source.join("expected.journal")).unwrap();
+    std::fs::write(
+        source.join("expected.journal"),
+        expected.replace("Buy AAPL", "Sell AAPL"),
+    )
+    .unwrap();
+
+    let plugins = Plugins::new(&dir);
+    let failure = plugins.install(&source).unwrap_err();
+    assert!(
+        format!("{failure:?}").contains("does not write its own sample"),
+        "{failure:?}"
+    );
+    assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_writer_refusing_a_document_names_the_plugin() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/ledger");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let plugins = Plugins::new(&dir);
+    plugins.install(&example).unwrap();
+
+    let failure = plugins
+        .write(
+            "app.stonqs.ledger/ledger",
+            r#"{"format":"stonqs.transactions","version":9,"rows":[]}"#,
+        )
+        .unwrap_err();
+    assert!(
+        matches!(&failure, sq_app_lib::error::UiError::Writer { plugin, .. } if plugin == "app.stonqs.ledger/ledger"),
+        "{failure:?}"
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}

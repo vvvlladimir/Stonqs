@@ -7,8 +7,9 @@ into its own plugin directory, so the folder you picked is free to move afterwar
 See [ADR-0070](../../docs/decisions/0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md)
 for what a plugin may and may not be, and
 [ADR-0073](../../docs/decisions/0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
-for the file reader. This build honours five kinds of content: themes, broker import layouts,
-classification sets, operation dictionaries and file readers.
+for the file reader, [ADR-0080](../../docs/decisions/0080-a-file-writer-is-the-reader-turned-round.md)
+for the file writer. This build honours six kinds of content: themes, broker import layouts,
+classification sets, operation dictionaries, file readers and file writers.
 
 ## `midnight` — a theme
 
@@ -216,6 +217,59 @@ Returning `not-mine` is not a failure — the app moves on to the next reader an
 Returning `malformed` is, and it says so with the reader's own reason. A warning does not stop
 anything: it is shown beside the preview, in the reader's words.
 
+## `ledger` — a file writer
+
+The reader turned round: it is handed the app's own transaction file and returns the bytes of
+another format. This one writes the plain-text accounting journal that `ledger` and `hledger` read —
+one balanced entry per operation, several lines each, which no column layout could express.
+Installing it makes **Export** on the Transactions screen ask which format: `Stonqs file` or
+**Ledger journal**.
+
+```json
+{
+  "id": "app.stonqs.ledger",
+  "api": 1,
+  "name": "Ledger journal export",
+  "version": "1.0.0",
+  "provides": {
+    "writers": [
+      {
+        "id": "ledger",
+        "name": "Ledger journal",
+        "file": "writer.wasm",
+        "sample": "sample.json",
+        "expected": "expected.journal",
+        "extension": "journal"
+      }
+    ]
+  }
+}
+```
+
+The contract is `app/src-tauri/wit/writer.wit`:
+
+```
+write(canonical) -> result<bytes, reason>
+```
+
+`canonical` is the same document **Export** saves as a `Stonqs file` — the operations the screen
+shows, with its filter, already resolved by the app. The writer sees nothing else: not the
+portfolio, not a path, not the name the user will save under. It runs in exactly the reader's
+sandbox — no filesystem, no network, a frozen clock, a memory ceiling and a deadline — so the
+two are one grant, not two.
+
+`name` is what the export menu shows, in the plugin's own words. `extension` is the ending the
+saved file gets, letters and digits without the dot.
+
+`expected` is **required**, and it is compared byte for byte with what the writer makes of
+`sample`: the output *is* bytes, and the program that reads the file judges every one of them. A
+wrong journal looks like a journal, so it is checked against an answer. `src/` is the guest, about
+150 lines of Rust with `serde_json` and `wit-bindgen`, built by `./build.sh`.
+
+This writer names an operation it has no journal equivalent for — a delivery, a transfer between
+one's own accounts — in a comment line rather than guessing at it. Refusing the whole document is
+also allowed: the reason it returns is shown to the user, naming the plugin.
+
 ## When a package is wrong
 
 Installation is the check, and it refuses rather than half-installs:
@@ -234,6 +288,7 @@ Installation is the check, and it refuses rather than half-installs:
 | A classification set's CSV does not read as a tree, or leaves a row invalid | Refused, saying which |
 | A dictionary carries no words, or a word the app already reads as another operation | Refused, naming the words |
 | A dictionary's sample reads without it, or still leaves a wording unmapped or a row invalid with it | Refused, saying which |
+| A writer's `extension` is not letters and digits, its sample is not a transaction file, or writing it does not give exactly `expected` | Refused, saying which |
 
 A field the manifest carries that this build does not know is **ignored**, not refused — that is
 what lets a package add something for a later version without breaking this one. The cost is that a

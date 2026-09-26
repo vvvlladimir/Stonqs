@@ -26,7 +26,7 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   profile, in that profile's vault under the plugin's id. The host copies the manifest and the
   files it names and nothing else, and refuses a file name that leaves the package.
 - A plugin's **file reader** is the one piece of a stranger's *code* this host runs, and
-  `plugins/reader.rs` is the whole of what it is granted (ADR-0073): a WASM component with no
+  `plugins/sandbox.rs` is the whole of what it is granted (ADR-0073): a WASM component with no
   filesystem, no reachable address, a frozen clock and a seeded generator — linked at all only
   because a guest carrying a language runtime will not instantiate without them — under a memory
   ceiling and an epoch deadline. It runs **once**, in `import_load`, and what it produced replaces
@@ -37,6 +37,11 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   reader, which accepts nearly anything. `not-mine` moves on; a reader that claimed the file and
   failed is `UiError::Reader` naming the plugin, never a fall-through. The row schema is **not**
   restated in WIT — the document carries its own `format` and `version` (ADR-0066).
+- A plugin's **file writer** is the reader turned round (ADR-0080): `wit/writer.wit`,
+  `write(canonical) -> result<bytes, reason>`, run in the same `plugins/sandbox.rs`. It is handed
+  what `transactions_export` already built — the screen's filter, the store released first — and
+  never sees the portfolio or a path; `transactions_export_save` writes what it returns. Its
+  expectation is compared **byte for byte**, because its output is bytes another program judges.
 - `Store` is `Send`, not `Sync`, hence `Mutex<Store>`. Never hold that lock across a network call — background jobs open their own `Store` on `AppState::db_path` in a separate thread.
 - **Text never crosses IPC.** The host and the core send a code, a key and the values behind it;
   the sentence is written in the frontend, where the language is known — see ADR-0023. `ScopeOption`

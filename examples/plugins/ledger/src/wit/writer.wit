@@ -1,0 +1,11 @@
+// The second compute contract (ADR-0080), and the reader turned round: the app's own transaction
+// file in, the bytes of somebody else's format out. The rows are not restated here either — the
+// document says what it is through its own `format` and `version` (ADR-0066).
+
+package stonqs:writer@1.0.0;
+
+world writer {
+    /// `canonical` is a `stonqs.transactions` document, as text: what the screen shows, already
+    /// resolved by the host. The error is shown as the reason, in the writer's words.
+    export write: func(canonical: string) -> result<list<u8>, string>;
+}

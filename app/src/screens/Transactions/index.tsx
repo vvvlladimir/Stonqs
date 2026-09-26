@@ -2,7 +2,6 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react";
-import { save as saveFile } from "@tauri-apps/plugin-dialog";
 import { api, today } from "../../lib/api";
 import { ariaKeys, Command } from "../../lib/commands";
 import { Page } from "../../components/Page";
@@ -25,6 +24,7 @@ import type { TransactionFilter, TransactionInput, TransactionRow } from "../../
 import { Filters } from "./Filters";
 import { JournalTable } from "./JournalTable";
 import { TransactionForm } from "./TransactionForm";
+import { useExport } from "./useExport";
 
 export function Transactions({ focus }: { focus?: string | null }) {
   const { t, i18n } = useLingui();
@@ -34,8 +34,8 @@ export function Transactions({ focus }: { focus?: string | null }) {
   // the hint (`App`), so arriving with a new one starts here rather than syncing in an effect.
   const [query, setQuery] = useState(focus ?? "");
   const [draft, setDraft] = useState<TransactionInput | null>(null);
-  const [exporting, setExporting] = useState(false);
   const menu = useMenu();
+  const exported = useExport(filter, menu);
 
   const accounts = useAccounts();
   const rows = useTransactions(filter);
@@ -124,21 +124,6 @@ export function Transactions({ focus }: { focus?: string | null }) {
     (a, b) => Number(b) - Number(a),
   );
 
-  // The file holds what the screen holds: the same filter, not the whole journal.
-  const exportFile = async () => {
-    const path = await saveFile({
-      defaultPath: `transactions-${today()}.json`,
-      filters: [{ name: "Stonqs transactions", extensions: ["json"] }],
-    });
-    if (!path) return;
-    setExporting(true);
-    try {
-      await api.transactionsExportSave(filter, path);
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const currency = rows.data?.base_currency ?? "";
 
   const itemsFor = (row: TransactionRow): MenuItem[] => [
@@ -161,7 +146,12 @@ export function Transactions({ focus }: { focus?: string | null }) {
       }
       actions={
         <>
-          <button className="btn" onClick={exportFile} disabled={exporting}>
+          <button
+            className="btn"
+            aria-haspopup="menu"
+            onClick={(e) => exported.choose(e.currentTarget)}
+            disabled={exported.exporting}
+          >
             <DownloadSimpleIcon /> <Trans>Export</Trans>
           </button>
           <button
@@ -172,7 +162,7 @@ export function Transactions({ focus }: { focus?: string | null }) {
             <PlusIcon /> <Trans>New transaction</Trans>
           </button>
           <Command id="newTransaction" run={() => setDraft(blank())} />
-          <Command id="exportTransactions" run={exportFile} disabled={exporting} />
+          <Command id="exportTransactions" run={exported.saveOwn} disabled={exported.exporting} />
           <Command id="new" label={t`New transaction`} run={() => setDraft(blank())} />
         </>
       }
@@ -181,6 +171,7 @@ export function Transactions({ focus }: { focus?: string | null }) {
       }
     >
       <ErrorText error={remove.error} />
+      <ErrorText error={exported.error} />
 
       {draft && (
         <TransactionForm

@@ -59,14 +59,23 @@ pub fn transactions_export(state: State<AppState>, filter: TransactionFilter) ->
     )?)
 }
 
+/// Saves the export. `format` names a plugin's writer (`<plugin id>/<writer id>`, ADR-0080), which
+/// is handed the same document and returns the bytes to save; absent saves the document itself.
 #[tauri::command]
 pub fn transactions_export_save(
     state: State<AppState>,
     filter: TransactionFilter,
     path: String,
+    format: Option<String>,
 ) -> UiResult<()> {
-    let text = transactions_export(state, filter)?;
-    std::fs::write(&path, text).map_err(|e| UiError::invalid(format!("cannot write {path}: {e}")))
+    // The document is built and the store released before a writer runs: its deadline is not
+    // spent holding the lock.
+    let text = transactions_export(state.clone(), filter)?;
+    let bytes = match format {
+        Some(key) => state.plugins.write(&key, &text)?,
+        None => text.into_bytes(),
+    };
+    std::fs::write(&path, bytes).map_err(|e| UiError::invalid(format!("cannot write {path}: {e}")))
 }
 
 /// The rows a filter leaves, in stored order. Shared by the list and its export so the file can

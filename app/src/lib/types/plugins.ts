@@ -44,6 +44,16 @@ export interface PluginDictionary {
   sample: string;
 }
 
+/** A file writer a plugin brings: turns the app's own transaction file into another format. */
+export interface PluginWriter {
+  id: string;
+  name: string;
+  file: string;
+  sample: string;
+  expected: string;
+  extension: string;
+}
+
 export type Plugin = {
   id: string;
   name: string;
@@ -53,6 +63,7 @@ export type Plugin = {
   readers: PluginReader[];
   taxonomies: PluginTaxonomy[];
   dictionaries: PluginDictionary[];
+  writers: PluginWriter[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */
@@ -72,12 +83,24 @@ export interface InstalledTaxonomySet {
   plugin: string;
 }
 
+/** One export format on offer, addressed the way the save command names it. */
+export interface InstalledWriter {
+  /** `<plugin id>/<writer id>`. */
+  key: string;
+  name: string;
+  plugin: string;
+  /** The ending a saved file gets, without the dot. */
+  extension: string;
+}
+
 export interface PluginList {
   plugins: Plugin[];
   /** Only the themes that can actually be applied. */
   themes: InstalledTheme[];
   /** Only the sets that can actually be created. */
   taxonomy_sets: InstalledTaxonomySet[];
+  /** Only the export formats that can actually be written. */
+  writers: InstalledWriter[];
   /** The plugin API this build speaks. */
   api: number;
 }

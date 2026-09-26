@@ -274,8 +274,9 @@ export const api = {
     call<PositionReturnRow[]>("position_returns", { from, to, source: source ?? null }),
 
   transactionsList: (filter: TransactionFilter) => call<TransactionsData>("transactions_list", { filter }),
-  transactionsExportSave: (filter: TransactionFilter, path: string) =>
-    call<void>("transactions_export_save", { filter, path }),
+  /** `format` is a plugin writer's key; null saves the app's own file. */
+  transactionsExportSave: (filter: TransactionFilter, path: string, format: string | null = null) =>
+    call<void>("transactions_export_save", { filter, path, format }),
   transactionSave: (input: TransactionInput) => call<Transaction>("transaction_save", { input }),
   transactionDelete: (id: string) => call<void>("transaction_delete", { id }),
   /** Moves between two of the user's own accounts that arrived as two unrelated rows. */

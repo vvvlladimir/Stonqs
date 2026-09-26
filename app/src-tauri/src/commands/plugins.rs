@@ -7,7 +7,7 @@
 //! a plugin has no path into the portfolio of its own.
 
 use crate::error::UiResult;
-use crate::plugins::{PluginInfo, TaxonomySetInfo, ThemeInfo};
+use crate::plugins::{PluginInfo, TaxonomySetInfo, ThemeInfo, WriterInfo};
 use crate::state::AppState;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -20,6 +20,9 @@ pub struct PluginList {
     pub themes: Vec<ThemeInfo>,
     /// The classification sets that can actually be created, addressed as a command names them.
     pub taxonomy_sets: Vec<TaxonomySetInfo>,
+    /// The export formats that can actually be written, addressed as `transactions_export_save`
+    /// names them.
+    pub writers: Vec<WriterInfo>,
     /// The plugin API this build speaks, so the list can say what a refused package wanted.
     pub api: u32,
 }
@@ -30,6 +33,7 @@ pub fn plugins_list(state: State<AppState>) -> UiResult<PluginList> {
         plugins: state.plugins.list()?,
         themes: state.plugins.themes()?,
         taxonomy_sets: state.plugins.taxonomy_sets()?,
+        writers: state.plugins.writers()?,
         api: crate::plugins::API,
     })
 }
