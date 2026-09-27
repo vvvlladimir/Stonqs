@@ -1,4 +1,5 @@
 use super::*;
+use std::path::Path;
 
 fn package(dir: &Path, id: &str, api: u32) -> PathBuf {
     let source = dir.join(format!("src-{id}"));

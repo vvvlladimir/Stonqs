@@ -8,7 +8,7 @@
   and fed into `taxonomy_import_preview` / `taxonomy_import_commit` — the commands every taxonomy
   file already goes through, so a set has no path into the portfolio of its own. It ships no
   expectation, unlike a reader (ADR-0086): the file *is* the data, so one would be a copy. The
-  install check (`plugins::check_taxonomy`) asks only that it reads as a tree and leaves nothing
+  install check (`plugins::verify::taxonomy`) asks only that it reads as a tree and leaves nothing
   invalid, against an **empty** securities list — a set is judged for being a tree, never for
   fitting this portfolio.
 - `rebalance` divides a node's drift across all its subjects, cash included. Output differs by kind: a security gets a `RebalanceTrade`, a cash subject gets a `CashDeposit` (no price/quantity/step — a balance is paid in, not bought).
