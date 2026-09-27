@@ -21,7 +21,7 @@
   `gross_in_transaction_currency` folds in only the charges in that currency, a foreign one is a
   cash movement of its own (`foreign_charge_legs`) and is converted at *its* pair's rate on the
   transaction's date (`calc::holdings::charge_rate`) — `fx_rate_to_base` belongs to the
-  transaction's currency and is never lent to another pair. `calc::holdings::Charges` carries a
+  transaction's currency and is never lent to another pair. `calc::holdings::charges::Charges` carries a
   foreign charge back into the trade's currency through the base one so the lot's cost stays
   complete; both rates are of the same day, which is arithmetic over what was paid, not a cross
   rate synthesized at lookup.

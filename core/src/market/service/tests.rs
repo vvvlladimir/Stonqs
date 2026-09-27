@@ -1,6 +1,10 @@
 use super::*;
+use crate::error::Result;
 use crate::market::Quote;
+use crate::market::{DateRange, QuoteProvider};
+use crate::model::Security;
 use crate::model::SecurityKind;
+use crate::storage::Store;
 use chrono::NaiveDate;
 use rust_decimal_macros::dec;
 use std::sync::Mutex;

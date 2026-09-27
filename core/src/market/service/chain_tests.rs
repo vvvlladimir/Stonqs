@@ -1,8 +1,13 @@
 use super::*;
+use crate::error::{Error, Result};
 use crate::market::Quote;
+use crate::market::{DateRange, FetchPolicy, QuoteProvider};
+use crate::model::Security;
 use crate::model::SecurityKind;
+use crate::storage::Store;
 use chrono::NaiveDate;
 use rust_decimal_macros::dec;
+use std::sync::Mutex;
 
 fn d(y: i32, m: u32, day: u32) -> NaiveDate {
     NaiveDate::from_ymd_opt(y, m, day).unwrap()

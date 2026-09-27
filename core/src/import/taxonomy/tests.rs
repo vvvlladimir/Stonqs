@@ -1,6 +1,8 @@
 use super::*;
 use crate::import::{ParseConfig, parse_csv};
 use crate::model::SecurityKind;
+use crate::model::{AllocationTarget, SecurityClassification, Taxonomy};
+use crate::storage::Store;
 use rust_decimal_macros::dec;
 
 const PP: &str = "Levels 1,Levels 2,Levels 3,Levels 4,Weight,Allocation,TARGET Value,Symbol,ISIN\n\

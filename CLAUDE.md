@@ -78,8 +78,8 @@ sources/   the catalogue of shipped sources (SourceInfo rows, one constructor pe
           the only builder of MarketDataService/FxService from a `Setup` (keys, switches,
           custom sources — ADR-0050/0053). Quotes and FX are chains with a fallback guard
           (market/guard.rs, ADR-0051/0052); market/custom/ is the user-described feed (ADR-0054).
-calc/     holdings.rs -> valuation.rs -> series.rs -> risk/ / benchmark.rs
-          -> allocation.rs / rebalance/, capital_gains.rs, dividends.rs,
+calc/     holdings/ -> valuation.rs -> series.rs -> risk/ / benchmark.rs
+          -> allocation/ / rebalance/, capital_gains.rs, dividends.rs,
           income.rs, charges.rs, journal.rs, periods/, plans.rs, alerts.rs, watchlist.rs;
           twr.rs / xirr.rs;
           engine/ glues everything as PortfolioAnalytics, its impl split by subject.
