@@ -70,7 +70,7 @@ pub mod prelude {
     pub use crate::calc::{
         AlertStatus, Allocation, AllocationBucket, BenchmarkComparison, CalculationSheet, Contribution,
         DividendProfile, DividendSummary, Holdings, InstrumentMove, NearestLevel, Peak, Period, PeriodPreset,
-        PlanOccurrence, PlannedTrade, PortfolioAnalytics, PortfolioValuation, RealizedSummary,
+        PlanOccurrence, PlannedTrade, PortfolioAnalytics, PortfolioValuation, QuantityGap, RealizedSummary,
         RebalanceOptions, RebalancePlan, RiskMetrics, Trade, TradeGrouping, TradeStats, ValueSeries,
         alert_status, all_time_high, build_holdings, capital_gains_by_year, closed_trades,
         contribution_schedule, contributions_by_month, dividend_profiles, dividends_by_year, due_occurrences,

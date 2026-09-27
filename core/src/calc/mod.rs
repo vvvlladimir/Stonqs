@@ -13,6 +13,7 @@ mod dividend_forecast;
 mod dividends;
 mod engine;
 mod fire;
+mod gaps;
 mod goals;
 mod holdings;
 mod income;
@@ -66,6 +67,8 @@ pub use engine::{
     position_twr_between, position_xirr, twr_between, twr_between_with, valuation_at, valuation_at_with,
 };
 pub use fire::{FireAssumptions, FireProjection, fire_projection, percent_to_rate};
+pub(crate) use gaps::bridge_gaps;
+pub use gaps::{QuantityGap, quantity_gaps};
 pub use goals::{GoalProgress, goal_progress};
 pub use holdings::{
     CashFlow, ChargeRecord, Holdings, HoldingsOptions, IncomeRecord, RealizedGain, build_holdings,

@@ -141,3 +141,4 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [41](0041-what-a-turn-costs-is-counted-not-priced.md) | What a turn costs is counted, not priced | Accepted |
 | [42](0042-a-provider-the-user-configures.md) | A provider the user configures | Accepted |
 | [69](0069-a-new-chat-starts-where-the-last-choice-left-off.md) | A new chat starts where the last choice left off | Accepted |
+| [89](0089-a-sale-of-shares-never-received-is-reported-and-bridged.md) | A sale of shares never received is reported and bridged, not fatal | Accepted |

@@ -37,6 +37,13 @@ Three more things follow from a file being somebody else's:
   quantities and never what they cost. Imported as it stands, the position enters at a cost of
   zero and reads as pure profit; the value has to be supplied on the row.
 
+- **A sale can outrun what was ever received.** Each sale is checked against what is already
+  stored plus what the file is about to write. One that sells more than was held at that date is
+  flagged, and if the same file has rows of that instrument that will not be written — a wording
+  nobody mapped, or one marked as not an operation — the notice names them, because that is
+  usually where the missing receipt is. Crypto received by transfer is the typical case. It is a
+  warning, not a refusal: the purchase may be in an older or a later file.
+
 **A move between two brokers arrives as two unrelated rows**, because each export knows only its
 own half, and both are read as money crossing the portfolio boundary — the very thing every return
 figure is measured against. After a write the app lists payments that match in currency and size

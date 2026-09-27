@@ -4,6 +4,7 @@ import type { AccountCash, AccountRef } from "./accounts";
 import type { PortfolioValuation } from "./positions";
 import type { DateString } from "./primitives";
 import type { SecurityRef } from "./securities";
+import type { TransactionKind } from "./transactions";
 export type CostBasisMethod = "FIFO" | "AVERAGE_COST";
 
 export interface Portfolio {
@@ -29,6 +30,21 @@ export interface SetupInput {
   account_currency: string;
   /** Optional securities account linked to it. */
   securities_account_name: string | null;
+}
+
+/**
+ * A sale or outgoing delivery taking more than the ledger held at that date: the purchase or
+ * incoming transfer is missing. Figures around it are estimated (ADR-0089).
+ */
+export interface QuantityGap {
+  transaction_id: string;
+  date: DateString;
+  account_id: string;
+  security_id: string;
+  kind: TransactionKind;
+  quantity: string;
+  held: string;
+  missing: string;
 }
 
 /** Complete data payload for the overview screen. */

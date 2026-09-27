@@ -26,6 +26,11 @@
   complete; both rates are of the same day, which is arithmetic over what was paid, not a cross
   rate synthesized at lookup.
 - Buy commission goes into cost basis; never also counted in `Holdings::fees_base`. `Holdings::charges` records only standalone Fee/Tax operations. A cost *rate* asks the opposite question and must count that commission, so it goes through `calc::costs_paid`, never through the charges rollups — see ADR-0024.
+- A disposal of more than is held is a hole in the ledger, not a short position (ADR-0089):
+  `build_holdings` refuses it, `PortfolioAnalytics::transactions_until` bridges it with an implied
+  `DeliveryInbound` at the disposal's own price (nil result, value in as a flow; never stored), and
+  `quantity_gaps` / `portfolio_gaps` report it over the whole portfolio for the banner. Within a
+  day `ordered_events` applies acquisitions first — storage order is by random id.
 - `Position::accounts` values sum to `quantity`. A disposal from an account that never held the shares goes negative there rather than being smeared over other accounts — that's a data inconsistency, and hiding it forges the answer to "where is it".
 - Quotes are stored already split-adjusted; `corporate_actions` adjust lots, not quotes.
 - `quote_coverage` records what was asked; `quotes` records what came back. Extend coverage even when a provider returns nothing.

@@ -66,6 +66,7 @@ pub fn run() {
             commands::dashboard::dashboard_summary,
             commands::portfolio::portfolio_get,
             commands::portfolio::portfolio_save,
+            commands::portfolio::portfolio_gaps,
             commands::portfolio::setup_portfolio,
             commands::plugins::plugins_list,
             commands::plugins::plugin_install,

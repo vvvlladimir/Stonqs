@@ -20,8 +20,9 @@ fn trade_republic_mapping(account: &Account) -> ImportMapping {
     ImportMapping::detect(&headers).with_account(&account.id)
 }
 
-/// The file parses without aliases; only account selection remains.
-/// Three rows need missing securities, a separate status rather than an error.
+/// The file parses without aliases; only account selection remains — apart from the two
+/// wordings no dictionary knows (`STOCKPERK`, `FREE_RECEIPT`), which the shipped layout maps.
+/// Six rows need missing securities, a separate status rather than an error.
 #[test]
 fn trade_republic_export_needs_only_the_account() {
     let store = Store::open_in_memory().unwrap();
@@ -40,9 +41,10 @@ fn trade_republic_export_needs_only_the_account() {
 
     // Instrument name has its own column; otherwise the ISIN would be the name.
     assert_eq!(mapping.column(ImportField::Name), Some("name"));
-    assert_eq!(preview.summary.invalid, 0, "{:?}", preview.rows);
+    assert_eq!(preview.unknown_kinds(), vec!["FREE_RECEIPT", "STOCKPERK"]);
+    assert_eq!(preview.summary.invalid, 2, "{:?}", preview.rows);
     assert_eq!(preview.summary.ready, 1, "a cash row needs no security");
-    assert_eq!(preview.summary.unknown_securities, 3);
+    assert_eq!(preview.summary.unknown_securities, 6);
 
     // Sale quantity has broker sign; operation kind carries direction.
     let sell = &preview.rows[2].draft.as_ref().unwrap();
@@ -103,7 +105,11 @@ fn a_resolved_isin_becomes_a_security_with_a_real_ticker() {
         etf.name.as_deref(),
         Some("iShares Core S&P 500 UCITS ETF USD (Acc)")
     );
-    assert_eq!(preview.unresolved_symbols().len(), 1, "only Apple is left");
+    assert_eq!(
+        preview.unresolved_symbols().len(),
+        3,
+        "Apple, Neptune and Stellar are left"
+    );
 
     service.commit(&preview, &ImportOptions::default()).unwrap();
 
@@ -175,7 +181,13 @@ fn the_brokers_fx_column_does_not_shrink_amounts_in_the_base_currency() {
         .unwrap();
     service.commit(&preview, &ImportOptions::default()).unwrap();
 
-    let transactions = store.transactions_for_account(&account.id).unwrap();
+    // Only the dividend: without the layout the Stellar receipt is unread and its sale uncovered.
+    let transactions: Vec<_> = store
+        .transactions_for_account(&account.id)
+        .unwrap()
+        .into_iter()
+        .filter(|t| t.kind == TransactionKind::Dividend)
+        .collect();
     let holdings = build_holdings(&transactions, "EUR", &store).unwrap();
     assert_eq!(holdings.income[0].gross_base, dec!(0.22));
     // 0.22 − 0.03 = 0.19, not 0.19 × 0.853898 = 0.162240.

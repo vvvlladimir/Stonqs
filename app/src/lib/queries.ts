@@ -43,6 +43,7 @@ export const keys = {
     source?: Source,
   ) => key("plugin-reads", reads?.join(","), date, from, to, source ?? undefined),
   portfolio: () => key("portfolio"),
+  ledgerGaps: () => key("ledger-gaps"),
   aiKeyStatus: (provider?: string) => key("ai-key-status", provider),
   aiChats: () => key("ai-chats"),
   aiMessages: (chatId?: string) => key("ai-messages", chatId),
@@ -235,6 +236,11 @@ export function useAiGrants(chatId: string | null) {
 
 export function usePortfolio() {
   return useQuery({ queryKey: keys.portfolio(), queryFn: api.portfolioGet });
+}
+
+/** Sales of shares the ledger never received, over the whole portfolio. */
+export function useLedgerGaps() {
+  return useQuery({ queryKey: keys.ledgerGaps(), queryFn: api.portfolioGaps });
 }
 
 export function useAccounts() {
@@ -724,6 +730,7 @@ export function useImportTemplates() {
 
 /** Every key computed from transactions and prices — a report, not a stored list. */
 const REPORTS: QueryKey[] = [
+  keys.ledgerGaps(),
   keys.positions(),
   keys.pluginReads(),
   keys.dashboard(),

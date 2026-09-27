@@ -139,7 +139,8 @@ export type ProblemCode =
   | "ACCOUNT_CURRENCY_MISMATCH"
   | "TICKER_ISIN_CONFLICT"
   | "SIMILAR_IN_STORE"
-  | "POSSIBLE_SPLIT";
+  | "POSSIBLE_SPLIT"
+  | "SALE_EXCEEDS_HOLDINGS";
 
 export interface ImportProblem {
   row: number | null;

@@ -292,6 +292,11 @@ msgstr "{0, plural, one {# request} other {# requests}}"
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
+#. placeholder {0}: uncovered.length
+#: src/screens/Import/CommitStep.tsx
+msgid "{0, plural, one {# row sells} other {# rows sell}} more {uncoveredSymbols} than the database and this file ever received. The purchase or incoming transfer is missing, so the figures for it will be estimated — open \"Row notices\" below for where it may be."
+msgstr "{0, plural, one {# row sells} other {# rows sell}} more {uncoveredSymbols} than the database and this file ever received. The purchase or incoming transfer is missing, so the figures for it will be estimated — open \"Row notices\" below for where it may be."
+
 #. placeholder {0}: errors.length
 #. placeholder {0}: preview.rows.length
 #. placeholder {0}: symbol.count
@@ -406,6 +411,26 @@ msgstr "{0} · {1} of {2} · {3} downloaded"
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{0} · previous period"
 msgstr "{0} · previous period"
+
+#. placeholder {0}: p.quantity
+#. placeholder {1}: p.symbol
+#. placeholder {2}: p.date
+#. placeholder {3}: p.held
+#. placeholder {4}: p.symbol
+#: src/screens/Import/labels.ts
+msgid "{0} {1} leave on {2}, but only {3} is held then. The purchase or incoming transfer is missing: until it is added, the figures for {4} are estimated."
+msgstr "{0} {1} leave on {2}, but only {3} is held then. The purchase or incoming transfer is missing: until it is added, the figures for {4} are estimated."
+
+#. placeholder {0}: p.quantity
+#. placeholder {1}: p.symbol
+#. placeholder {2}: p.date
+#. placeholder {3}: p.held
+#. placeholder {4}: p.unread
+#. placeholder {5}: p.symbol
+#. placeholder {6}: p.unread_kinds
+#: src/screens/Import/labels.ts
+msgid "{0} {1} leave on {2}, but only {3} is held then. This file has {4} more rows for {5} that will not be written ({6}) — map that wording on the \"Parsing\" step, most likely to an incoming delivery."
+msgstr "{0} {1} leave on {2}, but only {3} is held then. This file has {4} more rows for {5} that will not be written ({6}) — map that wording on the \"Parsing\" step, most likely to an incoming delivery."
 
 #. placeholder {0}: transactionLabel(i18n, part.kind)
 #. placeholder {1}: year.year
@@ -767,6 +792,10 @@ msgstr "{subject}: the ticker field holds an ISIN, which has no prices. Open Ins
 msgid "{symbol} fell below {level}"
 msgstr "{symbol} fell below {level}"
 
+#: src/components/domain/LedgerGaps.tsx
+msgid "{symbol} is sold without having been bought: {count, plural, one {# sale} other {# sales}} from {since} take more than the operations ever received. Its figures are estimated until the purchase or the incoming transfer is added — as a new transaction, or by importing the file again with that row mapped."
+msgstr "{symbol} is sold without having been bought: {count, plural, one {# sale} other {# sales}} from {since} take more than the operations ever received. Its figures are estimated until the purchase or the incoming transfer is added — as a new transaction, or by importing the file again with that row mapped."
+
 #: src/components/domain/QuoteSpark.tsx
 msgid "{symbol} over {QUOTE_WINDOW_DAYS} days"
 msgstr "{symbol} over {QUOTE_WINDOW_DAYS} days"
@@ -786,6 +815,10 @@ msgstr "{symbol}: date reached"
 #: src/lib/alerts.ts
 #~ msgid "{symbol}: limit reached"
 #~ msgstr "{symbol}: limit reached"
+
+#: src/components/domain/LedgerGaps.tsx
+msgid "{symbols} are sold without having been bought. Their figures are estimated until the purchases or incoming transfers are added — as new transactions, or by importing the files again with those rows mapped."
+msgstr "{symbols} are sold without having been bought. Their figures are estimated until the purchases or incoming transfers are added — as new transactions, or by importing the files again with those rows mapped."
 
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{taxonomies, plural, one {# classification set} other {# classification sets}}"
@@ -5456,6 +5489,10 @@ msgstr "months ahead"
 msgid "More actions"
 msgstr "More actions"
 
+#: src/screens/Import/labels.ts
+msgid "more is sold than was ever received"
+msgstr "more is sold than was ever received"
+
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Move"
 msgstr "Move"
@@ -8305,6 +8342,10 @@ msgstr "Show list"
 #: src/components/domain/tour/TourLayer.tsx
 msgid "Show me around"
 msgstr "Show me around"
+
+#: src/components/domain/LedgerGaps.tsx
+msgid "Show operations"
+msgstr "Show operations"
 
 #: src/screens/Import/ProblemList.tsx
 msgid "show rows"

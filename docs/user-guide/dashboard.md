@@ -100,3 +100,9 @@ instead of running flat to the right edge. Where the portfolio's line sits above
 gained purchasing power; below it, it lost some despite any gain in money terms.
 
 Charts fill the tile they are in, so a tile dragged taller is drawn into rather than padded out.
+
+A red notice above the board saying an instrument "is sold without having been bought" means the
+operations sell more of it than they ever brought in. The tiles still show figures, but those for
+that instrument are estimates until the missing purchase or incoming transfer is added; **Show
+operations** opens the transactions filtered to it. See the cost-basis reference for how the gap is
+treated.

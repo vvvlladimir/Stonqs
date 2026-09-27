@@ -118,6 +118,7 @@ import type {
   WidgetRead,
   Unlock,
   Portfolio,
+  QuantityGap,
   PortfolioInput,
   RealPerformance,
   Security,
@@ -178,6 +179,7 @@ export const api = {
     call<DashboardData>("dashboard_summary", { date, source: source ?? null }),
 
   portfolioGet: () => call<Portfolio>("portfolio_get"),
+  portfolioGaps: () => call<QuantityGap[]>("portfolio_gaps"),
   portfolioSave: (input: PortfolioInput) => call<Portfolio>("portfolio_save", { input }),
   setupPortfolio: (input: SetupInput) => call<Portfolio>("setup_portfolio", { input }),
 

@@ -38,3 +38,18 @@ the result is counted, which is why the choice is a tax question rather than a v
 
 Quantity, price and market value are the same under either method. So is anything derived from
 the value series — time-weighted return, volatility, drawdown — because those never read a cost.
+
+## A sale of shares that were never bought
+
+Every sale must consume lots, so a sale larger than what the operations ever brought in has
+nothing to consume. That is a hole in the history — usually a purchase or an incoming transfer
+(crypto sent from another wallet, shares moved from another broker) that was never recorded — not
+a short position.
+
+The app does not stop over it. A red notice above every screen names the instrument, and until the
+missing operation is added its figures are **estimates**: the uncovered part is treated as having
+arrived on the day of the sale at the sale's own price. Its realised result is therefore nil except
+for the sale's costs, and its value shows as money arriving rather than as a gain. The rest of the
+portfolio is unaffected. The fix is to add the missing purchase or incoming delivery with its real
+date and cost, as a new transaction or by importing again with that row mapped; the notice then
+disappears.

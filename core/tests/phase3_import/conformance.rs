@@ -145,13 +145,23 @@ fn every_fixture_is_recognised_as_the_layout_it_names() {
 /// uuids, and `(date, id)` is the ledger's order, not a file's.
 fn sorted(mut rows: Vec<CanonicalRow>) -> Vec<CanonicalRow> {
     rows.sort_by(|a, b| {
-        (&a.date, &a.kind, &a.symbol, &a.amount, &a.quantity).cmp(&(
-            &b.date,
-            &b.kind,
-            &b.symbol,
-            &b.amount,
-            &b.quantity,
-        ))
+        // The broker's id last: two identical orders differ in nothing else.
+        (
+            &a.date,
+            &a.kind,
+            &a.symbol,
+            &a.amount,
+            &a.quantity,
+            &a.external_id,
+        )
+            .cmp(&(
+                &b.date,
+                &b.kind,
+                &b.symbol,
+                &b.amount,
+                &b.quantity,
+                &b.external_id,
+            ))
     });
     rows
 }

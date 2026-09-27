@@ -31,6 +31,7 @@ import { AiToggle } from "./components/domain/AiToggle";
 import { AlertNotifier } from "./components/domain/AlertNotifier";
 import { SyncChip } from "./components/domain/MarketRefresh";
 import { AsOfBanner } from "./components/domain/AsOfPicker";
+import { LedgerGapsBanner } from "./components/domain/LedgerGaps";
 import { Nav } from "./components/Nav";
 import { SCREENS } from "./components/Nav/model";
 import { Commands } from "./components/domain/Commands";
@@ -203,6 +204,7 @@ export function App() {
                     <Nav screen={screen} focus={focus} go={go} alertsDot={(unseen.data ?? 0) > 0} />
 
                     <div className="main">
+                      <LedgerGapsBanner />
                       <AsOfBanner />
                       <main ref={main} id="main" className="app" tabIndex={-1} aria-label={screenTitle}>
                         <Suspense fallback={<Pending />}>

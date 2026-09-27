@@ -75,3 +75,73 @@ fn a_restated_row_replaces_the_one_it_names_instead_of_joining_it() {
     assert_eq!(restated.amount, dec!(1060.00));
     assert_eq!(restated.price, dec!(212.00));
 }
+
+/// Two orders of the same size at the same price seconds apart: identical content, two broker
+/// ids, two operations. Both are written, and the same file again writes neither.
+#[test]
+fn identical_rows_the_broker_names_apart_are_two_operations() {
+    const TWICE: &str = "\
+date,type,symbol,quantity,unit_price,currency,fee,amount,transaction id
+2025-06-17,BUY,AAPL,1,100.00,USD,1.00,100.00,ed8c3e9d
+2025-06-17,BUY,AAPL,1,100.00,USD,1.00,100.00,4b286ff9
+";
+    let (store, account) = store_with_account();
+    store
+        .save_security(&Security::new("AAPL", "Apple", "USD", SecurityKind::Stock))
+        .unwrap();
+
+    let (service, mapping) = imported(&store, &account, TWICE);
+    let preview = service
+        .preview(TWICE.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+    assert_eq!(preview.summary.ready, 2, "{:?}", preview.rows);
+    assert_eq!(
+        service
+            .commit(&preview, &ImportOptions::default())
+            .unwrap()
+            .imported,
+        2
+    );
+
+    let again = service
+        .preview(TWICE.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+    assert_eq!(again.summary.duplicates, 2);
+}
+
+/// One of the two was imported earlier by a layout that did not read the id: the stored row
+/// answers for one of them, and the other is still new.
+#[test]
+fn a_stored_copy_without_an_id_answers_for_one_row_only() {
+    const TWICE: &str = "\
+date,type,symbol,quantity,unit_price,currency,fee,amount,transaction id
+2025-06-17,BUY,AAPL,1,100.00,USD,1.00,100.00,ed8c3e9d
+2025-06-17,BUY,AAPL,1,100.00,USD,1.00,100.00,4b286ff9
+";
+    let (store, account) = store_with_account();
+    store
+        .save_security(&Security::new("AAPL", "Apple", "USD", SecurityKind::Stock))
+        .unwrap();
+    let (service, mapping) = imported(&store, &account, TWICE);
+    let mut without_id = mapping.clone();
+    without_id.columns.remove(&ImportField::ExternalId);
+    let first = service
+        .preview(TWICE.as_bytes(), &ParseConfig::default(), Some(&without_id), &[])
+        .unwrap();
+    assert_eq!(first.summary.ready, 1, "without the id the two rows are one");
+    service.commit(&first, &ImportOptions::default()).unwrap();
+
+    let preview = service
+        .preview(TWICE.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+    assert_eq!(preview.summary.duplicates, 1, "{:?}", preview.rows);
+    assert_eq!(preview.summary.ready, 1);
+    assert_eq!(preview.summary.similar, 0);
+    assert_eq!(
+        service
+            .commit(&preview, &ImportOptions::default())
+            .unwrap()
+            .imported,
+        1
+    );
+}

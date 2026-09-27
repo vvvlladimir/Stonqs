@@ -18,7 +18,7 @@ pub use returns::{PositionReturnRow, PositionRisk};
 pub use returns::{position_returns, position_twr_between, position_xirr, twr_between, twr_between_with};
 pub use valuation::{holdings_at, valuation_at, valuation_at_with};
 
-use super::{HoldingsOptions, scoped_transactions};
+use super::{HoldingsOptions, QuantityGap, bridge_gaps, quantity_gaps, scoped_transactions};
 use crate::error::Result;
 use crate::model::{Account, CorporateAction, Portfolio, Security, Transaction};
 use crate::storage::Store;
@@ -85,12 +85,25 @@ impl<'a> PortfolioAnalytics<'a> {
             .with_corporate_actions(&self.corporate_actions)
     }
 
-    /// Portfolio transactions rewritten for the selected account scope.
+    /// Portfolio transactions rewritten for the selected account scope, a disposal of shares
+    /// never received bridged by an implied delivery (see [`Self::quantity_gaps`]).
     pub fn transactions_until(&self, date: Option<NaiveDate>) -> Result<Vec<Transaction>> {
         let all = self
             .store
             .transactions_for_accounts(&self.portfolio.account_ids, date)?;
-        Ok(scoped_transactions(&all, &self.accounts, &self.scope))
+        bridge_gaps(
+            scoped_transactions(&all, &self.accounts, &self.scope),
+            &self.corporate_actions,
+        )
+    }
+
+    /// Every disposal of the whole portfolio that takes more than was held — the holes
+    /// [`Self::transactions_until`] bridges. Not scoped: a hole is in the ledger, not in a view.
+    pub fn quantity_gaps(&self) -> Result<Vec<QuantityGap>> {
+        let all = self
+            .store
+            .transactions_for_accounts(&self.portfolio.account_ids, None)?;
+        quantity_gaps(&all, &self.corporate_actions)
     }
 
     /// Date of the portfolio's first transaction.

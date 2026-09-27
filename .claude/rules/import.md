@@ -53,6 +53,12 @@
   request, ADR-0034), so this covers only what that route cannot. The
   amount-vs-quantity×price allowance is per **unit** rather than flat, because a printed unit
   price is rounded and that rounding multiplies by the quantity.
+- A disposal is checked against the **stored ledger plus the rows about to be written**
+  (`preview::holdings`, `calc::quantity_gaps`): one taking more than is held is
+  `SaleExceedsHoldings`, a warning naming the file's unread rows of the same instrument
+  (`unread`, `unread_kinds`) as the likely cause (ADR-0089). Identity is counted, not a set: two
+  rows of one content with two broker ids are two operations, and each stored row answers for one
+  row of the file.
 - Two legs of one move that arrived from **two different exports** are never joined by the import:
   `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
   `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the

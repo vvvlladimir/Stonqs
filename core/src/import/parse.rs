@@ -150,6 +150,10 @@ pub enum ProblemCode {
     /// One instrument's prices in the file step by a whole factor: a split the broker applied
     /// part-way through the statement.
     PossibleSplit,
+
+    /// A sale or outgoing delivery takes more than the stored ledger and this file hold of the
+    /// instrument at that date: the purchase or incoming transfer is missing.
+    SaleExceedsHoldings,
 }
 
 /// File- or row-level diagnostic collected during parsing.
