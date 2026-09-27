@@ -5,7 +5,7 @@ use crate::scope::DataScope;
 use crate::state::AppState;
 use rust_decimal::Decimal;
 use serde::Serialize;
-use sq_core::calc::{Trade, TradeStats, TradingVolume, trade_stats};
+use sq_core::calc::{Trade, TradeGrouping, TradeStats, TradingVolume, trade_stats};
 use sq_core::market::DateRange;
 use std::collections::HashMap;
 use tauri::State;
@@ -42,6 +42,7 @@ pub fn trades_summary(
     state: State<AppState>,
     from: String,
     to: String,
+    by: Option<TradeGrouping>,
     source: Option<DataScope>,
 ) -> UiResult<TradesData> {
     let from = parse_date(&from)?;
@@ -53,7 +54,9 @@ pub fn trades_summary(
     let scope = state.scope_selection_in(&store, source.as_ref())?;
     let analytics = scope.analytics(&store)?;
 
-    let book = analytics.trades(to).map_err(|e| named(&store, e))?;
+    let book = analytics
+        .trades(to, by.unwrap_or_default())
+        .map_err(|e| named(&store, e))?;
     let volume = analytics.trading_volume(from, to)?;
     let summary = analytics
         .period_summary(DateRange::new(from, to))

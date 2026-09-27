@@ -104,7 +104,8 @@ pub(crate) use series::dietz_capital;
 pub use series::{GrowthSeries, StatSeries, ValueSeries, value_series};
 pub use summary::{PeriodSummary, period_summary};
 pub use trades::{
-    Trade, TradeBook, TradeStats, TradingVolume, closed_trades, open_trades, trade_stats, trading_volume,
+    Trade, TradeBook, TradeGrouping, TradeStats, TradingVolume, closed_trades, open_trades, trade_stats,
+    trading_volume,
 };
 pub use transfers::{TransferPair, transfer_candidates};
 pub use twr::{TwrPoint, annualize, time_weighted_return};

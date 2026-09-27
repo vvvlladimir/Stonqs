@@ -68,6 +68,7 @@ import type {
   CustomSource,
   CustomTestRow,
   ReportsData,
+  TradeGrouping,
   TradesData,
   IncomeData,
   TaxonomyIncomeData,
@@ -304,8 +305,8 @@ export const api = {
   dividendsExpected: (months: number, source?: Source) =>
     call<ExpectedDividendsData>("dividends_expected", { months, source: source ?? null }),
   /** Open and closed trades of a window, with the turnover the trading produced. */
-  tradesSummary: (from: DateString, to: DateString, source?: Source) =>
-    call<TradesData>("trades_summary", { from, to, source: source ?? null }),
+  tradesSummary: (from: DateString, to: DateString, by: TradeGrouping, source?: Source) =>
+    call<TradesData>("trades_summary", { from, to, by, source: source ?? null }),
   /** Full risk report; rolling-volatility window is in trading days. */
   riskReport: (from: DateString, to: DateString, risk_free_rate: number, window_days = 63, source?: Source) =>
     call<RiskReport>("risk_report", {

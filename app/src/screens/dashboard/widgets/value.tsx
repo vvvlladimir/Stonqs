@@ -390,7 +390,7 @@ export function FromTrades({
   foot?: (data: TradesData) => ReactNode;
 }) {
   const range = useRange(ctx.date, ctx.period);
-  const query = useTrades(range, ctx.source);
+  const query = useTrades(range, "POSITION", ctx.source);
   if (!range)
     return (
       <p className="muted">

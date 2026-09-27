@@ -103,6 +103,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [78](0078-the-app-states-what-it-is-not.md) | The app states what it is not, and carries its notices | Accepted |
 | [79](0079-a-latest-close-source-extends-the-tail-and-never-rewrites-the-history.md) | A latest-close source extends the tail and never rewrites the history | Accepted |
 | [80](0080-a-file-writer-is-the-reader-turned-round.md) | A file writer is the reader turned round | Accepted |
+| [81](0081-a-trade-may-be-cut-per-lot.md) | A trade may be cut per lot | Accepted |
 
 ## Profiles, keys and encryption
 

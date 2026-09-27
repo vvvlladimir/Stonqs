@@ -1,5 +1,6 @@
 //! A trade is a position's life: it opens with a purchase, grows with later ones, and one
-//! disposal ends it. The numbers come from the lots a disposal consumed — see ADR-0027.
+//! disposal ends it. The numbers come from the lots a disposal consumed — see ADR-0027. Cut per
+//! lot instead, every purchase is a trade of its own (`TradeGrouping::Lot`, ADR-0081).
 
 use super::{CashFlow, Holdings, PortfolioValuation, RealizedGain, xirr};
 use crate::error::Result;
@@ -94,30 +95,87 @@ fn trade(
     })
 }
 
-/// One trade per disposal, in disposal order. An outbound delivery ends a trade too — it
-/// realizes a result, and dropping it would lose everything the shares earned before leaving.
-pub fn closed_trades(realized: &[RealizedGain]) -> Vec<Trade> {
+/// How trades are cut out of the lots. Both answers are right; they answer different questions —
+/// "how did holding this go" against "how did each purchase go".
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum TradeGrouping {
+    /// One trade per disposal and per open position, however many purchases fed it.
+    #[default]
+    Position,
+    /// One trade per lot: a sale that consumed three purchases is three trades.
+    Lot,
+}
+
+/// Each lot's share of `total`, by quantity. The last lot takes what the division left, so the
+/// shares add up to `total` to the last digit.
+fn shares(lots: &[Lot], total: Decimal) -> Vec<Decimal> {
+    let quantity: Decimal = lots.iter().map(|l| l.quantity).sum();
+    if quantity.is_zero() {
+        return vec![Decimal::ZERO; lots.len()];
+    }
+    let mut out: Vec<Decimal> = lots.iter().map(|l| total * l.quantity / quantity).collect();
+    if let Some((last, rest)) = out.split_last_mut() {
+        *last = total - rest.iter().sum::<Decimal>();
+    }
+    out
+}
+
+/// The trades one set of lots makes, leaving at `exit_value_base` on `exit_date`.
+fn trades_of(
+    security_id: &str,
+    lots: &[Lot],
+    exit_value_base: Decimal,
+    exit_date: NaiveDate,
+    closed: bool,
+    by: TradeGrouping,
+) -> Vec<Trade> {
+    match by {
+        TradeGrouping::Position => trade(security_id, lots, exit_value_base, exit_date, closed)
+            .into_iter()
+            .collect(),
+        TradeGrouping::Lot => lots
+            .iter()
+            .zip(shares(lots, exit_value_base))
+            .filter_map(|(lot, share)| {
+                trade(security_id, std::slice::from_ref(lot), share, exit_date, closed)
+            })
+            .collect(),
+    }
+}
+
+/// One trade per disposal, in disposal order — or, per lot, one per lot it consumed. An outbound
+/// delivery ends a trade too: it realizes a result, and dropping it would lose everything the
+/// shares earned before leaving.
+pub fn closed_trades(realized: &[RealizedGain], by: TradeGrouping) -> Vec<Trade> {
     realized
         .iter()
-        .filter_map(|g| trade(&g.security_id, &g.lots, g.net_proceeds_base(), g.date, true))
+        .flat_map(|g| trades_of(&g.security_id, &g.lots, g.net_proceeds_base(), g.date, true, by))
         .collect()
 }
 
-/// One trade per open position, marked to market at the valuation date. Under average cost
-/// a position has a single merged lot, so its trade opens at the earliest purchase.
-pub fn open_trades(holdings: &Holdings, valuation: &PortfolioValuation) -> Vec<Trade> {
+/// One trade per open position — or per lot still held — marked to market at the valuation date.
+/// Under average cost a position has a single merged lot, so both groupings give one trade that
+/// opens at the earliest purchase.
+pub fn open_trades(holdings: &Holdings, valuation: &PortfolioValuation, by: TradeGrouping) -> Vec<Trade> {
     valuation
         .positions
         .iter()
-        .filter_map(|p| {
-            let position = holdings.positions.get(&p.security_id)?;
-            trade(
-                &p.security_id,
-                &position.lots,
-                p.market_value_base,
-                valuation.date,
-                false,
-            )
+        .flat_map(|p| {
+            holdings
+                .positions
+                .get(&p.security_id)
+                .map(|position| {
+                    trades_of(
+                        &p.security_id,
+                        &position.lots,
+                        p.market_value_base,
+                        valuation.date,
+                        false,
+                        by,
+                    )
+                })
+                .unwrap_or_default()
         })
         .collect()
 }
@@ -282,6 +340,20 @@ mod tests {
         assert!(t.is_open());
         assert_eq!(t.pnl_base, dec!(200));
         assert_eq!(t.holding_days, 152);
+    }
+
+    /// 100 over three equal lots is 33.33… each, which does not add back to 100 at any precision;
+    /// the last lot takes 100 − 2 × 33.33… so the shares sum to exactly what came in.
+    #[test]
+    fn lot_shares_add_up_to_the_whole() {
+        let lots = [
+            lot(day(2024, 1, 1), dec!(1), dec!(10)),
+            lot(day(2024, 2, 1), dec!(1), dec!(10)),
+            lot(day(2024, 3, 1), dec!(1), dec!(10)),
+        ];
+        let split = shares(&lots, dec!(100));
+        assert_eq!(split.iter().sum::<Decimal>(), dec!(100));
+        assert_eq!(split[0].round_dp(2), dec!(33.33));
     }
 
     /// 1000 held 100 days and 100 held 900 days: the average leans to the money,

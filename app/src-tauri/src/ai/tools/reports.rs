@@ -30,16 +30,18 @@ pub(super) const REPORT_TRADES: Tool = Tool {
     name: "report_trades",
     description: "Trading over a period: what was bought and sold, how the trades closed in \
                   the window turned out, how long they were held and what is still open. A \
-                  trade is the whole round trip, not one row of the ledger.",
+                  trade is the whole round trip, not one row of the ledger — per position by \
+                  default, or per purchase with `by: LOT`.",
     access: Access::Ask,
     schema: || {
         json!({
             "type": "object",
             "properties": {
                 "period": period_property(),
-                "limit": { "type": ["integer", "null"], "description": "How many closed trades to list, most recent first. Null means 20." }
+                "limit": { "type": ["integer", "null"], "description": "How many closed trades to list, most recent first. Null means 20." },
+                "by": { "type": ["string", "null"], "enum": ["POSITION", "LOT", null], "description": "POSITION: one trade per position's life, however many purchases fed it. LOT: one trade per purchase, a sale's proceeds shared by quantity. Null means POSITION." }
             },
-            "required": ["period", "limit"],
+            "required": ["period", "limit", "by"],
             "additionalProperties": false
         })
     },
@@ -153,7 +155,11 @@ pub(super) const TRADES_CAP: usize = 20;
 pub(super) fn report_trades(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let range = resolve_period(context, args)?;
     let analytics = context.scope.analytics(context.store).map_err(tool)?;
-    let book = analytics.trades(range.to).map_err(tool)?;
+    let by = match args.get("by").and_then(Value::as_str) {
+        Some("LOT") => sq_core::calc::TradeGrouping::Lot,
+        _ => sq_core::calc::TradeGrouping::Position,
+    };
+    let book = analytics.trades(range.to, by).map_err(tool)?;
     let volume = analytics.trading_volume(range.from, range.to).map_err(tool)?;
     let summary = analytics.period_summary(range).map_err(tool)?;
     let securities = context.store.list_securities().map_err(tool)?;

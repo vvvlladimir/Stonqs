@@ -7,6 +7,7 @@ import type {
   PaymentPeriod,
   PeriodRange,
   SheetPeriod,
+  TradeGrouping,
   TransactionFilter,
   TransactionKind,
 } from "./types";
@@ -77,8 +78,8 @@ export const keys = {
     key("performance-breakdown", from, to, period, source ?? undefined),
   goals: (date?: DateString) => key("goals", date),
   limits: (date?: DateString) => key("limits", date),
-  trades: (from?: DateString, to?: DateString, source?: Source) =>
-    key("trades", from, to, source ?? undefined),
+  trades: (from?: DateString, to?: DateString, by?: TradeGrouping, source?: Source) =>
+    key("trades", from, to, by, source ?? undefined),
   payments: (from?: DateString, to?: DateString, period?: PaymentPeriod, source?: Source) =>
     key("payments", from, to, period, source ?? undefined),
   expectedDividends: (months?: number, source?: Source) =>
@@ -487,10 +488,11 @@ export function usePayments(range: PeriodRange | undefined, period: PaymentPerio
   });
 }
 
-export function useTrades(range: PeriodRange | undefined, source?: Source) {
+/** `by` defaults to one trade per position, which is what a dashboard tile counts. */
+export function useTrades(range: PeriodRange | undefined, by: TradeGrouping = "POSITION", source?: Source) {
   return useQuery({
-    queryKey: keys.trades(range?.from, range?.to, source),
-    queryFn: () => api.tradesSummary(range!.from, range!.to, source),
+    queryKey: keys.trades(range?.from, range?.to, by, source),
+    queryFn: () => api.tradesSummary(range!.from, range!.to, by, source),
     enabled: range !== undefined,
   });
 }

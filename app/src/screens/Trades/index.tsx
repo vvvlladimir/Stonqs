@@ -4,16 +4,19 @@ import { useState } from "react";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import { useTrades } from "../../lib/queries";
 import { Page } from "../../components/Page";
-import { Async, Empty, Panel, Pending, QueryError } from "../../components/ui";
+import { Async, Empty, Panel, Pending, QueryError, Seg } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
 import { TradeMetrics } from "./TradeMetrics";
 import { TradesTable } from "./TradesTable";
 import { useAsOf } from "../../lib/asOf";
+import { useUiState } from "../../lib/uiState";
+import type { TradeGrouping } from "../../lib/types";
 
 /**
- * A trade is one purchase and the sales that emptied it — not an instrument and not a
- * transaction. The period selects which trades were *closed*; what is still held is shown
- * as of its end, because an open trade has no date to fall inside a window.
+ * A trade is a position's life — or, per lot, one purchase and the part of a sale that emptied
+ * it; not an instrument and not a transaction. The period selects which trades were *closed*;
+ * what is still held is shown as of its end, because an open trade has no date to fall inside a
+ * window.
  */
 export function Trades() {
   const { t } = useLingui();
@@ -22,7 +25,8 @@ export function Trades() {
 
   const ranges = usePeriodRanges(asOf);
   const range = pickRange(ranges.data, period);
-  const trades = useTrades(range);
+  const { ui, save } = useUiState();
+  const trades = useTrades(range, ui.trades_by);
 
   if (ranges.isError) return <QueryError error={ranges.error} />;
   if (ranges.isPending) return <Pending />;
@@ -39,7 +43,20 @@ export function Trades() {
     <Page
       archetype="analysis"
       title={t`Trades`}
-      controls={<PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />}
+      controls={
+        <>
+          <PeriodControl value={period} onChange={setPeriod} ranges={ranges.data} />
+          <Seg<TradeGrouping>
+            options={[
+              { value: "POSITION", label: t`Per position` },
+              { value: "LOT", label: t`Per purchase` },
+            ]}
+            value={ui.trades_by}
+            onChange={(trades_by) => save((ui) => ({ ...ui, trades_by }))}
+            label={t`Count trades`}
+          />
+        </>
+      }
       metrics={<TradeMetrics data={trades.data} />}
       banner={trades.isError ? <QueryError error={trades.error} /> : undefined}
     >
@@ -54,8 +71,8 @@ export function Trades() {
           empty={
             <Empty title={t`Nothing was closed in this period`}>
               <Trans>
-                A trade closes when the last share of a purchase is sold. Widen the period if the sales
-                happened earlier.
+                A trade closes when the shares it holds are sold. Widen the period if the sales happened
+                earlier.
               </Trans>
             </Empty>
           }

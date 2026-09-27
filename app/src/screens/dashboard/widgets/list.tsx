@@ -270,7 +270,7 @@ export function TradesWidget({ widget, date, period }: WidgetProps) {
   const source = sourceOf(widget);
   const ranges = usePeriodRanges(date);
   const range = pickRange(ranges.data, periodOf(widget, period));
-  const trades = useTrades(range, source);
+  const trades = useTrades(range, "POSITION", source);
   const count = Number(widget.cfg.count) || 6;
 
   if (!range)
