@@ -5,25 +5,15 @@ use crate::state::AppState;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sq_core::calc::{
-    MonthlyNet, YearlyNet, transaction_amount_base, transaction_net_base, transactions_net_by_month,
-    transactions_net_by_year,
+    JournalRow, MonthlyNet, YearlyNet, journal_rows, transactions_net_by_month, transactions_net_by_year,
 };
 use sq_core::import::canonical_to_file;
 use sq_core::prelude::*;
 use std::str::FromStr;
 use tauri::{AppHandle, Manager, State};
 
-#[derive(Debug, Serialize)]
-pub struct TransactionRow {
-    #[serde(flatten)]
-    pub transaction: Transaction,
-    pub symbol: Option<String>,
-    pub account_name: String,
-    #[serde(with = "rust_decimal::serde::str")]
-    pub amount_base: Decimal,
-    #[serde(with = "rust_decimal::serde::str")]
-    pub net_base: Decimal,
-}
+/// One row of the list: the ledger's own shape, shared with a plugin's `transactions` read.
+pub type TransactionRow = JournalRow;
 
 #[derive(Debug, Serialize)]
 pub struct TransactionsData {
@@ -137,26 +127,7 @@ pub fn transactions_list(state: State<AppState>, filter: TransactionFilter) -> U
     let yearly_net = transactions_net_by_year(&monthly_net);
     let total_net = yearly_net.iter().map(|y| y.net_base).sum();
 
-    let mut rows: Vec<TransactionRow> = Vec::with_capacity(filtered.len());
-    for t in filtered {
-        rows.push(TransactionRow {
-            symbol: t
-                .security_id
-                .as_ref()
-                .and_then(|id| securities.iter().find(|s| &s.id == id))
-                .map(|s| s.symbol.clone()),
-            account_name: accounts
-                .iter()
-                .find(|a| a.id == t.account_id)
-                .map(|a| a.name.clone())
-                .unwrap_or_default(),
-            amount_base: transaction_amount_base(&t, &base, &rates)?,
-            net_base: transaction_net_base(&t, &base, &rates)?,
-            transaction: t,
-        });
-    }
-
-    rows.reverse();
+    let rows = journal_rows(filtered, &accounts, &securities, &base, &rates)?;
     Ok(TransactionsData {
         base_currency: base,
         rows,

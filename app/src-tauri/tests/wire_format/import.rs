@@ -289,7 +289,7 @@ fn attribute_import_preview_keys_match_the_typescript_types() {
 }
 
 /// What a plugin's reader adds to the wizard's payload, and nothing else: the preview itself is
-/// unchanged, because a reader produces the app's own transaction file and stops there (ADR-0073).
+/// unchanged, because a reader produces the app's own transaction file and stops there (ADR-0086).
 #[test]
 fn a_reader_reaches_the_wizard_as_an_id_and_its_own_warnings() {
     use sq_app_lib::plugins::reader::ReaderWarning;

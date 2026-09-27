@@ -35,6 +35,13 @@ export const keys = {
   plugins: () => key("plugins"),
   pluginTheme: (key_?: string) => key("plugin-theme", key_),
   pluginState: (plugin?: string) => key("plugin-state", plugin),
+  pluginReads: (
+    reads?: readonly WidgetRead[],
+    date?: DateString,
+    from?: DateString,
+    to?: DateString,
+    source?: Source,
+  ) => key("plugin-reads", reads?.join(","), date, from, to, source ?? undefined),
   portfolio: () => key("portfolio"),
   aiKeyStatus: (provider?: string) => key("ai-key-status", provider),
   aiChats: () => key("ai-chats"),
@@ -415,10 +422,10 @@ export function useDashboard(date: DateString, source?: Source) {
 }
 
 /**
- * What a plugin page declared it reads, and nothing else (ADR-0083/0084): the same keys and calls
- * as the built-in screens, so a plugin tile beside a positions list costs no second query. A read
- * the page did not declare is never fetched, which is the whole of its permission. `transactions`
- * has only the app's lens, which is why a widget (with a source of its own) is never given it.
+ * What a plugin page declared it reads, and nothing else (ADR-0083/0084), built by the host in
+ * one call — the projection an assistant tool of the same package is handed too, so the two
+ * cannot drift. A read the page did not declare is never built, which is the whole of its
+ * permission. A page that reads over a period waits for one.
  */
 export function usePluginReads(
   reads: readonly WidgetRead[],
@@ -426,31 +433,12 @@ export function usePluginReads(
   range: PeriodRange | undefined,
   source?: Source,
 ) {
-  const [valuation, positions, performance, transactions] = useQueries({
-    queries: [
-      {
-        queryKey: keys.dashboard(date, source),
-        queryFn: () => api.dashboardSummary(date, source),
-        enabled: reads.includes("valuation"),
-      },
-      {
-        queryKey: keys.positions(date, source),
-        queryFn: () => api.positionsAt(date, source),
-        enabled: reads.includes("positions"),
-      },
-      {
-        queryKey: keys.performance(range?.from, range?.to, source),
-        queryFn: () => api.performanceSummary(range!.from, range!.to, source),
-        enabled: reads.includes("performance") && range !== undefined,
-      },
-      {
-        queryKey: keys.transactions({ from: range?.from, to: range?.to }),
-        queryFn: () => api.transactionsList({ from: range!.from, to: range!.to }),
-        enabled: reads.includes("transactions") && range !== undefined,
-      },
-    ],
+  const periodic = reads.includes("performance") || reads.includes("transactions");
+  return useQuery({
+    queryKey: keys.pluginReads(reads, date, range?.from, range?.to, source),
+    queryFn: () => api.pluginReads([...reads], date, range, source),
+    enabled: !periodic || range !== undefined,
   });
-  return { valuation, positions, performance, transactions };
 }
 
 /** A plugin's own document in the profile, for a page that declared `storage` (ADR-0084). */
@@ -737,6 +725,7 @@ export function useImportTemplates() {
 /** Every key computed from transactions and prices — a report, not a stored list. */
 const REPORTS: QueryKey[] = [
   keys.positions(),
+  keys.pluginReads(),
   keys.dashboard(),
   keys.transactions(),
   keys.reports(),

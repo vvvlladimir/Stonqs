@@ -1,4 +1,4 @@
-//! Running a plugin's file reader (ADR-0073): bytes in, a `stonqs.transactions` document out.
+//! Running a plugin's file reader (ADR-0086): bytes in, a `stonqs.transactions` document out.
 //!
 //! What the module may reach is `sandbox.rs`, shared with the writer.
 //!
@@ -69,6 +69,8 @@ impl Refusal {
         match self {
             Refusal::NotMine => UiError::invalid(format!("reader {plugin} does not read this file")),
             Refusal::NeedsPassword => UiError::FileProtected {
+                reader: plugin.to_string(),
+                tried: false,
                 message: format!("the file is protected and reader {plugin} needs its password"),
             },
             Refusal::Malformed(why) | Refusal::Broken(why) => UiError::Reader {

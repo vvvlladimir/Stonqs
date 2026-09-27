@@ -1,6 +1,6 @@
 # 85: A plugin's assistant tool is a component that answers from its declared reads
 
-- Status: Accepted
+- Status: Accepted; the two copies of the projection superseded by ADR-0088
 
 ## Context
 
@@ -41,7 +41,7 @@ the model reads everything a tool returns as the app's word unless it is told ot
   result comes back as `{ plugin, tool, answer }`, and the system prompt says a `plugin_` tool's
   figures are never to be presented as the app's (ADR-0082). The consent card names the plugin and
   the tool from values, like every card.
-- **It proves itself before it installs**, like a reader (ADR-0073): the package ships a sample
+- **It proves itself before it installs**, like a reader (ADR-0086): the package ships a sample
   call (`args` + `data`) and the answer it must give, compared as JSON.
 - Tools are loaded for each message, so one installed mid-chat answers from the next message.
 

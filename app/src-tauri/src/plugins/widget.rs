@@ -1,8 +1,8 @@
 //! A dashboard widget and a whole screen: one ES module each, served by the host as a page of its
 //! own inside a frame with no origin, fed only the reads its manifest declares (ADR-0083/0084).
 //!
-//! The host's part is the page and its policy. What goes into the frame, and when, is the
-//! frontend's (`lib/pluginBridge.ts`), because that is where the data already is.
+//! The host's part is the page, its policy and the data (`plugins::reads`, ADR-0088). When it goes
+//! into the frame is the frontend's (`lib/pluginBridge.ts`), because that is where the frame is.
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};

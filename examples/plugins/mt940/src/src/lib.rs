@@ -1,6 +1,6 @@
 //! A reader for MT940, the SWIFT bank statement most European banks still export.
 //!
-//! It exists as an example of the contract (ADR-0073), and it is a real reader: MT940 is a
+//! It exists as an example of the contract (ADR-0086), and it is a real reader: MT940 is a
 //! tagged text format that no column mapping can express, which is exactly the case a broker
 //! layout cannot cover and a plugin can.
 //!

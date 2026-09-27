@@ -44,7 +44,7 @@ fn error_codes_match_the_typescript_union() {
 #[test]
 fn a_reader_failure_names_the_plugin_it_came_from() {
     // Two codes rather than one, because the user's next action differs: type a password, or
-    // stop expecting this plugin to read this file (ADR-0073).
+    // stop expecting this plugin to read this file (ADR-0086).
     let json = serde_json::to_value(sq_app_lib::error::UiError::Reader {
         plugin: "app.stonqs.mt940/mt940".into(),
         message: "the statement holds no readable line".into(),
@@ -61,11 +61,16 @@ fn a_reader_failure_names_the_plugin_it_came_from() {
     assert_eq!(json["code"], "writer");
     assert_eq!(keys(&json), ["code", "message", "plugin"]);
 
+    // Which reader asked is what the password is later handed to; `tried` is what lets the
+    // prompt say the last one was wrong.
     let json = serde_json::to_value(sq_app_lib::error::UiError::FileProtected {
+        reader: "app.stonqs.mt940/mt940".into(),
+        tried: true,
         message: "sealed".into(),
     })
     .unwrap();
     assert_eq!(json["code"], "file_protected");
+    assert_eq!(keys(&json), ["code", "message", "reader", "tried"]);
 }
 
 /// Progress events are discriminated by the `event` field.
@@ -474,7 +479,7 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     assert_eq!(json["status"], "api");
     assert_eq!(json["themes"][0]["base"], "dark");
     // A reader carries the sample *and* what that sample must read as: the pair is what makes a
-    // stranger's module checkable before it is installed (ADR-0073).
+    // stranger's module checkable before it is installed (ADR-0086).
     assert_eq!(
         keys(&json["readers"][0]),
         ["expected", "extensions", "file", "id", "sample"]

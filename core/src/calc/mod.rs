@@ -81,8 +81,8 @@ pub use inflation::{
     RealReturn, deflation_end, inflation_factor, inflation_series, real_period_return, real_return, real_xirr,
 };
 pub use journal::{
-    MonthlyNet, YearlyNet, transaction_amount_base, transaction_net_base, transactions_net_by_month,
-    transactions_net_by_year,
+    JournalRow, MonthlyNet, YearlyNet, journal_rows, transaction_amount_base, transaction_net_base,
+    transactions_net_by_month, transactions_net_by_year,
 };
 pub use limits::{LimitUsage, contributions_between, limit_usage};
 pub use payments::{
@@ -110,7 +110,7 @@ pub use trades::{
 pub use transfers::{TransferPair, transfer_candidates};
 pub use twr::{TwrPoint, annualize, time_weighted_return};
 pub use valuation::{
-    DayChange, DayChanges, PortfolioValuation, PositionValuation, day_changes, value_holdings,
+    DayChange, DayChanges, PortfolioValuation, PositionValuation, day_changes, value_holdings, weight,
 };
 pub use watchlist::{InstrumentMove, NearestLevel, instrument_move, nearest_level};
 pub use xirr::{XIRR_MAX_ITERATIONS, xirr};

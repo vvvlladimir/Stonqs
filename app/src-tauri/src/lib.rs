@@ -72,6 +72,7 @@ pub fn run() {
             commands::plugins::plugin_remove,
             commands::plugins::plugin_theme_css,
             commands::plugins::plugin_taxonomy_csv,
+            commands::plugins::plugin_reads,
             commands::plugins::plugin_state_get,
             commands::plugins::plugin_state_save,
             commands::profiles::profiles_list,

@@ -7,13 +7,14 @@
 //!
 //! Plain filesystem work over an explicitly passed root, so it is tested on a temporary folder.
 //! This build honours data content — themes, broker layouts, classification sets and operation
-//! dictionaries — plus two kinds of compute over one sandbox, the file reader (ADR-0073) and the
+//! dictionaries — plus two kinds of compute over one sandbox, the file reader (ADR-0086) and the
 //! file writer (ADR-0080), and two kinds of UI, the dashboard widget (ADR-0083) and the screen
 //! (ADR-0084); the rest of a
 //! manifest is read without being acted on, so a package built for a later version is listed
 //! rather than rejected.
 
 pub mod reader;
+pub mod reads;
 mod sandbox;
 pub mod tool;
 pub mod widget;
@@ -121,7 +122,7 @@ pub struct TaxonomyDef {
 }
 
 /// A file reader: a WASM component that turns bytes this app cannot read into the app's own
-/// transaction file (ADR-0073). It ships the sample it was written against **and** what that
+/// transaction file (ADR-0086). It ships the sample it was written against **and** what that
 /// sample must come out as, because a layout that misreads a column shows up in the wizard while
 /// a reader that misreads one produces a document that looks perfectly correct.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -353,6 +354,23 @@ pub struct ThemeInfo {
     pub base: Base,
 }
 
+/// The password the user typed for a sealed file, and the reader that asked for it. Handed to
+/// that reader alone: another plugin's reader has no business with it. Never stored, never
+/// printed (no `Debug`), and wiped from memory when dropped.
+#[derive(Deserialize)]
+pub struct Unlock {
+    /// `<plugin id>/<reader id>`, as `UiError::FileProtected` named it.
+    pub reader: String,
+    pub password: String,
+}
+
+impl Drop for Unlock {
+    fn drop(&mut self) {
+        use zeroize::Zeroize;
+        self.password.zeroize();
+    }
+}
+
 /// What the installed readers made of one file.
 #[derive(Debug, Default)]
 pub struct FileReading {
@@ -505,7 +523,10 @@ impl Plugins {
     /// every file the user opens. A reader that claimed the file and then said it is malformed is
     /// an error rather than a fall-through: the reader after it would be reading a file somebody
     /// has already said is theirs.
-    pub fn read_file(&self, name: &str, bytes: &[u8]) -> UiResult<FileReading> {
+    ///
+    /// A reader that answers `needs-password` stops the import as `UiError::FileProtected`, naming
+    /// itself; the load is asked again with `unlock`, whose password reaches that reader only.
+    pub fn read_file(&self, name: &str, bytes: &[u8], unlock: Option<&Unlock>) -> UiResult<FileReading> {
         let ending = name
             .rsplit_once('.')
             .map(|(_, end)| format!(".{}", end.to_lowercase()));
@@ -524,7 +545,8 @@ impl Plugins {
                     continue;
                 }
                 let id = format!("{}/{}", plugin.id, def.id);
-                match reader::read(&module, bytes, name, None) {
+                let password = unlock.filter(|u| u.reader == id).map(|u| u.password.as_str());
+                match reader::read(&module, bytes, name, password) {
                     Ok(mut reading) => {
                         for warning in &mut reading.warnings {
                             warning.plugin = id.clone();
@@ -537,6 +559,13 @@ impl Plugins {
                     Err(reader::Refusal::NotMine) => continue,
                     Err(reader::Refusal::Broken(detail)) => {
                         skipped.push(reader::SkippedReader { plugin: id, detail })
+                    }
+                    Err(reader::Refusal::NeedsPassword) => {
+                        return Err(UiError::FileProtected {
+                            message: format!("reader {id} needs the file's password"),
+                            tried: password.is_some(),
+                            reader: id,
+                        });
                     }
                     Err(refusal) => return Err(refusal.into_error(&id)),
                 }

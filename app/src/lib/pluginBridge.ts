@@ -4,21 +4,14 @@
  * frame's side of it is `app/src-tauri/src/plugins/widget_shim.js`.
  *
  * The data is a **projection**, not the wire: field names here are the plugin API's own and
- * change only with `api`, so a rename in `lib/types` never breaks somebody else's package.
+ * change only with `api`, so a rename in `lib/types` never breaks somebody else's package. The
+ * host builds it (`plugins::reads`, through `plugin_reads`) — the same projection an assistant
+ * tool of the package is handed — and these interfaces type what arrives;
+ * `the_projection_is_the_bridges` pins the two together.
  * Money stays a string, instruments are named by ticker and name, never by an internal id.
  */
 import { useEffect, useState } from "react";
-import type {
-  DateString,
-  MoneyString,
-  PerformanceData,
-  PeriodRange,
-  PositionsData,
-  DashboardData,
-  TransactionKind,
-  TransactionsData,
-  WidgetRead,
-} from "./types";
+import type { DateString, MoneyString, PeriodRange, TransactionKind } from "./types";
 
 export const BRIDGE_API = 1;
 
@@ -100,6 +93,8 @@ export interface BridgeTransactions {
 }
 
 export interface BridgeData {
+  /** The period the reads were answered over, for a page that reads over one. */
+  period?: { from: DateString; to: DateString };
   valuation?: BridgeValuation;
   positions?: BridgePositions;
   performance?: BridgePerformance;
@@ -186,88 +181,6 @@ export function themeTokens(): BridgeContext["theme"] {
     if (value) tokens[name] = value;
   }
   return { scheme: root.getAttribute("data-theme") === "light" ? "light" : "dark", tokens };
-}
-
-export function projectValuation(d: DashboardData): BridgeValuation {
-  const v = d.valuation;
-  return {
-    date: v.date,
-    base_currency: v.base_currency,
-    total_value: v.total_value_base,
-    securities_value: v.securities_value_base,
-    cash: v.cash_base,
-    cost_basis: v.cost_basis_base,
-    unrealized_result: v.unrealized_pnl_base,
-    realized_result: v.realized_pnl_base,
-    dividends: v.dividends_base,
-    interest: v.interest_base,
-    fees: v.fees_base,
-    taxes: v.taxes_base,
-  };
-}
-
-export function projectPositions(d: PositionsData): BridgePositions {
-  return {
-    date: d.date,
-    base_currency: d.base_currency,
-    total_value: d.total_value_base,
-    rows: d.rows.map((r) => ({
-      symbol: r.symbol,
-      name: r.name,
-      currency: r.currency,
-      quantity: r.quantity,
-      price: r.price,
-      value: r.market_value_base,
-      cost_basis: r.cost_basis_base,
-      unrealized_result: r.unrealized_pnl_base,
-      weight: r.weight,
-      day_change: r.day_change,
-    })),
-  };
-}
-
-export function projectPerformance(d: PerformanceData): BridgePerformance {
-  const s = d.series;
-  return {
-    from: d.from,
-    to: d.to,
-    base_currency: d.base_currency,
-    twr: d.twr,
-    twr_annualized: d.twr_annualized,
-    xirr: d.xirr,
-    start_value: d.summary.start_value_base,
-    end_value: d.summary.end_value_base,
-    net_flow: d.summary.net_flow_base,
-    earned: d.summary.delta_base,
-    series: s.dates.map((date, i) => ({
-      date,
-      value: s.total_value_base[i],
-      flow: s.external_flow_base[i],
-    })),
-  };
-}
-
-export function projectTransactions(d: TransactionsData): BridgeTransactions {
-  return {
-    base_currency: d.base_currency,
-    rows: d.rows.map((r) => ({
-      id: r.id,
-      date: r.date,
-      kind: r.kind,
-      account: r.account_name,
-      symbol: r.symbol,
-      amount: r.amount,
-      currency: r.currency,
-      amount_base: r.amount_base,
-      net_base: r.net_base,
-      note: r.note,
-    })),
-  };
-}
-
-/** Whether every declared read has arrived: a page is rendered once, with all it asked for. */
-export function complete(reads: readonly WidgetRead[], data: BridgeData, storage = false): boolean {
-  return reads.every((read) => data[read] !== undefined) && (!storage || data.state !== undefined);
 }
 
 /** The period the frame is told about: only a periodic widget has one. */

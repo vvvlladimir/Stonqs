@@ -6608,6 +6608,7 @@ msgstr "Только {0}"
 msgid "Only when I ask"
 msgstr "Только по запросу"
 
+#: src/screens/Import/FilePasswordDialog.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
 msgid "Open"
 msgstr "Открыт"
@@ -6786,6 +6787,7 @@ msgid "Part of what was sent that the provider served from its own cache, usuall
 msgstr "Часть отправленного, которую провайдер взял из своего кэша — обычно дешевле."
 
 #: src/components/domain/ProfileLock.tsx
+#: src/screens/Import/FilePasswordDialog.tsx
 #: src/screens/Settings/ProfileSecurity.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
 msgid "Password"
@@ -8732,6 +8734,10 @@ msgstr "Текст"
 msgid "That file is not a dashboard layout."
 msgstr "Это не файл раскладки дашборда."
 
+#: src/screens/Import/FilePasswordDialog.tsx
+msgid "That password did not open it. Try again."
+msgstr "Этот пароль не подошёл. Попробуйте ещё раз."
+
 #: src/components/ui/Async.tsx
 msgid "That password is not right."
 msgstr "Пароль неверный."
@@ -8755,6 +8761,10 @@ msgstr "Читатель {0} не смог прочитать этот файл:
 #: src/screens/Import/FilePreview.tsx
 msgid "The {name} plugin failed on this file and was skipped. Update or remove it if this keeps happening. ({detail})"
 msgstr "Плагин {name} не смог прочитать этот файл и был пропущен. Если это повторяется, обновите или удалите его. ({detail})"
+
+#: src/screens/Import/FilePasswordDialog.tsx
+msgid "The {plugin} plugin reads this file and needs its password. It is used once and not saved."
+msgstr "Плагин {plugin} читает этот файл, и ему нужен пароль. Пароль используется один раз и не сохраняется."
 
 #: src/screens/Import/labels.ts
 msgid "the account is not mapped"
@@ -9642,6 +9652,10 @@ msgstr "У этой классификации нет цели"
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "This device opens the profile without asking; anyone using it can too."
 msgstr "Это устройство открывает профиль без пароля — и любой, кто им пользуется, тоже."
+
+#: src/screens/Import/FilePasswordDialog.tsx
+msgid "This file is password-protected"
+msgstr "Файл защищён паролем"
 
 #: src/components/ui/Async.tsx
 msgid "This file is password-protected and cannot be read."

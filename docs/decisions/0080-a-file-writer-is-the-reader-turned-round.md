@@ -6,7 +6,7 @@
 
 The export writes one format, the app's own transaction file (ADR-0066). Somebody leaving for
 another program, or handing operations to an accountant, needs that program's format, and there
-are more of those than this repository will ever write. ADR-0073 built the machinery for the
+are more of those than this repository will ever write. ADR-0086 built the machinery for the
 opposite direction — a stranger's WASM component that turns bytes into the canonical file, with no
 filesystem, no network, a frozen clock and a fixture it must pass before it installs — and left the
 second contract undefined.

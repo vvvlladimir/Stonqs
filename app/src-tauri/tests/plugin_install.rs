@@ -70,7 +70,7 @@ fn the_example_layout_installs_and_reads_its_own_sample() {
 }
 
 /// The compute half of the example: a WASM component that reads a format no column mapping can
-/// express (ADR-0073). `UPDATE_FIXTURES=1` rewrites the expectation the package ships and then
+/// express (ADR-0086). `UPDATE_FIXTURES=1` rewrites the expectation the package ships and then
 /// fails on purpose, so the diff is read rather than waved through.
 #[test]
 fn the_example_reader_installs_and_reads_its_own_sample() {
@@ -102,7 +102,7 @@ fn the_example_reader_installs_and_reads_its_own_sample() {
 
     // And the installed copy is what answers for a file of that kind.
     let claimed = plugins
-        .read_file("statement.sta", &sample)
+        .read_file("statement.sta", &sample, None)
         .unwrap()
         .read
         .expect("a reader claims the file");
@@ -643,7 +643,7 @@ fn a_reader_that_breaks_is_passed_over_and_named() {
     .unwrap();
 
     let reading = plugins
-        .read_file("statement.sta", b":20:X\n")
+        .read_file("statement.sta", b":20:X\n", None)
         .expect("a broken reader is not the import's failure");
     assert!(
         reading.read.is_none(),
@@ -651,6 +651,62 @@ fn a_reader_that_breaks_is_passed_over_and_named() {
     );
     assert_eq!(reading.skipped.len(), 1);
     assert_eq!(reading.skipped[0].plugin, "app.stonqs.mt940/mt940");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// A sealed file stops the import naming the reader that asked, and the password given back
+/// reaches that reader alone: a wrong one says so, the right one reads the file.
+#[test]
+fn a_sealed_file_is_read_once_its_reader_is_given_the_password() {
+    use sq_app_lib::error::UiError;
+    use sq_app_lib::plugins::Unlock;
+
+    let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sealed");
+    let dir = std::env::temp_dir().join(format!("stonqs-sealed-{}", uuid::Uuid::new_v4()));
+    let plugins = Plugins::new(&dir);
+    // The sample is an open file: a package proves itself without anybody's password.
+    plugins.install(&fixture).unwrap();
+
+    let expected = std::fs::read_to_string(fixture.join("expected.json")).unwrap();
+    let sealed = format!("SEALED:hunter2\n{}", expected.trim_end());
+    let unlock = |reader: &str, password: &str| Unlock {
+        reader: reader.into(),
+        password: password.into(),
+    };
+    let asked = |result: Result<_, UiError>| match result {
+        Err(UiError::FileProtected { reader, tried, .. }) => (reader, tried),
+        other => panic!(
+            "expected a password prompt, got {:?}",
+            other.map(|_: sq_app_lib::plugins::FileReading| ())
+        ),
+    };
+
+    let (reader, tried) = asked(plugins.read_file("statement.sealed", sealed.as_bytes(), None));
+    assert_eq!(
+        reader, "test.sealed/sealed",
+        "the prompt names the reader that asked"
+    );
+    assert!(!tried, "nothing was tried yet");
+
+    let wrong = unlock("test.sealed/sealed", "letmein");
+    let (_, tried) = asked(plugins.read_file("statement.sealed", sealed.as_bytes(), Some(&wrong)));
+    assert!(tried, "a refused password is told apart from none");
+
+    let elsewhere = unlock("someone.else/reader", "hunter2");
+    let (_, tried) = asked(plugins.read_file("statement.sealed", sealed.as_bytes(), Some(&elsewhere)));
+    assert!(
+        !tried,
+        "a password meant for another reader is not handed to this one"
+    );
+
+    let right = unlock("test.sealed/sealed", "hunter2");
+    let read = plugins
+        .read_file("statement.sealed", sealed.as_bytes(), Some(&right))
+        .unwrap()
+        .read
+        .expect("the reader claims the file");
+    assert_eq!(read.1.canonical.trim_end(), expected.trim_end());
 
     std::fs::remove_dir_all(&dir).ok();
 }

@@ -1,10 +1,10 @@
-# 86: A reader that breaks is passed over, and one that refuses stops the import
+# 87: A reader that breaks is passed over, and one that refuses stops the import
 
 - Status: Accepted
 
 ## Context
 
-ADR-0073 made every failure of a plugin's file reader an error of the import: refused, trapped,
+ADR-0086 made every failure of a plugin's file reader an error of the import: refused, trapped,
 timed out, out of memory. A reader that declares no file endings is offered every file the shipped
 readers do not recognise, so one whose module traps on input it does not know — before it could
 answer `not-mine` — refused every CSV the user opened, and the only way out was to find and remove
@@ -31,7 +31,7 @@ frontend's). The install check is unchanged: a reader that breaks on its own sam
 
 ## Consequences
 
-- The consequence in ADR-0073 that listed "trapped, timed out, out of memory" as import failures is
+- The consequence in ADR-0086 that listed "trapped, timed out, out of memory" as import failures is
   narrowed to install failures; `malformed` and `needs-password` remain the import's.
 - A reader that traps on its own kind of file now leaves that file to the CSV reader, which usually
   fails to map it — with the banner above the result saying which plugin should have read it.

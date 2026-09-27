@@ -115,6 +115,8 @@ import type {
   DataChangeKind,
   DashboardData,
   DateString,
+  WidgetRead,
+  Unlock,
   Portfolio,
   PortfolioInput,
   RealPerformance,
@@ -130,6 +132,7 @@ import type {
   WatchRow,
 } from "./types";
 import type { Outcome } from "./ipcRecord";
+import type { BridgeData } from "./pluginBridge";
 
 // Folded to `undefined` unless recording, so a normal build does not even carry the chunk.
 const record = import.meta.env.VITE_RECORD_IPC
@@ -481,7 +484,9 @@ export const api = {
   /** Hands an address to the OS: a webview opens no window of its own on any platform. */
   openUrl: (url: string) => openUrl(url),
 
-  importLoadPath: (path: string) => call<ImportPreviewData>("import_load_path", { path }),
+  /** `unlock` answers a `file_protected` failure: the password, for the reader that asked. */
+  importLoadPath: (path: string, unlock?: Unlock) =>
+    call<ImportPreviewData>("import_load_path", { path, unlock: unlock ?? null }),
   importPreview: (config: ParseConfig, mapping: ImportMapping | null, overrides: RowOverride[]) =>
     call<ImportPreviewData>("import_preview", { config, mapping, overrides }),
   importCommit: (
@@ -548,6 +553,16 @@ export const api = {
    *  spells a custom one (ADR-0083). `key` is `<plugin id>/<widget or screen id>`. */
   pluginPageUrl: (kind: "widget" | "screen", key: string) =>
     convertFileSrc(`${kind}/${key}`, "stonqs-plugin"),
+  /** What a plugin page declared it reads, built by the host in the plugin API's own names
+   *  (ADR-0083) — the same projection an assistant tool of that package is handed. */
+  pluginReads: (reads: WidgetRead[], date: DateString, range: PeriodRange | undefined, source?: Source) =>
+    call<BridgeData>("plugin_reads", {
+      reads,
+      date,
+      from: range?.from ?? null,
+      to: range?.to ?? null,
+      source: source ?? null,
+    }),
   /** A plugin's one document in the open profile; null before it saved one (ADR-0084). */
   pluginStateGet: (plugin: string) => call<unknown>("plugin_state_get", { plugin }),
   pluginStateSave: (plugin: string, document: unknown) =>

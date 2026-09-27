@@ -57,7 +57,7 @@
   `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
   `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
   wrong pair erases a real deposit and a real withdrawal from every return figure at once.
-- A **reader** can arrive as a plugin too (ADR-0073), and it is the level that has no privileges:
+- A **reader** can arrive as a plugin too (ADR-0086), and it is the level that has no privileges:
   it produces a `stonqs.transactions` document and everything after that is the one wizard, the one
   identity check and the one commit. It is run by the host, once, at load — `import::parse_file`
   itself never learns a plugin exists. The manifest declares the endings it is offered plus a

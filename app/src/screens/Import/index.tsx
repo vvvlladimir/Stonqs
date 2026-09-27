@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "@phosphor-icons/react";
-import { api } from "../../lib/api";
+import { api, ApiError } from "../../lib/api";
 import { affects, useAccounts, useImportTemplates, useInvalidate, usePlugins } from "../../lib/queries";
 import { Page } from "../../components/Page";
 import { Banner, Buttons, Chip, QueryError } from "../../components/ui";
@@ -15,13 +15,15 @@ import type {
   ImportResult,
   ParseConfig,
   RowOverride,
+  Unlock,
 } from "../../lib/types";
 import { AssetsStep } from "./AssetsStep";
 import { CommitStep } from "./CommitStep";
+import { FilePasswordDialog } from "./FilePasswordDialog";
 import { FileStep } from "./FileStep";
 import { ParseStep } from "./ParseStep";
 
-import { STEPS, fieldLabel, missingFields } from "./labels";
+import { STEPS, fieldLabel, missingFields, readerPluginName } from "./labels";
 
 const LAST = STEPS.length - 1;
 
@@ -60,9 +62,19 @@ export function Import() {
   const templates = useImportTemplates();
   const plugins = usePlugins();
 
+  // A plugin's reader recognised a sealed file: which file, which reader asked, and whether a
+  // password was already refused. The password itself lives only in the dialog.
+  const [sealed, setSealed] = useState<{ path: string; reader: string; tried: boolean } | null>(null);
+
   const load = useMutation({
-    mutationFn: api.importLoadPath,
+    mutationFn: ({ path, unlock }: { path: string; unlock?: Unlock }) => api.importLoadPath(path, unlock),
+    onError: (error, { path }) => {
+      if (error instanceof ApiError && error.detail.code === "file_protected") {
+        setSealed({ path, reader: error.detail.reader, tried: error.detail.tried });
+      }
+    },
     onSuccess: (data) => {
+      setSealed(null);
       setPreview(data);
       // A recognised file arrives already laid out, so what the core would have detected on
       // its own is not in hand — "— detect —" asks for it again rather than replaying it.
@@ -113,7 +125,7 @@ export function Import() {
     });
     if (typeof path !== "string") return;
     setFileName(path.split("/").pop() ?? path);
-    load.mutate(path);
+    load.mutate({ path });
   };
 
   const current = mapping ?? preview?.mapping ?? null;
@@ -213,10 +225,29 @@ export function Import() {
         <FileStep
           loading={load.isPending}
           onPick={pickFile}
-          error={load.error}
+          // A sealed file is a question for the dialog below, not a failure to show.
+          error={sealed ? null : load.error}
           preview={preview}
           config={config}
           mapping={current}
+        />
+      )}
+
+      {sealed && (
+        <FilePasswordDialog
+          // A fresh field after a refused password rather than the wrong one left in it.
+          key={String(load.submittedAt)}
+          plugin={readerPluginName(plugins.data?.plugins, sealed.reader)}
+          tried={sealed.tried}
+          busy={load.isPending}
+          onSubmit={(password) =>
+            load.mutate({ path: sealed.path, unlock: { reader: sealed.reader, password } })
+          }
+          onClose={() => {
+            setSealed(null);
+            // The password it was sent with must not outlive the dialog in the mutation's state.
+            load.reset();
+          }}
         />
       )}
 

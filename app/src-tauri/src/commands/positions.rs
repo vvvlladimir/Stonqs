@@ -8,7 +8,7 @@ use rust_decimal::Decimal;
 use serde::Serialize;
 use sq_core::calc::{
     CostBasisRow, DividendFrequency, PositionRisk, day_changes, dividend_profiles, dividend_yield, peak_of,
-    value_holdings, yield_on_cost,
+    value_holdings, weight, yield_on_cost,
 };
 use sq_core::market::DateRange;
 use sq_core::model::Lot;
@@ -167,11 +167,7 @@ pub fn positions_at(
                 ath_price: peak.as_ref().map(|peak| peak.value),
                 ath_date: peak.as_ref().map(|peak| peak.date.to_string()),
                 ath_distance: peak.as_ref().and_then(|peak| peak.distance),
-                weight: if total.is_zero() {
-                    Decimal::ZERO
-                } else {
-                    p.market_value_base / total
-                },
+                weight: weight(p.market_value_base, total),
                 previous_price: change.map(|c| c.previous_price),
                 day_change_base: change.map(|c| c.change_base),
                 day_change: change.map(|c| c.change),

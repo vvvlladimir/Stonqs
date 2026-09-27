@@ -6,7 +6,7 @@ into its own plugin directory, so the folder you picked is free to move afterwar
 
 See [ADR-0070](../../docs/decisions/0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md)
 for what a plugin may and may not be, and
-[ADR-0073](../../docs/decisions/0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
+[ADR-0086](../../docs/decisions/0086-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
 for the file reader, [ADR-0080](../../docs/decisions/0080-a-file-writer-is-the-reader-turned-round.md)
 for the file writer, [ADR-0083](../../docs/decisions/0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)
 for the dashboard widget, [ADR-0084](../../docs/decisions/0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md)
@@ -216,6 +216,12 @@ sample must come out as. Before installing, the app runs the reader on its own s
 A layout that misreads a column leaves a visible question in the wizard; a reader that misreads one
 hands over a file that looks perfectly correct, so it is checked against an answer rather than
 against a shrug.
+
+A sealed file — a PDF statement with a password — is answered with `needs-password`. The app then
+asks the user, and calls your reader again with `hints.password` set; the password goes to the
+reader that asked and to no other, and it is never stored. Answer `needs-password` again when it is
+wrong: the prompt says so. Your `sample` must still be a file you read **without** a password —
+installing asks nobody for one.
 
 Returning `not-mine` is not a failure — the app moves on to the next reader and then to its own.
 Returning `malformed` is, and it says so with the reader's own reason. A module that traps, runs

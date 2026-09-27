@@ -3,6 +3,7 @@ import { msg } from "@lingui/core/macro";
 import { IMPORTABLE_TRANSACTION_KINDS, accountKindLabel, transactionLabel } from "../../lib/kinds";
 import type { BadgeTone } from "../../components/ui";
 import type {
+  Plugin,
   AccountRow,
   AmountBasis,
   AmountSign,
@@ -319,4 +320,11 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
     default:
       return problem.message;
   }
+}
+
+/** The plugin a reader key (`<plugin id>/<reader id>`) belongs to, by its own name — or by its id
+ *  once that plugin is gone. */
+export function readerPluginName(plugins: Plugin[] | undefined, key: string): string {
+  const id = key.split("/")[0];
+  return plugins?.find((p) => p.id === id)?.name ?? id;
 }

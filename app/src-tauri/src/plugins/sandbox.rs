@@ -1,4 +1,4 @@
-//! The one sandbox every compute plugin runs in (ADR-0073, ADR-0080). A reader and a writer are two
+//! The one sandbox every compute plugin runs in (ADR-0086, ADR-0080). A reader and a writer are two
 //! contracts over the same grant, and the grant is written once, here.
 //!
 //! There is no filesystem, no preopened directory, no reachable address and no real clock; what

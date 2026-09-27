@@ -1,7 +1,7 @@
 # 70: A plugin brings data and shows it; it never changes what a number means
 
 - Status: Accepted; data plugins (themes, broker layouts) and the file reader are implemented
-  (the reader's contract is ADR-0073), UI plugins and a quote source are not yet. Later: the
+  (the reader's contract is ADR-0086), UI plugins and a quote source are not yet. Later: the
   writer (ADR-0080) and dashboard widgets (ADR-0083) implemented; which numbers a plugin may show
   is narrowed by ADR-0082
 

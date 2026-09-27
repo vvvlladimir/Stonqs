@@ -1,0 +1,22 @@
+# A test fixture, not an example: a reader that asks for a password, so the host's unlock path is
+# exercised by a real component. A workspace of its own: it builds for wasm32-wasip2, and it sits
+# inside the app's crate, which `exclude` cannot reach past.
+[workspace]
+
+[package]
+name = "stonqs-sealed-reader"
+version = "1.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = "0.62"
+
+[profile.release]
+opt-level = "s"
+strip = true
+lto = true
+panic = "abort"

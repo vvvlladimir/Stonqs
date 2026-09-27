@@ -6,13 +6,8 @@ import { useLanguage } from "../../lib/i18n";
 import { keys, useInvalidate, usePluginReads, usePluginState } from "../../lib/queries";
 import {
   BRIDGE_API,
-  complete,
   isFrameMessage,
   periodOfRange,
-  projectPerformance,
-  projectPositions,
-  projectTransactions,
-  projectValuation,
   renderMessage,
   useThemeTokens,
   type BridgeData,
@@ -94,33 +89,23 @@ export function PluginFrame({
     return () => window.clearTimeout(timer);
   }, [ready]);
 
-  const data = useMemo<BridgeData>(
-    () => ({
-      valuation: reads.valuation.data ? projectValuation(reads.valuation.data) : undefined,
-      positions: reads.positions.data ? projectPositions(reads.positions.data) : undefined,
-      performance: reads.performance.data ? projectPerformance(reads.performance.data) : undefined,
-      transactions: reads.transactions.data ? projectTransactions(reads.transactions.data) : undefined,
-      state: page.storage ? state.data : undefined,
-    }),
-    [
-      reads.valuation.data,
-      reads.positions.data,
-      reads.performance.data,
-      reads.transactions.data,
-      page.storage,
-      state.data,
-    ],
+  // The reads arrive already projected by the host; the page's own document joins them here.
+  const data = useMemo<BridgeData | undefined>(
+    () => (reads.data ? { ...reads.data, state: page.storage ? state.data : undefined } : undefined),
+    [reads.data, page.storage, state.data],
   );
+  // A page is rendered once, with everything it asked for.
+  const complete = data !== undefined && (!page.storage || state.data !== undefined);
   const base =
-    data.valuation?.base_currency ??
-    data.positions?.base_currency ??
-    data.performance?.base_currency ??
-    data.transactions?.base_currency ??
+    data?.valuation?.base_currency ??
+    data?.positions?.base_currency ??
+    data?.performance?.base_currency ??
+    data?.transactions?.base_currency ??
     null;
 
   useEffect(() => {
     const target = frame.current?.contentWindow;
-    if (!ready || !target || !complete(page.reads, data, page.storage)) return;
+    if (!ready || !target || !complete || !data) return;
     const context = {
       api: BRIDGE_API,
       date,
@@ -131,11 +116,9 @@ export function PluginFrame({
     };
     // The frame has no origin to address, so `*`: what is posted is only what it declared it reads.
     target.postMessage(renderMessage(context, data), "*");
-  }, [ready, page.reads, page.storage, data, date, range, base, locale, theme]);
+  }, [ready, complete, data, date, range, base, locale, theme]);
 
-  const queryError = [reads.valuation, reads.positions, reads.performance, reads.transactions, state].find(
-    (q) => q.isError,
-  )?.error;
+  const queryError = [reads, state].find((q) => q.isError)?.error;
   if (queryError) return <QueryError error={queryError} />;
   if (failure) {
     const detail = failure.detail;

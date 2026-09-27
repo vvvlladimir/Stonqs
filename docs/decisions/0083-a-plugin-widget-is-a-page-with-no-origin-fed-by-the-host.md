@@ -1,6 +1,6 @@
 # 83: A plugin widget is a page with no origin, fed by the host
 
-- Status: Accepted
+- Status: Accepted; who builds the data superseded by ADR-0088
 
 ## Context
 
@@ -47,7 +47,7 @@ inherited by a `srcdoc` frame, forbidding exactly the inline script a plugin is.
   promise and a module that never registered a renderer; the host shows that in the body with the
   plugin's own message. A frame that never says it is ready is reported the same way.
 - **No fixture.** A drawing has no expected answer the host could compare, unlike a reader
-  (ADR-0073). The install check is structural: the module exists and is `.js`, every read is known,
+  (ADR-0086). The install check is structural: the module exists and is `.js`, every read is known,
   the sizes fit the grid. This is the one kind that installs without one, and it is also the one
   kind that cannot write, reach the network or see anything but the reads it declared.
 - **A widget whose plugin is gone stays on the board** and says so, like a theme preference

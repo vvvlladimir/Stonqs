@@ -305,6 +305,13 @@ export interface ImportPreviewData extends ImportPreview {
   skipped_readers?: SkippedReader[];
 }
 
+/** A password for a sealed file, for the reader that asked for it. Sent once, never stored. */
+export interface Unlock {
+  /** `<plugin id>/<reader id>`, as the `file_protected` error named it. */
+  reader: string;
+  password: string;
+}
+
 /** A plugin reader that broke over a file; `detail` is the runtime's English, shown as is. */
 export interface SkippedReader {
   /** `<plugin id>/<reader id>`. */

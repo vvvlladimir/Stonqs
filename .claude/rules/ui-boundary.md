@@ -29,7 +29,7 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   a folder whose name is not its manifest's id is `Status::Misplaced` and offers nothing
   (`Plugins::loaded` is the one lookup by id).
 - A plugin's **file reader** is the one piece of a stranger's *code* this host runs, and
-  `plugins/sandbox.rs` is the whole of what it is granted (ADR-0073): a WASM component with no
+  `plugins/sandbox.rs` is the whole of what it is granted (ADR-0086): a WASM component with no
   filesystem, no reachable address, a frozen clock and a seeded generator — linked at all only
   because a guest carrying a language runtime will not instantiate without them — under a memory
   ceiling and an epoch deadline. The epoch is the engine's, shared by every store, so one ticker
@@ -45,7 +45,9 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   `import::parse_file`, asked after the two self-describing shipped formats and before the CSV
   reader, which accepts nearly anything. `not-mine` moves on, and so does a module that broke
   (trap, deadline, memory — `Refusal::Broken`), named in `skipped_readers`; only the reader's own
-  `malformed` is `UiError::Reader`, never a fall-through (ADR-0086). The row schema is **not**
+  `malformed` is `UiError::Reader`, never a fall-through (ADR-0087). `needs-password` is
+  `UiError::FileProtected { reader, tried }`; the wizard asks, and `import_load` is called again with
+  `unlock`, whose password reaches the reader that asked and no other, and is never stored. The row schema is **not**
   restated in WIT — the document carries its own `format` and `version` (ADR-0066).
 - A plugin's **dashboard widget** (ADR-0083) is the one piece of a stranger's *JavaScript* the app
   runs. The host serves it from its own scheme (`stonqs-plugin`, `commands::plugins::page`)
@@ -54,9 +56,10 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   shim deletes every `RTC*` global before the module runs (a STUN server is the page's to choose)
   and DNS prefetching is off; the frame is `sandbox="allow-scripts"`, so it has no
   origin, and Tauri injects IPC into the main frame only. Nothing is asked *for*: the manifest's
-  `reads` (a closed list) is what `usePluginReads` fetches under the tile's scope and period, and
-  `lib/pluginBridge.ts` projects it into the bridge's own field names, versioned by `api`, before
-  posting it. The tile's header names the plugin, because what it shows is the plugin's number
+  `reads` (a closed list) is what the host builds — `plugins::reads::project`, through
+  `plugin_reads`, one query per frame (`usePluginReads`) under the tile's scope and period — in the
+  bridge's own field names, versioned by `api`; `lib/pluginBridge.ts` types what arrives and posts
+  it. An assistant tool of the same package is handed the same function's answer (ADR-0088). The tile's header names the plugin, because what it shows is the plugin's number
   (ADR-0082).
 - A plugin's **screen** (ADR-0084) is the same page under `/screen/<plugin>/<id>` beside
   `/widget/…`, following the app's lenses rather than a source of its own — which is why

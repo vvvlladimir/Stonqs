@@ -1,6 +1,7 @@
 use super::off_thread;
 use crate::error::{UiError, UiResult};
 use crate::events::emit_changed;
+use crate::plugins::Unlock;
 use crate::plugins::reader::{ReaderWarning, SkippedReader};
 use crate::state::AppState;
 use chrono::Local;
@@ -17,14 +18,14 @@ pub struct LoadedFile {
     pub name: String,
     pub size: usize,
     /// `<plugin id>/<reader id>` when a plugin's reader is what turned this file into something
-    /// the wizard can read (ADR-0073). Absent for every file a shipped reader handled.
+    /// the wizard can read (ADR-0086). Absent for every file a shipped reader handled.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reader: Option<String>,
 }
 
 /// The file the wizard is working on. `content` is what every preview and the commit read, and
 /// for a file a plugin claimed it is **what the reader produced**, not what was on disk: the
-/// reader runs once, at load, and nothing calls it again (ADR-0073).
+/// reader runs once, at load, and nothing calls it again (ADR-0086).
 pub struct ImportFile {
     pub info: LoadedFile,
     pub content: Vec<u8>,
@@ -57,20 +58,32 @@ pub struct ImportPreviewData {
 
 /// Off the main thread: a plugin's reader may run here, and it is allowed seconds.
 #[tauri::command]
-pub async fn import_load(app: AppHandle, name: String, content: Vec<u8>) -> UiResult<ImportPreviewData> {
-    off_thread(move || load(app.state::<AppState>(), name, content)).await
+/// `unlock` answers a `file_protected` error from an earlier attempt: the password, for the reader
+/// that asked for it.
+pub async fn import_load(
+    app: AppHandle,
+    name: String,
+    content: Vec<u8>,
+    unlock: Option<Unlock>,
+) -> UiResult<ImportPreviewData> {
+    off_thread(move || load(app.state::<AppState>(), name, content, unlock.as_ref())).await
 }
 
-fn load(state: State<AppState>, name: String, content: Vec<u8>) -> UiResult<ImportPreviewData> {
+fn load(
+    state: State<AppState>,
+    name: String,
+    content: Vec<u8>,
+    unlock: Option<&Unlock>,
+) -> UiResult<ImportPreviewData> {
     let size = content.len();
     // A plugin's reader gets the file after the two shipped formats that describe themselves and
     // before the CSV reader, which accepts nearly anything and would never let one through. What
     // it produces replaces the bytes: everything downstream reads the app's own transaction file,
-    // so the preview and the commit cannot see different things (ADR-0073).
+    // so the preview and the commit cannot see different things (ADR-0086).
     let (content, reader, warnings, skipped) = if is_canonical(&content) || is_flex(&content) {
         (content, None, Vec::new(), Vec::new())
     } else {
-        let found = state.plugins.read_file(&name, &content)?;
+        let found = state.plugins.read_file(&name, &content, unlock)?;
         match found.read {
             Some((id, reading)) => (
                 reading.canonical.into_bytes(),
@@ -112,10 +125,14 @@ fn load(state: State<AppState>, name: String, content: Vec<u8>) -> UiResult<Impo
 }
 
 #[tauri::command]
-pub async fn import_load_path(app: AppHandle, path: String) -> UiResult<ImportPreviewData> {
+pub async fn import_load_path(
+    app: AppHandle,
+    path: String,
+    unlock: Option<Unlock>,
+) -> UiResult<ImportPreviewData> {
     off_thread(move || {
         let (name, content) = read_file(&path)?;
-        load(app.state::<AppState>(), name, content)
+        load(app.state::<AppState>(), name, content, unlock.as_ref())
     })
     .await
 }

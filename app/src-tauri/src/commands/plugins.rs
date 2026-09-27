@@ -6,9 +6,13 @@
 //! to the frontend and in again through `taxonomy_import_preview`, which is the point: a set from
 //! a plugin has no path into the portfolio of its own.
 
-use super::off_thread;
+use super::performance::date_range;
+use super::{off_thread, parse_date};
 use crate::error::{UiError, UiResult};
-use crate::plugins::{PluginInfo, ScreenInfo, TaxonomySetInfo, ThemeInfo, ToolInfo, WidgetInfo, WriterInfo};
+use crate::plugins::{
+    PluginInfo, Read, ScreenInfo, TaxonomySetInfo, ThemeInfo, ToolInfo, WidgetInfo, WriterInfo, reads,
+};
+use crate::scope::DataScope;
 use crate::state::AppState;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -72,6 +76,28 @@ pub fn plugin_theme_css(state: State<AppState>, plugin: String, theme: String) -
 #[tauri::command]
 pub fn plugin_taxonomy_csv(state: State<AppState>, plugin: String, set: String) -> UiResult<Vec<u8>> {
     state.plugins.taxonomy_csv(&plugin, &set)
+}
+
+/// What a plugin page declared it reads, built by the host (`plugins::reads`) exactly as an
+/// assistant tool of the same package is handed it. `from`/`to` are the period of a read over one;
+/// `source` is a widget's own data scope, absent for the app's lens.
+#[tauri::command]
+pub fn plugin_reads(
+    state: State<AppState>,
+    reads: Vec<Read>,
+    date: String,
+    from: Option<String>,
+    to: Option<String>,
+    source: Option<DataScope>,
+) -> UiResult<serde_json::Value> {
+    let date = parse_date(&date)?;
+    let range = match (from, to) {
+        (Some(from), Some(to)) => Some(date_range(&from, &to)?),
+        _ => None,
+    };
+    let store = state.store()?;
+    let scope = state.scope_selection_in(&store, source.as_ref())?;
+    reads::project(&store, &scope, &reads, date, range)
 }
 
 /// A plugin's one document in the open profile, or null before it saved one (ADR-0084).

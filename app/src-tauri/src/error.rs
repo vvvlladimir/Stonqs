@@ -71,12 +71,16 @@ pub enum UiError {
         message: String,
     },
     /// A plugin's file reader recognised the file and needs the password it is sealed with.
+    /// `reader` is the one that asked — the password goes to it alone — and `tried` says a
+    /// password was already given and refused, so the prompt can say it was wrong.
     FileProtected {
+        reader: String,
+        tried: bool,
         message: String,
     },
     /// A plugin's file reader failed over a file it claimed: it trapped, ran past its deadline,
     /// ran out of its memory, or said the file is malformed. One code, because the user's action
-    /// is the same in every case — this plugin cannot read this file (ADR-0073).
+    /// is the same in every case — this plugin cannot read this file (ADR-0086).
     Reader {
         plugin: String,
         message: String,
@@ -197,7 +201,7 @@ impl std::fmt::Display for UiError {
             | UiError::PasswordRequired { message }
             | UiError::WrongPassword { message }
             | UiError::Busy { message }
-            | UiError::FileProtected { message }
+            | UiError::FileProtected { message, .. }
             | UiError::Reader { message, .. }
             | UiError::Writer { message, .. }
             | UiError::Internal { message } => message,

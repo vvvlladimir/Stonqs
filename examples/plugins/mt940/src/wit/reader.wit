@@ -1,4 +1,4 @@
-// The one contract a compute plugin gets first (ADR-0073): bytes in, the app's own transaction
+// The one contract a compute plugin gets first (ADR-0086): bytes in, the app's own transaction
 // file out. The row schema is deliberately not restated here — `stonqs.transactions` carries its
 // own `format` and `version` (ADR-0066), so a document says what it is once rather than twice.
 

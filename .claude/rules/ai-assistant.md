@@ -83,9 +83,9 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
 - A **plugin's tool** (ADR-0085) is not a `CATALOGUE` row: `Plugins::tools()` loads them per
   message into `Session::plugin_tools`, and `session::Entry` lets `run_one` branch on `access`
   in its one place for both kinds. Always `Access::Ask`. The body is a WASM component
-  (`wit/tool.wit`, `plugins/tool.rs`) handed the declared reads, built by `ai/tools/plugin.rs` in
-  the **bridge's** field names — `the_projection_is_the_bridges` reads `lib/pluginBridge.ts` back
-  and fails on drift. The host adds `reason` and, for a period read, `period`; the schema is
+  (`wit/tool.wit`, `plugins/tool.rs`) handed the declared reads as `plugins::reads::project` builds
+  them — the one projection a widget's frame gets too (ADR-0088), in the **bridge's** field names;
+  `the_projection_is_the_bridges` reads `lib/pluginBridge.ts` back and fails on drift. The host adds `reason` and, for a period read, `period`; the schema is
   checked against the strict subset at install (a `required` array included, even empty), because a
   provider refuses the whole request over one bad schema. Every content id is `valid_id`, and a
   model name another installed plugin's tool already has is refused at install, not skipped. The model sees `plugin_<plugin>_<tool>`, a description starting "From the …

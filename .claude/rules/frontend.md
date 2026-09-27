@@ -208,7 +208,8 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 - A plugin's widget is a catalog row the host describes (`InstalledWidget`), stored on a board as
   `plugin:<plugin id>/<widget id>`: `useWidgetCatalog()` is the catalog every caller reads — never
   `WIDGETS` directly — and its `of(type)` keeps a tile whose plugin is gone on the board, saying so.
-  Its body is `widgets/plugin.tsx`, a frame fed by `lib/pluginBridge.ts`; the bridge's field names
+  Its body is `widgets/plugin.tsx`, a frame fed the host's `plugin_reads` through `lib/pluginBridge.ts`
+  (ADR-0088); the bridge's field names
   are the plugin API's, not `lib/types`' (ADR-0083). The frame itself is
   `components/domain/PluginFrame.tsx`, shared with a plugin's screen.
 - A plugin's screen is the one `ScreenId` `plugin`, with the navigation hint naming which

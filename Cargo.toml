@@ -67,17 +67,17 @@ keyring = { version = "3", features = ["apple-native", "windows-native", "sync-s
 # The profile vault (ADR-0048): Argon2id turns a password into a key, XChaCha20-Poly1305 seals.
 argon2 = "0.5"
 # A file reader plugin is a WASM component and the host is the only place that runs one
-# (ADR-0070/0073) — `core` stays a library that knows nothing about who calls it. Default features
+# (ADR-0070/0086) — `core` stays a library that knows nothing about who calls it. Default features
 # off: the cache, the profiler, parallel compilation and the text format are all things a reader
 # of a broker file has no use for. Cranelift stays on everywhere, iOS included: there it compiles
 # to Pulley bytecode, which is interpreted rather than mapped executable.
 wasmtime = { version = "49", default-features = false, features = ["runtime", "std", "component-model", "cranelift", "async"] }
 # WASI itself is not granted — no preopened directory and no address is reachable. It is linked
 # because a guest carrying a language runtime will not instantiate without `wasi:clocks` and
-# `wasi:random`, which are handed over frozen and seeded instead (ADR-0073).
+# `wasi:random`, which are handed over frozen and seeded instead (ADR-0086).
 wasmtime-wasi = { version = "49", default-features = false, features = ["p2"] }
 # Only ever seeded, never from the OS: it is what a plugin is handed in place of real
-# randomness, so two runs over one file answer the same (ADR-0073).
+# randomness, so two runs over one file answer the same (ADR-0086).
 rand = { version = "0.10", default-features = false, features = ["std", "std_rng"] }
 chacha20poly1305 = "0.10"
 zeroize = "1"

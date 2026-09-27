@@ -7,7 +7,7 @@
   `TaxonomyDef { id, name, file }` naming a taxonomy CSV, handed back out by `plugin_taxonomy_csv`
   and fed into `taxonomy_import_preview` / `taxonomy_import_commit` — the commands every taxonomy
   file already goes through, so a set has no path into the portfolio of its own. It ships no
-  expectation, unlike a reader (ADR-0073): the file *is* the data, so one would be a copy. The
+  expectation, unlike a reader (ADR-0086): the file *is* the data, so one would be a copy. The
   install check (`plugins::check_taxonomy`) asks only that it reads as a tree and leaves nothing
   invalid, against an **empty** securities list — a set is judged for being a tree, never for
   fitting this portfolio.
