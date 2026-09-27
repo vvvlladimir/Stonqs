@@ -41,6 +41,38 @@ fn error_codes_match_the_typescript_union() {
     assert_eq!(keys(&json), ["code", "date", "key", "kind", "message"]);
 }
 
+#[test]
+fn a_reader_failure_names_the_plugin_it_came_from() {
+    // Two codes rather than one, because the user's next action differs: type a password, or
+    // stop expecting this plugin to read this file (ADR-0086).
+    let json = serde_json::to_value(sq_app_lib::error::UiError::Reader {
+        plugin: "app.stonqs.mt940/mt940".into(),
+        message: "the statement holds no readable line".into(),
+    })
+    .unwrap();
+    assert_eq!(json["code"], "reader");
+    assert_eq!(keys(&json), ["code", "message", "plugin"]);
+
+    let json = serde_json::to_value(sq_app_lib::error::UiError::Writer {
+        plugin: "app.stonqs.ledger/ledger".into(),
+        message: "version 9 is not a file this writer knows".into(),
+    })
+    .unwrap();
+    assert_eq!(json["code"], "writer");
+    assert_eq!(keys(&json), ["code", "message", "plugin"]);
+
+    // Which reader asked is what the password is later handed to; `tried` is what lets the
+    // prompt say the last one was wrong.
+    let json = serde_json::to_value(sq_app_lib::error::UiError::FileProtected {
+        reader: "app.stonqs.mt940/mt940".into(),
+        tried: true,
+        message: "sealed".into(),
+    })
+    .unwrap();
+    assert_eq!(json["code"], "file_protected");
+    assert_eq!(keys(&json), ["code", "message", "reader", "tried"]);
+}
+
 /// Progress events are discriminated by the `event` field.
 #[test]
 fn job_progress_is_tagged_by_event() {
@@ -348,19 +380,78 @@ fn profile_list_keys_match_the_typescript_types() {
 
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
-    use sq_app_lib::plugins::{Base, PluginInfo, Status, ThemeDef};
+    use sq_app_lib::plugins::{
+        Base, DictionaryDef, PluginInfo, Provides, Read, ReaderDef, ScreenDef, ScreenInfo, Size, Status,
+        TaxonomyDef, ThemeDef, ToolDef, ToolInfo, WidgetDef, WidgetInfo, WriterDef, WriterInfo,
+    };
 
     let json = serde_json::to_value(PluginInfo {
         id: "com.example.midnight".into(),
         name: "Midnight".into(),
         version: "1.0.0".into(),
-        themes: vec![ThemeDef {
-            id: "midnight".into(),
-            name: "Midnight".into(),
-            file: "midnight.css".into(),
-            base: Base::Dark,
-        }],
-        layouts: Vec::new(),
+        provides: Provides {
+            themes: vec![ThemeDef {
+                id: "midnight".into(),
+                name: "Midnight".into(),
+                file: "midnight.css".into(),
+                base: Base::Dark,
+            }],
+            layouts: Vec::new(),
+            readers: vec![ReaderDef {
+                id: "mt940".into(),
+                file: "reader.wasm".into(),
+                sample: "sample.sta".into(),
+                expected: "expected.json".into(),
+                extensions: vec![".sta".into()],
+            }],
+            taxonomies: vec![TaxonomyDef {
+                id: "regions".into(),
+                name: "Regions".into(),
+                file: "regions.csv".into(),
+            }],
+            dictionaries: vec![DictionaryDef {
+                id: "fi".into(),
+                file: "words.json".into(),
+                sample: "sample.csv".into(),
+            }],
+            writers: vec![WriterDef {
+                id: "ledger".into(),
+                name: "Ledger journal".into(),
+                file: "writer.wasm".into(),
+                sample: "sample.json".into(),
+                expected: "expected.journal".into(),
+                extension: "journal".into(),
+            }],
+            widgets: vec![WidgetDef {
+                id: "heat".into(),
+                name: "Heat map".into(),
+                description: String::new(),
+                file: "heat.js".into(),
+                reads: vec![Read::Positions],
+                periodic: false,
+                size: Size { w: 6, h: 8 },
+                min: Size { w: 3, h: 4 },
+            }],
+            screens: vec![ScreenDef {
+                id: "spending".into(),
+                name: "Spending".into(),
+                description: String::new(),
+                file: "spending.js".into(),
+                reads: vec![Read::Transactions],
+                periodic: true,
+                storage: true,
+            }],
+            tools: vec![ToolDef {
+                id: "concentration".into(),
+                name: "Concentration".into(),
+                description: String::new(),
+                file: "tool.wasm".into(),
+                schema: "schema.json".into(),
+                reads: vec![Read::Positions],
+                sample: "sample.json".into(),
+                expected: "expected.json".into(),
+            }],
+        },
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -370,9 +461,132 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     assert_eq!(
         keys(&json),
         [
-            "id", "layouts", "name", "speaks", "status", "themes", "version", "wants"
+            "dictionaries",
+            "id",
+            "layouts",
+            "name",
+            "readers",
+            "screens",
+            "speaks",
+            "status",
+            "taxonomies",
+            "themes",
+            "tools",
+            "version",
+            "wants",
+            "widgets",
+            "writers"
         ]
     );
     assert_eq!(json["status"], "api");
     assert_eq!(json["themes"][0]["base"], "dark");
+    // A reader carries the sample *and* what that sample must read as: the pair is what makes a
+    // stranger's module checkable before it is installed (ADR-0086).
+    assert_eq!(
+        keys(&json["readers"][0]),
+        ["expected", "extensions", "file", "id", "sample"]
+    );
+    // A classification set ships no expectation: the file *is* the data, so one would be a copy.
+    assert_eq!(keys(&json["taxonomies"][0]), ["file", "id", "name"]);
+    assert_eq!(keys(&json["dictionaries"][0]), ["file", "id", "sample"]);
+    // A writer carries its expectation like a reader, plus the ending a saved file gets (ADR-0080).
+    assert_eq!(
+        keys(&json["writers"][0]),
+        ["expected", "extension", "file", "id", "name", "sample"]
+    );
+
+    // What the export menu is offered: addressed the way the save command names it.
+    let json = serde_json::to_value(WriterInfo {
+        key: "app.stonqs.ledger/ledger".into(),
+        name: "Ledger journal".into(),
+        plugin: "app.stonqs.ledger".into(),
+        extension: "journal".into(),
+    })
+    .unwrap();
+    assert_eq!(keys(&json), ["extension", "key", "name", "plugin"]);
+
+    // What the palette is offered: the reads it will be handed are part of the entry, because
+    // placing the tile is the consent to them (ADR-0083).
+    let json = serde_json::to_value(WidgetInfo {
+        key: "app.stonqs.heat/heat".into(),
+        name: "Heat map".into(),
+        description: "Positions by weight and result.".into(),
+        plugin: "app.stonqs.heat".into(),
+        plugin_name: "Heat map".into(),
+        reads: vec![Read::Positions, Read::Valuation, Read::Performance],
+        periodic: true,
+        size: Size { w: 6, h: 8 },
+        min: Size { w: 3, h: 4 },
+    })
+    .unwrap();
+    assert_eq!(
+        keys(&json),
+        [
+            "description",
+            "key",
+            "min",
+            "name",
+            "periodic",
+            "plugin",
+            "plugin_name",
+            "reads",
+            "size"
+        ]
+    );
+    assert_eq!(
+        json["reads"],
+        serde_json::json!(["positions", "valuation", "performance"])
+    );
+    assert_eq!(keys(&json["size"]), ["h", "w"]);
+
+    // A screen is addressed like a widget and says whether it keeps a document (ADR-0084).
+    let json = serde_json::to_value(ScreenInfo {
+        key: "app.stonqs.spending/spending".into(),
+        name: "Spending".into(),
+        description: String::new(),
+        plugin: "app.stonqs.spending".into(),
+        plugin_name: "Spending".into(),
+        reads: vec![Read::Transactions],
+        periodic: true,
+        storage: true,
+    })
+    .unwrap();
+    assert_eq!(
+        keys(&json),
+        [
+            "description",
+            "key",
+            "name",
+            "periodic",
+            "plugin",
+            "plugin_name",
+            "reads",
+            "storage"
+        ]
+    );
+    assert_eq!(json["reads"], serde_json::json!(["transactions"]));
+
+    // A tool as Settings lists it: whose, and what it is handed (ADR-0085).
+    let json = serde_json::to_value(ToolInfo {
+        key: "app.stonqs.concentration/concentration".into(),
+        name: "Concentration".into(),
+        plugin: "app.stonqs.concentration".into(),
+        plugin_name: "Concentration".into(),
+        reads: vec![Read::Positions],
+    })
+    .unwrap();
+    assert_eq!(keys(&json), ["key", "name", "plugin", "plugin_name", "reads"]);
+}
+
+/// A folder renamed by hand is listed under the folder's name, carrying the id its manifest gives,
+/// so the frontend can say both.
+#[test]
+fn a_misplaced_plugin_names_the_id_its_manifest_gives() {
+    use sq_app_lib::plugins::Status;
+    let json = serde_json::to_value(Status::Misplaced {
+        manifest_id: "app.stonqs.midnight".into(),
+    })
+    .unwrap();
+    assert_eq!(json["status"], "misplaced");
+    assert_eq!(json["manifest_id"], "app.stonqs.midnight");
 }

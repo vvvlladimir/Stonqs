@@ -433,6 +433,54 @@ impl MarketDataService {
         }
         Ok(saved)
     }
+
+    /// Asks the instrument's latest-close source (ADR-0079) for the days after its stored series
+    /// ends, through `through`. Only that tail: a hole inside the history is the fallbacks'
+    /// business. Checked against the stored overlap like a fallback, written only on days nothing
+    /// is stored for, and extending no coverage: a day the own source is later asked for and
+    /// answers replaces the close written here.
+    pub fn ensure_latest(
+        &self,
+        store: &Store,
+        security: &Security,
+        through: chrono::NaiveDate,
+    ) -> Result<usize> {
+        let Some((source, symbol)) = store.latest_symbol(&security.id)? else {
+            return Ok(0);
+        };
+        if security.data_source.as_deref() == Some(source.as_str()) {
+            return Ok(0);
+        }
+        // Nothing to extend, and nothing to check a stranger's closes against.
+        let Some(last) = store.latest_quote_date(&security.id)? else {
+            return Ok(0);
+        };
+        if last >= through {
+            return Ok(0);
+        }
+        // A source switched off is not registered: the role stays on the instrument and simply
+        // asks nothing until it is back on, rather than failing every refresh.
+        let Some((&id, provider)) = self.providers.get_key_value(source.as_str()) else {
+            return Ok(0);
+        };
+        if !provider.covers(security) {
+            return Ok(0);
+        }
+        let asked = DateRange::new(last - Duration::days(OVERLAP_DAYS), through);
+        let alias = security.clone().with_source(id, &symbol);
+        let quotes = self.attempt(store, id, || provider.fetch(&alias, asked))?;
+        let currency = store
+            .latest_quote_currency(&security.id)?
+            .unwrap_or_else(|| security.currency.clone());
+        super::guard::check(
+            id,
+            &currency,
+            &store.quotes_in_range(&security.id, asked)?,
+            &quotes,
+        )?;
+        let tail: Vec<_> = quotes.into_iter().filter(|q| q.date > last).collect();
+        store.fill_quotes(&tail)
+    }
 }
 
 fn overlap(a: Option<DateRange>, b: Option<DateRange>) -> Option<DateRange> {
@@ -973,6 +1021,86 @@ mod chain_tests {
                 .ensure_history(&store, &sec, week)
                 .is_err()
         );
+    }
+
+    /// An instrument whose own source has published through 06-05 and whose latest close comes
+    /// from `backup`.
+    fn with_latest(store: &Store, close: rust_decimal::Decimal) -> Security {
+        let sec = listed(store, "FUND");
+        store.set_latest_source(&sec.id, Some("backup")).unwrap();
+        let history: Vec<Quote> = d(2024, 6, 3)
+            .iter_days()
+            .take(3)
+            .map(|date| Quote {
+                security_id: sec.id.clone(),
+                date,
+                close,
+                currency: "USD".into(),
+                source: "primary".into(),
+            })
+            .collect();
+        store.save_quotes(&history).unwrap();
+        sec
+    }
+
+    #[test]
+    fn the_latest_source_fills_only_the_tail_the_own_source_has_not_published() {
+        let store = Store::open_in_memory().unwrap();
+        let sec = with_latest(&store, dec!(10));
+        let svc = chain(Fixed::up("backup", dec!(10.1), "USD"));
+
+        // Stored 06-03..06-05; asked through 06-07 → only 06-06 and 06-07 are new (10.1 vs 10 is
+        // a 1% ratio, inside the 2% guard). The three stored days keep the own source's close.
+        let saved = svc.ensure_latest(&store, &sec, d(2024, 6, 7)).unwrap();
+        assert_eq!(saved, 2);
+        let week = store
+            .quotes_in_range(&sec.id, DateRange::new(d(2024, 6, 3), d(2024, 6, 7)))
+            .unwrap();
+        let sources: Vec<&str> = week.iter().map(|q| q.source.as_str()).collect();
+        assert_eq!(sources, ["primary", "primary", "primary", "backup", "backup"]);
+        assert_eq!(
+            store.quote_coverage(&sec.id).unwrap(),
+            None,
+            "no coverage is claimed"
+        );
+
+        // Up to date: nothing is asked at all.
+        assert_eq!(svc.ensure_latest(&store, &sec, d(2024, 6, 7)).unwrap(), 0);
+    }
+
+    #[test]
+    fn a_latest_close_that_disagrees_with_the_history_is_refused() {
+        let store = Store::open_in_memory().unwrap();
+        let sec = with_latest(&store, dec!(10));
+
+        // 10.5 against 10 is a 5% ratio: another series, not a fresher close of this one.
+        let err = chain(Fixed::up("backup", dec!(10.5), "USD")).ensure_latest(&store, &sec, d(2024, 6, 7));
+        assert!(matches!(err, Err(Error::BadProviderData { .. })), "{err:?}");
+        assert_eq!(store.latest_quote_date(&sec.id).unwrap(), Some(d(2024, 6, 5)));
+    }
+
+    #[test]
+    fn a_latest_source_that_is_switched_off_asks_nothing_and_fails_nothing() {
+        let store = Store::open_in_memory().unwrap();
+        let sec = with_latest(&store, dec!(10));
+        // Only the own source is registered: `backup` is off in the settings.
+        let service = MarketDataService::new()
+            .with_policy(FetchPolicy::none())
+            .with(Fixed::down("primary"));
+        assert_eq!(service.ensure_latest(&store, &sec, d(2024, 6, 7)).unwrap(), 0);
+    }
+
+    #[test]
+    fn without_a_latest_source_nothing_is_asked() {
+        let store = Store::open_in_memory().unwrap();
+        let sec = listed(&store, "ACME");
+        let backup = Fixed::up("backup", dec!(10), "USD");
+        let calls = backup.calls.clone();
+        assert_eq!(
+            chain(backup).ensure_latest(&store, &sec, d(2024, 6, 7)).unwrap(),
+            0
+        );
+        assert_eq!(*calls.lock().unwrap(), 0);
     }
 
     #[test]

@@ -6,6 +6,7 @@ mod basis;
 mod brokers;
 mod canonical;
 mod conformance;
+mod dictionary;
 mod external;
 mod ibflex;
 mod rules;

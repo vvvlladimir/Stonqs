@@ -1,0 +1,16 @@
+/* A plugin's page (ADR-0083/0084). Its own document is transparent, so the tile or the screen
+   underneath is what shows through; the frame only has to take the room it is given. */
+.plugin-frame {
+  flex: 1;
+  display: block;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+}
+/* A screen has no tile to be sized by: it takes the window's height below the header, so the
+   plugin's page scrolls inside itself rather than inside a frame of an arbitrary height. */
+.plugin-frame[data-kind="screen"] {
+  height: calc(100dvh - 11rem);
+  min-height: 20rem;
+}

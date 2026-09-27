@@ -14,6 +14,7 @@ import {
   FileTextIcon,
   GearIcon,
   ListBulletsIcon,
+  PuzzlePieceIcon,
   ReceiptIcon,
   ScalesIcon,
   SquaresFourIcon,
@@ -61,7 +62,13 @@ export const SCREENS: Record<ScreenId, NavScreen> = {
   import: { id: "import", title: msg`Import`, icon: FileArrowUpIcon },
   reports: { id: "reports", title: msg`Reports`, icon: FileTextIcon },
   settings: { id: "settings", title: msg`Settings`, icon: GearIcon },
+  // Never listed by itself: each plugin screen is a row of its own under `PLUGIN_SECTION`.
+  plugin: { id: "plugin", title: msg`Plugin screen`, icon: PuzzlePieceIcon },
 };
+
+/** The section plugin screens are listed in, after the shipped ones. Not reordered and not
+ *  stored: the arrangement names only what the app itself defines (ADR-0084). */
+export const PLUGIN_SECTION = "plugins";
 
 /** The shipped arrangement; the user's own order is laid over it by `arrange`. */
 const SECTIONS: NavSection[] = [
@@ -97,7 +104,7 @@ export function arrange(prefs: NavPrefs): Arrangement {
     return { ...shipped, screens: ordered(prefs.screens[id] ?? [], shipped.screens) };
   });
   const favorites = unique(prefs.favorites).filter((id): id is ScreenId => SECTION_SCREENS.has(id));
-  const open = sections.some((s) => s.id === prefs.open) ? prefs.open : null;
+  const open = sections.some((s) => s.id === prefs.open) || prefs.open === PLUGIN_SECTION ? prefs.open : null;
   return { favorites, sections, open };
 }
 

@@ -19,7 +19,9 @@ export type ScreenId =
   | "income"
   | "import"
   | "reports"
-  | "settings";
+  | "settings"
+  /** A plugin's screen, the navigation hint naming which: `<plugin id>/<screen id>` (ADR-0084). */
+  | "plugin";
 
 interface Nav {
   /** Where the user is. Read by the assistant panel, which is above the screens rather than one

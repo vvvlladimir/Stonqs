@@ -1,0 +1,9 @@
+{
+  "id": "app.stonqs.finnish-words",
+  "api": 1,
+  "name": "Finnish operation words",
+  "version": "1.0.0",
+  "provides": {
+    "dictionaries": [{ "id": "fi", "file": "words.json", "sample": "sample.csv" }]
+  }
+}

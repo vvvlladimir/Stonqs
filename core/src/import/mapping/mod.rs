@@ -21,8 +21,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub use field::ImportField;
 pub(crate) use field::header_row_score;
-pub use keywords::default_kind_aliases;
 pub(crate) use keywords::kind_from_keywords;
+pub use keywords::{KindWords, default_kind_aliases};
 pub use normalize::normalize_alias;
 pub(crate) use normalize::normalize_header;
 pub use rules::{Condition, Emit, ImportRule, Sign, Test};
@@ -183,13 +183,22 @@ impl ImportMapping {
     /// nobody has answered yet. A broker prints wordings no list can enumerate ("Sell 3 @
     /// 139.74 USD"), so a saved layout has to keep learning from the file it is applied to.
     /// Values already aliased or already skipped are left exactly as they are.
-    pub fn with_detected_kinds<'a>(mut self, values: impl Iterator<Item = &'a str>) -> Self {
+    pub fn with_detected_kinds<'a>(self, values: impl Iterator<Item = &'a str>) -> Self {
+        self.with_detected_kinds_using(values, &KindWords::empty())
+    }
+
+    /// The same, with an added dictionary read after the shipped keywords (`KindWords`).
+    pub fn with_detected_kinds_using<'a>(
+        mut self,
+        values: impl Iterator<Item = &'a str>,
+        added: &KindWords,
+    ) -> Self {
         for value in values {
             let key = normalize_alias(value);
             if key.is_empty() || self.kind_aliases.contains_key(&key) || self.ignored_kinds.contains(&key) {
                 continue;
             }
-            if let Some(kind) = kind_from_keywords(&key) {
+            if let Some(kind) = kind_from_keywords(&key).or_else(|| added.kind_of(&key)) {
                 self.kind_aliases.insert(key, kind);
             }
         }

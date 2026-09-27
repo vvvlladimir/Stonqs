@@ -1,7 +1,12 @@
 import { useLayoutEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLingui } from "@lingui/react/macro";
-import { CertificateIcon, LightningIcon, SlidersHorizontalIcon } from "@phosphor-icons/react";
+import {
+  CertificateIcon,
+  LightningIcon,
+  PuzzlePieceIcon,
+  SlidersHorizontalIcon,
+} from "@phosphor-icons/react";
 
 import { api } from "../../lib/api";
 import { useAsOf } from "../../lib/asOf";
@@ -67,6 +72,7 @@ export function Commands({ aiOpen, onAi }: { aiOpen: boolean; onAi: () => void }
   const { ui } = useUiState();
   const securities = useSecurities();
   const card = useSecurityCard();
+  const plugins = usePlugins();
   const favKeys = [HOME, ...arrange(ui.nav).favorites].slice(0, COMMANDS.fav.keys.length);
 
   const items = useMemo<PaletteItem[]>(() => {
@@ -90,6 +96,8 @@ export function Commands({ aiOpen, onAi }: { aiOpen: boolean; onAi: () => void }
       ];
     });
     for (const screen of Object.values(SCREENS)) {
+      // The generic plugin screen is not a place; the plugin screens below are.
+      if (screen.id === "plugin") continue;
       const Icon = screen.icon;
       const fav = favKeys.indexOf(screen.id);
       out.push({
@@ -99,6 +107,15 @@ export function Commands({ aiOpen, onAi }: { aiOpen: boolean; onAi: () => void }
         hint: fav >= 0 ? keyParts(COMMANDS.fav.keys[fav]) : undefined,
         icon: <Icon />,
         run: () => nav.go(screen.id),
+      });
+    }
+    for (const s of plugins.data?.screens ?? []) {
+      out.push({
+        id: `p:${s.key}`,
+        label: s.name,
+        group: screens,
+        icon: <PuzzlePieceIcon />,
+        run: () => nav.go("plugin", s.key),
       });
     }
     for (const [id, choice] of registry.choices()) {
@@ -127,7 +144,7 @@ export function Commands({ aiOpen, onAi }: { aiOpen: boolean; onAi: () => void }
     return out;
     // Built when the palette opens; what it lists does not move under the cursor while it is open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [palette, securities.data, i18n.locale]);
+  }, [palette, securities.data, plugins.data, i18n.locale]);
 
   return (
     <>

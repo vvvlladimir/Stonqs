@@ -13,6 +13,7 @@ mod goals;
 mod listings;
 mod migrate;
 mod plans;
+mod plugin_state;
 mod portfolios;
 mod price_index;
 mod quotes;

@@ -105,3 +105,12 @@ pub(crate) fn require_currency(value: &str) -> UiResult<String> {
     }
     Ok(code)
 }
+
+/// Disposals of shares the ledger never received (ADR-0089). The whole portfolio, never the
+/// lens: a hole is in the ledger, and every figure around it is estimated whatever is in view.
+#[tauri::command]
+pub fn portfolio_gaps(state: State<AppState>) -> UiResult<Vec<QuantityGap>> {
+    let store = state.store()?;
+    let portfolio = state.portfolio()?.clone();
+    Ok(PortfolioAnalytics::new(&store, &portfolio)?.quantity_gaps()?)
+}

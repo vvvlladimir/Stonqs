@@ -1,7 +1,7 @@
 /** The only frontend module that imports Tauri APIs. */
 
 import { getVersion } from "@tauri-apps/api/app";
-import { Channel, invoke } from "@tauri-apps/api/core";
+import { Channel, convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
@@ -68,6 +68,7 @@ import type {
   CustomSource,
   CustomTestRow,
   ReportsData,
+  TradeGrouping,
   TradesData,
   IncomeData,
   TaxonomyIncomeData,
@@ -114,7 +115,10 @@ import type {
   DataChangeKind,
   DashboardData,
   DateString,
+  WidgetRead,
+  Unlock,
   Portfolio,
+  QuantityGap,
   PortfolioInput,
   RealPerformance,
   Security,
@@ -129,6 +133,7 @@ import type {
   WatchRow,
 } from "./types";
 import type { Outcome } from "./ipcRecord";
+import type { BridgeData } from "./pluginBridge";
 
 // Folded to `undefined` unless recording, so a normal build does not even carry the chunk.
 const record = import.meta.env.VITE_RECORD_IPC
@@ -174,6 +179,7 @@ export const api = {
     call<DashboardData>("dashboard_summary", { date, source: source ?? null }),
 
   portfolioGet: () => call<Portfolio>("portfolio_get"),
+  portfolioGaps: () => call<QuantityGap[]>("portfolio_gaps"),
   portfolioSave: (input: PortfolioInput) => call<Portfolio>("portfolio_save", { input }),
   setupPortfolio: (input: SetupInput) => call<Portfolio>("setup_portfolio", { input }),
 
@@ -274,8 +280,9 @@ export const api = {
     call<PositionReturnRow[]>("position_returns", { from, to, source: source ?? null }),
 
   transactionsList: (filter: TransactionFilter) => call<TransactionsData>("transactions_list", { filter }),
-  transactionsExportSave: (filter: TransactionFilter, path: string) =>
-    call<void>("transactions_export_save", { filter, path }),
+  /** `format` is a plugin writer's key; null saves the app's own file. */
+  transactionsExportSave: (filter: TransactionFilter, path: string, format: string | null = null) =>
+    call<void>("transactions_export_save", { filter, path, format }),
   transactionSave: (input: TransactionInput) => call<Transaction>("transaction_save", { input }),
   transactionDelete: (id: string) => call<void>("transaction_delete", { id }),
   /** Moves between two of the user's own accounts that arrived as two unrelated rows. */
@@ -303,8 +310,8 @@ export const api = {
   dividendsExpected: (months: number, source?: Source) =>
     call<ExpectedDividendsData>("dividends_expected", { months, source: source ?? null }),
   /** Open and closed trades of a window, with the turnover the trading produced. */
-  tradesSummary: (from: DateString, to: DateString, source?: Source) =>
-    call<TradesData>("trades_summary", { from, to, source: source ?? null }),
+  tradesSummary: (from: DateString, to: DateString, by: TradeGrouping, source?: Source) =>
+    call<TradesData>("trades_summary", { from, to, by, source: source ?? null }),
   /** Full risk report; rolling-volatility window is in trading days. */
   riskReport: (from: DateString, to: DateString, risk_free_rate: number, window_days = 63, source?: Source) =>
     call<RiskReport>("risk_report", {
@@ -369,6 +376,22 @@ export const api = {
   taxonomyDelete: (id: string) => call<void>("taxonomy_delete", { id }),
   taxonomyImportPreviewPath: (path: string, name?: string | null) =>
     call<TaxonomyPreview>("taxonomy_import_preview_path", { path, config: null, name: name ?? null }),
+  /** The same preview over bytes, which is what a classification set from a plugin arrives as. */
+  taxonomyImportPreview: (content: number[], name?: string | null) =>
+    call<TaxonomyPreview>("taxonomy_import_preview", { content, config: null, name: name ?? null }),
+  taxonomyImportCommit: (
+    content: number[],
+    name: string | null,
+    into: string | null,
+    with_targets: boolean,
+  ) =>
+    call<Taxonomy>("taxonomy_import_commit", {
+      content,
+      config: null,
+      name,
+      into,
+      withTargets: with_targets,
+    }),
   taxonomyImportCommitPath: (path: string, name: string | null, into: string | null, with_targets: boolean) =>
     call<Taxonomy>("taxonomy_import_commit_path", {
       path,
@@ -463,7 +486,9 @@ export const api = {
   /** Hands an address to the OS: a webview opens no window of its own on any platform. */
   openUrl: (url: string) => openUrl(url),
 
-  importLoadPath: (path: string) => call<ImportPreviewData>("import_load_path", { path }),
+  /** `unlock` answers a `file_protected` failure: the password, for the reader that asked. */
+  importLoadPath: (path: string, unlock?: Unlock) =>
+    call<ImportPreviewData>("import_load_path", { path, unlock: unlock ?? null }),
   importPreview: (config: ParseConfig, mapping: ImportMapping | null, overrides: RowOverride[]) =>
     call<ImportPreviewData>("import_preview", { config, mapping, overrides }),
   importCommit: (
@@ -523,6 +548,27 @@ export const api = {
   pluginInstall: (path: string) => call<Plugin>("plugin_install", { path }),
   pluginRemove: (id: string) => call<void>("plugin_remove", { id }),
   pluginThemeCss: (plugin: string, theme: string) => call<string>("plugin_theme_css", { plugin, theme }),
+  /** A classification set's CSV, previewed and committed by the commands every taxonomy file
+   *  goes through — the set has no path into the portfolio of its own. */
+  pluginTaxonomyCsv: (plugin: string, set: string) => call<number[]>("plugin_taxonomy_csv", { plugin, set }),
+  /** Where a plugin's page is served: the host's own scheme, spelled the way this platform
+   *  spells a custom one (ADR-0083). `key` is `<plugin id>/<widget or screen id>`. */
+  pluginPageUrl: (kind: "widget" | "screen", key: string) =>
+    convertFileSrc(`${kind}/${key}`, "stonqs-plugin"),
+  /** What a plugin page declared it reads, built by the host in the plugin API's own names
+   *  (ADR-0083) — the same projection an assistant tool of that package is handed. */
+  pluginReads: (reads: WidgetRead[], date: DateString, range: PeriodRange | undefined, source?: Source) =>
+    call<BridgeData>("plugin_reads", {
+      reads,
+      date,
+      from: range?.from ?? null,
+      to: range?.to ?? null,
+      source: source ?? null,
+    }),
+  /** A plugin's one document in the open profile; null before it saved one (ADR-0084). */
+  pluginStateGet: (plugin: string) => call<unknown>("plugin_state_get", { plugin }),
+  pluginStateSave: (plugin: string, document: unknown) =>
+    call<void>("plugin_state_save", { plugin, document }),
 
   profilesList: () => call<ProfileList>("profiles_list"),
   profileCreate: (name: string) => call<Profile>("profile_create", { name }),

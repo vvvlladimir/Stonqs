@@ -1,0 +1,10 @@
+{
+  "positions": 3,
+  "effective_positions": "2.6",
+  "top": 2,
+  "top_share_percent": "80.0",
+  "largest": [
+    { "symbol": "IWDA", "weight_percent": "50.0" },
+    { "symbol": "AAPL", "weight_percent": "30.0" }
+  ]
+}

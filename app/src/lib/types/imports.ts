@@ -139,7 +139,8 @@ export type ProblemCode =
   | "ACCOUNT_CURRENCY_MISMATCH"
   | "TICKER_ISIN_CONFLICT"
   | "SIMILAR_IN_STORE"
-  | "POSSIBLE_SPLIT";
+  | "POSSIBLE_SPLIT"
+  | "SALE_EXCEEDS_HOLDINGS";
 
 export interface ImportProblem {
   row: number | null;
@@ -296,6 +297,35 @@ export interface ImportPreviewData extends ImportPreview {
   headers: string[];
   /** Id of the layout the file was recognised as; absent when nothing fitted. */
   applied_template?: string;
+  /** `<plugin id>/<reader id>` when a plugin's reader is what turned this file into something
+   *  the wizard can read. Absent for a file one of the app's own readers handled. */
+  reader?: string;
+  /** What that reader had to say. Its own words: the app has no table to translate them from. */
+  reader_warnings?: ReaderWarning[];
+  /** Plugin readers that broke over the file and were passed over. */
+  skipped_readers?: SkippedReader[];
+}
+
+/** A password for a sealed file, for the reader that asked for it. Sent once, never stored. */
+export interface Unlock {
+  /** `<plugin id>/<reader id>`, as the `file_protected` error named it. */
+  reader: string;
+  password: string;
+}
+
+/** A plugin reader that broke over a file; `detail` is the runtime's English, shown as is. */
+export interface SkippedReader {
+  /** `<plugin id>/<reader id>`. */
+  plugin: string;
+  detail: string;
+}
+
+/** A file reader's own warning about the file it read. */
+export interface ReaderWarning {
+  plugin: string;
+  row?: number;
+  code: string;
+  message: string;
 }
 
 export interface ImportOptions {

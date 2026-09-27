@@ -146,6 +146,48 @@ impl Store {
         Ok(out)
     }
 
+    /// The other source asked for the days the own one has not published yet, with the
+    /// instrument's symbol there. `None` when history and latest close come from one source.
+    pub fn latest_symbol(&self, security_id: &str) -> Result<Option<(String, String)>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT source, symbol FROM security_symbols WHERE security_id = ?1 AND latest = 1")?;
+        let mut rows = stmt.query_map([security_id], |r| Ok((r.get(0)?, r.get(1)?)))?;
+        rows.next().transpose().map_err(Into::into)
+    }
+
+    /// Every instrument's latest-close source, `security_id -> source`, in one read.
+    pub fn latest_sources(&self) -> Result<std::collections::HashMap<String, String>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT security_id, source FROM security_symbols WHERE latest = 1")?;
+        let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
+    /// Names the source asked for the latest close, or with `None` goes back to the own source
+    /// alone. The source must already have a symbol here: a role without a ticker asks nothing.
+    pub fn set_latest_source(&self, security_id: &str, source: Option<&str>) -> Result<()> {
+        let tx = self.conn.unchecked_transaction()?;
+        tx.execute(
+            "UPDATE security_symbols SET latest = 0 WHERE security_id = ?1",
+            [security_id],
+        )?;
+        if let Some(source) = source {
+            let marked = tx.execute(
+                "UPDATE security_symbols SET latest = 1 WHERE security_id = ?1 AND source = ?2",
+                params![security_id, source],
+            )?;
+            if marked == 0 {
+                return Err(Error::Invalid(format!(
+                    "no symbol is recorded at {source}, so it cannot be asked for the latest close"
+                )));
+            }
+        }
+        tx.commit()?;
+        Ok(())
+    }
+
     /// Records (or, with an empty symbol, forgets) the instrument's symbol at another source.
     pub fn set_security_symbol(&self, security_id: &str, source: &str, symbol: &str) -> Result<()> {
         let symbol = symbol.trim();
@@ -189,5 +231,35 @@ mod symbol_tests {
 
         store.set_security_symbol(&btc.id, "kraken", " ").unwrap();
         assert!(store.security_symbols(&btc.id).unwrap().is_empty());
+    }
+
+    #[test]
+    fn one_source_at_most_answers_for_the_latest_close() {
+        let store = Store::open_in_memory().unwrap();
+        let fund = Security::new("FUND", "Fund", "EUR", SecurityKind::Fund).with_source("yahoo", "FUND.DE");
+        store.save_security(&fund).unwrap();
+        assert!(
+            store.set_latest_source(&fund.id, Some("kraken")).is_err(),
+            "no symbol there"
+        );
+
+        store.set_security_symbol(&fund.id, "kraken", "A").unwrap();
+        store.set_security_symbol(&fund.id, "eodhd", "B").unwrap();
+        store.set_latest_source(&fund.id, Some("kraken")).unwrap();
+        store.set_latest_source(&fund.id, Some("eodhd")).unwrap();
+        assert_eq!(
+            store.latest_symbol(&fund.id).unwrap(),
+            Some(("eodhd".into(), "B".into())),
+            "naming another moves the role rather than adding one"
+        );
+
+        // A new symbol keeps the role; forgetting the symbol takes the role with it.
+        store.set_security_symbol(&fund.id, "eodhd", "C").unwrap();
+        assert_eq!(
+            store.latest_symbol(&fund.id).unwrap(),
+            Some(("eodhd".into(), "C".into()))
+        );
+        store.set_security_symbol(&fund.id, "eodhd", "").unwrap();
+        assert_eq!(store.latest_symbol(&fund.id).unwrap(), None);
     }
 }

@@ -14,7 +14,7 @@ fn two_purchases_and_a_sale_make_one_closed_trade() {
     ];
 
     let holdings = build_holdings(&transactions, "EUR", &FakeRates::new()).unwrap();
-    let trades = closed_trades(&holdings.realized);
+    let trades = closed_trades(&holdings.realized, TradeGrouping::Position);
 
     assert_eq!(trades.len(), 1);
     let trade = &trades[0];
@@ -43,7 +43,7 @@ fn an_open_position_is_an_open_trade() {
 
     let holdings = build_holdings(&[buy], "EUR", &rates).unwrap();
     let valuation = value_holdings(&holdings, "EUR", d(2025, 6, 1), &prices, &rates).unwrap();
-    let trades = open_trades(&holdings, &valuation);
+    let trades = open_trades(&holdings, &valuation, TradeGrouping::Position);
 
     assert_eq!(trades.len(), 1);
     assert!(trades[0].is_open());
@@ -51,6 +51,71 @@ fn an_open_position_is_an_open_trade() {
     assert_eq!(trades[0].exit_value_base, dec!(750));
     assert_eq!(trades[0].pnl_base, dec!(250));
     assert_eq!(trades[0].holding_days, 120);
+}
+
+/// The same two purchases and one sale, cut per lot: two trades rather than one.
+/// Lot A cost 10 × 100 + 5 = 1005, lot B 10 × 120 + 5 = 1205.
+/// The sale's 2594 net is shared by quantity, 10 of 20 each: 2594 × 10/20 = 1297 per lot.
+/// A: 1297 − 1005 = 292 over 366 days. B: 1297 − 1205 = 92 over 184 days.
+/// Together 292 + 92 = 384 — the per-position result, split rather than changed.
+#[test]
+fn per_lot_one_sale_of_two_purchases_is_two_trades() {
+    let transactions = vec![
+        Transaction::buy(ACC, AAPL, d(2024, 1, 1), dec!(10), dec!(100), "EUR").with_fees(dec!(5)),
+        Transaction::buy(ACC, AAPL, d(2024, 7, 1), dec!(10), dec!(120), "EUR").with_fees(dec!(5)),
+        Transaction::sell(ACC, AAPL, d(2025, 1, 1), dec!(20), dec!(130), "EUR").with_fees(dec!(6)),
+    ];
+
+    let holdings = build_holdings(&transactions, "EUR", &FakeRates::new()).unwrap();
+    let trades = closed_trades(&holdings.realized, TradeGrouping::Lot);
+
+    assert_eq!(trades.len(), 2);
+    let (a, b) = (&trades[0], &trades[1]);
+    assert_eq!((a.opened_at, a.quantity), (d(2024, 1, 1), dec!(10)));
+    assert_eq!(a.entry_value_base, dec!(1005));
+    assert_eq!(a.exit_value_base, dec!(1297));
+    assert_eq!(a.pnl_base, dec!(292));
+    assert_eq!(a.holding_days, 366);
+    assert_eq!((b.opened_at, b.quantity), (d(2024, 7, 1), dec!(10)));
+    assert_eq!(b.entry_value_base, dec!(1205));
+    assert_eq!(b.exit_value_base, dec!(1297));
+    assert_eq!(b.pnl_base, dec!(92));
+    assert_eq!(b.holding_days, 184);
+    assert_eq!(a.closed_at, b.closed_at);
+
+    let whole = closed_trades(&holdings.realized, TradeGrouping::Position);
+    assert_eq!(a.pnl_base + b.pnl_base, whole[0].pnl_base);
+}
+
+/// A sale that empties one lot and cuts into the next, first in first out.
+/// Bought 10 at 100 and 10 at 120; sold 15 at 130, so 1950 came in and FIFO took all 10 of the
+/// first lot and 5 of the second. Shared by quantity: 1950 × 10/15 = 1300 and 1950 × 5/15 = 650.
+/// Closed: 1300 − 1000 = 300, and 650 − 5 × 120 = 650 − 600 = 50.
+/// Still open: the second lot's other 5, worth 5 × 150 = 750 against 600, so 150 unrealized.
+#[test]
+fn per_lot_a_partial_sale_closes_what_it_consumed_and_leaves_the_rest_open() {
+    let transactions = vec![
+        Transaction::buy(ACC, AAPL, d(2024, 1, 1), dec!(10), dec!(100), "EUR"),
+        Transaction::buy(ACC, AAPL, d(2024, 7, 1), dec!(10), dec!(120), "EUR"),
+        Transaction::sell(ACC, AAPL, d(2025, 1, 1), dec!(15), dec!(130), "EUR"),
+    ];
+    let prices = FakePrices::new("EUR").with(AAPL, d(2025, 6, 1), dec!(150));
+    let rates = FakeRates::new();
+
+    let holdings = build_holdings(&transactions, "EUR", &rates).unwrap();
+    let closed = closed_trades(&holdings.realized, TradeGrouping::Lot);
+    assert_eq!(closed.len(), 2);
+    assert_eq!((closed[0].quantity, closed[0].pnl_base), (dec!(10), dec!(300)));
+    assert_eq!((closed[1].quantity, closed[1].pnl_base), (dec!(5), dec!(50)));
+
+    let valuation = value_holdings(&holdings, "EUR", d(2025, 6, 1), &prices, &rates).unwrap();
+    let open = open_trades(&holdings, &valuation, TradeGrouping::Lot);
+    assert_eq!(open.len(), 1);
+    assert_eq!(open[0].opened_at, d(2024, 7, 1));
+    assert_eq!(open[0].quantity, dec!(5));
+    assert_eq!(open[0].entry_value_base, dec!(600));
+    assert_eq!(open[0].exit_value_base, dec!(750));
+    assert_eq!(open[0].pnl_base, dec!(150));
 }
 
 /// Turnover counts the trading itself: 1000 bought and 600 sold move 1600,

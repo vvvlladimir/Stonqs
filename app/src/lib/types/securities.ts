@@ -93,6 +93,8 @@ export interface SecurityRow extends Security {
   transaction_count: number;
   /** Symbols at sources other than `data_source`, `source -> symbol`. */
   other_symbols: Record<string, string>;
+  /** Which of `other_symbols` is asked for the days the own source has not published yet. */
+  latest_source: string | null;
   /** Effective step: explicit, trade-observed, then kind default. */
   effective_quantity_step: MoneyString;
   /** Step observed in trades, or null when no quantities were recorded. */
@@ -158,6 +160,8 @@ export interface SecurityInput {
   /** Symbols at other sources (`source -> symbol`), asked when the own source fails. Absent
    * means not edited; a blank value forgets that source. */
   other_symbols?: Record<string, string>;
+  /** Which of `other_symbols` answers for the latest close; read only beside `other_symbols`. */
+  latest_source?: string | null;
 }
 
 export interface SecurityRef {

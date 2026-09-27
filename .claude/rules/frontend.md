@@ -205,6 +205,17 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   figure over a track, so they are one `progress` entry whose `track` setting picks the subject
   (`model.trackOf`, `TRACK_LABELS`). The three old types migrate to it in `parseUiState`, by type
   rather than by version, so an exported board file reads the same way a stored one does.
+- A plugin's widget is a catalog row the host describes (`InstalledWidget`), stored on a board as
+  `plugin:<plugin id>/<widget id>`: `useWidgetCatalog()` is the catalog every caller reads — never
+  `WIDGETS` directly — and its `of(type)` keeps a tile whose plugin is gone on the board, saying so.
+  Its body is `widgets/plugin.tsx`, a frame fed the host's `plugin_reads` through `lib/pluginBridge.ts`
+  (ADR-0088); the bridge's field names
+  are the plugin API's, not `lib/types`' (ADR-0083). The frame itself is
+  `components/domain/PluginFrame.tsx`, shared with a plugin's screen.
+- A plugin's screen is the one `ScreenId` `plugin`, with the navigation hint naming which
+  (`go("plugin", "<plugin>/<screen>")`), so every closed list of screens stays closed. `Nav` lists
+  them in a `Plugins` section after the shipped ones — not dragged, not pinned, not stored — and the
+  palette lists them beside the screens; the menu bar does not (ADR-0084).
 - A widget configures itself: `WidgetDef::fields` names what its dialog offers, and every widget
   that reads data offers `source` (its own data scope) on top of whatever is specific to it —
   `period`, `taxonomy`, `count`, `benchmark`, `target`. `sourceOf` turns the stored `cfg.source`

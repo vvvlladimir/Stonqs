@@ -138,7 +138,7 @@ pub struct AppState {
     /// survives switching profile (ADR-0070).
     pub plugins: crate::plugins::Plugins,
     /// Bytes currently being processed by the import wizard.
-    import_file: Mutex<Option<(crate::commands::import::LoadedFile, Vec<u8>)>>,
+    import_file: Mutex<Option<crate::commands::import::ImportFile>>,
 }
 
 impl AppState {
@@ -361,10 +361,7 @@ impl AppState {
             .map_err(|_| UiError::internal("the refresh state is poisoned"))
     }
 
-    #[allow(clippy::type_complexity)]
-    pub fn import_file(
-        &self,
-    ) -> UiResult<MutexGuard<'_, Option<(crate::commands::import::LoadedFile, Vec<u8>)>>> {
+    pub fn import_file(&self) -> UiResult<MutexGuard<'_, Option<crate::commands::import::ImportFile>>> {
         self.import_file
             .lock()
             .map_err(|_| UiError::internal("the import state is poisoned"))

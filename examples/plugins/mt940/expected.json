@@ -1,0 +1,38 @@
+{
+  "format": "stonqs.transactions",
+  "rows": [
+    {
+      "amount": "250.00",
+      "currency": "EUR",
+      "date": "2024-01-02",
+      "external_id": "BANKREF001",
+      "kind": "DEPOSIT",
+      "note": "SALARY ACME GMBH"
+    },
+    {
+      "amount": "42.50",
+      "currency": "EUR",
+      "date": "2024-01-05",
+      "external_id": "BANKREF002",
+      "kind": "WITHDRAWAL",
+      "note": "SUPERMARKT EDEKA"
+    },
+    {
+      "amount": "3.90",
+      "currency": "EUR",
+      "date": "2024-01-31",
+      "external_id": "BANKREF003",
+      "kind": "FEE",
+      "note": "KONTOFUEHRUNGSGEBUEHR"
+    },
+    {
+      "amount": "1.25",
+      "currency": "EUR",
+      "date": "2024-01-31",
+      "external_id": "BANKREF004",
+      "kind": "INTEREST",
+      "note": "HABENZINSEN"
+    }
+  ],
+  "version": 1
+}

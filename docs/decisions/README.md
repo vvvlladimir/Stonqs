@@ -24,6 +24,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [13](0013-storage-design.md) | SQLite storage design | Accepted |
 | [31](0031-instrument-attributes-are-typed-key-values.md) | Instrument attributes are typed key/values, not columns | Accepted |
 | [62](0062-an-upgrade-copies-the-database-before-it-changes-it.md) | An upgrade copies the database before it changes it | Accepted |
+| [64](0064-a-charge-carries-the-currency-it-was-billed-in.md) | A charge carries the currency it was billed in | Accepted |
 
 ## Market data and FX
 
@@ -55,6 +56,11 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [19](0019-csv-detection-by-language-and-values.md) | CSV import detection is per language and arbitrated by values | Accepted |
 | [32](0032-a-taxonomy-is-seeded-from-an-attribute-not-derived-from-it.md) | A taxonomy is seeded from an attribute, never derived from it | Accepted |
 | [61](0061-a-flex-statement-is-a-second-reader-not-a-second-import.md) | A Flex statement is a second reader, not a second import | Accepted |
+| [65](0065-a-brokers-own-identifier-decides-identity.md) | A broker's own identifier decides identity | Accepted |
+| [66](0066-one-transaction-file-of-our-own.md) | One transaction file of our own | Accepted |
+| [67](0067-a-row-becomes-what-a-rule-says.md) | A row becomes what a rule says | Accepted |
+| [86](0086-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md) | A file reader is a WASM component that produces the canonical file | Accepted; a module failing at import narrowed by [87](0087-a-reader-that-breaks-is-passed-over.md) |
+| [87](0087-a-reader-that-breaks-is-passed-over.md) | A reader that breaks is passed over, and one that refuses stops the import | Accepted |
 
 ## What the numbers mean
 
@@ -83,6 +89,8 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [33](0033-an-investment-plan-proposes-transactions.md) | An investment plan proposes transactions, it does not own them | Accepted |
 | [34](0034-an-alert-is-a-rule-whose-firing-is-derived.md) | An alert is a trigger level with a crossing log; events ride on the quote request | Accepted |
 | [35](0035-a-watchlist-is-a-list-of-instruments-read-off-their-own-quotes.md) | A watchlist is a named list of instruments, read off their own quotes | Accepted |
+| [68](0068-a-goal-is-an-intention-and-a-limit-is-measured-never-enforced.md) | A goal is an intention, and a contribution limit is measured, never enforced | Accepted; withdrawal netting superseded by [71](0071-a-withdrawal-restores-allowance-only-when-the-limit-says-so.md) |
+| [71](0071-a-withdrawal-restores-allowance-only-when-the-limit-says-so.md) | A withdrawal restores allowance only when the limit says so | Accepted |
 
 ## The host and the interface
 
@@ -97,9 +105,21 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [45](0045-a-dashboard-tile-is-resized-from-the-edge-being-dragged.md) | A dashboard tile is resized from the edge being dragged | Accepted |
 | [59](0059-a-tile-may-hold-assumptions-and-a-ratio-is-a-rendering.md) | A tile may hold assumptions, and a ratio of two shown figures is a rendering | Accepted |
 | [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted |
-| [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins implemented, UI and compute not yet |
+| [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins, the file reader ([86](0086-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)) the file writer ([80](0080-a-file-writer-is-the-reader-turned-round.md)) dashboard widgets ([83](0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)) screens ([84](0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md)) and assistant tools ([85](0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md)) implemented; "what a number means" narrowed by [82](0082-a-plugin-may-show-a-number-of-its-own-under-its-own-name.md) |
+| [72](0072-one-keyboard-layer-for-shortcuts-and-dialogs.md) | One keyboard layer for shortcuts and dialogs | Accepted |
+| [73](0073-a-block-is-laid-out-by-its-own-width.md) | A block is laid out by its own width, not by the window's | Accepted; the phone rule narrowed by [74](0074-a-tile-s-smallest-width-is-the-board-owner-s.md) |
+| [74](0074-a-tile-s-smallest-width-is-the-board-owner-s.md) | A tile's smallest width is the board owner's | Accepted |
+| [75](0075-one-surface-for-a-tile-and-a-panel.md) | One surface for a dashboard tile and a screen's panel | Accepted |
 | [77](0077-the-tour-is-a-declaration-over-the-real-screens.md) | The guided tour is a declaration over the real screens | Accepted |
 | [78](0078-the-app-states-what-it-is-not.md) | The app states what it is not, and carries its notices | Accepted |
+| [79](0079-a-latest-close-source-extends-the-tail-and-never-rewrites-the-history.md) | A latest-close source extends the tail and never rewrites the history | Accepted |
+| [80](0080-a-file-writer-is-the-reader-turned-round.md) | A file writer is the reader turned round | Accepted |
+| [81](0081-a-trade-may-be-cut-per-lot.md) | A trade may be cut per lot | Accepted |
+| [82](0082-a-plugin-may-show-a-number-of-its-own-under-its-own-name.md) | A plugin may show a number of its own, under its own name | Accepted |
+| [83](0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md) | A plugin widget is a page with no origin, fed by the host | Accepted; who builds the data superseded by [88](0088-the-host-builds-what-a-plugin-reads.md) |
+| [84](0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md) | A plugin screen, and the one document a plugin keeps | Accepted |
+| [85](0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md) | A plugin's assistant tool is a component that answers from its declared reads | Accepted; the two copies of the projection superseded by [88](0088-the-host-builds-what-a-plugin-reads.md) |
+| [88](0088-the-host-builds-what-a-plugin-reads.md) | The host builds what a plugin reads, for a page and a tool alike | Accepted |
 
 ## Profiles, keys and encryption
 
@@ -120,3 +140,5 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [40](0040-the-summary-tile-is-configured-like-a-widget.md) | The summary tile is configured like a widget, schedule included | Accepted |
 | [41](0041-what-a-turn-costs-is-counted-not-priced.md) | What a turn costs is counted, not priced | Accepted |
 | [42](0042-a-provider-the-user-configures.md) | A provider the user configures | Accepted |
+| [69](0069-a-new-chat-starts-where-the-last-choice-left-off.md) | A new chat starts where the last choice left off | Accepted |
+| [89](0089-a-sale-of-shares-never-received-is-reported-and-bridged.md) | A sale of shares never received is reported and bridged, not fatal | Accepted |

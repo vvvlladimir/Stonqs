@@ -272,3 +272,90 @@ date,type,symbol,quantity,unit_price,currency,amount
     assert!(!code(1), "the purchase is in the account's own currency");
     assert_ne!(preview.rows[0].status, RowStatus::Invalid);
 }
+
+/// A sale is checked against the stored ledger and the file together: 5 AAPL stored, then the
+/// file sells 3 (5 − 3 = 2 left) and 4 more — 2 held, 4 sold, 2 missing. The first sale is
+/// covered and says nothing; the second is a warning naming what is missing.
+#[test]
+fn a_sale_of_more_than_the_ledger_holds_is_called_out() {
+    const CSV: &str = "\
+date,type,symbol,quantity,unit_price,currency
+2024-03-01,SELL,AAPL,3,190.00,USD
+2024-04-01,SELL,AAPL,4,195.00,USD
+";
+    let (store, account) = store_with_account();
+    let aapl = Security::new("AAPL", "Apple", "USD", SecurityKind::Stock);
+    store.save_security(&aapl).unwrap();
+    store
+        .save_transaction(&Transaction::buy(
+            &account.id,
+            &aapl.id,
+            sq_core_date(2024, 1, 10),
+            dec!(5),
+            dec!(180),
+            "USD",
+        ))
+        .unwrap();
+
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+    let preview = ImportService::new(&store)
+        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+
+    let gaps: Vec<_> = preview
+        .rows
+        .iter()
+        .flat_map(|r| &r.problems)
+        .filter(|p| p.code == ProblemCode::SaleExceedsHoldings)
+        .collect();
+    assert_eq!(gaps.len(), 1, "{:?}", preview.rows);
+    assert_eq!(gaps[0].row, Some(2));
+    assert_eq!(gaps[0].severity, Severity::Warning);
+    assert_eq!(gaps[0].params["held"], "2");
+    assert_eq!(gaps[0].params["missing"], "2");
+    // A warning, not a refusal: the row is still written.
+    assert_eq!(preview.rows[1].status, RowStatus::Ready);
+}
+
+/// The likeliest place for the missing receipt is a row of the same file that will not be
+/// written — a wording nobody mapped — so the warning names it.
+#[test]
+fn an_unread_row_of_the_same_instrument_is_named_as_the_likely_cause() {
+    const CSV: &str = "\
+date,type,symbol,quantity,unit_price,currency,amount
+2026-04-19,FREE_RECEIPT,XLM,580,0.15,EUR,
+2026-04-19,SELL,XLM,580,0.1458524,EUR,84.59
+";
+    let (store, account) = store_with_account();
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+    let preview = ImportService::new(&store)
+        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+
+    let gap = preview.rows[1]
+        .problems
+        .iter()
+        .find(|p| p.code == ProblemCode::SaleExceedsHoldings)
+        .expect("the sale is uncovered while the receipt is unread");
+    assert_eq!(gap.params["unread"], "1");
+    assert_eq!(gap.params["unread_kinds"], "FREE_RECEIPT");
+
+    // Mapped, the receipt covers the sale on the same day and the warning is gone.
+    let mapping = mapping.with_kind_alias("FREE_RECEIPT", TransactionKind::DeliveryInbound);
+    let preview = ImportService::new(&store)
+        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+    assert!(
+        preview
+            .rows
+            .iter()
+            .flat_map(|r| &r.problems)
+            .all(|p| p.code != ProblemCode::SaleExceedsHoldings),
+        "{:?}",
+        preview.rows
+    );
+}
+
+fn sq_core_date(y: i32, m: u32, d: u32) -> chrono::NaiveDate {
+    chrono::NaiveDate::from_ymd_opt(y, m, d).unwrap()
+}

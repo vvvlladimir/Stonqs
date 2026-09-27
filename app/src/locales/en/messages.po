@@ -81,6 +81,10 @@ msgstr "— not mapped —"
 msgid "— not used —"
 msgstr "— not used —"
 
+#: src/screens/Securities/SecurityForm.tsx
+msgid "— own source —"
+msgstr "— own source —"
+
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "— weights in such files are given inside the parent (\"equities 42 %, of which the core is 88 %\"), and that is how they are stored"
 msgstr "— weights in such files are given inside the parent (\"equities 42 %, of which the core is 88 %\"), and that is how they are stored"
@@ -288,6 +292,11 @@ msgstr "{0, plural, one {# request} other {# requests}}"
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
+#. placeholder {0}: uncovered.length
+#: src/screens/Import/CommitStep.tsx
+msgid "{0, plural, one {# row sells} other {# rows sell}} more {uncoveredSymbols} than the database and this file ever received. The purchase or incoming transfer is missing, so the figures for it will be estimated — open \"Row notices\" below for where it may be."
+msgstr "{0, plural, one {# row sells} other {# rows sell}} more {uncoveredSymbols} than the database and this file ever received. The purchase or incoming transfer is missing, so the figures for it will be estimated — open \"Row notices\" below for where it may be."
+
 #. placeholder {0}: errors.length
 #. placeholder {0}: preview.rows.length
 #. placeholder {0}: symbol.count
@@ -398,10 +407,30 @@ msgstr "{0} · {1} of {2}"
 msgid "{0} · {1} of {2} · {3} downloaded"
 msgstr "{0} · {1} of {2} · {3} downloaded"
 
-#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Figure as UiFigure, Money, Num, Percent, Progress, QueryError, Stat, type Tone, } from "../../../components/ui"; import { useDashboard, useFire, useGoals, useLimits, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, trackOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, deltaTone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: Tone; deltaTone?: Tone; foot?: ReactNode; }) { // What the line under the number says is this file's business; how a figure looks is not. return <UiFigure value={value} tone={tone} delta={delta} deltaTone={deltaTone} note={useFoot(ctx, foot)} />; } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: Tone; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * A figure over a track. Which figure is a setting, not a widget: a goal, a contribution limit * and financial independence are one shape — a percentage, a bar and the facts that read it — * and three catalog entries only made the picker longer. */ export function ProgressWidget(props: WidgetProps) { switch (trackOf(props.widget.cfg)) { case "limit": return <LimitWidget {...props} />; case "fire": return <FireWidget {...props} />; default: return <GoalWidget {...props} />; } } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ function FireWidget({ widget }: WidgetProps) { const { t, i18n } = useLingui(); const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <Progress value={<Percent value={data.progress} digits={0} />} share={data.progress} legend={{ left: months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ), }} note={<FireNote data={data} />} /> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; // Plain text: `Progress` puts it in its own note line, which already draws the rule above it. return ( <> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </> ); } /** * One goal as a track: where it is, and the single figure that answers "is this enough". * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean * nothing here. */ function GoalWidget({ widget, date }: WidgetProps) { const { t } = useLingui(); const query = useGoals(date); const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : ""; return ( <Async query={query}> {(rows) => { const row = rows.find((r) => r.goal.id === wanted) ?? rows[0]; if (!row) return ( <p className="muted"> <Trans>No goals yet — one is added on the Plans screen.</Trans> </p> ); const { progress } = row; return ( <Progress value={<Percent value={progress.progress} digits={0} />} share={progress.progress} barTone={progress.on_track === false ? "neg" : undefined} legend={{ left: ( <> <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "} <Money value={progress.target_base} currency={row.goal.currency} /> </> ), right: progress.months_left !== null ? plural(progress.months_left, { one: "# month left", other: "# months left" }) : progress.projected_date !== null ? t`at this pace, ${formatDay(progress.projected_date)}` : t`no date and no pace stated`, }} note={ progress.required_monthly_base !== null && ( <> <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "} {t`a month needed`} </> ) } /> ); }} </Async> ); } /** One contribution limit as a track: spent against allowed, over its own limit year. */ function LimitWidget({ widget, date }: WidgetProps) { const { t } = useLingui(); const query = useLimits(date); const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : ""; return ( <Async query={query}> {(rows) => { const usage = rows.find((r) => r.limit_id === wanted) ?? rows[0]; if (!usage) return ( <p className="muted"> <Trans>No limits set — one is added on the Accounts screen.</Trans> </p> ); const over = Number(usage.share) > 1; return ( <Progress value={<Percent value={usage.share} digits={0} />} share={usage.share} barTone={over ? "neg" : undefined} legend={{ left: ( <> <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "} <Money value={usage.allowance} currency={usage.currency} /> </> ), }} note={t`of the allowance used`} /> ); }} </Async> ); } 
+#. placeholder {0}: import type { ReactNode } from "react"; import type { I18n } from "@lingui/core"; import { msg, plural } from "@lingui/core/macro"; import { Trans, useLingui } from "@lingui/react/macro"; import { Async, Figure as UiFigure, Money, Num, Percent, Progress, QueryError, Stat, type Tone, } from "../../../components/ui"; import { useDashboard, useFire, useGoals, useLimits, useIncomeOver, usePerformance, usePlans, usePositions, useRisk, useTrades, } from "../../../lib/queries"; import { periodLabel, pickRange, usePeriodRanges, type PeriodId } from "../../../lib/periods"; import { formatDay, formatMoney } from "../../../lib/format"; import type { DateString, FireProjection, MoneyString, PeriodSummary, PortfolioValuation, RiskMetrics, TradesData, } from "../../../lib/types"; import { RATIO_TERMS, fireCfg, periodOf, ratioTerms, sourceOf, trackOf, type MetricCtx, type RatioData, type WidgetProps, } from "./model"; /** Valuation fields suitable for a money metric tile. */ type MoneyField = { [K in keyof PortfolioValuation]: PortfolioValuation[K] extends MoneyString ? K : never; }[keyof PortfolioValuation]; /** * Shared layout for a metric value and its note. `foot` is what the metric itself has to say * under the number; the widget's own setting is what decides whether that is what gets shown. */ export function Figure({ ctx, value, delta, tone, deltaTone, foot, }: { ctx: MetricCtx; value: ReactNode; delta?: ReactNode; tone?: Tone; deltaTone?: Tone; foot?: ReactNode; }) { // What the line under the number says is this file's business; how a figure looks is not. return <UiFigure value={value} tone={tone} delta={delta} deltaTone={deltaTone} note={useFoot(ctx, foot)} />; } /** What the line under the value says: the metric's own note unless the widget names another. */ function useFoot(ctx: MetricCtx, own: ReactNode): ReactNode { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); switch (ctx.foot) { case "none": return null; case "dates": return range ? `${formatDay(range.from)} — ${formatDay(range.to)}` : null; case "period": return range ? periodLabel(i18n, range) : null; default: return own; } } function useRange(date: DateString, period: PeriodId) { const ranges = usePeriodRanges(date); return pickRange(ranges.data, period); } export function FromValuation({ ctx, field, signed, }: { ctx: MetricCtx; field: MoneyField; signed?: boolean; }) { const query = useDashboard(ctx.date, ctx.source); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={ <Money value={data.valuation[field]} currency={data.valuation.base_currency} signed={signed} /> } /> )} </Async> ); } export function DayMetric(ctx: MetricCtx) { const { t } = useLingui(); const query = usePositions(ctx.date, ctx.source); return ( <Async query={query}> {(data) => { // No second quote means there is nothing to compare, not zero. const known = data.rows.some((row) => row.day_change_base !== null); return ( <Figure ctx={ctx} value={known ? <Money value={data.day_change_base} currency={data.base_currency} signed /> : "—"} foot={known ? undefined : t`no previous quote`} /> ); }} </Async> ); } /** Money fields of the period summary that make a tile on their own. */ type SummaryField = keyof PeriodSummary; /** * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a * balance on a date, this one reads a change between two. */ export function FromSummary({ ctx, field, signed, foot, }: { ctx: MetricCtx; field: SummaryField; signed?: boolean; foot?: (summary: PeriodSummary) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.summary[field]} currency={data.base_currency} signed={signed} />} foot={foot?.(data.summary) ?? `${formatDay(range.from)} — ${formatDay(range.to)}`} /> )} </Async> ); } /** A cost rate and the money behind it; the core divides, the tile only renders. */ export function CostRate({ ctx, field }: { ctx: MetricCtx; field: "fee_rate" | "tax_rate" }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); const amount = field === "fee_rate" ? "fees_base" : "taxes_base"; if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const rate = data[field]; return ( <Figure ctx={ctx} value={rate === null ? "—" : <Percent value={rate} digits={2} />} foot={<Money value={data.costs[amount]} currency={data.base_currency} />} /> ); }} </Async> ); } export function FromPerformance({ ctx, field, }: { ctx: MetricCtx; field: "twr" | "xirr" | "twr_annualized"; }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const value = data[field]; return ( <Figure ctx={ctx} value={value === null ? "—" : <Percent value={value} signed />} foot={`${formatDay(range.from)} — ${formatDay(range.to)}`} /> ); }} </Async> ); } export function IncomeMetric(ctx: MetricCtx) { const range = useRange(ctx.date, ctx.period); const query = useIncomeOver(range, null, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={<Money value={data.total.net_base} currency={data.base_currency} />} delta={<Money value={data.change_base} currency={data.base_currency} signed />} foot={ <> <Trans> {plural(data.total.events, { one: "# payment", other: "# payments" })} · previous period </Trans>{" "} <Money value={data.previous_total.net_base} currency={data.base_currency} /> </> } /> )} </Async> ); } /** A drawdown duration: the core counted the days, the tile only picks the wording. */ export function DrawdownDays({ ctx, pick }: { ctx: MetricCtx; pick: (m: RiskMetrics) => number | null }) { const range = useRange(ctx.date, ctx.period); const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => { const days = pick(data.metrics); return ( <Figure ctx={ctx} value={days === null ? "—" : <Num>{plural(days, { one: "# day", other: "# days" })}</Num>} /> ); }} </Async> ); } export function FromRisk({ ctx, pick, foot, tone, }: { ctx: MetricCtx; pick: (metrics: RiskMetrics) => ReactNode; foot?: (metrics: RiskMetrics, i18n: I18n) => string | undefined; tone?: Tone; }) { const { i18n } = useLingui(); const range = useRange(ctx.date, ctx.period); // Same rate and window as the risk widgets, so the history is walked once. const query = useRisk(range, "0", "63", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={pick(data.metrics)} tone={tone} foot={foot?.(data.metrics, i18n)} /> )} </Async> ); } /** The period's highest value and how far under it the period ends. */ export function PeakMetric({ ctx }: { ctx: MetricCtx }) { const { t } = useLingui(); const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => data.peak === null ? ( <Figure ctx={ctx} value="—" /> ) : ( <Figure ctx={ctx} value={<Money value={data.peak.value} currency={data.base_currency} />} delta={data.peak.distance ? <Percent value={data.peak.distance} signed /> : undefined} foot={ data.peak.distance ? t`below the high of ${formatDay(data.peak.date)}` : t`reached on ${formatDay(data.peak.date)}` } /> ) } </Async> ); } /** Traded volume against the capital at work; the core divides, the tile renders. */ export function TurnoverMetric({ ctx }: { ctx: MetricCtx }) { const range = useRange(ctx.date, ctx.period); const query = usePerformance(range, ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return ( <Async query={query}> {(data) => ( <Figure ctx={ctx} value={data.turnover_rate === null ? "—" : <Percent value={data.turnover_rate} digits={1} />} foot={<Money value={data.volume.volume_base} currency={data.base_currency} />} /> )} </Async> ); } /** A figure of the trade ledger: the widget names which one, the core computed all of them. */ export function FromTrades({ ctx, pick, foot, }: { ctx: MetricCtx; pick: (data: TradesData) => ReactNode; foot?: (data: TradesData) => ReactNode; }) { const range = useRange(ctx.date, ctx.period); const query = useTrades(range, "POSITION", ctx.source); if (!range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>; } /** * What the active plans add up to in an average month. Read off the coming year rather than * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033). */ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) { const plans = usePlans(); return ( <Async query={plans}> {(data) => { const owed = data.rows.reduce((sum, row) => sum + row.due_count, 0); const active = data.rows.filter((row) => row.plan.active).length; return ( <Figure ctx={ctx} value={<Money value={data.monthly_base} currency={data.base_currency} />} foot={ owed > 0 ? plural(owed, { one: "# contribution due", other: "# contributions due" }) : plural(active, { one: "# active plan", other: "# active plans" }) } /> ); }} </Async> ); } /** * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the * core computed; the division happens here because a share of two displayed values is a * rendering, not money: nothing is added, rounded or stored. */ export function RatioWidget({ widget, date, period }: WidgetProps) { const { i18n } = useLingui(); const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) }; const { top, bottom } = ratioTerms(widget.cfg); const range = useRange(ctx.date, ctx.period); const needsPeriod = RATIO_TERMS[top].periodic || RATIO_TERMS[bottom].periodic; const dashboard = useDashboard(ctx.date, ctx.source); const performance = usePerformance(needsPeriod ? range : undefined, ctx.source); const income = useIncomeOver(needsPeriod ? range : undefined, null, ctx.source); if (needsPeriod && !range) return ( <p className="muted"> <Trans>No transactions.</Trans> </p> ); // The tile waits on `dashboard` below; a period query that failed would otherwise leave it // waiting for an answer that is not coming. const failed = needsPeriod ? (performance.error ?? income.error) : null; if (failed) return <QueryError error={failed} />; const data: RatioData = { valuation: dashboard.data?.valuation, summary: performance.data?.summary, costs: performance.data?.costs, income: income.data?.total, }; const numerator = RATIO_TERMS[top].pick(data); const denominator = RATIO_TERMS[bottom].pick(data); const currency = dashboard.data?.valuation.base_currency ?? ""; return ( <Async query={dashboard}> {() => ( <Figure ctx={ctx} value={<RatioValue top={numerator} bottom={denominator} multiple={widget.cfg.as === "multiple"} />} foot={ numerator !== undefined && denominator !== undefined ? `${formatMoney(numerator, currency, { compact: true })} / ${formatMoney(denominator, currency, { compact: true })}` : i18n._(RATIO_TERMS[top].label) } /> )} </Async> ); } /** A ratio has no answer when the divisor is zero, and that is an absent figure, not a zero. */ function RatioValue({ top, bottom, multiple, }: { top?: MoneyString; bottom?: MoneyString; multiple?: boolean; }) { if (top === undefined || bottom === undefined) return <>…</>; const divisor = Number(bottom); if (!Number.isFinite(divisor) || divisor === 0) return <>—</>; const ratio = Number(top) / divisor; if (multiple) return ( <> <Stat value={ratio} digits={2} /> <span className="cur">×</span> </> ); return <Percent value={String(ratio)} digits={1} />; } /** * A figure over a track. Which figure is a setting, not a widget: a goal, a contribution limit * and financial independence are one shape — a percentage, a bar and the facts that read it — * and three catalog entries only made the picker longer. */ export function ProgressWidget(props: WidgetProps) { switch (trackOf(props.widget.cfg)) { case "limit": return <LimitWidget {...props} />; case "fire": return <FireWidget {...props} />; default: return <GoalWidget {...props} />; } } /** * How far the portfolio is from covering a year of spending, and when this pace would get * there. Every figure but today's value is an assumption — the return is not this portfolio's * measured return and is never read from it. */ function FireWidget({ widget }: WidgetProps) { const { t, i18n } = useLingui(); const assumptions = fireCfg(widget.cfg); const query = useFire(assumptions); if (assumptions.annual_spending === "") return ( <p className="muted"> <Trans>Name the yearly spending this portfolio should cover.</Trans> </p> ); return ( <Async query={query}> {(data) => { const months = data.months_to_target; return ( <Progress value={<Percent value={data.progress} digits={0} />} share={data.progress} legend={{ left: months === null ? t`not within a hundred years at this pace` : months === 0 ? t`already there` : i18n._( msg`${plural(Math.round(months / 12), { one: "# year", other: "# years" })} to go`, ), }} note={<FireNote data={data} />} /> ); }} </Async> ); } function FireNote({ data }: { data: FireProjection }) { const { t } = useLingui(); const currency = data.base_currency; // Plain text: `Progress` puts it in its own note line, which already draws the rule above it. return ( <> {t`${formatMoney(data.current_base, currency, { compact: true })} of ${formatMoney(data.target_base, currency, { compact: true })}`} {data.target_date && ` · ${formatDay(data.target_date)}`} </> ); } /** * One goal as a track: where it is, and the single figure that answers "is this enough". * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean * nothing here. */ function GoalWidget({ widget, date }: WidgetProps) { const { t } = useLingui(); const query = useGoals(date); const wanted = typeof widget.cfg.goal === "string" ? widget.cfg.goal : ""; return ( <Async query={query}> {(rows) => { const row = rows.find((r) => r.goal.id === wanted) ?? rows[0]; if (!row) return ( <p className="muted"> <Trans>No goals yet — one is added on the Plans screen.</Trans> </p> ); const { progress } = row; return ( <Progress value={<Percent value={progress.progress} digits={0} />} share={progress.progress} barTone={progress.on_track === false ? "neg" : undefined} legend={{ left: ( <> <Money value={progress.current_base} currency={row.goal.currency} /> {t`of`}{" "} <Money value={progress.target_base} currency={row.goal.currency} /> </> ), right: progress.months_left !== null ? plural(progress.months_left, { one: "# month left", other: "# months left" }) : progress.projected_date !== null ? t`at this pace, ${formatDay(progress.projected_date)}` : t`no date and no pace stated`, }} note={ progress.required_monthly_base !== null && ( <> <Money value={progress.required_monthly_base} currency={row.goal.currency} />{" "} {t`a month needed`} </> ) } /> ); }} </Async> ); } /** One contribution limit as a track: spent against allowed, over its own limit year. */ function LimitWidget({ widget, date }: WidgetProps) { const { t } = useLingui(); const query = useLimits(date); const wanted = typeof widget.cfg.limit === "string" ? widget.cfg.limit : ""; return ( <Async query={query}> {(rows) => { const usage = rows.find((r) => r.limit_id === wanted) ?? rows[0]; if (!usage) return ( <p className="muted"> <Trans>No limits set — one is added on the Accounts screen.</Trans> </p> ); const over = Number(usage.share) > 1; return ( <Progress value={<Percent value={usage.share} digits={0} />} share={usage.share} barTone={over ? "neg" : undefined} legend={{ left: ( <> <Money value={usage.remaining} currency={usage.currency} /> {t`left of`}{" "} <Money value={usage.allowance} currency={usage.currency} /> </> ), }} note={t`of the allowance used`} /> ); }} </Async> ); } 
 #: src/screens/dashboard/widgets/value.tsx
 msgid "{0} · previous period"
 msgstr "{0} · previous period"
+
+#. placeholder {0}: p.quantity
+#. placeholder {1}: p.symbol
+#. placeholder {2}: p.date
+#. placeholder {3}: p.held
+#. placeholder {4}: p.symbol
+#: src/screens/Import/labels.ts
+msgid "{0} {1} leave on {2}, but only {3} is held then. The purchase or incoming transfer is missing: until it is added, the figures for {4} are estimated."
+msgstr "{0} {1} leave on {2}, but only {3} is held then. The purchase or incoming transfer is missing: until it is added, the figures for {4} are estimated."
+
+#. placeholder {0}: p.quantity
+#. placeholder {1}: p.symbol
+#. placeholder {2}: p.date
+#. placeholder {3}: p.held
+#. placeholder {4}: p.unread
+#. placeholder {5}: p.symbol
+#. placeholder {6}: p.unread_kinds
+#: src/screens/Import/labels.ts
+msgid "{0} {1} leave on {2}, but only {3} is held then. This file has {4} more rows for {5} that will not be written ({6}) — map that wording on the \"Parsing\" step, most likely to an incoming delivery."
+msgstr "{0} {1} leave on {2}, but only {3} is held then. This file has {4} more rows for {5} that will not be written ({6}) — map that wording on the \"Parsing\" step, most likely to an incoming delivery."
 
 #. placeholder {0}: transactionLabel(i18n, part.kind)
 #. placeholder {1}: year.year
@@ -648,6 +677,18 @@ msgstr "{dead, plural, one {# venue hidden: the instrument is listed there but r
 #~ msgid "{delta, plural, one {# day} other {# days}}"
 #~ msgstr "{delta, plural, one {# day} other {# days}}"
 
+#: src/screens/dashboard/dialogs.tsx
+msgid "{description} From {plugin}, which is given {reads}."
+msgstr "{description} From {plugin}, which is given {reads}."
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "{description} From {plugin}, which is given no portfolio data."
+msgstr "{description} From {plugin}, which is given no portfolio data."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{dictionaries, plural, one {# operation dictionary} other {# operation dictionaries}}"
+msgstr "{dictionaries, plural, one {# operation dictionary} other {# operation dictionaries}}"
+
 #: src/components/domain/SecurityPopup.tsx
 msgid "{effective} (from the kind)"
 msgstr "{effective} (from the kind)"
@@ -699,6 +740,14 @@ msgstr "{owedTotal, plural, one {# contribution has come due and is not recorded
 msgid "{positiveDays} of {0}"
 msgstr "{positiveDays} of {0}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{readers, plural, one {# file reader} other {# file readers}}"
+msgstr "{readers, plural, one {# file reader} other {# file readers}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{screens, plural, one {# screen} other {# screens}}"
+msgstr "{screens, plural, one {# screen} other {# screens}}"
+
 #: src/screens/Rebalance/model.ts
 msgid "{sign}{size} pp"
 msgstr "{sign}{size} pp"
@@ -743,6 +792,10 @@ msgstr "{subject}: the ticker field holds an ISIN, which has no prices. Open Ins
 msgid "{symbol} fell below {level}"
 msgstr "{symbol} fell below {level}"
 
+#: src/components/domain/LedgerGaps.tsx
+msgid "{symbol} is sold without having been bought: {count, plural, one {# sale} other {# sales}} from {since} take more than the operations ever received. Its figures are estimated until the purchase or the incoming transfer is added — as a new transaction, or by importing the file again with that row mapped."
+msgstr "{symbol} is sold without having been bought: {count, plural, one {# sale} other {# sales}} from {since} take more than the operations ever received. Its figures are estimated until the purchase or the incoming transfer is added — as a new transaction, or by importing the file again with that row mapped."
+
 #: src/components/domain/QuoteSpark.tsx
 msgid "{symbol} over {QUOTE_WINDOW_DAYS} days"
 msgstr "{symbol} over {QUOTE_WINDOW_DAYS} days"
@@ -763,9 +816,21 @@ msgstr "{symbol}: date reached"
 #~ msgid "{symbol}: limit reached"
 #~ msgstr "{symbol}: limit reached"
 
+#: src/components/domain/LedgerGaps.tsx
+msgid "{symbols} are sold without having been bought. Their figures are estimated until the purchases or incoming transfers are added — as new transactions, or by importing the files again with those rows mapped."
+msgstr "{symbols} are sold without having been bought. Their figures are estimated until the purchases or incoming transfers are added — as new transactions, or by importing the files again with those rows mapped."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{taxonomies, plural, one {# classification set} other {# classification sets}}"
+msgstr "{taxonomies, plural, one {# classification set} other {# classification sets}}"
+
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{themes, plural, one {# theme} other {# themes}}"
 msgstr "{themes, plural, one {# theme} other {# themes}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{tools, plural, one {# assistant tool} other {# assistant tools}}"
+msgstr "{tools, plural, one {# assistant tool} other {# assistant tools}}"
 
 #: src/screens/Alerts/index.tsx
 #~ msgid "{unread, plural, one {# new} other {# new}}"
@@ -779,10 +844,22 @@ msgstr "{unseen, plural, one {# new crossing} other {# new crossings}}"
 msgid "{value, plural, one {# day} other {# days}}"
 msgstr "{value, plural, one {# day} other {# days}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+#~ msgstr "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{widgets, plural, one {# dashboard widget} other {# dashboard widgets}}"
+msgstr "{widgets, plural, one {# dashboard widget} other {# dashboard widgets}}"
+
 #. placeholder {0}: s.total
 #: src/screens/Import/CommitStep.tsx
 msgid "{willWrite} of {0}"
 msgstr "{willWrite} of {0}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{writers, plural, one {# export format} other {# export formats}}"
+msgstr "{writers, plural, one {# export format} other {# export formats}}"
 
 #: src/components/domain/SecurityAlerts.tsx
 msgid "↑ crossed {level} upward"
@@ -1068,8 +1145,36 @@ msgid "A plan is a contribution on a schedule: how much, how often, and what it 
 msgstr "A plan is a contribution on a schedule: how much, how often, and what it buys. It proposes the transactions and you confirm them, so nothing is written behind your back."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
-msgstr "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes and broker import layouts."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts and readers for files the app cannot open by itself."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets and readers for files the app cannot open by itself."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language and readers for files the app cannot open by itself."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language and readers for files the app cannot open by itself."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+
+#: src/screens/Settings/PluginsPanel.tsx
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets, whole screens and tools for the assistant."
+msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets, whole screens and tools for the assistant."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -1102,6 +1207,10 @@ msgstr "A quote refresh or an AI answer is still using the data. Try again when 
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "A rate is a number with \"%\" as its unit — there is no percent kind to guess at."
 msgstr "A rate is a number with \"%\" as its unit — there is no percent kind to guess at."
+
+#: src/components/domain/aiToolLabels.ts
+msgid "a reading by an installed plugin"
+msgstr "a reading by an installed plugin"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "A ready-made layout for this broker"
@@ -1190,6 +1299,10 @@ msgstr "A target is a set of weights over taxonomy nodes. Without one there is n
 msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 msgstr "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 
+#: src/screens/dashboard/widgets/index.tsx
+msgid "A tile drawn by a plugin that is no longer installed."
+msgstr "A tile drawn by a plugin that is no longer installed."
+
 #: src/screens/dashboard/dialogs.tsx
 msgid "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
 msgstr "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
@@ -1199,12 +1312,16 @@ msgstr "A token is about three quarters of an English word, less in Russian. Lef
 #~ msgstr "A trade closes when the last share of a purchase is sold. One sale that empties three purchases closes three trades, because each was bought at its own price on its own day."
 
 #: src/screens/Trades/index.tsx
-msgid "A trade closes when the last share of a purchase is sold. Widen the period if the sales happened earlier."
-msgstr "A trade closes when the last share of a purchase is sold. Widen the period if the sales happened earlier."
+#~ msgid "A trade closes when the last share of a purchase is sold. Widen the period if the sales happened earlier."
+#~ msgstr "A trade closes when the last share of a purchase is sold. Widen the period if the sales happened earlier."
 
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "A trade closes when the last share of one purchase is sold."
 msgstr "A trade closes when the last share of one purchase is sold."
+
+#: src/screens/Trades/index.tsx
+msgid "A trade closes when the shares it holds are sold. Widen the period if the sales happened earlier."
+msgstr "A trade closes when the shares it holds are sold. Widen the period if the sales happened earlier."
 
 #: src/screens/Import/labels.ts
 msgid "a transfer carrying an instrument"
@@ -2059,6 +2176,10 @@ msgstr "Bring back the shipped periods that were removed"
 msgid "Broker export"
 msgstr "Broker export"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Built for plugin version {wants}; this app speaks {speaks}. Update the app, or the plugin."
+msgstr "Built for plugin version {wants}; this app speaks {speaks}. Update the app, or the plugin."
+
 #: src/lib/kinds.ts
 msgid "Buy"
 msgstr "Buy"
@@ -2608,6 +2729,10 @@ msgstr "Could not read or write the file: {fileError}"
 #: src/screens/Reports/index.tsx
 msgid "Could not save the file: {saveError}"
 msgstr "Could not save the file: {saveError}"
+
+#: src/screens/Trades/index.tsx
+msgid "Count trades"
+msgstr "Count trades"
 
 #: src/components/domain/AiTools.tsx
 #~ msgid "Counted by the provider once the request finishes."
@@ -3869,6 +3994,10 @@ msgstr "Fill it"
 msgid "Filling…"
 msgstr "Filling…"
 
+#: src/screens/Securities/SecurityForm.tsx
+msgid "Fills the days the own source has not published yet"
+msgstr "Fills the days the own source has not published yet"
+
 #: src/screens/Onboarding.tsx
 msgid "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
 msgstr "Fills this profile with a sample portfolio and offers a short tour, so you can see what the app does before importing anything of your own."
@@ -3984,6 +4113,10 @@ msgstr "from column \"{0}\""
 msgid "From high"
 msgstr "From high"
 
+#: src/screens/PluginScreen/index.tsx
+msgid "From the {plugin} plugin"
+msgstr "From the {plugin} plugin"
+
 #. placeholder {0}: symbol.value
 #: src/screens/Import/AssetRow.tsx
 msgid "from the file: {0}"
@@ -4046,6 +4179,10 @@ msgstr "Give at least one category a weight: under \"Edit tree\" every category 
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "given {reads}"
+msgstr "given {reads}"
 
 #: src/components/domain/menuBar/model.ts
 msgid "Go"
@@ -4387,6 +4524,11 @@ msgstr "Identifying…"
 #: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Import"
 msgstr "Import"
+
+#. placeholder {0}: set.name
+#: src/screens/Allocation/TaxonomyDock.tsx
+msgid "Import {0}…"
+msgstr "Import {0}…"
 
 #: src/screens/Allocation/ImportDialog.tsx
 msgid "Import a classification"
@@ -4767,9 +4909,17 @@ msgstr "It reads the figures behind the screen you are on, and asks before it do
 msgid "It remembers the column layout and every alias. The next export from the same broker parses without questions."
 msgstr "It remembers the column layout and every alias. The next export from the same broker parses without questions."
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Its folder is named {folder}, but its plugin.json says {manifest_id}. Remove it and install it again."
+msgstr "Its folder is named {folder}, but its plugin.json says {manifest_id}. Remove it and install it again."
+
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
 msgstr "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Its plugin.json could not be read: {detail}"
+msgstr "Its plugin.json could not be read: {detail}"
 
 #: src/screens/Onboarding.tsx
 msgid "Just looking"
@@ -4778,6 +4928,10 @@ msgstr "Just looking"
 #: src/lib/format.ts
 msgid "k"
 msgstr "k"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "keeps its own settings in the profile"
+msgstr "keeps its own settings in the profile"
 
 #: src/screens/Settings/AiPanel.tsx
 #~ msgid "Kept in your operating system's keychain, never in the app's database — the app never reads it back, only whether one is saved."
@@ -4906,6 +5060,10 @@ msgstr "Last year's payments over today's value."
 #: src/components/domain/UpdateDialog.tsx
 msgid "Later"
 msgstr "Later"
+
+#: src/screens/Securities/SecurityForm.tsx
+msgid "Latest price from"
+msgstr "Latest price from"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "Layout"
@@ -5330,6 +5488,10 @@ msgstr "months ahead"
 #: src/screens/Securities/index.tsx
 msgid "More actions"
 msgstr "More actions"
+
+#: src/screens/Import/labels.ts
+msgid "more is sold than was ever received"
+msgstr "more is sold than was ever received"
 
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Move"
@@ -5987,8 +6149,13 @@ msgstr "No transactions — there is no risk to compute."
 msgid "No transactions — there is nothing to report yet."
 msgstr "No transactions — there is nothing to report yet."
 
+#: src/screens/PluginScreen/index.tsx
+msgid "No transactions yet"
+msgstr "No transactions yet"
+
 #: src/screens/dashboard/widgets/chart.tsx
 #: src/screens/dashboard/widgets/list.tsx
+#: src/screens/dashboard/widgets/plugin.tsx
 #: src/screens/dashboard/widgets/value.tsx
 msgid "No transactions."
 msgstr "No transactions."
@@ -6484,6 +6651,7 @@ msgstr "Only {0}"
 msgid "Only when I ask"
 msgstr "Only when I ask"
 
+#: src/screens/Import/FilePasswordDialog.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
 msgid "Open"
 msgstr "Open"
@@ -6544,6 +6712,10 @@ msgstr "Opening, {currency}"
 #: src/components/domain/aiToolLabels.ts
 msgid "operation"
 msgstr "operation"
+
+#: src/lib/kinds.ts
+msgid "operations over the period"
+msgstr "operations over the period"
 
 #: src/components/domain/AlertDialogs.tsx
 #: src/screens/Securities/Splits.tsx
@@ -6658,6 +6830,7 @@ msgid "Part of what was sent that the provider served from its own cache, usuall
 msgstr "Part of what was sent that the provider served from its own cache, usually cheaper."
 
 #: src/components/domain/ProfileLock.tsx
+#: src/screens/Import/FilePasswordDialog.tsx
 #: src/screens/Settings/ProfileSecurity.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
 msgid "Password"
@@ -6720,6 +6893,14 @@ msgstr "Pays"
 #: src/components/domain/SecurityPopup.tsx
 msgid "pays none"
 msgstr "pays none"
+
+#: src/screens/Trades/index.tsx
+msgid "Per position"
+msgstr "Per position"
+
+#: src/screens/Trades/index.tsx
+msgid "Per purchase"
+msgstr "Per purchase"
 
 #: src/screens/Watchlist/columns.tsx
 msgid "Per share, as the data source reported it, not what the portfolio was paid."
@@ -6813,6 +6994,26 @@ msgstr "Planning"
 msgid "Plans"
 msgstr "Plans"
 
+#: src/components/domain/aiToolLabels.ts
+msgid "plugin"
+msgstr "plugin"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+#: src/screens/PluginScreen/index.tsx
+msgid "Plugin not installed"
+msgstr "Plugin not installed"
+
+#: src/components/Nav/model.ts
+#: src/screens/PluginScreen/index.tsx
+msgid "Plugin screen"
+msgstr "Plugin screen"
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Plugin widget"
+msgstr "Plugin widget"
+
+#: src/components/Nav/index.tsx
+#: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "Plugins"
@@ -6895,6 +7096,10 @@ msgstr "Portfolio yield"
 #: src/screens/dashboard/widgets/index.tsx
 #~ msgid "Position contribution to the return as a staircase, largest first."
 #~ msgstr "Position contribution to the return as a staircase, largest first."
+
+#: src/lib/kinds.ts
+msgid "positions"
+msgstr "positions"
 
 #: src/components/Nav/model.ts
 #: src/lib/tour/steps.ts
@@ -7180,6 +7385,10 @@ msgstr "reached on {0}"
 #: src/components/domain/AiTools.tsx
 msgid "Read {0}"
 msgstr "Read {0}"
+
+#: src/screens/Import/FilePreview.tsx
+msgid "Read by the {readBy} plugin, which turned it into the app's own transaction file."
+msgstr "Read by the {readBy} plugin, which turned it into the app's own transaction file."
 
 #. placeholder {0}: name(tool)
 #: src/components/domain/AiTools.tsx
@@ -7597,6 +7806,10 @@ msgstr "Return above the risk-free rate per unit of volatility."
 #: src/screens/Risk.tsx
 msgid "Return above the risk-free rate per unit of volatility. Above 1 is good."
 msgstr "Return above the risk-free rate per unit of volatility. Above 1 is good."
+
+#: src/lib/kinds.ts
+msgid "return and flows over the period"
+msgstr "return and flows over the period"
 
 #: src/screens/Performance/index.tsx
 msgid "Return by month"
@@ -8130,6 +8343,10 @@ msgstr "Show list"
 msgid "Show me around"
 msgstr "Show me around"
 
+#: src/components/domain/LedgerGaps.tsx
+msgid "Show operations"
+msgstr "Show operations"
+
 #: src/screens/Import/ProblemList.tsx
 msgid "show rows"
 msgstr "show rows"
@@ -8346,6 +8563,10 @@ msgstr "Stock"
 msgid "Stocks"
 msgstr "Stocks"
 
+#: src/screens/Transactions/useExport.ts
+msgid "Stonqs file"
+msgstr "Stonqs file"
+
 #: src/screens/Settings/AboutPanel.tsx
 msgid "Stonqs is a tool for recording and analysing your own investments. It is not financial advice, and neither are the answers of the built-in assistant, which are generated by AI and can be wrong."
 msgstr "Stonqs is a tool for recording and analysing your own investments. It is not financial advice, and neither are the answers of the built-in assistant, which are generated by AI and can be wrong."
@@ -8560,6 +8781,10 @@ msgstr "Text"
 msgid "That file is not a dashboard layout."
 msgstr "That file is not a dashboard layout."
 
+#: src/screens/Import/FilePasswordDialog.tsx
+msgid "That password did not open it. Try again."
+msgstr "That password did not open it. Try again."
+
 #: src/components/ui/Async.tsx
 msgid "That password is not right."
 msgstr "That password is not right."
@@ -8567,6 +8792,26 @@ msgstr "That password is not right."
 #: src/screens/Import/ParseSettings.tsx
 msgid "The \"Total\" summary rows"
 msgstr "The \"Total\" summary rows"
+
+#. placeholder {0}: detail.plugin
+#. placeholder {1}: detail.message
+#: src/components/ui/Async.tsx
+msgid "The {0} format could not be written: {1}"
+msgstr "The {0} format could not be written: {1}"
+
+#. placeholder {0}: detail.plugin
+#. placeholder {1}: detail.message
+#: src/components/ui/Async.tsx
+msgid "The {0} reader could not read this file: {1}"
+msgstr "The {0} reader could not read this file: {1}"
+
+#: src/screens/Import/FilePreview.tsx
+msgid "The {name} plugin failed on this file and was skipped. Update or remove it if this keeps happening. ({detail})"
+msgstr "The {name} plugin failed on this file and was skipped. Update or remove it if this keeps happening. ({detail})"
+
+#: src/screens/Import/FilePasswordDialog.tsx
+msgid "The {plugin} plugin reads this file and needs its password. It is used once and not saved."
+msgstr "The {plugin} plugin reads this file and needs its password. It is used once and not saved."
 
 #: src/screens/Import/labels.ts
 msgid "the account is not mapped"
@@ -9057,6 +9302,14 @@ msgstr "The period's time-weighted return restated as a yearly rate."
 msgid "the plan has no targets"
 msgstr "the plan has no targets"
 
+#: src/screens/PluginScreen/index.tsx
+msgid "The plugin that brought this screen has been removed."
+msgstr "The plugin that brought this screen has been removed."
+
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "The plugin that drew this tile has been removed. Install it again, or remove the tile."
+msgstr "The plugin that drew this tile has been removed. Install it again, or remove the tile."
+
 #: src/screens/Import/AccountTarget.tsx
 msgid "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
 msgstr "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
@@ -9447,6 +9700,14 @@ msgstr "This classification has no target"
 msgid "This device opens the profile without asking; anyone using it can too."
 msgstr "This device opens the profile without asking; anyone using it can too."
 
+#: src/screens/Import/FilePasswordDialog.tsx
+msgid "This file is password-protected"
+msgstr "This file is password-protected"
+
+#: src/components/ui/Async.tsx
+msgid "This file is password-protected and cannot be read."
+msgstr "This file is password-protected and cannot be read."
+
 #: src/components/domain/ListingPicker.tsx
 #~ msgid "This instrument carries no ISIN, and the directory looks venues up by it — one ticker is reused by different companies on different exchanges. Add the ISIN under \"Edit\" and the venues appear here."
 #~ msgstr "This instrument carries no ISIN, and the directory looks venues up by it — one ticker is reused by different companies on different exchanges. Add the ISIN under \"Edit\" and the venues appear here."
@@ -9470,6 +9731,30 @@ msgstr "this pace does not arrive"
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
 msgstr "this period against the one before"
+
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page did not start."
+msgstr "This plugin's page did not start."
+
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page failed: {detail}"
+msgstr "This plugin's page failed: {detail}"
+
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page never drew anything."
+msgstr "This plugin's page never drew anything."
+
+#: src/screens/dashboard/widgets/plugin.tsx
+#~ msgid "This plugin's tile did not start."
+#~ msgstr "This plugin's tile did not start."
+
+#: src/screens/dashboard/widgets/plugin.tsx
+#~ msgid "This plugin's tile failed: {detail}"
+#~ msgstr "This plugin's tile failed: {detail}"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+#~ msgid "This plugin's tile never drew anything."
+#~ msgstr "This plugin's tile never drew anything."
 
 #: src/components/domain/positionColumns.tsx
 msgid "This position's share of everything the current scope holds."
@@ -9510,6 +9795,10 @@ msgstr "This profile's data is stored unencrypted. Set a password before saving 
 #: src/components/domain/UpdateDialog.tsx
 msgid "This release ships no notes of its own."
 msgstr "This release ships no notes of its own."
+
+#: src/screens/PluginScreen/index.tsx
+msgid "This screen reads over a period, and there is nothing to read yet."
+msgstr "This screen reads over a period, and there is nothing to read yet."
 
 #: src/screens/dashboard/widgets/ai.tsx
 msgid "This summary reads:"
@@ -9632,6 +9921,10 @@ msgstr "Tokens used"
 #: src/components/domain/PasswordDialog.tsx
 msgid "Too short: {0} of at least {MIN_PASSWORD} characters."
 msgstr "Too short: {0} of at least {MIN_PASSWORD} characters."
+
+#: src/components/domain/aiToolLabels.ts
+msgid "tool"
+msgstr "tool"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Top"
@@ -9758,6 +10051,7 @@ msgstr "Trigger level"
 msgid "trough {0}"
 msgstr "trough {0}"
 
+#: src/components/domain/PluginFrame.tsx
 #: src/components/domain/UpdateDialog.tsx
 #: src/components/ErrorBoundary.tsx
 msgid "Try again"
@@ -9989,6 +10283,10 @@ msgstr "Value and cost"
 #: src/screens/Performance/index.tsx
 msgid "Value and flows"
 msgstr "Value and flows"
+
+#: src/lib/kinds.ts
+msgid "value and results"
+msgstr "value and results"
 
 #: src/screens/Performance/Metrics.tsx
 msgid "value changed by"

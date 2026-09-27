@@ -235,6 +235,16 @@ pub struct DayChanges {
     pub total_base: Decimal,
 }
 
+/// A position's share of a total: `part / total`, and zero when there is no total — an empty
+/// scope has no weights at all, not a division by zero.
+pub fn weight(part: Decimal, total: Decimal) -> Decimal {
+    if total.is_zero() {
+        Decimal::ZERO
+    } else {
+        part / total
+    }
+}
+
 /// Computes quote-price movement in base currency:
 /// `(price - previous_close) * quantity * rate(date)`.
 pub fn day_changes(

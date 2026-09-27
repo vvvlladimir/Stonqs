@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "top": { "type": "integer", "description": "How many of the largest positions to add up, 1 to 20." }
+  },
+  "required": ["top"]
+}

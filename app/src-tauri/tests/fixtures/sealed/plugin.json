@@ -1,0 +1,17 @@
+{
+  "id": "test.sealed",
+  "api": 1,
+  "name": "Sealed",
+  "version": "1.0.0",
+  "provides": {
+    "readers": [
+      {
+        "id": "sealed",
+        "file": "reader.wasm",
+        "sample": "sample.txt",
+        "expected": "expected.json",
+        "extensions": [".sealed", ".txt"]
+      }
+    ]
+  }
+}

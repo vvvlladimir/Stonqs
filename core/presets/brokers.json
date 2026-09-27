@@ -909,7 +909,8 @@
         "TAX": "tax",
         "CURRENCY": "currency",
         "FX_RATE": "fx_rate",
-        "NOTE": "description"
+        "NOTE": "description",
+        "EXTERNAL_ID": "transaction_id"
       },
       "kind_aliases": {
         "BENEFITSSAVEBACK": "CASHBACK",
@@ -925,6 +926,7 @@
         "CUSTOMERINPAYMENTREVERSAL": "DEPOSIT",
         "CUSTOMEROUTBOUNDREQUEST": "WITHDRAWAL",
         "DIVIDENDEQUIVALENTPAYMENT": "DIVIDEND",
+        "FREERECEIPT": "DELIVERY_INBOUND",
         "GENERALINBOUND": "DEPOSIT",
         "KINDERGELDBONUS": "DEPOSIT",
         "MANUALCASHTRANSFER": "DEPOSIT",
@@ -933,6 +935,7 @@
         "PRIVATEMARKETSELL": "SELL",
         "REFERRAL": "CASHBACK",
         "SECACCOUNT": "TAX",
+        "STOCKPERK": "CASHBACK",
         "TAXOPTIMIZATION": "TAX_REFUND",
         "TRANSFERDIRECTDEBITINBOUND": "WITHDRAWAL",
         "TRANSFERIN": "DEPOSIT",

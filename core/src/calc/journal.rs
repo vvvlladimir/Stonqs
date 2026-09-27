@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::fx::RateLookup;
-use crate::model::Transaction;
+use crate::model::{Account, Security, Transaction};
 use chrono::Datelike;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -63,6 +63,52 @@ pub fn transaction_amount_base(t: &Transaction, base: &str, rates: &dyn RateLook
     Ok(t.amount * super::resolve_rate(t, base, rates)?)
 }
 
+/// One operation as the ledger lists it: the row, the names a reader knows its account and
+/// instrument by, and its money in the base currency. The Transactions screen, a plugin's
+/// `transactions` read and the assistant all read this one shape, so they cannot drift.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct JournalRow {
+    #[serde(flatten)]
+    pub transaction: Transaction,
+    pub symbol: Option<String>,
+    pub account_name: String,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub amount_base: Decimal,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub net_base: Decimal,
+}
+
+/// The rows of `transactions`, newest first. `rates` must cover every transaction's currency
+/// against `base` through the last date; a missing rate is `MissingMarketData`, never a zero.
+pub fn journal_rows(
+    transactions: Vec<Transaction>,
+    accounts: &[Account],
+    securities: &[Security],
+    base: &str,
+    rates: &dyn RateLookup,
+) -> Result<Vec<JournalRow>> {
+    let mut rows = Vec::with_capacity(transactions.len());
+    for t in transactions {
+        rows.push(JournalRow {
+            symbol: t
+                .security_id
+                .as_ref()
+                .and_then(|id| securities.iter().find(|s| &s.id == id))
+                .map(|s| s.symbol.clone()),
+            account_name: accounts
+                .iter()
+                .find(|a| a.id == t.account_id)
+                .map(|a| a.name.clone())
+                .unwrap_or_default(),
+            amount_base: transaction_amount_base(&t, base, rates)?,
+            net_base: transaction_net_base(&t, base, rates)?,
+            transaction: t,
+        });
+    }
+    rows.reverse();
+    Ok(rows)
+}
+
 /// Money that moved through the portfolio in one calendar year. A separate type rather
 /// than `MonthlyNet` with `month: 0` — the "month zero" convention isn't self-explanatory.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -91,4 +137,41 @@ pub fn transactions_net_by_year(months: &[MonthlyNet]) -> Vec<YearlyNet> {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::{Account, Security, SecurityKind, TransactionKind};
+    use crate::storage::Store;
+    use chrono::NaiveDate;
+    use rust_decimal_macros::dec;
+
+    /// A deposit of 1000 then a purchase of 5 × 150 = 750, all in the base currency (rate 1):
+    ///   deposit:  amount 1000, net +1000
+    ///   purchase: amount  750, net  −750
+    /// listed newest first, each named by its account and instrument rather than by an id.
+    #[test]
+    fn rows_are_named_converted_and_newest_first() {
+        let store = Store::open_in_memory().unwrap();
+        let cash = Account::deposit("Cash", "EUR");
+        let depot = Account::securities("Depot", "EUR", &cash.id);
+        let fund = Security::new("FUND", "Fund", "EUR", SecurityKind::Fund);
+        let day = |d| NaiveDate::from_ymd_opt(2024, 6, d).unwrap();
+        let rows = vec![
+            Transaction::cash(&cash.id, TransactionKind::Deposit, day(3), dec!(1000), "EUR"),
+            Transaction::buy(&depot.id, &fund.id, day(4), dec!(5), dec!(150), "EUR"),
+        ];
+        let rates = store.rate_cache(&[], day(4)).unwrap();
+
+        let listed = journal_rows(rows, &[cash, depot], &[fund], "EUR", &rates).unwrap();
+
+        assert_eq!(listed[0].account_name, "Depot");
+        assert_eq!(listed[0].symbol.as_deref(), Some("FUND"));
+        assert_eq!(listed[0].amount_base, dec!(750));
+        assert_eq!(listed[0].net_base, dec!(-750));
+        assert_eq!(listed[1].account_name, "Cash");
+        assert_eq!(listed[1].symbol, None);
+        assert_eq!(listed[1].net_base, dec!(1000));
+    }
 }

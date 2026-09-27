@@ -143,6 +143,9 @@ export interface Trade {
   irr: MoneyString | null;
 }
 
+/** How trades are cut out of the lots: one per position's life, or one per purchase. */
+export type TradeGrouping = "POSITION" | "LOT";
+
 export interface TradeRow extends Trade {
   symbol: string;
   name: string;

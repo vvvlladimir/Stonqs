@@ -7,8 +7,10 @@ import type {
   PaymentPeriod,
   PeriodRange,
   SheetPeriod,
+  TradeGrouping,
   TransactionFilter,
   TransactionKind,
+  WidgetRead,
 } from "./types";
 
 /**
@@ -32,7 +34,16 @@ export const keys = {
   profiles: () => key("profiles"),
   plugins: () => key("plugins"),
   pluginTheme: (key_?: string) => key("plugin-theme", key_),
+  pluginState: (plugin?: string) => key("plugin-state", plugin),
+  pluginReads: (
+    reads?: readonly WidgetRead[],
+    date?: DateString,
+    from?: DateString,
+    to?: DateString,
+    source?: Source,
+  ) => key("plugin-reads", reads?.join(","), date, from, to, source ?? undefined),
   portfolio: () => key("portfolio"),
+  ledgerGaps: () => key("ledger-gaps"),
   aiKeyStatus: (provider?: string) => key("ai-key-status", provider),
   aiChats: () => key("ai-chats"),
   aiMessages: (chatId?: string) => key("ai-messages", chatId),
@@ -77,8 +88,8 @@ export const keys = {
     key("performance-breakdown", from, to, period, source ?? undefined),
   goals: (date?: DateString) => key("goals", date),
   limits: (date?: DateString) => key("limits", date),
-  trades: (from?: DateString, to?: DateString, source?: Source) =>
-    key("trades", from, to, source ?? undefined),
+  trades: (from?: DateString, to?: DateString, by?: TradeGrouping, source?: Source) =>
+    key("trades", from, to, by, source ?? undefined),
   payments: (from?: DateString, to?: DateString, period?: PaymentPeriod, source?: Source) =>
     key("payments", from, to, period, source ?? undefined),
   expectedDividends: (months?: number, source?: Source) =>
@@ -225,6 +236,11 @@ export function useAiGrants(chatId: string | null) {
 
 export function usePortfolio() {
   return useQuery({ queryKey: keys.portfolio(), queryFn: api.portfolioGet });
+}
+
+/** Sales of shares the ledger never received, over the whole portfolio. */
+export function useLedgerGaps() {
+  return useQuery({ queryKey: keys.ledgerGaps(), queryFn: api.portfolioGaps });
 }
 
 export function useAccounts() {
@@ -411,6 +427,35 @@ export function useDashboard(date: DateString, source?: Source) {
   });
 }
 
+/**
+ * What a plugin page declared it reads, and nothing else (ADR-0083/0084), built by the host in
+ * one call — the projection an assistant tool of the same package is handed too, so the two
+ * cannot drift. A read the page did not declare is never built, which is the whole of its
+ * permission. A page that reads over a period waits for one.
+ */
+export function usePluginReads(
+  reads: readonly WidgetRead[],
+  date: DateString,
+  range: PeriodRange | undefined,
+  source?: Source,
+) {
+  const periodic = reads.includes("performance") || reads.includes("transactions");
+  return useQuery({
+    queryKey: keys.pluginReads(reads, date, range?.from, range?.to, source),
+    queryFn: () => api.pluginReads([...reads], date, range, source),
+    enabled: !periodic || range !== undefined,
+  });
+}
+
+/** A plugin's own document in the profile, for a page that declared `storage` (ADR-0084). */
+export function usePluginState(plugin: string | null) {
+  return useQuery({
+    queryKey: keys.pluginState(plugin ?? undefined),
+    queryFn: () => api.pluginStateGet(plugin!),
+    enabled: plugin !== null,
+  });
+}
+
 export function useTransactions(filter: TransactionFilter) {
   return useQuery({
     queryKey: keys.transactions(filter),
@@ -487,10 +532,11 @@ export function usePayments(range: PeriodRange | undefined, period: PaymentPerio
   });
 }
 
-export function useTrades(range: PeriodRange | undefined, source?: Source) {
+/** `by` defaults to one trade per position, which is what a dashboard tile counts. */
+export function useTrades(range: PeriodRange | undefined, by: TradeGrouping = "POSITION", source?: Source) {
   return useQuery({
-    queryKey: keys.trades(range?.from, range?.to, source),
-    queryFn: () => api.tradesSummary(range!.from, range!.to, source),
+    queryKey: keys.trades(range?.from, range?.to, by, source),
+    queryFn: () => api.tradesSummary(range!.from, range!.to, by, source),
     enabled: range !== undefined,
   });
 }
@@ -684,7 +730,9 @@ export function useImportTemplates() {
 
 /** Every key computed from transactions and prices — a report, not a stored list. */
 const REPORTS: QueryKey[] = [
+  keys.ledgerGaps(),
   keys.positions(),
+  keys.pluginReads(),
   keys.dashboard(),
   keys.transactions(),
   keys.reports(),

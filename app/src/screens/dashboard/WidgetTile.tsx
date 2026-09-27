@@ -15,7 +15,7 @@ import {
   type GrowDirection,
   type TileBox,
 } from "./grid";
-import { WIDGETS, widgetMeta, widgetTitle } from "./widgets";
+import { useWidgetCatalog, widgetMeta, widgetTitle } from "./widgets";
 
 /** Pixels a pointer must travel before a press on the header becomes a drag. */
 const SLOP = 6;
@@ -71,7 +71,7 @@ export function WidgetTile({
   const ranges = usePeriodRanges(date);
   const tile = useRef<HTMLElement | null>(null);
   const body = useRef<HTMLDivElement | null>(null);
-  const def = WIDGETS[widget.type];
+  const def = useWidgetCatalog().of(widget.type);
   // A tile showing less than it holds says so with a fade rather than with a scrollbar that
   // only exists under a mouse.
   useOverflow(body, [widget.type, widget.w, widget.h, cols, editing]);
@@ -117,7 +117,10 @@ export function WidgetTile({
   });
 
   if (!def) return null;
-  const meta = widgetMeta(i18n, widget, def, period, ranges.data);
+  // A plugin's tile always says whose it is: its figures are the plugin's, not the app's (ADR-0082).
+  const meta = [widgetMeta(i18n, widget, def, period, ranges.data), def.plugin?.name]
+    .filter(Boolean)
+    .join(" · ");
   const min = limitsOf(widget, def);
 
   return (

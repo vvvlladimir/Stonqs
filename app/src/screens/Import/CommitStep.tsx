@@ -1,5 +1,5 @@
 import { plural } from "@lingui/core/macro";
-import { Trans, useLingui } from "@lingui/react/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMemo } from "react";
 import { Badge, Banner, CheckField, Field, Form, List, ListRow, Panel } from "../../components/ui";
 import { useQuoteProviders } from "../../lib/queries";
@@ -74,6 +74,9 @@ export function CommitStep({
     () => preview.rows.flatMap((r) => r.problems).filter((p) => p.severity === "WARNING"),
     [preview.rows],
   );
+  // The one notice that breaks figures after the write rather than one row: said above it all.
+  const uncovered = warnings.filter((p) => p.code === "SALE_EXCEEDS_HOLDINGS");
+  const uncoveredSymbols = [...new Set(uncovered.map((p) => p.params?.symbol ?? ""))].join(", ");
 
   return (
     <>
@@ -87,6 +90,16 @@ export function CommitStep({
           {result.created_securities.length > 0 &&
             t` Instruments created: ${result.created_securities.join(", ")}.`}{" "}
           <Trans>The file is in the database — writing it again adds nothing.</Trans>
+        </Banner>
+      )}
+
+      {uncovered.length > 0 && (
+        <Banner tone="bad">
+          <Trans>
+            <Plural value={uncovered.length} one="# row sells" other="# rows sell" /> more {uncoveredSymbols}{" "}
+            than the database and this file ever received. The purchase or incoming transfer is missing, so
+            the figures for it will be estimated — open "Row notices" below for where it may be.
+          </Trans>
         </Banner>
       )}
 

@@ -21,14 +21,25 @@ import type { ToolDecision, ToolParams } from "../../lib/types";
 import type { ToolRequest } from "../../lib/ai";
 import { Markdown } from "../ui/Markdown";
 import { useMenu, type MenuItem } from "../ui/Menu";
-import { PARAM_LABELS, TOOL_LABELS, paramEntries } from "./aiToolLabels";
+import {
+  PARAM_LABELS,
+  PLUGIN_TOOL_LABEL,
+  PLUGIN_TOOL_PREFIX,
+  TOOL_LABELS,
+  paramEntries,
+} from "./aiToolLabels";
 import type { Step } from "./aiSteps";
 import { formatDecimal } from "../../lib/format";
 import { useProviderName } from "../../lib/ai";
 
 function useToolName() {
   const { i18n } = useLingui();
-  return (tool: string) => (TOOL_LABELS[tool] ? i18n._(TOOL_LABELS[tool]) : tool);
+  return (tool: string) =>
+    TOOL_LABELS[tool]
+      ? i18n._(TOOL_LABELS[tool])
+      : tool.startsWith(PLUGIN_TOOL_PREFIX)
+        ? i18n._(PLUGIN_TOOL_LABEL)
+        : tool;
 }
 
 function Values({ params }: { params: ToolParams }) {

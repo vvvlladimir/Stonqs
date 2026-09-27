@@ -1,8 +1,8 @@
 //! The ledger read back: realised gains, income, dividends, payments and round trips.
 
 use crate::calc::{
-    DividendProfile, DividendSummary, PaymentGrid, PaymentPeriod, TradeBook, TradingVolume, closed_trades,
-    dividend_profiles, open_trades, payment_grid, trading_volume,
+    DividendProfile, DividendSummary, PaymentGrid, PaymentPeriod, TradeBook, TradeGrouping, TradingVolume,
+    closed_trades, dividend_profiles, open_trades, payment_grid, trading_volume,
 };
 use crate::calc::{
     IncomeRecord, RealizedSummary, TaxonomyIncome, capital_gains_by_year, dividends_by_year, income_between,
@@ -61,13 +61,14 @@ impl PortfolioAnalytics<'_> {
         Ok(payment_grid(&self.holdings_at(to)?, from, to, period))
     }
 
-    /// Open and closed trades at a date; both come out of the same holdings pass.
-    pub fn trades(&self, as_of: NaiveDate) -> Result<TradeBook> {
+    /// Open and closed trades at a date, cut `by` position or by lot; both come out of the same
+    /// holdings pass.
+    pub fn trades(&self, as_of: NaiveDate, by: TradeGrouping) -> Result<TradeBook> {
         let holdings = self.holdings_at(as_of)?;
         let valuation = value_holdings(&holdings, self.base_currency(), as_of, self.store, self.store)?;
         Ok(TradeBook {
-            open: open_trades(&holdings, &valuation),
-            closed: closed_trades(&holdings.realized),
+            open: open_trades(&holdings, &valuation, by),
+            closed: closed_trades(&holdings.realized, by),
         })
     }
 

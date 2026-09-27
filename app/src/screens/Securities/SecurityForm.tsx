@@ -171,17 +171,34 @@ function FallbackSymbols({
   const others = (providers.data ?? []).filter((id) => id !== draft.data_source);
   if (!draft.data_source || others.length === 0) return null;
   const symbols = draft.other_symbols ?? {};
+  const known = others.filter((id) => (symbols[id] ?? "").trim() !== "");
+  const setSymbol = (id: string, value: string) =>
+    onChange({
+      ...draft,
+      other_symbols: { ...symbols, [id]: value },
+      // A source with no ticker there cannot answer for anything.
+      latest_source: draft.latest_source === id && value.trim() === "" ? null : draft.latest_source,
+    });
 
   return (
-    <FieldSet label={t`Fallback symbols`}>
-      {others.map((id) => (
-        <Field key={id} label={id} hint={t`Asked only when the own source fails`}>
-          <input
-            value={symbols[id] ?? ""}
-            onChange={(e) => onChange({ ...draft, other_symbols: { ...symbols, [id]: e.target.value } })}
-          />
-        </Field>
-      ))}
-    </FieldSet>
+    <>
+      <FieldSet label={t`Fallback symbols`}>
+        {others.map((id) => (
+          <Field key={id} label={id} hint={t`Asked only when the own source fails`}>
+            <input value={symbols[id] ?? ""} onChange={(e) => setSymbol(id, e.target.value)} />
+          </Field>
+        ))}
+      </FieldSet>
+      {known.length > 0 && (
+        <Field
+          label={t`Latest price from`}
+          hint={t`Fills the days the own source has not published yet`}
+          placeholder={t`— own source —`}
+          options={known.map((id) => ({ value: id, label: id }))}
+          value={draft.latest_source ?? null}
+          onChange={(id) => onChange({ ...draft, latest_source: id || null })}
+        />
+      )}
+    </>
   );
 }

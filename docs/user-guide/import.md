@@ -123,6 +123,30 @@ matched to it; anything unmatched is asked for in the wizard as usual.
 It carries operations and nothing else. Classification trees, investment plans, alerts and
 settings are not in it, and a backup of everything is the profile itself rather than this file.
 
+## Files a plugin reads
+
+Some files are not tables at all — a bank statement in a tagged text format, a broker's PDF — and no
+column mapping can express them. A plugin can bring a reader for one, installed from
+**Settings → Plugins**, and after that such a file is chosen and imported like any other.
+
+A reader does one thing: it turns the file into the app's own transaction file, and the wizard then
+runs over that exactly as it runs over a file exported from this app. So the steps behave the same
+way, the duplicate check is the same one, and nothing is written before the last step. The File
+step says which plugin read the file, and anything the reader wanted to flag about it is shown
+there in the reader's own words.
+
+Because the file was rewritten before the wizard saw it, the parsing settings — encoding, date
+format, decimal separator, skipped rows — have nothing left to do and do not appear, in the same
+way they do not for the app's own file.
+
+A reader gets no access to the internet, to the disk or to the clock, so it cannot send the
+statement it is reading anywhere. When the file is password-protected, the plugin's reader
+asks for the password: the import shows a password field, the password is handed to that plugin
+only and is not saved, and a wrong one is asked again. A reader that finds the file is its kind but cannot read it stops the
+import and says which plugin failed. A reader that crashes is skipped instead: the import step shows
+a warning naming that plugin, and the file goes on to the next reader or is read as a text file. A
+file no installed reader recognises is simply read as a text file, as before.
+
 ## Interactive Brokers
 
 An Interactive Brokers export is a Flex Query: a report the user defines once in the broker's web

@@ -2,7 +2,16 @@
   "preset": "Trade Republic",
   "file": "export.csv",
   "sample": "redacted",
-  "note": "Real Trade Republic export headers; one row of each shape it prints. Edge cases: the ISIN stands in the symbol column, a sale carries a negative quantity, the dividend was paid in USD and credited in EUR at the row's own rate.",
-  "account": { "name": "Trade Republic", "kind": "SECURITIES", "currency": "EUR" },
-  "questions": { "layout": 0, "kinds": 0, "invalid": 0, "warnings": 0 }
+  "note": "Real Trade Republic export headers; one row of each shape it prints. Edge cases: the ISIN stands in the symbol column, a sale carries a negative quantity, the dividend was paid in USD and credited in EUR at the row's own rate, two identical orders seconds apart told apart only by transaction_id, a stock perk credited as cash, and crypto received by transfer (FREE_RECEIPT, no amount) then sold. The two warnings are the 1 EUR commission exceeding a 0.87 EUR order.",
+  "account": {
+    "name": "Trade Republic",
+    "kind": "SECURITIES",
+    "currency": "EUR"
+  },
+  "questions": {
+    "layout": 0,
+    "kinds": 0,
+    "invalid": 0,
+    "warnings": 2
+  }
 }

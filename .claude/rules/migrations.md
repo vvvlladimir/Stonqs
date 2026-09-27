@@ -12,7 +12,16 @@ failed copy is `Error::Backup` and **aborts the upgrade**. A database with nothi
 not copied, and only the three newest copies are kept. An in-memory database passes `None` for the
 path and is never copied.
 
-Latest is `0029_limit_withdrawals.sql`: `contribution_limits.withdrawals_restore`, `0` for every
+Latest is `0031_plugin_state.sql`: `plugin_state (plugin, state, updated_at)`, one opaque JSON
+document per plugin that declared `storage`, replaced whole by `plugin_state_save` and read by
+nobody in the app. In the database rather than beside it so an encrypted profile encrypts it;
+removing the plugin leaves the row (ADR-0084).
+
+Before that, `0030_latest_source.sql`: `security_symbols.latest`, `0` for every existing row, and a
+partial unique index so at most one row per instrument carries it — the other source asked for the
+days the own one has not published yet (ADR-0079).
+
+Before that, `0029_limit_withdrawals.sql`: `contribution_limits.withdrawals_restore`, `0` for every
 existing limit — a withdrawal gives allowance back only when the user says so (ADR-0071).
 
 Before that, `0028_goals_and_limits.sql`: `goals` (+ `goal_accounts`, cascading — no rows means the

@@ -169,6 +169,7 @@ export function Securities({ focus }: { focus?: string | null }) {
       note: row.note,
       attributes: row.attributes,
       other_symbols: row.other_symbols,
+      latest_source: row.latest_source,
     });
 
   // Keep destructive actions last and visually separated.

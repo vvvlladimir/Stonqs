@@ -304,16 +304,19 @@ impl Event<'_> {
 }
 
 /// Merges transactions and corporate actions chronologically.
-/// Same-day order is action, transfer-out, transfer-in, then original transaction order.
+/// Same-day order is action, acquisition, transfer-out, transfer-in, then original order.
+/// Storage order within a day is by id, which is random, so a day's shares arrive before any
+/// of them can leave — otherwise a same-day receive-and-sell fails or not by chance (ADR-0089).
 pub(crate) fn ordered_events<'a>(
     transactions: &'a [Transaction],
     actions: &'a [CorporateAction],
 ) -> Vec<Event<'a>> {
     fn phase(kind: TransactionKind) -> u8 {
         match kind {
-            TransactionKind::SecurityTransferOut => 1,
-            TransactionKind::SecurityTransferIn => 2,
-            _ => 3,
+            TransactionKind::Buy | TransactionKind::DeliveryInbound => 1,
+            TransactionKind::SecurityTransferOut => 2,
+            TransactionKind::SecurityTransferIn => 3,
+            _ => 4,
         }
     }
 

@@ -14,6 +14,7 @@
       "amount": "199.99",
       "fee": "1",
       "currency": "EUR",
+      "external_id": "18a93e2f",
       "note": "Buy trade"
     },
     {
@@ -22,7 +23,38 @@
       "account": "Trade Republic · cash",
       "amount": "1750",
       "currency": "EUR",
+      "external_id": "7b1a3660",
       "note": "Incoming transfer"
+    },
+    {
+      "date": "2025-06-17",
+      "kind": "BUY",
+      "account": "Trade Republic",
+      "symbol": "CA64073L1013",
+      "isin": "CA64073L1013",
+      "name": "Neptune Digital Assets",
+      "quantity": "1",
+      "price": "0.874",
+      "amount": "0.87",
+      "fee": "1",
+      "currency": "EUR",
+      "external_id": "4b286ff9",
+      "note": "Buy trade CA64073L1013 NEPTUNE DIGITAL ASS.CORP., quantity: 1"
+    },
+    {
+      "date": "2025-06-17",
+      "kind": "BUY",
+      "account": "Trade Republic",
+      "symbol": "CA64073L1013",
+      "isin": "CA64073L1013",
+      "name": "Neptune Digital Assets",
+      "quantity": "1",
+      "price": "0.874",
+      "amount": "0.87",
+      "fee": "1",
+      "currency": "EUR",
+      "external_id": "ed8c3e9d",
+      "note": "Buy trade CA64073L1013 NEPTUNE DIGITAL ASS.CORP., quantity: 1"
     },
     {
       "date": "2025-06-17",
@@ -36,7 +68,20 @@
       "amount": "200.71",
       "fee": "1",
       "currency": "EUR",
+      "external_id": "1f975274",
       "note": "Sell trade"
+    },
+    {
+      "date": "2025-06-18",
+      "kind": "CASHBACK",
+      "account": "Trade Republic · cash",
+      "symbol": "US0378331005",
+      "isin": "US0378331005",
+      "name": "Apple",
+      "amount": "10.03",
+      "currency": "EUR",
+      "external_id": "6a2aa3bd",
+      "note": "Stockperk"
     },
     {
       "date": "2025-08-14",
@@ -50,7 +95,35 @@
       "tax": "0.03",
       "currency": "EUR",
       "fx_rate": "0.853898",
+      "external_id": "498959bd",
       "note": "Cash Dividend"
+    },
+    {
+      "date": "2026-04-19",
+      "kind": "DELIVERY_INBOUND",
+      "account": "Trade Republic",
+      "symbol": "XLM",
+      "name": "Stellar",
+      "quantity": "580",
+      "price": "0.15",
+      "amount": "87",
+      "currency": "EUR",
+      "external_id": "ebee5f30",
+      "note": "FREE_RECEIPT XLM"
+    },
+    {
+      "date": "2026-04-19",
+      "kind": "SELL",
+      "account": "Trade Republic",
+      "symbol": "XLM",
+      "name": "Stellar",
+      "quantity": "580",
+      "price": "0.1458524",
+      "amount": "84.59",
+      "fee": "1",
+      "currency": "EUR",
+      "external_id": "1e29fb9a",
+      "note": "Sell trade XF000XLM0017 Stellar, quantity: 580"
     }
   ]
 }

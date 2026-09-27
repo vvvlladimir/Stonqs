@@ -5,7 +5,111 @@
 
 use super::normalize_alias;
 use crate::model::TransactionKind;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+
+/// Operation wordings brought from outside the binary — a plugin's dictionary for a language the
+/// shipped table does not speak. Read like the shipped keywords, by containment and first hit
+/// first, but only **after** them: an added word fills a gap and never re-answers a wording the
+/// app already reads, so a stranger's package cannot turn a buy into a sale.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "KindWordsFile", into = "KindWordsFile")]
+pub struct KindWords(Vec<(String, TransactionKind)>);
+
+/// The file shape: an ordered list, because order decides which of two nested words wins.
+#[derive(Serialize, Deserialize)]
+struct KindWordsFile {
+    words: Vec<KindWord>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct KindWord {
+    word: String,
+    kind: TransactionKind,
+}
+
+impl From<KindWordsFile> for KindWords {
+    fn from(file: KindWordsFile) -> Self {
+        KindWords::new(file.words.into_iter().map(|w| (w.word, w.kind)))
+    }
+}
+
+impl From<KindWords> for KindWordsFile {
+    fn from(words: KindWords) -> Self {
+        KindWordsFile {
+            words: words
+                .0
+                .into_iter()
+                .map(|(word, kind)| KindWord { word, kind })
+                .collect(),
+        }
+    }
+}
+
+impl KindWords {
+    pub const fn empty() -> Self {
+        KindWords(Vec::new())
+    }
+
+    /// Normalised on the way in, the way every wording is before it is compared. A word that
+    /// normalises to nothing would match every wording, so it is dropped.
+    pub fn new<S: AsRef<str>>(words: impl IntoIterator<Item = (S, TransactionKind)>) -> Self {
+        KindWords(
+            words
+                .into_iter()
+                .map(|(word, kind)| (normalize_alias(word.as_ref()), kind))
+                .filter(|(word, _)| !word.is_empty())
+                .collect(),
+        )
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Several dictionaries read as one, in the order given.
+    pub fn extend(&mut self, other: KindWords) {
+        self.0.extend(other.0);
+    }
+
+    pub(crate) fn kind_of(&self, normalized: &str) -> Option<TransactionKind> {
+        self.0
+            .iter()
+            .filter(|(word, _)| long_enough(word))
+            .find(|(word, _)| normalized.contains(word.as_str()))
+            .map(|(_, kind)| *kind)
+    }
+
+    /// Words too short to be read: matched by containment, "E" or "TO" would answer nearly every
+    /// wording nobody else did. Refused at install, and skipped by `kind_of` all the same.
+    pub fn too_short(&self) -> Vec<&str> {
+        self.0
+            .iter()
+            .filter(|(word, _)| !long_enough(word))
+            .map(|(word, _)| word.as_str())
+            .collect()
+    }
+
+    /// Words the shipped keywords already answer as another kind. Such a word is never reached —
+    /// the shipped reading comes first — so a dictionary carrying one says something it will
+    /// never do.
+    pub fn shadowed(&self) -> Vec<(&str, TransactionKind)> {
+        self.0
+            .iter()
+            .filter_map(|(word, kind)| match kind_from_keywords(word) {
+                Some(shipped) if shipped != *kind => Some((word.as_str(), shipped)),
+                _ => None,
+            })
+            .collect()
+    }
+}
+
+/// Three characters of an alphabet; two of a script whose one character is a syllable or a word,
+/// where "买入" (buy) is already the whole word.
+fn long_enough(word: &str) -> bool {
+    let count = word.chars().count();
+    count >= 3 || (count == 2 && word.chars().all(|c| c as u32 >= 0x2E80))
+}
 
 pub fn default_kind_aliases() -> BTreeMap<String, TransactionKind> {
     use TransactionKind::*;

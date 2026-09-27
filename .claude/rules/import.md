@@ -53,10 +53,24 @@
   request, ADR-0034), so this covers only what that route cannot. The
   amount-vs-quantity×price allowance is per **unit** rather than flat, because a printed unit
   price is rounded and that rounding multiplies by the quantity.
+- A disposal is checked against the **stored ledger plus the rows about to be written**
+  (`preview::holdings`, `calc::quantity_gaps`): one taking more than is held is
+  `SaleExceedsHoldings`, a warning naming the file's unread rows of the same instrument
+  (`unread`, `unread_kinds`) as the likely cause (ADR-0089). Identity is counted, not a set: two
+  rows of one content with two broker ids are two operations, and each stored row answers for one
+  row of the file.
 - Two legs of one move that arrived from **two different exports** are never joined by the import:
   `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
   `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
   wrong pair erases a real deposit and a real withdrawal from every return figure at once.
+- A **reader** can arrive as a plugin too (ADR-0086), and it is the level that has no privileges:
+  it produces a `stonqs.transactions` document and everything after that is the one wizard, the one
+  identity check and the one commit. It is run by the host, once, at load — `import::parse_file`
+  itself never learns a plugin exists. The manifest declares the endings it is offered plus a
+  `sample` **and** an `expected`: a layout that misreads a column leaves a question in the wizard,
+  while a reader that misreads one hands over a document that looks perfectly correct, so it is
+  checked against an answer rather than against a shrug, and a package failing that installs
+  nothing.
 - A layout can arrive as a **plugin** (ADR-0070), and then it is identity that keeps it apart from
   the shipped ones: every layout in the wizard's list carries an `id` (`user:<name>`,
   `builtin:<name>`, or a plugin's `<plugin id>/<layout id>`), and the commands take that, never the
@@ -66,6 +80,16 @@
   is. Installing one runs `import_templates::check_layout` against the sample the package is
   obliged to carry — recognised, every wording mapped, no invalid row — and a package failing it
   installs nothing at all.
+- Operation wordings can arrive as a **plugin** dictionary (`provides.dictionaries`,
+  `KindWords`), still per language and never per broker. It is asked **after** the shipped
+  keywords, so it fills a gap and never re-answers a wording the app reads — a package cannot turn
+  a buy into a sale, and a word the shipped table reads as another kind is refused at install
+  (`KindWords::shadowed`). So is a word under three letters (two ideographs, `KindWords::too_short`):
+  matched by containment, it would answer nearly every wording nobody else did, and `kind_of`
+  skips one all the same. The words reach `build_preview` through `ImportContext::kind_words`
+  (`ImportService::with_kind_dictionary`), never through the mapping the host sends, so removing
+  the plugin removes them. Its sample must be one the app **cannot** read alone
+  (`import_templates::check_dictionary`).
 - A shipped layout is only as good as the file it was tried against: `core/tests/fixtures/presets/`
   holds one folder per layout — the redacted export, what it must be recognised as, and the
   operations it must produce, written in the canonical format so the expectation needs no second

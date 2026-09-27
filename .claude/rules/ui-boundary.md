@@ -24,7 +24,57 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   profiles folder, so a theme survives switching profile (ADR-0070). Its commands take no store,
   which is why a locked profile still has its colours; what a plugin *stores* belongs to the
   profile, in that profile's vault under the plugin's id. The host copies the manifest and the
-  files it names and nothing else, and refuses a file name that leaves the package.
+  files it names and nothing else, and refuses a file name that leaves the package. It copies into
+  a `.staging-*` folder and swaps it in by renaming, so a failed reinstall leaves the old version;
+  a folder whose name is not its manifest's id is `Status::Misplaced` and offers nothing
+  (`Plugins::loaded` is the one lookup by id). `Plugins::list` is read once and kept: install,
+  remove and `plugins_list` (the Settings list) drop it, so one import sees one set of plugins from
+  preview to commit, and a package edited on disk by hand appears when the list is opened.
+- A plugin's **file reader** is the one piece of a stranger's *code* this host runs, and
+  `plugins/sandbox.rs` is the whole of what it is granted (ADR-0086): a WASM component with no
+  filesystem, no reachable address, a frozen clock and a seeded generator — linked at all only
+  because a guest carrying a language runtime will not instantiate without them — under a memory
+  ceiling and an epoch deadline. The epoch is the engine's, shared by every store, so one ticker
+  thread moves it while anything runs and a deadline is a number of ticks — never a bump of its
+  own, which would end every other plugin's call too. A module is compiled once per version of its file (`sandbox::component`,
+  keyed by path, size and time, dropped by `sandbox::forget` on install and remove), and every
+  command that can run one — `import_load`, `transactions_export_save`, `plugin_install` — is
+  `async` and goes through `commands::off_thread`: a synchronous Tauri command runs on the main
+  thread, and a module is allowed seconds. It runs **once**, in `import_load`, and what it produced replaces
+  the bytes in `AppState::import_file`, so every later preview and the commit read a
+  `stonqs.transactions` document through `parse_canonical`. Preview and commit therefore cannot
+  diverge, and `core` gains no dependency: the registry is `Plugins::read_file`, one layer above
+  `import::parse_file`, asked after the two self-describing shipped formats and before the CSV
+  reader, which accepts nearly anything. `not-mine` moves on, and so does a module that broke
+  (trap, deadline, memory — `Refusal::Broken`), named in `skipped_readers`; only the reader's own
+  `malformed` is `UiError::Reader`, never a fall-through (ADR-0087). `needs-password` is
+  `UiError::FileProtected { reader, tried }`; the wizard asks, and `import_load` is called again with
+  `unlock`, whose password reaches the reader that asked and no other, and is never stored. The row schema is **not**
+  restated in WIT — the document carries its own `format` and `version` (ADR-0066).
+- A plugin's **dashboard widget** (ADR-0083) is the one piece of a stranger's *JavaScript* the app
+  runs. The host serves it from its own scheme (`stonqs-plugin`, `commands::plugins::page`)
+  as one page — `plugins/widget_shim.js` plus the module inline — under a CSP of its own with no
+  `connect-src` and a nonce per response. What a CSP does not cover the page closes itself: the
+  shim deletes every `RTC*` global before the module runs (a STUN server is the page's to choose)
+  and DNS prefetching is off; the frame is `sandbox="allow-scripts"`, so it has no
+  origin, and Tauri injects IPC into the main frame only. Nothing is asked *for*: the manifest's
+  `reads` (a closed list) is what the host builds — `plugins::reads::project`, through
+  `plugin_reads`, one query per frame (`usePluginReads`) under the tile's scope and period — in the
+  bridge's own field names, versioned by `api`; `lib/pluginBridge.ts` types what arrives and posts
+  it. An assistant tool of the same package is handed the same function's answer (ADR-0088). The tile's header names the plugin, because what it shows is the plugin's number
+  (ADR-0082).
+- A plugin's **screen** (ADR-0084) is the same page under `/screen/<plugin>/<id>` beside
+  `/widget/…`, following the app's lenses rather than a source of its own — which is why
+  `transactions` is a screen's read only (`transactions_list` has no `source`). It may keep **one
+  document** in the profile (`plugin_state`, migration 0031) if its manifest says `storage`:
+  `plugin_state_get/save` refuse anybody else, cap it at 256 KiB, and ask nothing, because it is
+  the plugin's data and reaches no operation, account or figure. The frame's `save` message is the
+  bridge's only write.
+- A plugin's **file writer** is the reader turned round (ADR-0080): `wit/writer.wit`,
+  `write(canonical) -> result<bytes, reason>`, run in the same `plugins/sandbox.rs`. It is handed
+  what `transactions_export` already built — the screen's filter, the store released first — and
+  never sees the portfolio or a path; `transactions_export_save` writes what it returns. Its
+  expectation is compared **byte for byte**, because its output is bytes another program judges.
 - `Store` is `Send`, not `Sync`, hence `Mutex<Store>`. Never hold that lock across a network call — background jobs open their own `Store` on `AppState::db_path` in a separate thread.
 - **Text never crosses IPC.** The host and the core send a code, a key and the values behind it;
   the sentence is written in the frontend, where the language is known — see ADR-0023. `ScopeOption`

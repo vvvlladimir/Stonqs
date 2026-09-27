@@ -45,6 +45,7 @@ fn security_rows_carry_the_note_wkn_and_attribute_values() {
         other_symbols: [("eodhd".to_string(), "IWDA.LSE".to_string())]
             .into_iter()
             .collect(),
+        latest_source: Some("eodhd".into()),
         sparse_history: false,
     };
     let json: Value = serde_json::to_value(row).unwrap();
@@ -56,6 +57,8 @@ fn security_rows_carry_the_note_wkn_and_attribute_values() {
     assert_eq!(json["attributes"]["attr-1"], "0.2");
     // Fallback symbols are keyed by source id.
     assert_eq!(json["other_symbols"]["eodhd"], "IWDA.LSE");
+    // The latest-close source names one of them by the same id (ADR-0079).
+    assert_eq!(json["latest_source"], "eodhd");
     // A verdict, not a count: the table paints the history cell from it.
     assert_eq!(json["sparse_history"], false);
 

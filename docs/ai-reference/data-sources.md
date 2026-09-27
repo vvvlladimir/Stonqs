@@ -29,6 +29,17 @@ checked first: a source whose closes are in another currency, or differ from the
 more than two percent, is ignored rather than mixed in. The next refresh asks the instrument's own
 source again.
 
+**History from one source, the latest price from another.** Some sources publish a day or two
+late — a fund's value, a thinly traded venue. Once an instrument has a fallback symbol, its form
+offers **Latest price from**: that source is asked, after the instrument's own, only for the days
+after the stored prices end. The history before that stays the own source's. The same check
+applies — same currency, within two percent of the stored closes where they overlap — and a source
+that fails it adds nothing; a refresh then names that source as the one that failed. Days it
+filled are replaced if the own source is later asked for them and answers. Removing that source's
+fallback symbol also removes it as the latest-price source. While that source is switched off in
+the data sources settings it is simply not asked — the choice stays on the instrument, and no
+refresh reports it as failing.
+
 **Exchange rates** are asked in a fixed order: the European Central Bank for the roughly thirty
 currencies it publishes, a mirror of the same rates if it is unreachable, then the market's daily
 close for everything else. A currency no source knows stays missing, and every figure depending

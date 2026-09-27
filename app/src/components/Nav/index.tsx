@@ -1,20 +1,23 @@
 import { useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { CaretRightIcon, ListIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, ListIcon, PuzzlePieceIcon } from "@phosphor-icons/react";
 import { Trans, useLingui } from "@lingui/react/macro";
 
 import type { ScreenId } from "../../lib/nav";
 import { useUiState, type NavPrefs } from "../../lib/uiState";
+import { usePlugins } from "../../lib/queries";
 import { usePointerDrag } from "../../lib/pointerDrag";
 import { ariaBinding, COMMANDS, useLayer } from "../../lib/commands";
 import { AsOfPicker } from "../domain/AsOfPicker";
 import { ScopePicker } from "../domain/ScopePicker";
-import { arrange, HOME, moveBefore, SCREENS, SETTINGS, TABS, type NavSection } from "./model";
+import { arrange, HOME, moveBefore, PLUGIN_SECTION, SCREENS, SETTINGS, TABS, type NavSection } from "./model";
 import { useReorder, type DragItem, type Drop } from "./useReorder";
 
 interface Props {
   screen: ScreenId;
-  go: (screen: ScreenId) => void;
+  /** The navigation hint: which plugin screen is open while `screen` is `plugin`. */
+  focus: string | null;
+  go: (screen: ScreenId, focus?: string) => void;
   /** Alerts has crossings nobody looked at yet. */
   alertsDot: boolean;
 }
@@ -30,9 +33,10 @@ const CLOSE_PULL = 80;
  * behind the tab bar's `Menu`, so the order and the pins are one thing at every width.
  * The arrangement is `UiState::nav`; see `model.ts` for how a stored order is read.
  */
-export function Nav({ screen, go, alertsDot }: Props) {
+export function Nav({ screen, focus, go, alertsDot }: Props) {
   const { t, i18n } = useLingui();
   const { ui, save } = useUiState();
+  const pluginScreens = usePlugins().data?.screens ?? [];
   const layout = arrange(ui.nav);
   const root = useRef<HTMLElement>(null);
   const [sheet, setSheet] = useState(false);
@@ -76,8 +80,8 @@ export function Nav({ screen, go, alertsDot }: Props) {
 
   useLayer(() => setSheet(false), { active: sheet });
 
-  const pick = (id: ScreenId) => {
-    go(id);
+  const pick = (id: ScreenId, hint?: string) => {
+    go(id, hint);
     setSheet(false);
   };
 
@@ -168,6 +172,59 @@ export function Nav({ screen, go, alertsDot }: Props) {
     ];
   };
 
+  /**
+   * Plugin screens: one section after the shipped ones, in the plugin list's order. Nothing here
+   * is dragged or pinned — the stored arrangement names only what the app defines (ADR-0084).
+   */
+  const plugins = () => {
+    if (pluginScreens.length === 0) return null;
+    const open = layout.open === PLUGIN_SECTION;
+    return [
+      <button
+        key="section:plugins"
+        type="button"
+        className="nav__row nav__head"
+        aria-expanded={open}
+        onClick={() => toggle(PLUGIN_SECTION)}
+      >
+        <span className="nav__lbl">
+          <Trans>Plugins</Trans>
+        </span>
+        <CaretRightIcon className="nav__caret" />
+      </button>,
+      <div
+        key="fold:plugins"
+        className="nav__fold"
+        data-open={open ? "" : undefined}
+        data-opening={opening === PLUGIN_SECTION ? "" : undefined}
+        ref={(el) => {
+          if (el) el.inert = !open;
+        }}
+      >
+        <div className="nav__clip">
+          <div className="nav__sub">
+            {pluginScreens.map((p, i) => {
+              const on = screen === "plugin" && focus === p.key;
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  className="nav__row nav__row--sub"
+                  aria-current={on ? "page" : undefined}
+                  style={{ "--i": i } as CSSProperties}
+                  onClick={() => pick("plugin", p.key)}
+                >
+                  <PuzzlePieceIcon weight={on ? "fill" : "regular"} />
+                  <span className="nav__lbl">{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>,
+    ];
+  };
+
   const tabs = [HOME, ...layout.favorites].slice(0, TABS);
   const ghost = drag && SCREENS[drag.item.id as ScreenId];
   const ghostSection = drag && layout.sections.find((s) => s.id === drag.item.id);
@@ -198,6 +255,7 @@ export function Nav({ screen, go, alertsDot }: Props) {
               <Trans>Sections</Trans>
             </div>
             {layout.sections.flatMap(section)}
+            {plugins()}
             <div
               className="nav__end"
               data-nav-end=""

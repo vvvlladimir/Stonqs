@@ -1,6 +1,6 @@
 use super::dedupe::{fingerprint, fingerprint_of, loose_fingerprint_of};
 use super::ibflex;
-use super::mapping::{ImportMapping, normalize_alias};
+use super::mapping::{ImportMapping, KindWords, normalize_alias};
 use super::parse::{ImportProblem, ParseConfig, ProblemCode, parse_csv};
 use super::preview::{ImportContext, ImportPreview, RowOverride, RowStatus, build_preview};
 use super::prices::{PriceImport, PriceMapping, build_price_import};
@@ -69,6 +69,7 @@ pub struct ImportService<'a> {
     store: &'a Store,
     base_currency: Option<String>,
     today: Option<NaiveDate>,
+    kind_words: KindWords,
 }
 
 impl<'a> ImportService<'a> {
@@ -77,7 +78,16 @@ impl<'a> ImportService<'a> {
             store,
             base_currency: None,
             today: None,
+            kind_words: KindWords::empty(),
         }
+    }
+
+    /// Operation wordings to read after the shipped keywords. Handed to the preview rather than
+    /// written into the mapping, so a dictionary that is later removed leaves nothing behind in a
+    /// layout beyond the wordings the user actually saw answered.
+    pub fn with_kind_dictionary(mut self, words: KindWords) -> Self {
+        self.kind_words = words;
+        self
     }
 
     pub fn with_base_currency(mut self, currency: &str) -> Self {
@@ -114,6 +124,10 @@ impl<'a> ImportService<'a> {
         let accounts = self.store.list_accounts()?;
         let (known, loose) = self.known_fingerprints()?;
         let known_external = self.known_external()?;
+        let ledger = self
+            .store
+            .transactions_for_accounts(&accounts.iter().map(|a| a.id.clone()).collect::<Vec<_>>(), None)?;
+        let corporate_actions = self.store.list_corporate_actions()?;
         let context = ImportContext {
             securities: &securities,
             accounts: &accounts,
@@ -122,6 +136,9 @@ impl<'a> ImportService<'a> {
             known_loose: &loose,
             base_currency: self.base_currency.as_deref(),
             today: self.today,
+            kind_words: &self.kind_words,
+            ledger: &ledger,
+            corporate_actions: &corporate_actions,
         };
         Ok(build_preview(&parsed, &mapping, overrides, &context))
     }
@@ -138,7 +155,15 @@ impl<'a> ImportService<'a> {
         // import in between — so identity is checked again here, against the store, inside
         // the transaction. A row the preview already called a duplicate is excluded: writing
         // it is what `import_duplicates` was answered about.
-        let (mut known, _) = self.known_fingerprints()?;
+        let (counted, _) = self.known_fingerprints()?;
+        // A row the broker names is identified by that name, so two identical operations with
+        // two ids are both written; a row without one falls back to its content.
+        let mut known: HashSet<String> = counted.into_keys().collect();
+        known.extend(
+            self.known_external()?
+                .into_iter()
+                .map(|row| format!("ext:{}", row.external_id)),
+        );
 
         for row in &preview.rows {
             let importable = match row.status {
@@ -250,8 +275,10 @@ impl<'a> ImportService<'a> {
             if !matches!(
                 row.status,
                 RowStatus::Duplicate | RowStatus::Updated | RowStatus::Similar
-            ) && !known.insert(fingerprint(&draft))
-            {
+            ) && !known.insert(match &draft.external_id {
+                Some(id) => format!("ext:{id}"),
+                None => fingerprint(&draft),
+            }) {
                 result.skipped += 1;
                 continue;
             }
@@ -312,12 +339,17 @@ impl<'a> ImportService<'a> {
 
     /// Both readings of what the store already holds: the exact content fingerprint, and the
     /// one that ignores what an operation is worth (`dedupe::loose_fingerprint_of`).
-    fn known_fingerprints(&self) -> Result<(HashSet<String>, HashSet<String>)> {
+    fn known_fingerprints(&self) -> Result<(HashMap<String, usize>, HashMap<String, usize>)> {
         let accounts: Vec<String> = self.store.list_accounts()?.into_iter().map(|a| a.id).collect();
         let stored = self.store.transactions_for_accounts(&accounts, None)?;
-        Ok((
-            stored.iter().map(fingerprint_of).collect(),
-            stored.iter().filter_map(loose_fingerprint_of).collect(),
-        ))
+        let mut counted: HashMap<String, usize> = HashMap::new();
+        let mut loose: HashMap<String, usize> = HashMap::new();
+        for t in &stored {
+            *counted.entry(fingerprint_of(t)).or_insert(0) += 1;
+            if let Some(print) = loose_fingerprint_of(t) {
+                *loose.entry(print).or_insert(0) += 1;
+            }
+        }
+        Ok((counted, loose))
     }
 }

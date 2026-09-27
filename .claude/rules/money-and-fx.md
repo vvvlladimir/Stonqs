@@ -26,6 +26,11 @@
   complete; both rates are of the same day, which is arithmetic over what was paid, not a cross
   rate synthesized at lookup.
 - Buy commission goes into cost basis; never also counted in `Holdings::fees_base`. `Holdings::charges` records only standalone Fee/Tax operations. A cost *rate* asks the opposite question and must count that commission, so it goes through `calc::costs_paid`, never through the charges rollups — see ADR-0024.
+- A disposal of more than is held is a hole in the ledger, not a short position (ADR-0089):
+  `build_holdings` refuses it, `PortfolioAnalytics::transactions_until` bridges it with an implied
+  `DeliveryInbound` at the disposal's own price (nil result, value in as a flow; never stored), and
+  `quantity_gaps` / `portfolio_gaps` report it over the whole portfolio for the banner. Within a
+  day `ordered_events` applies acquisitions first — storage order is by random id.
 - `Position::accounts` values sum to `quantity`. A disposal from an account that never held the shares goes negative there rather than being smeared over other accounts — that's a data inconsistency, and hiding it forges the answer to "where is it".
 - Quotes are stored already split-adjusted; `corporate_actions` adjust lots, not quotes.
 - `quote_coverage` records what was asked; `quotes` records what came back. Extend coverage even when a provider returns nothing.
@@ -34,6 +39,12 @@
 - Which sources exist is `sources::CATALOG`, nothing else: a provider's id is its `ID` constant, services are built by `sources::quote_service()` / `fx_service()`, and a call site that needs "the" FX or index source names `sources::DEFAULT_FX` / `DEFAULT_INDEX`, never a string literal. A 429 is `Error::RateLimited` (transient), a 401/403 `Error::Unauthorized` (never retried) — see ADR-0050.
 - **No quote source is shipped as the default one** (ADR-0076). There is no `DEFAULT_QUOTES`: which source a new instrument is stamped with is `sources::default_quotes(&Setup)` — the first quote source that is *on*, `None` while none is, and then the instrument is priced by hand. Yahoo heads `CATALOG`, and `quote_ids` hands that order to the picker, but being first is a position in a list, never a recommendation. Nothing at all is asked while `AppSettings::sources_configured` is false: `AppState::market_setup` writes every switch to `false`, so one line gates every reader of a `Setup`, and `jobs::start` refuses rather than reporting a failure per instrument. `SourceInfo::site` is where a source's requests go, shown beside its switch.
 - Quotes are a chain too (ADR-0052): the instrument's own source first; only on its **failure** the others that `covers` it and have its symbol in `security_symbols`, asked 14 days early so `market::guard::check` can compare (same currency, median ratio within 2%). An accepted fallback `fill_quotes` and extends no coverage. A source failing 3× in a row (or once with a rejected key) rests for the rest of the service's life. Kraken covers `Crypto` only, which is also why it is not `on_by_default` — a build that stamped new instruments with it would name it for shares it cannot price; Stooq is off (JS challenge). A source with `SourceInfo::per_day` spends from `Budgets` before each call and is `RateLimited` once the day is spent (ADR-0055). A custom source (`market::custom`, ADR-0054) is quotes or FX by `CustomRole`; a rate one joins the FX chain last.
+- One of an instrument's other sources may answer for its **latest close** (`security_symbols.latest`,
+  at most one, ADR-0079): `ensure_latest` runs after the history, asks only when the series ends
+  before today, and writes only days after the last stored close — guarded like a fallback,
+  `fill_quotes`, no coverage. Not a fallback: it is asked because the own source is *late*, not
+  because it failed. A source switched off is not in the service, so the role asks nothing and
+  fails nothing until it is back on.
 - Providers are one-method (`fetch(&Security, DateRange)`). Caching, gap-filling, retries belong in `MarketDataService`/`FxService`, never in a provider. `fetch_history` is a default method a provider overrides only when the same response also carries dividends and splits (Yahoo's `events=div|split`) — never a second request (ADR-0034).
 - A range counts as fetched only when both `quote_coverage` and `event_coverage` hold it; the refresh job asks the full window for a security with no event coverage, so older databases backfill events once. A reported event moves no money and no quantity.
 - How far back a refresh reaches is read off the ledger, not off a constant: `Store::history_need`

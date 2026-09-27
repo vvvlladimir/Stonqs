@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { PlusIcon } from "@phosphor-icons/react";
 import { useMenu, type MenuItem } from "../../components/ui";
 import { useDockSlot } from "../../lib/dock";
-import type { TaxonomyData } from "../../lib/types";
+import type { InstalledTaxonomySet, TaxonomyData } from "../../lib/types";
 import { hasGaps } from "./model";
 
 /** Taxonomy tabs rendered into the app dock; in edit mode a tab also opens its menu. */
@@ -12,10 +12,12 @@ export function TaxonomyDock({
   selected,
   editing,
   securityIds,
+  sets,
   onSelect,
   onCreate,
   onEdit,
   onImport,
+  onImportSet,
   onGroup,
   onExport,
   onDelete,
@@ -24,10 +26,13 @@ export function TaxonomyDock({
   selected: string | null;
   editing: boolean;
   securityIds: string[];
+  /** Ready trees the installed plugins bring; empty when none is installed. */
+  sets: InstalledTaxonomySet[];
   onSelect: (id: string) => void;
   onCreate: () => void;
   onEdit: (taxonomy: TaxonomyData) => void;
   onImport: (taxonomy: TaxonomyData) => void;
+  onImportSet: (key: string, taxonomy: TaxonomyData) => void;
   onGroup: (taxonomy: TaxonomyData) => void;
   onExport: (taxonomy: TaxonomyData) => void;
   onDelete: (taxonomy: TaxonomyData) => void;
@@ -47,6 +52,12 @@ export function TaxonomyDock({
               const items: MenuItem[] = [
                 { label: t`Edit…`, onSelect: () => onEdit(tree) },
                 { label: t`Import from CSV…`, onSelect: () => onImport(tree) },
+                // A plugin's ready tree extends this one exactly as a CSV does, so it sits in
+                // the same place rather than getting a control of its own.
+                ...sets.map((set) => ({
+                  label: t`Import ${set.name}…`,
+                  onSelect: () => onImportSet(set.key, tree),
+                })),
                 { label: t`Group by attribute…`, onSelect: () => onGroup(tree) },
                 { label: t`Export to CSV…`, onSelect: () => onExport(tree) },
                 { label: t`Delete…`, danger: true, onSelect: () => onDelete(tree) },

@@ -8,6 +8,7 @@
 
 mod cells;
 mod fields;
+mod holdings;
 mod link;
 mod row;
 mod status;
@@ -15,18 +16,18 @@ mod tally;
 
 use super::checks::{self, BasisVote, CheckContext, SignVote};
 use super::dedupe::KnownRow;
-use super::mapping::{AmountBasis, AmountSign, ImportField, ImportMapping};
+use super::mapping::{AmountBasis, AmountSign, ImportField, ImportMapping, KindWords};
 use super::parse::{ImportProblem, ParseConfig, ParsedCsv, ProblemCode, parse_decimal};
 use super::securities::SecurityDraft;
 use crate::error::{Error, Result};
-use crate::model::{Account, Security, Transaction, TransactionKind};
+use crate::model::{Account, CorporateAction, Security, Transaction, TransactionKind};
 use crate::money::Currency;
 use chrono::NaiveDate;
 use fields::Index;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use status::Dedupe;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap};
 use tally::Tallies;
 
 /// Transaction assembled from one row but not yet committed.
@@ -180,14 +181,24 @@ pub struct ImportContext<'a> {
     /// Operations the database already knows by the broker's own identifier.
     pub known_external: &'a [KnownRow],
 
-    pub known_fingerprints: &'a HashSet<String>,
+    /// Stored operations by content fingerprint, counted: two identical operations the broker
+    /// names apart are two rows, and a re-import must meet each of them once.
+    pub known_fingerprints: &'a HashMap<String, usize>,
 
     /// Stored share movements by day, account, instrument and quantity — identity without the
     /// amount, so a row corrected by hand is still recognised (`dedupe::loose_fingerprint`).
-    pub known_loose: &'a HashSet<String>,
+    pub known_loose: &'a HashMap<String, usize>,
 
     pub base_currency: Option<&'a str>,
     pub today: Option<NaiveDate>,
+
+    /// Wordings added to the shipped keywords — an installed plugin's dictionary.
+    pub kind_words: &'a KindWords,
+
+    /// Every stored operation and split, so a sale in the file can be checked against what the
+    /// ledger will hold once the file is in (`holdings::check`).
+    pub ledger: &'a [Transaction],
+    pub corporate_actions: &'a [CorporateAction],
 }
 
 impl Default for ImportContext<'_> {
@@ -195,15 +206,21 @@ impl Default for ImportContext<'_> {
         static NO_SECURITIES: &[Security] = &[];
         static NO_ACCOUNTS: &[Account] = &[];
         static NO_EXTERNAL: &[KnownRow] = &[];
+        static NO_WORDS: KindWords = KindWords::empty();
+        static NO_LEDGER: &[Transaction] = &[];
+        static NO_ACTIONS: &[CorporateAction] = &[];
 
         ImportContext {
             securities: NO_SECURITIES,
             accounts: NO_ACCOUNTS,
             known_external: NO_EXTERNAL,
-            known_fingerprints: Box::leak(Box::new(HashSet::new())),
-            known_loose: Box::leak(Box::new(HashSet::new())),
+            known_fingerprints: Box::leak(Box::new(HashMap::new())),
+            known_loose: Box::leak(Box::new(HashMap::new())),
             base_currency: None,
             today: None,
+            kind_words: &NO_WORDS,
+            ledger: NO_LEDGER,
+            corporate_actions: NO_ACTIONS,
         }
     }
 }
@@ -342,7 +359,7 @@ pub fn build_preview(
     let mapping = &match mapping.column(ImportField::Kind) {
         Some(column) => mapping
             .clone()
-            .with_detected_kinds(parsed.column_values(column).into_iter()),
+            .with_detected_kinds_using(parsed.column_values(column).into_iter(), context.kind_words),
         None => mapping.clone(),
     };
 
@@ -413,6 +430,7 @@ pub fn build_preview(
     }
 
     link::internal_transfers(&mut rows, mapping);
+    holdings::check(&mut rows, mapping, context);
 
     problems.extend(parsed.problems.iter().cloned());
     let (kinds, symbols, accounts) = tallies.into_sorted();

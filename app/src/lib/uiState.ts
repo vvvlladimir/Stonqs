@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { keys, useSettings } from "./queries";
 import { isPluginTheme, type ThemePreference } from "./theme";
+import type { TradeGrouping } from "./types";
 import shipped from "./defaultDashboard.json";
 
 /** Persistent UI layout state stored by the host as opaque JSON. */
@@ -41,6 +42,8 @@ export interface UiState {
   /** How each of those two tables is ordered; `null` is the order the screen hands over. */
   position_sort: TableSort | null;
   watch_sort: TableSort | null;
+  /** How the Trades screen cuts trades: per position or per purchase. */
+  trades_by: TradeGrouping;
   /** Colour scheme: an explicit one, or whatever the OS reports. */
   theme: ThemePreference;
   /** Width of the AI panel in pixels, on a screen wide enough for it to be a side panel. */
@@ -145,6 +148,7 @@ export const DEFAULT_UI: UiState = {
   watch_columns: ["spark", "price", "day", "period", "range", "level", "leveldist", "quantity"],
   position_sort: null,
   watch_sort: null,
+  trades_by: "POSITION",
   theme: "system",
   ai_panel_width: 420,
   ai_briefs: {},
@@ -181,6 +185,7 @@ export function parseUiState(raw: unknown): UiState {
       : DEFAULT_UI.watch_columns,
     position_sort: tableSort(value.position_sort),
     watch_sort: tableSort(value.watch_sort),
+    trades_by: value.trades_by === "LOT" ? "LOT" : "POSITION",
     theme: isTheme(value.theme) ? value.theme : DEFAULT_UI.theme,
     ai_panel_width: clampPanel(value.ai_panel_width),
     ai_briefs: briefs(value.ai_briefs),

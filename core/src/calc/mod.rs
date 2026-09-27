@@ -13,6 +13,7 @@ mod dividend_forecast;
 mod dividends;
 mod engine;
 mod fire;
+mod gaps;
 mod goals;
 mod holdings;
 mod income;
@@ -66,6 +67,8 @@ pub use engine::{
     position_twr_between, position_xirr, twr_between, twr_between_with, valuation_at, valuation_at_with,
 };
 pub use fire::{FireAssumptions, FireProjection, fire_projection, percent_to_rate};
+pub(crate) use gaps::bridge_gaps;
+pub use gaps::{QuantityGap, quantity_gaps};
 pub use goals::{GoalProgress, goal_progress};
 pub use holdings::{
     CashFlow, ChargeRecord, Holdings, HoldingsOptions, IncomeRecord, RealizedGain, build_holdings,
@@ -81,8 +84,8 @@ pub use inflation::{
     RealReturn, deflation_end, inflation_factor, inflation_series, real_period_return, real_return, real_xirr,
 };
 pub use journal::{
-    MonthlyNet, YearlyNet, transaction_amount_base, transaction_net_base, transactions_net_by_month,
-    transactions_net_by_year,
+    JournalRow, MonthlyNet, YearlyNet, journal_rows, transaction_amount_base, transaction_net_base,
+    transactions_net_by_month, transactions_net_by_year,
 };
 pub use limits::{LimitUsage, contributions_between, limit_usage};
 pub use payments::{
@@ -104,12 +107,13 @@ pub(crate) use series::dietz_capital;
 pub use series::{GrowthSeries, StatSeries, ValueSeries, value_series};
 pub use summary::{PeriodSummary, period_summary};
 pub use trades::{
-    Trade, TradeBook, TradeStats, TradingVolume, closed_trades, open_trades, trade_stats, trading_volume,
+    Trade, TradeBook, TradeGrouping, TradeStats, TradingVolume, closed_trades, open_trades, trade_stats,
+    trading_volume,
 };
 pub use transfers::{TransferPair, transfer_candidates};
 pub use twr::{TwrPoint, annualize, time_weighted_return};
 pub use valuation::{
-    DayChange, DayChanges, PortfolioValuation, PositionValuation, day_changes, value_holdings,
+    DayChange, DayChanges, PortfolioValuation, PositionValuation, day_changes, value_holdings, weight,
 };
 pub use watchlist::{InstrumentMove, NearestLevel, instrument_move, nearest_level};
 pub use xirr::{XIRR_MAX_ITERATIONS, xirr};

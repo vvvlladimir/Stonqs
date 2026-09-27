@@ -3,6 +3,7 @@ import { msg } from "@lingui/core/macro";
 import { IMPORTABLE_TRANSACTION_KINDS, accountKindLabel, transactionLabel } from "../../lib/kinds";
 import type { BadgeTone } from "../../components/ui";
 import type {
+  Plugin,
   AccountRow,
   AmountBasis,
   AmountSign,
@@ -145,6 +146,7 @@ export const PROBLEM_LABELS: Record<ProblemCode, MessageDescriptor> = {
   TICKER_ISIN_CONFLICT: msg`the ticker already names another instrument`,
   SIMILAR_IN_STORE: msg`an operation like it is already stored`,
   POSSIBLE_SPLIT: msg`the prices step by a whole factor`,
+  SALE_EXCEEDS_HOLDINGS: msg`more is sold than was ever received`,
 };
 
 /** Column -> field: the reading direction of the mapping table, where a file column says what it is. */
@@ -316,7 +318,22 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
       return i18n._(
         msg`${p.symbol} trades at ${p.before} on ${p.was} and at ${p.after} on ${p.date} — a factor of exactly ${p.ratio}. If the broker applied a split in between, the quantities on either side mean different shares; record the split on the instrument instead of importing the change. A split the quote source reports is offered by itself, under the instrument's events.`,
       );
+    case "SALE_EXCEEDS_HOLDINGS":
+      return p.unread
+        ? i18n._(
+            msg`${p.quantity} ${p.symbol} leave on ${p.date}, but only ${p.held} is held then. This file has ${p.unread} more rows for ${p.symbol} that will not be written (${p.unread_kinds}) — map that wording on the "Parsing" step, most likely to an incoming delivery.`,
+          )
+        : i18n._(
+            msg`${p.quantity} ${p.symbol} leave on ${p.date}, but only ${p.held} is held then. The purchase or incoming transfer is missing: until it is added, the figures for ${p.symbol} are estimated.`,
+          );
     default:
       return problem.message;
   }
+}
+
+/** The plugin a reader key (`<plugin id>/<reader id>`) belongs to, by its own name — or by its id
+ *  once that plugin is gone. */
+export function readerPluginName(plugins: Plugin[] | undefined, key: string): string {
+  const id = key.split("/")[0];
+  return plugins?.find((p) => p.id === id)?.name ?? id;
 }

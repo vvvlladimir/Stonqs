@@ -1,0 +1,18 @@
+{
+  "id": "app.stonqs.ledger",
+  "api": 1,
+  "name": "Ledger journal export",
+  "version": "1.0.0",
+  "provides": {
+    "writers": [
+      {
+        "id": "ledger",
+        "name": "Ledger journal",
+        "file": "writer.wasm",
+        "sample": "sample.json",
+        "expected": "expected.journal",
+        "extension": "journal"
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+; Written from a stonqs.transactions file.
+
+2024-01-02 * Deposit
+    Equity:Transfers                      -5000 USD
+    Assets:Broker:Cash
+
+2024-01-15 * Buy AAPL
+    ; Initial Apple purchase
+    Assets:Broker:AAPL                    10 AAPL @ 185.5 USD
+    Expenses:Fees                         4.95 USD
+    Assets:Broker:Cash
+
+2024-02-01 * Buy IWDA.L
+    Assets:Broker:IWDA.L                  20 "IWDA.L" @ 85.1 USD
+    Expenses:Fees                         1.5 EUR
+    Assets:Broker:Cash
+
+2024-02-15 * Dividend AAPL
+    Income:Dividends:AAPL                 -2.4 USD
+    Expenses:Taxes                        0.36 USD
+    Assets:Broker:Cash
+
+2024-03-15 * Sell AAPL
+    Assets:Broker:AAPL                    -5 AAPL @ 192 USD
+    Expenses:Fees                         4.95 USD
+    Assets:Broker:Cash
+
+2024-03-31 * Interest
+    Income:Interest                       -3.1 USD
+    Assets:Broker:Cash
+
+2024-04-01 * Fee
+    ; Custody
+    Expenses:Fees                         2 USD
+    Assets:Broker:Cash
+
+; 2024-05-15 DELIVERY_INBOUND MSFT not written: no journal equivalent
+
+2024-06-01 * Withdrawal
+    Equity:Transfers                      500 USD
+    Assets:Broker:Cash

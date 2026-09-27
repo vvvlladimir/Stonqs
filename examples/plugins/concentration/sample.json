@@ -1,0 +1,15 @@
+{
+  "args": { "top": 2 },
+  "data": {
+    "positions": {
+      "date": "2026-09-15",
+      "base_currency": "EUR",
+      "total_value": "10000",
+      "rows": [
+        { "symbol": "IWDA", "name": "iShares Core MSCI World", "currency": "EUR", "quantity": "50", "price": "100", "value": "5000", "cost_basis": "4000", "unrealized_result": "1000", "weight": "0.5", "day_change": null },
+        { "symbol": "AAPL", "name": "Apple", "currency": "USD", "quantity": "10", "price": "330", "value": "3000", "cost_basis": "2500", "unrealized_result": "500", "weight": "0.3", "day_change": "0.01" },
+        { "symbol": "SAP", "name": "SAP", "currency": "EUR", "quantity": "10", "price": "200", "value": "2000", "cost_basis": "2100", "unrealized_result": "-100", "weight": "0.2", "day_change": null }
+      ]
+    }
+  }
+}

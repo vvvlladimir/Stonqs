@@ -30,6 +30,9 @@ pub struct SecurityRow {
     /// The instrument's symbol at sources other than its own (`source -> symbol`): what a
     /// fallback may ask when the own source fails (ADR-0052).
     pub other_symbols: std::collections::BTreeMap<String, String>,
+    /// The one of `other_symbols` asked for the days the own source has not published yet
+    /// (ADR-0079); `None` when history and latest close come from one source.
+    pub latest_source: Option<String>,
     /// The stored series covers far less than the instrument has been held — what a ticker on a
     /// venue the source does not quote leaves behind. The table says so rather than showing a
     /// price that is one day old and years out of place.
@@ -45,6 +48,7 @@ pub fn securities_list(state: State<AppState>) -> UiResult<Vec<SecurityRow>> {
     let stats = store.quote_stats()?;
     let mut attributes = store.security_attributes()?;
     let mut other_symbols = store.all_security_symbols()?;
+    let mut latest = store.latest_sources()?;
     let today = chrono::Local::now().date_naive();
 
     Ok(securities
@@ -80,6 +84,7 @@ pub fn securities_list(state: State<AppState>) -> UiResult<Vec<SecurityRow>> {
                 transaction_count,
                 attributes: values,
                 other_symbols: others,
+                latest_source: latest.remove(&security.id),
                 security,
             }
         })
@@ -108,6 +113,10 @@ pub struct SecurityInput {
     /// the caller is not editing them, as with `attributes`.
     #[serde(default)]
     pub other_symbols: Option<std::collections::BTreeMap<String, String>>,
+    /// Which of `other_symbols` answers for the latest close; read only beside them, so a caller
+    /// that is not editing symbols cannot clear it by leaving it out.
+    #[serde(default)]
+    pub latest_source: Option<String>,
 }
 
 #[tauri::command]
@@ -147,6 +156,9 @@ pub fn security_save(app: AppHandle, state: State<AppState>, input: SecurityInpu
             // The own source reads `data_symbol`; a row for it here would never be asked.
             let own = security.data_source.as_deref() == Some(source.as_str());
             store.set_security_symbol(&security.id, source, if own { "" } else { symbol })?;
+        }
+        if input.other_symbols.is_some() {
+            store.set_latest_source(&security.id, blank_to_none(input.latest_source).as_deref())?;
         }
         security
     };

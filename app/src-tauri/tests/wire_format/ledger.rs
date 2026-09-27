@@ -250,3 +250,38 @@ fn expected_dividends_keep_unknowns_null() {
     assert!(json["pay_date"].is_null());
     assert!(json["net_base"].is_null());
 }
+
+/// A hole in the ledger names the operation and the instrument by id; the frontend joins names.
+#[test]
+fn a_quantity_gap_carries_ids_and_string_quantities() {
+    use sq_core::calc::QuantityGap;
+    use sq_core::model::TransactionKind;
+
+    let json = serde_json::to_value(QuantityGap {
+        transaction_id: "tx-1".into(),
+        date: chrono::NaiveDate::from_ymd_opt(2026, 4, 19).unwrap(),
+        account_id: "acc-1".into(),
+        security_id: "sec-1".into(),
+        kind: TransactionKind::Sell,
+        quantity: dec!(580),
+        held: dec!(0),
+        missing: dec!(580),
+    })
+    .unwrap();
+
+    assert_eq!(
+        keys(&json),
+        [
+            "account_id",
+            "date",
+            "held",
+            "kind",
+            "missing",
+            "quantity",
+            "security_id",
+            "transaction_id"
+        ]
+    );
+    assert_eq!(json["kind"], "SELL");
+    assert_eq!(json["missing"], "580");
+}

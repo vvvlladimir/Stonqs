@@ -1,0 +1,9 @@
+{
+  "id": "app.stonqs.regions",
+  "api": 1,
+  "name": "Regions classification",
+  "version": "1.0.0",
+  "provides": {
+    "taxonomies": [{ "id": "regions", "name": "Regions", "file": "regions.csv" }]
+  }
+}
