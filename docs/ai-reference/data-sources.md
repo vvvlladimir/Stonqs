@@ -36,7 +36,9 @@ after the stored prices end. The history before that stays the own source's. The
 applies — same currency, within two percent of the stored closes where they overlap — and a source
 that fails it adds nothing; a refresh then names that source as the one that failed. Days it
 filled are replaced if the own source is later asked for them and answers. Removing that source's
-fallback symbol also removes it as the latest-price source.
+fallback symbol also removes it as the latest-price source. While that source is switched off in
+the data sources settings it is simply not asked — the choice stays on the instrument, and no
+refresh reports it as failing.
 
 **Exchange rates** are asked in a fixed order: the European Central Bank for the roughly thirty
 currencies it publishes, a mirror of the same rates if it is unreachable, then the market's daily

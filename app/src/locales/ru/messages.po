@@ -6113,6 +6113,7 @@ msgstr "Операций пока нет"
 
 #: src/screens/dashboard/widgets/chart.tsx
 #: src/screens/dashboard/widgets/list.tsx
+#: src/screens/dashboard/widgets/plugin.tsx
 #: src/screens/dashboard/widgets/value.tsx
 msgid "No transactions."
 msgstr "Нет операций."
@@ -10004,6 +10005,7 @@ msgstr "Уровень триггера"
 msgid "trough {0}"
 msgstr "дно {0}"
 
+#: src/components/domain/PluginFrame.tsx
 #: src/components/domain/UpdateDialog.tsx
 #: src/components/ErrorBoundary.tsx
 msgid "Try again"

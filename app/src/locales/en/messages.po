@@ -6118,6 +6118,7 @@ msgstr "No transactions yet"
 
 #: src/screens/dashboard/widgets/chart.tsx
 #: src/screens/dashboard/widgets/list.tsx
+#: src/screens/dashboard/widgets/plugin.tsx
 #: src/screens/dashboard/widgets/value.tsx
 msgid "No transactions."
 msgstr "No transactions."
@@ -10009,6 +10010,7 @@ msgstr "Trigger level"
 msgid "trough {0}"
 msgstr "trough {0}"
 
+#: src/components/domain/PluginFrame.tsx
 #: src/components/domain/UpdateDialog.tsx
 #: src/components/ErrorBoundary.tsx
 msgid "Try again"

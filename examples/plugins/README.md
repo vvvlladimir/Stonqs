@@ -301,7 +301,7 @@ Installation is the check, and it refuses rather than half-installs:
 | A reader's `file` is not a WebAssembly component, or the module fails to start | Refused |
 | A reader does not recognise its own sample, produces something that is not a transaction file, or produces a different one from `expected` | Refused, saying which |
 | A classification set's CSV does not read as a tree, or leaves a row invalid | Refused, saying which |
-| A dictionary carries no words, or a word the app already reads as another operation | Refused, naming the words |
+| A dictionary carries no words, a word the app already reads as another operation, or a word shorter than three letters (two ideographs) | Refused, naming the words |
 | A dictionary's sample reads without it, or still leaves a wording unmapped or a row invalid with it | Refused, saying which |
 | A writer's `extension` is not letters and digits, its sample is not a transaction file, or writing it does not give exactly `expected` | Refused, saying which |
 

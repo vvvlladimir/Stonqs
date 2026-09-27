@@ -87,7 +87,9 @@ app/      Tauri host: commands/ (thin), state.rs (Mutex<Store> + Portfolio of th
           profile), profiles.rs (one folder per profile), vault.rs + secrets.rs
           (password-sealed provider keys, the lock), dbfile.rs (plain <-> encrypted
           database file, ADR-0049),
-          error.rs (UiError). Frontend: lib/api.ts is the only file that
+          error.rs (UiError), plugins/ (installed packages, one folder each: the
+          registry in mod.rs, sandbox.rs for every WASM component, reads.rs for what a
+          plugin is handed — ADR-0070). Frontend: lib/api.ts is the only file that
           imports @tauri-apps/api; lib/types/ is a barrel, still imported as
           "lib/types".
 import/   parse_file -> parse.rs | ibflex.rs (IB Flex XML, ADR-0061) -> mapping/

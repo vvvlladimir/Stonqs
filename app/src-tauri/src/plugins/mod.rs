@@ -194,29 +194,15 @@ pub enum Status {
     },
 }
 
-/// One installed plugin as the list shows it.
+/// One installed plugin as the list shows it: what its manifest provides, flattened, so a new kind
+/// of content is a field of `Provides` and nothing here.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct PluginInfo {
     pub id: String,
     pub name: String,
     pub version: String,
-    pub themes: Vec<ThemeDef>,
-    #[serde(default)]
-    pub layouts: Vec<LayoutDef>,
-    #[serde(default)]
-    pub readers: Vec<ReaderDef>,
-    #[serde(default)]
-    pub taxonomies: Vec<TaxonomyDef>,
-    #[serde(default)]
-    pub dictionaries: Vec<DictionaryDef>,
-    #[serde(default)]
-    pub writers: Vec<WriterDef>,
-    #[serde(default)]
-    pub widgets: Vec<WidgetDef>,
-    #[serde(default)]
-    pub screens: Vec<ScreenDef>,
-    #[serde(default)]
-    pub tools: Vec<ToolDef>,
+    #[serde(flatten)]
+    pub provides: Provides,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -229,15 +215,7 @@ impl PluginInfo {
             id: id.to_string(),
             name,
             version: String::new(),
-            themes: Vec::new(),
-            layouts: Vec::new(),
-            readers: Vec::new(),
-            taxonomies: Vec::new(),
-            dictionaries: Vec::new(),
-            writers: Vec::new(),
-            widgets: Vec::new(),
-            screens: Vec::new(),
-            tools: Vec::new(),
+            provides: Provides::default(),
             status,
         }
     }
@@ -385,6 +363,11 @@ pub struct Plugins {
     /// Held by whatever rewrites the plugins folder. Install runs off the main thread, so two of
     /// them — or an install and a remove — could otherwise interleave on one folder.
     writing: std::sync::Mutex<()>,
+    /// What `list` last read off the disk. An import reads the layouts, the words and the
+    /// readers, the assistant the tools, on every step — from this, not from every manifest again,
+    /// so one import sees one set of plugins from its preview to its commit. Dropped by whatever
+    /// changes the folder, and by `refresh`, which the plugin list calls.
+    listed: std::sync::Mutex<Option<Vec<PluginInfo>>>,
 }
 
 fn io(e: std::io::Error) -> UiError {
@@ -396,6 +379,7 @@ impl Plugins {
         Plugins {
             root: root.into(),
             writing: std::sync::Mutex::new(()),
+            listed: std::sync::Mutex::new(None),
         }
     }
 
@@ -409,6 +393,22 @@ impl Plugins {
 
     /// Everything installed, in a stable order, each with why it is or is not in use.
     pub fn list(&self) -> UiResult<Vec<PluginInfo>> {
+        let mut listed = self.listed.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(plugins) = listed.as_ref() {
+            return Ok(plugins.clone());
+        }
+        let plugins = self.scan()?;
+        *listed = Some(plugins.clone());
+        Ok(plugins)
+    }
+
+    /// Reads the folder again on the next `list`: a package edited on disk by hand is seen once
+    /// the plugin list is opened.
+    pub fn refresh(&self) {
+        *self.listed.lock().unwrap_or_else(|e| e.into_inner()) = None;
+    }
+
+    fn scan(&self) -> UiResult<Vec<PluginInfo>> {
         let folder = self.folder();
         if !folder.exists() {
             return Ok(Vec::new());
@@ -437,15 +437,7 @@ impl Plugins {
                     id: manifest.id,
                     name: manifest.name,
                     version: manifest.version,
-                    themes: manifest.provides.themes,
-                    layouts: manifest.provides.layouts,
-                    readers: manifest.provides.readers,
-                    taxonomies: manifest.provides.taxonomies,
-                    dictionaries: manifest.provides.dictionaries,
-                    writers: manifest.provides.writers,
-                    widgets: manifest.provides.widgets,
-                    screens: manifest.provides.screens,
-                    tools: manifest.provides.tools,
+                    provides: manifest.provides,
                 },
                 Err(detail) => PluginInfo::unusable(&id, id.clone(), Status::Broken { detail }),
             });
@@ -462,7 +454,7 @@ impl Plugins {
             .into_iter()
             .filter(|p| p.status == Status::Ok)
             .flat_map(|p| {
-                p.themes.into_iter().map(move |theme| ThemeInfo {
+                p.provides.themes.into_iter().map(move |theme| ThemeInfo {
                     key: format!("{}/{}", p.id, theme.id),
                     name: theme.name,
                     plugin: p.id.clone(),
@@ -479,7 +471,7 @@ impl Plugins {
         let mut out = Vec::new();
         for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
             let folder = self.folder_of(&plugin.id);
-            for layout in plugin.layouts {
+            for layout in plugin.provides.layouts {
                 let Ok(path) = safe_join(&folder, &layout.file) else {
                     continue;
                 };
@@ -500,7 +492,7 @@ impl Plugins {
         let mut words = KindWords::empty();
         for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
             let folder = self.folder_of(&plugin.id);
-            for def in plugin.dictionaries {
+            for def in plugin.provides.dictionaries {
                 let Ok(path) = safe_join(&folder, &def.file) else {
                     continue;
                 };
@@ -533,7 +525,7 @@ impl Plugins {
         let mut skipped = Vec::new();
         for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
             let folder = self.folder_of(&plugin.id);
-            for def in plugin.readers {
+            for def in plugin.provides.readers {
                 let offered = def.extensions.is_empty()
                     || ending
                         .as_deref()
@@ -581,7 +573,7 @@ impl Plugins {
             .into_iter()
             .filter(|p| p.status == Status::Ok)
             .flat_map(|p| {
-                p.writers.into_iter().map(move |def| WriterInfo {
+                p.provides.writers.into_iter().map(move |def| WriterInfo {
                     key: format!("{}/{}", p.id, def.id),
                     name: def.name,
                     plugin: p.id.clone(),
@@ -616,7 +608,7 @@ impl Plugins {
             .into_iter()
             .filter(|p| p.status == Status::Ok)
             .flat_map(|p| {
-                p.widgets.into_iter().map(move |def| WidgetInfo {
+                p.provides.widgets.into_iter().map(move |def| WidgetInfo {
                     key: format!("{}/{}", p.id, def.id),
                     name: def.name,
                     description: def.description,
@@ -637,7 +629,7 @@ impl Plugins {
         let mut out: Vec<LoadedTool> = Vec::new();
         for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
             let folder = self.folder_of(&plugin.id);
-            for def in plugin.tools {
+            for def in plugin.provides.tools {
                 let model_name = tool_model_name(&plugin.id, &def.id);
                 let (Ok(module), Ok(schema)) =
                     (safe_join(&folder, &def.file), safe_join(&folder, &def.schema))
@@ -679,7 +671,7 @@ impl Plugins {
             .into_iter()
             .filter(|p| p.status == Status::Ok)
             .flat_map(|p| {
-                p.screens.into_iter().map(move |def| ScreenInfo {
+                p.provides.screens.into_iter().map(move |def| ScreenInfo {
                     key: format!("{}/{}", p.id, def.id),
                     name: def.name,
                     description: def.description,
@@ -763,7 +755,7 @@ impl Plugins {
             .into_iter()
             .filter(|p| p.status == Status::Ok)
             .flat_map(|p| {
-                p.taxonomies.into_iter().map(move |set| TaxonomySetInfo {
+                p.provides.taxonomies.into_iter().map(move |set| TaxonomySetInfo {
                     key: format!("{}/{}", p.id, set.id),
                     name: set.name,
                     plugin: p.id.clone(),
@@ -789,6 +781,12 @@ impl Plugins {
     /// a package is what it declares, and whatever else sits beside it is not ours to carry in.
     pub fn install(&self, source: &Path) -> UiResult<PluginInfo> {
         let _writing = self.writing.lock().unwrap_or_else(|e| e.into_inner());
+        let installed = self.install_locked(source);
+        self.refresh();
+        installed
+    }
+
+    fn install_locked(&self, source: &Path) -> UiResult<PluginInfo> {
         let manifest = read_manifest(source).map_err(UiError::invalid)?;
         if !valid_id(&manifest.id) {
             return Err(UiError::invalid(format!(
@@ -800,16 +798,7 @@ impl Plugins {
         // package for a later version — `provides` misspelled, or a content kind this build does
         // not know. A missing required field already fails above; an optional one would otherwise
         // install in silence and leave the user looking for a theme that was never declared.
-        if manifest.provides.themes.is_empty()
-            && manifest.provides.layouts.is_empty()
-            && manifest.provides.readers.is_empty()
-            && manifest.provides.taxonomies.is_empty()
-            && manifest.provides.dictionaries.is_empty()
-            && manifest.provides.writers.is_empty()
-            && manifest.provides.widgets.is_empty()
-            && manifest.provides.screens.is_empty()
-            && manifest.provides.tools.is_empty()
-        {
+        if manifest.provides.is_empty() {
             return Err(UiError::invalid(format!(
                 "plugin {} declares nothing this build can use: expected `provides.themes`, \
                  `provides.layouts`, `provides.readers`, `provides.writers`, \
@@ -820,6 +809,7 @@ impl Plugins {
         }
 
         check_ids(&manifest.provides)?;
+        check_regular_files(source, &manifest.provides)?;
         self.check_tool_names(&manifest)?;
 
         // A layout proves itself before it is installed, against the sample the package carries.
@@ -951,15 +941,7 @@ impl Plugins {
             id: manifest.id,
             name: manifest.name,
             version: manifest.version,
-            themes: manifest.provides.themes,
-            layouts: manifest.provides.layouts,
-            readers: manifest.provides.readers,
-            taxonomies: manifest.provides.taxonomies,
-            dictionaries: manifest.provides.dictionaries,
-            writers: manifest.provides.writers,
-            widgets: manifest.provides.widgets,
-            screens: manifest.provides.screens,
-            tools: manifest.provides.tools,
+            provides: manifest.provides,
         })
     }
 
@@ -969,7 +951,7 @@ impl Plugins {
     fn check_tool_names(&self, manifest: &Manifest) -> UiResult<()> {
         let mut taken: Vec<(String, String)> = Vec::new();
         for plugin in self.list()?.into_iter().filter(|p| p.id != manifest.id) {
-            for def in &plugin.tools {
+            for def in &plugin.provides.tools {
                 taken.push((tool_model_name(&plugin.id, &def.id), plugin.id.clone()));
             }
         }
@@ -1007,13 +989,27 @@ impl Plugins {
         if !folder.exists() {
             return Err(UiError::not_found(format!("plugin {id}")));
         }
-        std::fs::remove_dir_all(&folder).map_err(io)?;
+        let removed = std::fs::remove_dir_all(&folder).map_err(io);
+        self.refresh();
         sandbox::forget(&folder);
-        Ok(())
+        removed
     }
 }
 
 impl Provides {
+    /// Nothing this build can use: the shape a misspelled `provides` takes.
+    fn is_empty(&self) -> bool {
+        self.themes.is_empty()
+            && self.layouts.is_empty()
+            && self.readers.is_empty()
+            && self.taxonomies.is_empty()
+            && self.dictionaries.is_empty()
+            && self.writers.is_empty()
+            && self.widgets.is_empty()
+            && self.screens.is_empty()
+            && self.tools.is_empty()
+    }
+
     /// Every file the content names, besides the manifest: what an install copies and nothing else.
     fn files(&self) -> Vec<&str> {
         let mut files: Vec<&str> = Vec::new();
@@ -1043,6 +1039,23 @@ impl Provides {
         }
         files
     }
+}
+
+/// Every file the package names must be a file of the package: a symbolic link would have the
+/// checks read, and the install copy, whatever it points at on the user's disk.
+fn check_regular_files(source: &Path, provides: &Provides) -> UiResult<()> {
+    for file in std::iter::once(MANIFEST).chain(provides.files()) {
+        let path = safe_join(source, file)?;
+        // A missing file is reported by the check or the copy that needs it, naming it.
+        if let Ok(meta) = std::fs::symlink_metadata(&path)
+            && !meta.file_type().is_file()
+        {
+            return Err(UiError::invalid(format!(
+                "{file} is not a plain file inside the plugin"
+            )));
+        }
+    }
+    Ok(())
 }
 
 /// Copies the manifest and the files it names from `source` into a new folder `to`.
@@ -1359,6 +1372,22 @@ mod tests {
         assert!(plugins.list().unwrap().is_empty());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn a_file_that_is_a_link_out_of_the_package_is_refused() {
+        let dir = temp();
+        let source = package(&dir, "com.example.midnight", API);
+        let secret = dir.join("secret.txt");
+        std::fs::write(&secret, "not the plugin's").unwrap();
+        std::fs::remove_file(source.join("midnight.css")).unwrap();
+        std::os::unix::fs::symlink(&secret, source.join("midnight.css")).unwrap();
+
+        let plugins = Plugins::new(&dir);
+        let failure = plugins.install(&source).unwrap_err();
+        assert!(format!("{failure:?}").contains("not a plain file"), "{failure:?}");
+        assert!(plugins.list().unwrap().is_empty());
+    }
+
     #[test]
     fn reinstalling_replaces_rather_than_doubles() {
         let dir = temp();
@@ -1386,6 +1415,27 @@ mod tests {
 
         assert!(plugins.list().unwrap().is_empty());
         assert!(plugins.remove("com.example.midnight").is_err(), "already gone");
+    }
+
+    #[test]
+    fn a_package_edited_by_hand_is_seen_once_the_list_is_refreshed() {
+        let dir = temp();
+        let plugins = Plugins::new(&dir);
+        assert!(plugins.list().unwrap().is_empty());
+
+        // Copied into the folder without going through install.
+        let by_hand = dir.join(FOLDER).join("com.example.midnight");
+        std::fs::create_dir_all(&by_hand).unwrap();
+        let source = package(&dir, "com.example.midnight", API);
+        std::fs::copy(source.join(MANIFEST), by_hand.join(MANIFEST)).unwrap();
+        std::fs::copy(source.join("midnight.css"), by_hand.join("midnight.css")).unwrap();
+
+        assert!(
+            plugins.list().unwrap().is_empty(),
+            "one reading of the folder serves every step"
+        );
+        plugins.refresh();
+        assert_eq!(plugins.list().unwrap().len(), 1);
     }
 
     #[test]

@@ -29,6 +29,16 @@ export function PluginWidget(props: WidgetProps) {
 function PluginTile({ info, widget, date, period }: WidgetProps & { info: InstalledWidget }) {
   const ranges = usePeriodRanges(date);
   const range = info.periodic ? pickRange(ranges.data, periodOf(widget, period)) : undefined;
+  // A tile reading over a period has nothing to read before the portfolio has one: said the way
+  // the built-in charts say it, instead of a frame that waits for data that never comes.
+  if (info.periodic && !range) {
+    if (ranges.isPending) return <Pending />;
+    return (
+      <p className="muted">
+        <Trans>No transactions.</Trans>
+      </p>
+    );
+  }
   return (
     <PluginFrame
       page={{

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { api, type Source } from "../../lib/api";
 import { useLanguage } from "../../lib/i18n";
 import { keys, useInvalidate, usePluginReads, usePluginState } from "../../lib/queries";
@@ -56,6 +56,13 @@ export function PluginFrame({
   const frame = useRef<HTMLIFrameElement | null>(null);
   const [ready, setReady] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
+  // Each attempt is a fresh frame: a page that failed is loaded again rather than left for dead.
+  const [attempt, setAttempt] = useState(0);
+  const retry = () => {
+    setFailure(null);
+    setReady(false);
+    setAttempt((n) => n + 1);
+  };
   const reads = usePluginReads(page.reads, date, range, source);
   const state = usePluginState(page.storage ? page.plugin : null);
   const theme = useThemeTokens();
@@ -87,7 +94,7 @@ export function PluginFrame({
     if (ready) return;
     const timer = window.setTimeout(() => setFailure({ code: "no_start", detail: "" }), START_MS);
     return () => window.clearTimeout(timer);
-  }, [ready]);
+  }, [ready, attempt]);
 
   // The reads arrive already projected by the host; the page's own document joins them here.
   const data = useMemo<BridgeData | undefined>(
@@ -96,6 +103,15 @@ export function PluginFrame({
   );
   // A page is rendered once, with everything it asked for.
   const complete = data !== undefined && (!page.storage || state.data !== undefined);
+
+  // New data is a new chance: a page that threw over the last values is tried again with these.
+  // One that throws over every value fails once per change, never in a loop. Adjusted while
+  // rendering rather than in an effect, so the stale failure is never drawn.
+  const [seen, setSeen] = useState(data);
+  if (seen !== data) {
+    setSeen(data);
+    if (failure) retry();
+  }
   const base =
     data?.valuation?.base_currency ??
     data?.positions?.base_currency ??
@@ -123,19 +139,25 @@ export function PluginFrame({
   if (failure) {
     const detail = failure.detail;
     return (
-      <ErrorText>
-        {failure.code === "no_start"
-          ? t`This plugin's page did not start.`
-          : failure.code === "no_render"
-            ? t`This plugin's page never drew anything.`
-            : t`This plugin's page failed: ${detail}`}
-      </ErrorText>
+      <>
+        <ErrorText>
+          {failure.code === "no_start"
+            ? t`This plugin's page did not start.`
+            : failure.code === "no_render"
+              ? t`This plugin's page never drew anything.`
+              : t`This plugin's page failed: ${detail}`}
+        </ErrorText>
+        <button className="btn btn--sm" onClick={retry}>
+          <Trans>Try again</Trans>
+        </button>
+      </>
     );
   }
   return (
     <>
       {keep.isError && <SaveError error={keep.error} />}
       <iframe
+        key={attempt}
         ref={frame}
         className="plugin-frame"
         data-kind={page.kind}

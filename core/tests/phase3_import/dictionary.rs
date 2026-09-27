@@ -27,6 +27,30 @@ fn finnish() -> KindWords {
     ])
 }
 
+/// A word short enough to be inside almost any wording is not read: "E" as a deposit would turn
+/// every wording nobody answered into one. Two ideographs are a whole word, and are read.
+#[test]
+fn a_word_too_short_to_mean_anything_is_not_read() {
+    let words = KindWords::new([
+        ("e", TransactionKind::Deposit),
+        ("to", TransactionKind::Buy),
+        ("买入", TransactionKind::Buy),
+        ("Talletus", TransactionKind::Deposit),
+    ]);
+    assert_eq!(words.too_short(), ["E", "TO"]);
+
+    let mapping = ImportMapping::default()
+        .with_detected_kinds_using(["Monthly statement", "买入股票", "Talletus"].into_iter(), &words);
+    let aliases = &mapping.kind_aliases;
+    assert_eq!(
+        aliases.get("MONTHLYSTATEMENT"),
+        None,
+        "not a deposit because it holds an E"
+    );
+    assert_eq!(aliases.get("买入股票"), Some(&TransactionKind::Buy));
+    assert_eq!(aliases.get("TALLETUS"), Some(&TransactionKind::Deposit));
+}
+
 fn kind_of(preview: &ImportPreview, value: &str) -> Option<TransactionKind> {
     preview
         .kinds

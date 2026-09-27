@@ -40,6 +40,9 @@ pub struct PluginList {
 
 #[tauri::command]
 pub fn plugins_list(state: State<AppState>) -> UiResult<PluginList> {
+    // The list is where a package edited on disk by hand becomes visible; everything else reads
+    // what was last listed.
+    state.plugins.refresh();
     Ok(PluginList {
         plugins: state.plugins.list()?,
         themes: state.plugins.themes()?,

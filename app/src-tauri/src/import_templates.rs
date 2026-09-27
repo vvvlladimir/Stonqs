@@ -284,6 +284,14 @@ pub fn check_dictionary(id: &str, words_json: &str, sample: &[u8]) -> UiResult<(
     if words.is_empty() {
         return Err(UiError::invalid(format!("dictionary {id} carries no words")));
     }
+    let short = words.too_short();
+    if !short.is_empty() {
+        return Err(UiError::invalid(format!(
+            "dictionary {id} names words too short to be read — at least three letters, or two \
+             ideographs: {}",
+            short.join(", ")
+        )));
+    }
     let shadowed = words.shadowed();
     if !shadowed.is_empty() {
         let listed: Vec<String> = shadowed

@@ -75,8 +75,19 @@ impl KindWords {
     pub(crate) fn kind_of(&self, normalized: &str) -> Option<TransactionKind> {
         self.0
             .iter()
+            .filter(|(word, _)| long_enough(word))
             .find(|(word, _)| normalized.contains(word.as_str()))
             .map(|(_, kind)| *kind)
+    }
+
+    /// Words too short to be read: matched by containment, "E" or "TO" would answer nearly every
+    /// wording nobody else did. Refused at install, and skipped by `kind_of` all the same.
+    pub fn too_short(&self) -> Vec<&str> {
+        self.0
+            .iter()
+            .filter(|(word, _)| !long_enough(word))
+            .map(|(word, _)| word.as_str())
+            .collect()
     }
 
     /// Words the shipped keywords already answer as another kind. Such a word is never reached —
@@ -91,6 +102,13 @@ impl KindWords {
             })
             .collect()
     }
+}
+
+/// Three characters of an alphabet; two of a script whose one character is a syllable or a word,
+/// where "买入" (buy) is already the whole word.
+fn long_enough(word: &str) -> bool {
+    let count = word.chars().count();
+    count >= 3 || (count == 2 && word.chars().all(|c| c as u32 >= 0x2E80))
 }
 
 pub fn default_kind_aliases() -> BTreeMap<String, TransactionKind> {

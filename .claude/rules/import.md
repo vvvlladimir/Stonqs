@@ -78,7 +78,9 @@
   `KindWords`), still per language and never per broker. It is asked **after** the shipped
   keywords, so it fills a gap and never re-answers a wording the app reads — a package cannot turn
   a buy into a sale, and a word the shipped table reads as another kind is refused at install
-  (`KindWords::shadowed`). The words reach `build_preview` through `ImportContext::kind_words`
+  (`KindWords::shadowed`). So is a word under three letters (two ideographs, `KindWords::too_short`):
+  matched by containment, it would answer nearly every wording nobody else did, and `kind_of`
+  skips one all the same. The words reach `build_preview` through `ImportContext::kind_words`
   (`ImportService::with_kind_dictionary`), never through the mapping the host sends, so removing
   the plugin removes them. Its sample must be one the app **cannot** read alone
   (`import_templates::check_dictionary`).

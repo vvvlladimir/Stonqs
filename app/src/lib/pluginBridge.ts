@@ -195,7 +195,14 @@ export function periodOfRange(range: PeriodRange | undefined): BridgeContext["pe
 export function useThemeTokens(): BridgeContext["theme"] {
   const [theme, setTheme] = useState(themeTokens);
   useEffect(() => {
-    const observer = new MutationObserver(() => setTheme(themeTokens()));
+    // Most changes to the document's head are not the theme's; keeping the object when its values
+    // did not move keeps every frame from being rendered again for nothing.
+    const observer = new MutationObserver(() =>
+      setTheme((current) => {
+        const next = themeTokens();
+        return JSON.stringify(next) === JSON.stringify(current) ? current : next;
+      }),
+    );
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     observer.observe(document.head, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();

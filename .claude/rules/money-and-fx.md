@@ -38,7 +38,8 @@
   at most one, ADR-0079): `ensure_latest` runs after the history, asks only when the series ends
   before today, and writes only days after the last stored close — guarded like a fallback,
   `fill_quotes`, no coverage. Not a fallback: it is asked because the own source is *late*, not
-  because it failed.
+  because it failed. A source switched off is not in the service, so the role asks nothing and
+  fails nothing until it is back on.
 - Providers are one-method (`fetch(&Security, DateRange)`). Caching, gap-filling, retries belong in `MarketDataService`/`FxService`, never in a provider. `fetch_history` is a default method a provider overrides only when the same response also carries dividends and splits (Yahoo's `events=div|split`) — never a second request (ADR-0034).
 - A range counts as fetched only when both `quote_coverage` and `event_coverage` hold it; the refresh job asks the full window for a security with no event coverage, so older databases backfill events once. A reported event moves no money and no quantity.
 - How far back a refresh reaches is read off the ledger, not off a constant: `Store::history_need`

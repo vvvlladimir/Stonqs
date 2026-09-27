@@ -98,7 +98,7 @@ fn the_example_reader_installs_and_reads_its_own_sample() {
     // says it produces, and must parse as the app's own transaction format.
     let installed = plugins.install(&example).unwrap();
     assert_eq!(installed.status, Status::Ok);
-    assert_eq!(installed.readers.len(), 1);
+    assert_eq!(installed.provides.readers.len(), 1);
 
     // And the installed copy is what answers for a file of that kind.
     let claimed = plugins
@@ -256,7 +256,7 @@ fn the_example_dictionary_installs_and_answers_the_import() {
     // Installing is the check: the sample must be one only this dictionary can read.
     let installed = plugins.install(&example).unwrap();
     assert_eq!(installed.status, Status::Ok);
-    assert_eq!(installed.dictionaries.len(), 1);
+    assert_eq!(installed.provides.dictionaries.len(), 1);
 
     // And the installed words are what the import reads after its own.
     let sample = std::fs::read(example.join("sample.csv")).unwrap();
@@ -707,6 +707,37 @@ fn a_sealed_file_is_read_once_its_reader_is_given_the_password() {
         .read
         .expect("the reader claims the file");
     assert_eq!(read.1.canonical.trim_end(), expected.trim_end());
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_dictionary_with_a_word_too_short_to_mean_anything_installs_nothing() {
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    let source = dir.join("package");
+    std::fs::create_dir_all(&source).unwrap();
+    std::fs::write(
+        source.join("plugin.json"),
+        r#"{"id":"com.example.words","api":1,"name":"Words",
+            "provides":{"dictionaries":[{"id":"w","file":"words.json","sample":"sample.csv"}]}}"#,
+    )
+    .unwrap();
+    // "e" is inside nearly every wording, so it would answer all the ones nobody else did.
+    std::fs::write(
+        source.join("words.json"),
+        r#"{"words":[{"word":"Osto","kind":"BUY"},{"word":"e","kind":"DEPOSIT"}]}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        source.join("sample.csv"),
+        "Date,Type,Amount,Currency\n2024-01-02,Osto,100,EUR\n",
+    )
+    .unwrap();
+
+    let plugins = Plugins::new(&dir);
+    let failure = plugins.install(&source).unwrap_err();
+    assert!(format!("{failure:?}").contains("too short"), "{failure:?}");
+    assert!(plugins.list().unwrap().is_empty(), "nothing was written");
 
     std::fs::remove_dir_all(&dir).ok();
 }

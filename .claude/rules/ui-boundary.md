@@ -27,7 +27,9 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   files it names and nothing else, and refuses a file name that leaves the package. It copies into
   a `.staging-*` folder and swaps it in by renaming, so a failed reinstall leaves the old version;
   a folder whose name is not its manifest's id is `Status::Misplaced` and offers nothing
-  (`Plugins::loaded` is the one lookup by id).
+  (`Plugins::loaded` is the one lookup by id). `Plugins::list` is read once and kept: install,
+  remove and `plugins_list` (the Settings list) drop it, so one import sees one set of plugins from
+  preview to commit, and a package edited on disk by hand appears when the list is opened.
 - A plugin's **file reader** is the one piece of a stranger's *code* this host runs, and
   `plugins/sandbox.rs` is the whole of what it is granted (ADR-0086): a WASM component with no
   filesystem, no reachable address, a frozen clock and a seeded generator — linked at all only

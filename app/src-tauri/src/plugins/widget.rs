@@ -119,12 +119,34 @@ pub fn check(def: &WidgetDef, module: &[u8]) -> UiResult<()> {
 
 const SHIM: &str = include_str!("widget_shim.js");
 
+/// Every `</script`, whatever its case, as `<\/script` with the case it had.
+fn escape_script_end(module: &str) -> String {
+    const END: &[u8] = b"</script";
+    let bytes = module.as_bytes();
+    let mut out = String::with_capacity(module.len());
+    let mut from = 0;
+    let mut i = 0;
+    while i + END.len() <= bytes.len() {
+        if bytes[i..i + END.len()].eq_ignore_ascii_case(END) {
+            out.push_str(&module[from..i]);
+            out.push_str("<\\");
+            from = i + 1;
+            i += END.len();
+        } else {
+            i += 1;
+        }
+    }
+    out.push_str(&module[from..]);
+    out
+}
+
 /// The page a widget or a screen is served as, and the policy it is served under. `nonce` is new per response,
 /// so the only scripts that run are the two written here.
 pub fn page(module: &str, nonce: &str) -> (String, String) {
-    // `</script` inside the module would end the element early. It can only occur in a string, a
-    // regular expression or a comment, where `<\/` means the same thing.
-    let module = module.replace("</script", "<\\/script");
+    // `</script` inside the module would end the element early, in any letter case — HTML reads
+    // tag names that way. It can only occur in a string, a regular expression or a comment, where
+    // `<\/` means the same thing.
+    let module = escape_script_end(module);
     let html = format!(
         // DNS prefetching is not a request the policy can refuse, and a looked-up name is a
         // message to whoever answers for its domain.
@@ -178,6 +200,20 @@ mod tests {
         let module = html.find("<script type=\"module\"").unwrap();
         assert!(shim < module, "removed before the module can take a copy");
         assert!(html.contains("x-dns-prefetch-control\" content=\"off\""));
+    }
+
+    #[test]
+    fn a_closing_script_tag_in_any_case_does_not_end_the_element() {
+        let (html, _) = page("const s = \"</SCRIPT><script>alert(1)\"; // </Script>", "n0");
+        assert_eq!(
+            html.to_lowercase().matches("</script>").count(),
+            2,
+            "the shim's and the module's own"
+        );
+        assert!(
+            html.contains("<\\/SCRIPT>") && html.contains("<\\/Script>"),
+            "case kept"
+        );
     }
 
     #[test]

@@ -458,10 +458,11 @@ impl MarketDataService {
         if last >= through {
             return Ok(0);
         }
-        let (&id, provider) = self
-            .providers
-            .get_key_value(source.as_str())
-            .ok_or_else(|| Error::NotFound(format!("quote provider {source}")))?;
+        // A source switched off is not registered: the role stays on the instrument and simply
+        // asks nothing until it is back on, rather than failing every refresh.
+        let Some((&id, provider)) = self.providers.get_key_value(source.as_str()) else {
+            return Ok(0);
+        };
         if !provider.covers(security) {
             return Ok(0);
         }
@@ -1076,6 +1077,17 @@ mod chain_tests {
         let err = chain(Fixed::up("backup", dec!(10.5), "USD")).ensure_latest(&store, &sec, d(2024, 6, 7));
         assert!(matches!(err, Err(Error::BadProviderData { .. })), "{err:?}");
         assert_eq!(store.latest_quote_date(&sec.id).unwrap(), Some(d(2024, 6, 5)));
+    }
+
+    #[test]
+    fn a_latest_source_that_is_switched_off_asks_nothing_and_fails_nothing() {
+        let store = Store::open_in_memory().unwrap();
+        let sec = with_latest(&store, dec!(10));
+        // Only the own source is registered: `backup` is off in the settings.
+        let service = MarketDataService::new()
+            .with_policy(FetchPolicy::none())
+            .with(Fixed::down("primary"));
+        assert_eq!(service.ensure_latest(&store, &sec, d(2024, 6, 7)).unwrap(), 0);
     }
 
     #[test]
