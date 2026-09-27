@@ -542,3 +542,51 @@ fn a_plugin_without_storage_keeps_nothing() {
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn the_example_tool_installs_and_answers_its_own_sample() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/concentration");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let plugins = Plugins::new(&dir);
+    // Installing is the check: the sample must come out exactly as `expected.json` says.
+    assert_eq!(plugins.install(&example).unwrap().status, Status::Ok);
+
+    let tools = plugins.tools().unwrap();
+    assert_eq!(tools.len(), 1);
+    assert_eq!(
+        tools[0].model_name,
+        "plugin_app_stonqs_concentration_concentration"
+    );
+    assert!(
+        !tools[0].periodic,
+        "positions are read on a date, not over a period"
+    );
+
+    let sample: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(example.join("sample.json")).unwrap()).unwrap();
+    let answer = sq_app_lib::plugins::tool::call(&tools[0].module, &sample["args"], &sample["data"]).unwrap();
+    assert_eq!(answer["effective_positions"], "2.6");
+    assert_eq!(answer["top_share_percent"], "80.0");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_tool_that_does_not_answer_its_own_sample_installs_nothing() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/concentration");
+    let dir = std::env::temp_dir().join(format!("stonqs-tool-{}", uuid::Uuid::new_v4()));
+    let source = dir.join("src");
+    std::fs::create_dir_all(&source).unwrap();
+    for file in ["plugin.json", "tool.wasm", "schema.json", "sample.json"] {
+        std::fs::copy(example.join(file), source.join(file)).unwrap();
+    }
+    std::fs::write(source.join("expected.json"), r#"{"positions": 99}"#).unwrap();
+
+    let plugins = Plugins::new(&dir);
+    assert!(plugins.install(&source).is_err());
+    assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+
+    std::fs::remove_dir_all(&dir).ok();
+}

@@ -84,7 +84,16 @@ export const TOOL_LABELS: Record<string, MessageDescriptor> = {
 };
 
 /** The values on the card, spelled out. Keys come from the tool's own `Params`. */
+/**
+ * A tool an installed plugin brought (ADR-0085). Its own name is the plugin's words and arrives
+ * as a value on the card (`plugin`, `tool`), so the label says only what kind of thing runs.
+ */
+export const PLUGIN_TOOL_PREFIX = "plugin_";
+export const PLUGIN_TOOL_LABEL = msg`a reading by an installed plugin`;
+
 export const PARAM_LABELS: Record<string, MessageDescriptor> = {
+  plugin: msg`plugin`,
+  tool: msg`tool`,
   from: msg`from`,
   to: msg`to`,
   limit: msg`rows`,

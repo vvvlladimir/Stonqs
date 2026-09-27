@@ -80,6 +80,16 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   rather than a uniform one: `plans_*` reads the portfolio, `alerts_*` / `watchlist_*` /
   `market_quotes` / `securities_events` read the instrument, the rest read the lens. The system
   prompt says so — a model told "these accounts" would otherwise explain a watchlist as one of them.
+- A **plugin's tool** (ADR-0085) is not a `CATALOGUE` row: `Plugins::tools()` loads them per
+  message into `Session::plugin_tools`, and `session::Entry` lets `run_one` branch on `access`
+  in its one place for both kinds. Always `Access::Ask`. The body is a WASM component
+  (`wit/tool.wit`, `plugins/tool.rs`) handed the declared reads, built by `ai/tools/plugin.rs` in
+  the **bridge's** field names — `the_projection_is_the_bridges` reads `lib/pluginBridge.ts` back
+  and fails on drift. The host adds `reason` and, for a period read, `period`; the schema is
+  checked against the strict subset at install, because a provider refuses the whole request over
+  one bad schema. The model sees `plugin_<plugin>_<tool>`, a description starting "From the …
+  plugin, not the app", and an answer wrapped as `{ plugin, tool, answer }`; the card's label is
+  `PLUGIN_TOOL_LABEL` plus the `plugin`/`tool` values.
 - Anything the user named is matched case-insensitively, and a miss is a tool error naming what was
   not found, so the model corrects itself instead of the turn failing.
 - A **write** reads the *portfolio*, never the lens — a row exists whether the picker is looking at

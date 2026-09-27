@@ -10,9 +10,10 @@ for what a plugin may and may not be, and
 for the file reader, [ADR-0080](../../docs/decisions/0080-a-file-writer-is-the-reader-turned-round.md)
 for the file writer, [ADR-0083](../../docs/decisions/0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)
 for the dashboard widget, [ADR-0084](../../docs/decisions/0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md)
-for the screen. This build honours eight kinds of content: themes, broker import layouts,
-classification sets, operation dictionaries, file readers, file writers, dashboard widgets and
-screens.
+for the screen, [ADR-0085](../../docs/decisions/0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md)
+for the assistant tool. This build honours nine kinds of content: themes, broker import layouts,
+classification sets, operation dictionaries, file readers, file writers, dashboard widgets,
+screens and assistant tools.
 
 ## `midnight` — a theme
 
@@ -438,4 +439,57 @@ page with no network and no origin. Three things differ.
 
 The page has no forms (`<form>` does not submit in a sandbox with scripts only): use buttons with
 click handlers, as `spending.js` does.
+
+## `concentration` — an assistant tool
+
+A question the app's own assistant has no tool for: how concentrated the positions in view are —
+the effective number of holdings (one over the sum of squared weights) and the share of the largest
+few. Ask the assistant "am I diversified?" once it is installed.
+
+```json
+{
+  "id": "app.stonqs.concentration",
+  "api": 1,
+  "name": "Concentration",
+  "version": "1.0.0",
+  "provides": {
+    "tools": [
+      {
+        "id": "concentration",
+        "name": "Concentration",
+        "description": "How concentrated the positions in view are: …",
+        "file": "tool.wasm",
+        "schema": "schema.json",
+        "reads": ["positions"],
+        "sample": "sample.json",
+        "expected": "expected.json"
+      }
+    ]
+  }
+}
+```
+
+A tool is a **WebAssembly component**, like a reader (`app/src-tauri/wit/tool.wit`):
+
+```
+call(args, data) -> result<answer, error>     // all three are JSON text
+```
+
+- `args` is what the model called it with. `schema.json` says what that may be, and it must be the
+  strict subset every provider accepts — an object, `"additionalProperties": false`, every property
+  required, each one a string, number, integer or boolean. A schema outside it would not fail this
+  tool alone: the provider refuses the whole request, and with it every chat. So it is checked at
+  install.
+- `data` is exactly the declared `reads`, in the same shape a widget is handed (the table under
+  `heat` above). A tool reading `performance` or `transactions` is asked for a period: the app adds
+  a `period` argument to the schema itself, resolves it, and hands the tool `data.period` with the
+  dates — the model never writes a date. Do not name `period` or `reason` in your own schema.
+- The answer is any JSON value up to 64 KiB. The model receives it as
+  `{ "plugin": …, "tool": …, "answer": … }`, is told the figures are the plugin's own and not the
+  app's, and the user is asked before the first call like for any reading. A tool cannot write
+  anything and has no network.
+
+`sample.json` is a call (`{ "args": …, "data": … }`) and `expected.json` what it must answer,
+compared as JSON; a package whose tool answers anything else installs nothing. `src/` is the guest,
+about 80 lines of Rust, built by `./build.sh`.
 

@@ -795,6 +795,10 @@ msgstr "{taxonomies, plural, one {# набор классификации} few {
 msgid "{themes, plural, one {# theme} other {# themes}}"
 msgstr "{themes, plural, one {# тема} few {# темы} many {# тем} other {# темы}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{tools, plural, one {# assistant tool} other {# assistant tools}}"
+msgstr "{tools, plural, one {# инструмент ассистента} few {# инструмента ассистента} many {# инструментов ассистента} other {# инструмента ассистента}}"
+
 #: src/screens/Alerts/index.tsx
 #~ msgid "{unread, plural, one {# new} other {# new}}"
 #~ msgstr "{unread, plural, one {# новое} few {# новых} many {# новых} other {# новых}}"
@@ -1132,8 +1136,12 @@ msgstr "План — это взнос по расписанию: сколько
 #~ msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки и виджеты дашборда."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
-msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки, виджеты дашборда и целые экраны."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+#~ msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки, виджеты дашборда и целые экраны."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets, whole screens and tools for the assistant."
+msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки, виджеты дашборда, целые экраны и инструменты для ассистента."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -1166,6 +1174,10 @@ msgstr "Данные ещё использует обновление котир
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "A rate is a number with \"%\" as its unit — there is no percent kind to guess at."
 msgstr "Ставка — это число с единицей «%»: отдельного вида «процент» нет, чтобы не гадать."
+
+#: src/components/domain/aiToolLabels.ts
+msgid "a reading by an installed plugin"
+msgstr "чтение установленного плагина"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "A ready-made layout for this broker"
@@ -6933,6 +6945,10 @@ msgstr "Планирование"
 msgid "Plans"
 msgstr "Планы"
 
+#: src/components/domain/aiToolLabels.ts
+msgid "plugin"
+msgstr "плагин"
+
 #: src/screens/dashboard/widgets/plugin.tsx
 #: src/screens/PluginScreen/index.tsx
 msgid "Plugin not installed"
@@ -9836,6 +9852,10 @@ msgstr "Расход токенов"
 #: src/components/domain/PasswordDialog.tsx
 msgid "Too short: {0} of at least {MIN_PASSWORD} characters."
 msgstr "Слишком короткий: {0} из минимум {MIN_PASSWORD} символов."
+
+#: src/components/domain/aiToolLabels.ts
+msgid "tool"
+msgstr "инструмент"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Top"

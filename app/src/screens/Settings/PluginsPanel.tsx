@@ -41,7 +41,7 @@ export function PluginsPanel() {
   return (
     <Panel
       title={t`Plugins`}
-      info={t`A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens.`}
+      info={t`A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets, whole screens and tools for the assistant.`}
       tools={
         <button
           className="btn btn--ghost btn--sm"
@@ -99,9 +99,11 @@ function subtitle(plugin: Plugin, i18n: I18n): string {
   const writers = plugin.writers.length;
   const widgets = plugin.widgets?.length ?? 0;
   const screens = plugin.screens?.length ?? 0;
+  const tools = plugin.tools?.length ?? 0;
   // What a page is handed is said here as well as where it is placed: installing is when the user
   // first sees the package, opening or placing it is when it first reads (ADR-0083/0084).
-  const reads = [...new Set([...(plugin.widgets ?? []), ...(plugin.screens ?? [])].flatMap((w) => w.reads))]
+  const pages = [...(plugin.widgets ?? []), ...(plugin.screens ?? []), ...(plugin.tools ?? [])];
+  const reads = [...new Set(pages.flatMap((w) => w.reads))]
     .map((read) => i18n._(WIDGET_READ_LABELS[read]))
     .join(", ");
   const keeps = (plugin.screens ?? []).some((s) => s.storage);
@@ -113,6 +115,7 @@ function subtitle(plugin: Plugin, i18n: I18n): string {
     writers > 0 ? plural(writers, { one: "# export format", other: "# export formats" }) : null,
     widgets > 0 ? plural(widgets, { one: "# dashboard widget", other: "# dashboard widgets" }) : null,
     screens > 0 ? plural(screens, { one: "# screen", other: "# screens" }) : null,
+    tools > 0 ? plural(tools, { one: "# assistant tool", other: "# assistant tools" }) : null,
     reads ? i18n._(msg`given ${reads}`) : null,
     keeps ? i18n._(msg`keeps its own settings in the profile`) : null,
     taxonomies > 0

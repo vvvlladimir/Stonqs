@@ -1,0 +1,20 @@
+{
+  "id": "app.stonqs.concentration",
+  "api": 1,
+  "name": "Concentration",
+  "version": "1.0.0",
+  "provides": {
+    "tools": [
+      {
+        "id": "concentration",
+        "name": "Concentration",
+        "description": "How concentrated the positions in view are: the effective number of holdings (one over the sum of squared weights) and the share of the largest few. Use it when the user asks whether they are diversified or how much rides on a few positions.",
+        "file": "tool.wasm",
+        "schema": "schema.json",
+        "reads": ["positions"],
+        "sample": "sample.json",
+        "expected": "expected.json"
+      }
+    ]
+  }
+}

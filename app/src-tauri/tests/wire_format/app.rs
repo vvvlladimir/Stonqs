@@ -377,7 +377,7 @@ fn profile_list_keys_match_the_typescript_types() {
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
     use sq_app_lib::plugins::{
         Base, DictionaryDef, PluginInfo, Read, ReaderDef, ScreenDef, ScreenInfo, Size, Status, TaxonomyDef,
-        ThemeDef, WidgetDef, WidgetInfo, WriterDef, WriterInfo,
+        ThemeDef, ToolDef, ToolInfo, WidgetDef, WidgetInfo, WriterDef, WriterInfo,
     };
 
     let json = serde_json::to_value(PluginInfo {
@@ -435,6 +435,16 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             periodic: true,
             storage: true,
         }],
+        tools: vec![ToolDef {
+            id: "concentration".into(),
+            name: "Concentration".into(),
+            description: String::new(),
+            file: "tool.wasm".into(),
+            schema: "schema.json".into(),
+            reads: vec![Read::Positions],
+            sample: "sample.json".into(),
+            expected: "expected.json".into(),
+        }],
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -454,6 +464,7 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             "status",
             "taxonomies",
             "themes",
+            "tools",
             "version",
             "wants",
             "widgets",
@@ -547,4 +558,15 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
         ]
     );
     assert_eq!(json["reads"], serde_json::json!(["transactions"]));
+
+    // A tool as Settings lists it: whose, and what it is handed (ADR-0085).
+    let json = serde_json::to_value(ToolInfo {
+        key: "app.stonqs.concentration/concentration".into(),
+        name: "Concentration".into(),
+        plugin: "app.stonqs.concentration".into(),
+        plugin_name: "Concentration".into(),
+        reads: vec![Read::Positions],
+    })
+    .unwrap();
+    assert_eq!(keys(&json), ["key", "name", "plugin", "plugin_name", "reads"]);
 }

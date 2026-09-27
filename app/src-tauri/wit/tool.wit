@@ -1,0 +1,13 @@
+// The third compute contract (ADR-0085): an assistant tool's body. The model's arguments and the
+// reads the manifest declared go in, as JSON text; one JSON answer comes out. The shapes are not
+// restated here — the arguments are the tool's own schema, the data is the plugin bridge's
+// projection (ADR-0083), both versioned by the manifest's `api`.
+
+package stonqs:tool@1.0.0;
+
+world tool {
+    /// `args` is what the model called the tool with, `reason` removed; `data` holds exactly the
+    /// declared reads. The answer must be a JSON value; the error is the tool's own reason, which
+    /// the model reads back instead of an answer.
+    export call: func(args: string, data: string) -> result<string, string>;
+}

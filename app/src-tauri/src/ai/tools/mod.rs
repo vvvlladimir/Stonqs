@@ -36,6 +36,7 @@ mod fmt;
 mod lookup;
 mod market;
 mod plans;
+pub mod plugin;
 mod portfolio;
 mod reports;
 mod securities;
@@ -205,7 +206,7 @@ pub fn definitions() -> Vec<(&'static str, &'static str, Value)> {
 }
 
 /// `strict` requires every property to be listed as required, so the field is added to both.
-fn with_reason(mut schema: Value) -> Value {
+pub(super) fn with_reason(mut schema: Value) -> Value {
     let described = json!({
         "type": "string",
         "description": "One short sentence, in the user's language, saying why you need this \

@@ -470,6 +470,8 @@ pub fn ai_send(
     // turn runs on a thread that holds no lock on them.
     let quotes_source = sq_core::sources::default_quotes(&state.market_setup());
     let access = state.db_access()?;
+    // Loaded per message: a plugin installed mid-chat answers from the next one (ADR-0085).
+    let plugin_tools = state.plugins.tools()?;
 
     state.ai_cancel.store(false, Ordering::Relaxed);
     state.ai_consent.clear();
@@ -514,6 +516,7 @@ pub fn ai_send(
                 gate: &gate,
                 cancelled: &cancelled,
                 changed: &changed,
+                plugin_tools: &plugin_tools,
             };
             let provider = catalog::build(&chat_provider, key, &settings.ai_custom)?;
             session::send(&session, provider.as_ref(), text, &mut |event| {

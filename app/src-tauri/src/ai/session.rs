@@ -8,6 +8,7 @@
 use super::consent::{ConsentGate, Decision};
 use super::tools::{self, Access, ToolContext};
 use super::{AiEvent, AiProvider, AiRequest, AiResult, Block, Effort, Role, StopReason, ToolDef, Usage};
+use crate::plugins::LoadedTool;
 use crate::state::ScopeSelection;
 use chrono::NaiveDate;
 use sq_core::model::{AiEffort, AiToolMode};
@@ -43,6 +44,9 @@ never \"calling income_summary\".
 tidying up on your own initiative. Read before you write, change one thing at a time, and say \
 plainly what a change will do before proposing it. If the user has not asked for a change, \
 suggest it in words instead of calling the tool.
+- A tool whose name starts with plugin_ was brought by a plugin the user installed. Its figures \
+are that plugin's own, not the app's: say so when you use them, and never present one as the \
+app's return, value or cost.
 - Answer in the language the user writes in. Be concise.
 - When the user asks what you would do, give a real opinion and say what it rests on. Hedging \
 every sentence into uselessness is not caution, it is a worse answer. Say plainly when something \
@@ -90,6 +94,9 @@ pub struct Session<'a> {
     /// Told when a tool wrote something, with the host's own change scope — see
     /// [`ToolContext::changed`].
     pub changed: &'a dyn Fn(&'static str),
+    /// The installed plugins' tools, offered after the catalogue (ADR-0085). Read for each
+    /// message, so a plugin installed mid-chat answers from the next one.
+    pub plugin_tools: &'a [LoadedTool],
 }
 
 /// Sends one user turn and persists every turn it produces. The user's message is written
@@ -142,7 +149,7 @@ pub fn send(
             model: chat.model.clone(),
             effort: effort_of(chat.effort),
             messages: messages.clone(),
-            tools: tool_defs(),
+            tools: tool_defs(session.plugin_tools),
             web_search: session.web_search,
             reasoning_summary: session.reasoning_summary,
             max_output: None,
@@ -339,15 +346,50 @@ fn effort_of(effort: AiEffort) -> Effort {
     }
 }
 
-fn tool_defs() -> Vec<ToolDef> {
-    tools::definitions()
+fn tool_defs(plugin_tools: &[LoadedTool]) -> Vec<ToolDef> {
+    let built = tools::definitions()
         .into_iter()
+        .map(|(name, description, schema)| (name.to_string(), description.to_string(), schema));
+    built
+        .chain(plugin_tools.iter().map(tools::plugin::definition))
         .map(|(name, description, schema)| ToolDef {
-            name: name.to_string(),
-            description: description.to_string(),
+            name,
+            description,
             schema,
         })
         .collect()
+}
+
+/// One entry the model may call: the app's own, or one a plugin brought. The loop below branches
+/// on `access` exactly once whichever it is, so a plugin's tool is asked about like any read.
+enum Entry<'a> {
+    Built(&'static tools::Tool),
+    Plugin(&'a LoadedTool),
+}
+
+impl Entry<'_> {
+    /// A plugin's tool is always a read: it is handed data and answers, and it has no way to
+    /// write anything — so never `Free` (a stranger's code runs) and never `Write`.
+    fn access(&self) -> Access {
+        match self {
+            Entry::Built(tool) => tool.access,
+            Entry::Plugin(_) => Access::Ask,
+        }
+    }
+
+    fn summary(&self, context: &ToolContext, args: &serde_json::Value) -> tools::Params {
+        match self {
+            Entry::Built(tool) => (tool.summary)(context, args),
+            Entry::Plugin(tool) => tools::plugin::summary(tool, context, args),
+        }
+    }
+
+    fn run(&self, context: &ToolContext, args: &serde_json::Value) -> AiResult<serde_json::Value> {
+        match self {
+            Entry::Built(tool) => (tool.run)(context, args),
+            Entry::Plugin(tool) => tools::plugin::run(tool, context, args),
+        }
+    }
 }
 
 /// Asks (when needed), runs, and turns whatever happened into the string the model reads back.
@@ -360,8 +402,12 @@ fn run_one(
     args_json: &str,
     sink: &mut dyn FnMut(AiEvent),
 ) -> String {
-    let Some(tool) = tools::find(name) else {
-        return refused(&format!("there is no tool called {name}"));
+    let tool = match tools::find(name) {
+        Some(tool) => Entry::Built(tool),
+        None => match session.plugin_tools.iter().find(|t| t.model_name == name) {
+            Some(tool) => Entry::Plugin(tool),
+            None => return refused(&format!("there is no tool called {name}")),
+        },
     };
     let args: serde_json::Value = serde_json::from_str(args_json).unwrap_or(serde_json::Value::Null);
     let context = ToolContext {
@@ -375,7 +421,7 @@ fn run_one(
     // A write is confirmed every single time. Neither a `session` grant nor the chat's `AUTO`
     // mode reaches it, and no future global setting will either: this is the one branch where
     // that invariant lives, so it cannot be lost by adding a permission somewhere else.
-    let needs_asking = match tool.access {
+    let needs_asking = match tool.access() {
         Access::Free => false,
         Access::Write => true,
         Access::Ask => mode(session) == AiToolMode::Ask && !granted.iter().any(|g| g == name),
@@ -392,9 +438,9 @@ fn run_one(
         .to_string();
 
     if needs_asking {
-        let params = (tool.summary)(&context, &args);
+        let params = tool.summary(&context, &args);
         let request_id = sq_core::model::new_id();
-        let write = tool.access == Access::Write;
+        let write = tool.access() == Access::Write;
         match session.gate.ask(&request_id, name, &params, write, &reason) {
             Decision::Deny => {
                 return refused("the user did not allow access to this data");
@@ -402,12 +448,12 @@ fn run_one(
             // Remembered before the call runs: if the tool then fails, the user still said yes.
             // Both of these are read permissions, so a write answered with either still only
             // means "this once" — the card offers them for reads alone.
-            Decision::Session if tool.access == Access::Ask => {
+            Decision::Session if tool.access() == Access::Ask => {
                 if session.store.ai_grant_add(session.chat_id, name).is_ok() {
                     granted.push(name.to_string());
                 }
             }
-            Decision::Always if tool.access == Access::Ask => {
+            Decision::Always if tool.access() == Access::Ask => {
                 let _ = session.store.ai_chat_set_mode(session.chat_id, AiToolMode::Auto);
             }
             Decision::Session | Decision::Always => {}
@@ -420,7 +466,7 @@ fn run_one(
         reason,
     });
 
-    let content = match (tool.run)(&context, &args) {
+    let content = match tool.run(&context, &args) {
         Ok(value) => wrap(&value.to_string()),
         Err(e) => refused(&format!("the tool could not answer: {e}")),
     };
@@ -518,6 +564,7 @@ mod tests {
             gate,
             cancelled,
             changed: &|_| {},
+            plugin_tools: &[],
         }
     }
 
@@ -556,6 +603,76 @@ mod tests {
         assert_eq!(turns.len(), 2);
         assert_eq!(turns[0].role, Role::User);
         assert_eq!(turns[1].role, Role::Model);
+    }
+
+    /// A plugin's tool is offered after the catalogue, asked about like any read, run in its
+    /// sandbox, and its answer comes back labelled as the plugin's (ADR-0085).
+    #[test]
+    fn a_plugin_tool_is_offered_asked_about_and_answers_as_the_plugins() {
+        let (store, chat_id, scope) = fixture();
+        let dir = std::env::temp_dir().join(format!("stonqs-tool-{}", uuid::Uuid::new_v4()));
+        let plugins = crate::plugins::Plugins::new(&dir);
+        plugins
+            .install(
+                &std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../examples/plugins/concentration"),
+            )
+            .unwrap();
+        let loaded = plugins.tools().unwrap();
+        let name = loaded[0].model_name.clone();
+
+        let gate = ScriptedGate::new(Decision::Once);
+        let never = || false;
+        let session = Session {
+            plugin_tools: &loaded,
+            ..session(&store, &chat_id, &scope, &gate, &never)
+        };
+        let provider = StaticAiProvider::script(vec![
+            Ok(call_turn(
+                &name,
+                r#"{"top": 3, "reason": "to see how spread out you are"}"#,
+            )),
+            Ok(AiTurn {
+                blocks: vec![Block::Text { text: "done".into() }],
+                stop_reason: StopReason::EndTurn,
+                usage: Usage::default(),
+            }),
+        ]);
+
+        let events = RefCell::new(Vec::new());
+        send(&session, &provider, "am I diversified?".into(), &mut |e| {
+            events.borrow_mut().push(e)
+        })
+        .unwrap();
+
+        let offered = &provider.seen.borrow()[0].tools;
+        let def = offered
+            .iter()
+            .find(|t| t.name == name)
+            .expect("offered to the model");
+        assert!(def.description.starts_with("From the Concentration plugin"));
+        assert_eq!(
+            def.schema["properties"]["reason"]["type"], "string",
+            "asked about, so it gives a reason"
+        );
+        assert_eq!(
+            *gate.asked.borrow(),
+            std::slice::from_ref(&name),
+            "a stranger's code is a read that is asked about"
+        );
+
+        let finished = events
+            .into_inner()
+            .into_iter()
+            .find_map(|e| match e {
+                AiEvent::ToolFinished { content, .. } => Some(content),
+                _ => None,
+            })
+            .expect("the tool ran");
+        // An empty portfolio has no positions; what matters is whose answer it is.
+        assert!(finished.contains(r#""plugin":"Concentration""#), "{finished}");
+        assert!(finished.contains(r#""answer":{"positions":0}"#), "{finished}");
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     fn usage(input: i64, output: i64) -> Usage {

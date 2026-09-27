@@ -3,7 +3,7 @@ resolver = "3"
 members = ["core", "cli", "app/src-tauri"]
 # The example plugins' guests build for wasm32-wasip2, and a workspace resolves one set of
 # features for one target. Each is built by its own `build.sh`, not by `cargo build`.
-exclude = ["examples/plugins/mt940/src", "examples/plugins/ledger/src"]
+exclude = ["examples/plugins/mt940/src", "examples/plugins/ledger/src", "examples/plugins/concentration/src"]
 
 # Dependency versions live in the workspace so core and cli always build
 # against the same crates.

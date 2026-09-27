@@ -88,6 +88,18 @@ export interface PluginScreenDef {
   storage: boolean;
 }
 
+/** An assistant tool a plugin brings: a WebAssembly component the assistant may call (ADR-0085). */
+export interface PluginToolDef {
+  id: string;
+  name: string;
+  description: string;
+  file: string;
+  schema: string;
+  reads: WidgetRead[];
+  sample: string;
+  expected: string;
+}
+
 export type Plugin = {
   id: string;
   name: string;
@@ -100,6 +112,7 @@ export type Plugin = {
   writers: PluginWriter[];
   widgets: PluginWidgetDef[];
   screens: PluginScreenDef[];
+  tools: PluginToolDef[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */
@@ -141,6 +154,8 @@ export interface PluginList {
   widgets: InstalledWidget[];
   /** Only the screens that can actually be opened. */
   screens: InstalledScreen[];
+  /** The assistant tools offered to the model. */
+  tools: InstalledTool[];
   /** The plugin API this build speaks. */
   api: number;
 }
@@ -171,4 +186,14 @@ export interface InstalledScreen {
   reads: WidgetRead[];
   periodic: boolean;
   storage: boolean;
+}
+
+/** One assistant tool on offer, as the plugin list shows it. */
+export interface InstalledTool {
+  /** `<plugin id>/<tool id>`. */
+  key: string;
+  name: string;
+  plugin: string;
+  plugin_name: string;
+  reads: WidgetRead[];
 }

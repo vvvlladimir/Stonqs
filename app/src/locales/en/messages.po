@@ -795,6 +795,10 @@ msgstr "{taxonomies, plural, one {# classification set} other {# classification 
 msgid "{themes, plural, one {# theme} other {# themes}}"
 msgstr "{themes, plural, one {# theme} other {# themes}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{tools, plural, one {# assistant tool} other {# assistant tools}}"
+msgstr "{tools, plural, one {# assistant tool} other {# assistant tools}}"
+
 #: src/screens/Alerts/index.tsx
 #~ msgid "{unread, plural, one {# new} other {# new}}"
 #~ msgstr "{unread, plural, one {# new} other {# new}}"
@@ -1132,8 +1136,12 @@ msgstr "A plan is a contribution on a schedule: how much, how often, and what it
 #~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
-msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets, whole screens and tools for the assistant."
+msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets, whole screens and tools for the assistant."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -1166,6 +1174,10 @@ msgstr "A quote refresh or an AI answer is still using the data. Try again when 
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "A rate is a number with \"%\" as its unit — there is no percent kind to guess at."
 msgstr "A rate is a number with \"%\" as its unit — there is no percent kind to guess at."
+
+#: src/components/domain/aiToolLabels.ts
+msgid "a reading by an installed plugin"
+msgstr "a reading by an installed plugin"
 
 #: src/screens/Import/TemplateBar.tsx
 msgid "A ready-made layout for this broker"
@@ -6938,6 +6950,10 @@ msgstr "Planning"
 msgid "Plans"
 msgstr "Plans"
 
+#: src/components/domain/aiToolLabels.ts
+msgid "plugin"
+msgstr "plugin"
+
 #: src/screens/dashboard/widgets/plugin.tsx
 #: src/screens/PluginScreen/index.tsx
 msgid "Plugin not installed"
@@ -9841,6 +9857,10 @@ msgstr "Tokens used"
 #: src/components/domain/PasswordDialog.tsx
 msgid "Too short: {0} of at least {MIN_PASSWORD} characters."
 msgstr "Too short: {0} of at least {MIN_PASSWORD} characters."
+
+#: src/components/domain/aiToolLabels.ts
+msgid "tool"
+msgstr "tool"
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "Top"

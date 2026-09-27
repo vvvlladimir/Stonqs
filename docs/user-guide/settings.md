@@ -125,8 +125,9 @@ appear in the import wizard's layout list; ready classification sets, which appe
 from CSV…` on the Allocation screen; operation words in another language, used by the import;
 readers for file formats the app cannot open by itself, used automatically when such a file is
 imported; formats to export transactions to, offered by `Export`; dashboard tiles, offered in
-the dashboard's palette under *Plugins*; and whole screens, listed under *Plugins* in the
-navigation. The list says what each plugin brings, what its tiles and screens will be given, and
+the dashboard's palette under *Plugins*; whole screens, listed under *Plugins* in the
+navigation; and tools the assistant may use, which it asks permission for like any other reading
+and whose figures it presents as the plugin's, not the app's. The list says what each plugin brings, what its tiles and screens will be given, and
 whether it keeps settings of its own in the profile.
 
 A plugin never changes what a figure means — how a return, a cost basis or a position is computed

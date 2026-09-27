@@ -15,6 +15,7 @@
 
 pub mod reader;
 mod sandbox;
+pub mod tool;
 pub mod widget;
 pub mod writer;
 
@@ -22,6 +23,7 @@ use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
 use sq_core::import::{BrokerPreset, KindWords};
 use std::path::{Path, PathBuf};
+pub use tool::ToolDef;
 pub use widget::{Read, ScreenDef, Size, WidgetDef};
 
 const FOLDER: &str = "plugins";
@@ -71,6 +73,8 @@ pub struct Provides {
     pub widgets: Vec<WidgetDef>,
     #[serde(default)]
     pub screens: Vec<ScreenDef>,
+    #[serde(default)]
+    pub tools: Vec<ToolDef>,
 }
 
 /// A file writer: a WASM component that turns the app's own transaction file into another format
@@ -205,6 +209,8 @@ pub struct PluginInfo {
     pub widgets: Vec<WidgetDef>,
     #[serde(default)]
     pub screens: Vec<ScreenDef>,
+    #[serde(default)]
+    pub tools: Vec<ToolDef>,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -226,6 +232,37 @@ pub struct WriterInfo {
     pub name: String,
     pub plugin: String,
     pub extension: String,
+}
+
+/// One assistant tool on offer, as the plugin list shows it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ToolInfo {
+    /// `<plugin id>/<tool id>`.
+    pub key: String,
+    pub name: String,
+    pub plugin: String,
+    pub plugin_name: String,
+    pub reads: Vec<Read>,
+}
+
+/// A tool ready to be offered to the model: what it is called there, what it takes, and the
+/// module that answers. Built fresh for each message, so an install mid-chat is seen by the next.
+#[derive(Debug, Clone)]
+pub struct LoadedTool {
+    pub info: ToolInfo,
+    /// The name the model calls it by (`plugin_<plugin>_<tool>`), unique in the catalogue.
+    pub model_name: String,
+    pub description: String,
+    pub schema: serde_json::Value,
+    pub periodic: bool,
+    pub module: PathBuf,
+}
+
+/// What the model calls a plugin's tool. Providers accept `[a-zA-Z0-9_-]{1,64}`, and the prefix
+/// keeps it apart from the app's own catalogue, whose names never start with it.
+pub fn tool_model_name(plugin: &str, tool: &str) -> String {
+    let clean = |s: &str| s.replace(['.', '-'], "_");
+    format!("plugin_{}_{}", clean(plugin), clean(tool))
 }
 
 /// One screen on offer, addressed the way the navigation hint names it.
@@ -340,6 +377,7 @@ impl Plugins {
                     writers: manifest.provides.writers,
                     widgets: manifest.provides.widgets,
                     screens: manifest.provides.screens,
+                    tools: manifest.provides.tools,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
@@ -353,6 +391,7 @@ impl Plugins {
                     writers: Vec::new(),
                     widgets: Vec::new(),
                     screens: Vec::new(),
+                    tools: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -526,6 +565,47 @@ impl Plugins {
             .collect())
     }
 
+    /// The assistant tools on offer, loaded for a message. A tool whose files no longer read is
+    /// left out rather than failing the chat, and a name already taken keeps its first owner.
+    pub fn tools(&self) -> UiResult<Vec<LoadedTool>> {
+        let mut out: Vec<LoadedTool> = Vec::new();
+        for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
+            let folder = self.folder_of(&plugin.id);
+            for def in plugin.tools {
+                let model_name = tool_model_name(&plugin.id, &def.id);
+                let (Ok(module), Ok(schema)) =
+                    (safe_join(&folder, &def.file), safe_join(&folder, &def.schema))
+                else {
+                    continue;
+                };
+                let Some(schema) = std::fs::read(schema)
+                    .ok()
+                    .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+                else {
+                    continue;
+                };
+                if out.iter().any(|t| t.model_name == model_name) {
+                    continue;
+                }
+                out.push(LoadedTool {
+                    periodic: def.periodic(),
+                    info: ToolInfo {
+                        key: format!("{}/{}", plugin.id, def.id),
+                        name: def.name,
+                        plugin: plugin.id.clone(),
+                        plugin_name: plugin.name.clone(),
+                        reads: def.reads,
+                    },
+                    model_name,
+                    description: def.description,
+                    schema,
+                    module,
+                });
+            }
+        }
+        Ok(out)
+    }
+
     /// The screens on offer, from plugins this build can load, in the list's order.
     pub fn screens(&self) -> UiResult<Vec<ScreenInfo>> {
         Ok(self
@@ -678,12 +758,13 @@ impl Plugins {
             && manifest.provides.writers.is_empty()
             && manifest.provides.widgets.is_empty()
             && manifest.provides.screens.is_empty()
+            && manifest.provides.tools.is_empty()
         {
             return Err(UiError::invalid(format!(
                 "plugin {} declares nothing this build can use: expected `provides.themes`, \
                  `provides.layouts`, `provides.readers`, `provides.writers`, \
-                 `provides.widgets`, `provides.screens`, `provides.taxonomies` or \
-                 `provides.dictionaries`",
+                 `provides.widgets`, `provides.screens`, `provides.tools`, \
+                 `provides.taxonomies` or `provides.dictionaries`",
                 manifest.id
             )));
         }
@@ -748,6 +829,29 @@ impl Plugins {
             widget::check_screen(def, &module)?;
         }
 
+        // An assistant tool proves itself the way a reader does: its own sample, answered exactly.
+        // Its schema is checked too, because a schema a provider refuses breaks every chat, not
+        // just this tool.
+        for def in &manifest.provides.tools {
+            let name = tool_model_name(&manifest.id, &def.id);
+            if name.len() > 64 {
+                return Err(UiError::invalid(format!(
+                    "tool {}: {name} is longer than the 64 characters a provider accepts",
+                    def.id
+                )));
+            }
+            let read = |file: &str| {
+                std::fs::read(safe_join(source, file)?).map_err(|e| UiError::invalid(format!("{file}: {e}")))
+            };
+            tool::check(
+                def,
+                &safe_join(source, &def.file)?,
+                &read(&def.schema)?,
+                &read(&def.sample)?,
+                &read(&def.expected)?,
+            )?;
+        }
+
         // A classification set proves itself the same way, and needs no expectation of its own:
         // the file *is* the data, so an expectation would be a copy of it. What it must show is
         // that it reads as a tree at all and leaves nothing invalid behind.
@@ -803,6 +907,14 @@ impl Plugins {
             )
             .chain(manifest.provides.widgets.iter().map(|def| def.file.clone()))
             .chain(manifest.provides.screens.iter().map(|def| def.file.clone()))
+            .chain(manifest.provides.tools.iter().flat_map(|def| {
+                [
+                    def.file.clone(),
+                    def.schema.clone(),
+                    def.sample.clone(),
+                    def.expected.clone(),
+                ]
+            }))
             .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()))
             .chain(
                 manifest
@@ -833,6 +945,7 @@ impl Plugins {
             writers: manifest.provides.writers,
             widgets: manifest.provides.widgets,
             screens: manifest.provides.screens,
+            tools: manifest.provides.tools,
         })
     }
 

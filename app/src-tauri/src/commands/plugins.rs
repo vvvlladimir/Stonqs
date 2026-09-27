@@ -7,7 +7,7 @@
 //! a plugin has no path into the portfolio of its own.
 
 use crate::error::{UiError, UiResult};
-use crate::plugins::{PluginInfo, ScreenInfo, TaxonomySetInfo, ThemeInfo, WidgetInfo, WriterInfo};
+use crate::plugins::{PluginInfo, ScreenInfo, TaxonomySetInfo, ThemeInfo, ToolInfo, WidgetInfo, WriterInfo};
 use crate::state::AppState;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -27,6 +27,8 @@ pub struct PluginList {
     pub widgets: Vec<WidgetInfo>,
     /// The screens that can actually be opened, addressed as the navigation hint names them.
     pub screens: Vec<ScreenInfo>,
+    /// The assistant tools that are offered to the model.
+    pub tools: Vec<ToolInfo>,
     /// The plugin API this build speaks, so the list can say what a refused package wanted.
     pub api: u32,
 }
@@ -40,6 +42,7 @@ pub fn plugins_list(state: State<AppState>) -> UiResult<PluginList> {
         writers: state.plugins.writers()?,
         widgets: state.plugins.widgets()?,
         screens: state.plugins.screens()?,
+        tools: state.plugins.tools()?.into_iter().map(|t| t.info).collect(),
         api: crate::plugins::API,
     })
 }
