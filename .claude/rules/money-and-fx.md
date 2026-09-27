@@ -49,7 +49,7 @@
 - A range counts as fetched only when both `quote_coverage` and `event_coverage` hold it; the refresh job asks the full window for a security with no event coverage, so older databases backfill events once. A reported event moves no money and no quantity.
 - How far back a refresh reaches is read off the ledger, not off a constant: `Store::history_need`
   gives the first operation per instrument and per currency (charge currencies and the security's
-  own currency included), and `jobs::start_from` widens the mode's window back to it whenever what
+  own currency included), and `jobs::window::start_from` widens the mode's window back to it whenever what
   is stored does not already reach it. A catch-up asks from where the series ends, so a hole older
   than the series is one no later refresh would ever close — which is what importing a decade into
   a database holding this year looks like. `RefreshMode::Missing` therefore also *retains* what is

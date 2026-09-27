@@ -1,6 +1,6 @@
 //! The agentic loop: ask the model, run the tools it asks for once the user allows them, hand
 //! the results back, ask again. Knows nothing about Tauri — it takes a `Store`, a `ScopeSelection`
-//! and three closures, never `AppState` or a `Channel`. `commands/ai.rs` wires those in.
+//! and three closures, never `AppState` or a `Channel`. `commands/ai/` wires those in.
 //!
 //! History is read and written through [`super::store`], so this file never spells out how a turn
 //! is encoded — it only decides what the turn *is*.

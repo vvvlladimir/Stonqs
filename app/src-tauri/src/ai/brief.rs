@@ -5,7 +5,7 @@
 //! the cost of a brief is one call rather than a loop, and what the user agreed to when they
 //! placed the tile is the same fixed list the host reads every time. See ADR-0039.
 //!
-//! Knows nothing about Tauri, like the rest of `ai/` outside `commands/ai.rs`.
+//! Knows nothing about Tauri, like the rest of `ai/` outside `commands/ai/`.
 
 use super::tools::{self, ToolContext};
 use super::{AiEvent, AiProvider, AiRequest, AiResult, Block, Effort, Role, Usage};

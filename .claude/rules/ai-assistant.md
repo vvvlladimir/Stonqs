@@ -7,7 +7,7 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
 
 - `ai/` holds the neutral types, the provider adapters, the SSE reader, the history layer and the
   loop, and none of them names Tauri — `tests/ai_layering.rs` checks that the way
-  `grep -r tauri core/` checks the core. `commands/ai.rs` is the only Tauri file there.
+  `grep -r tauri core/` checks the core. `commands/ai/` is the only Tauri code there.
 - A provider id is the *stored* name of an adapter (`ai_chats.provider`, the keychain account),
   so `ai/catalog.rs` is the one place that maps it to one — `session::send` takes a
   `&dyn AiProvider` and never learns which it got, exactly as it never learns the model. Adding
@@ -171,7 +171,7 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
 - **A new chat starts where the last choice left off** (ADR-0069). Provider, model and effort
   switched in a footer are remembered (`AppSettings::ai_provider`, `ai_models` per provider,
   `ai_effort`); with nothing picked, a chat starts on the provider's **smallest** tier today
-  (`commands::ai::default_model` → `models::smallest`). A remembered id is read against today's
+  (`commands::ai::providers::default_model` → `models::smallest`). A remembered id is read against today's
   list (`models::remembered`: same id, else newest of its tier), because an id outlives the model
   it names. `catalog::Provider::default_model` (small tier) answers only when no list can be read.
   The tool mode is **not** carried (ADR-0037), and `settings_save` never overwrites the remembered
@@ -186,7 +186,7 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   a catalogue carries — dated snapshots, `-codex`, `-chat-latest`, transcription — answers a
   different question than "who answers this chat".
 - The user can add ids to any provider's picker by hand (`AppSettings::ai_extra_models`, Settings →
-  a provider's row). They are joined after the shortlist in `commands::ai::models_for`, **after**
+  a provider's row). They are joined after the shortlist in `commands::ai::providers::models_for`, **after**
   the cache so an edit shows at once, and they count as "on offer" for `models::remembered`. No id
   is validated there: the first send with a misspelled one returns the provider's own error.
 - A reading is shown while it happens: `AiEvent::ToolRunning` / `ToolFinished` / `Searching` drive

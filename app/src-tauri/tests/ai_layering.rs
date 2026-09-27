@@ -42,7 +42,7 @@ fn the_provider_layer_does_not_know_tauri_exists() {
         let source = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
         assert!(
             !code(&source).contains("tauri"),
-            "{} names tauri; a command belongs in commands/ai.rs, not here",
+            "{} names tauri; a command belongs in commands/ai/, not here",
             path.display()
         );
     }

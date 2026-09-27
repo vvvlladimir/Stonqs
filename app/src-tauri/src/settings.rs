@@ -259,7 +259,7 @@ pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<
         )
     };
     // The custom provider's model list was fetched from the address that just changed, so the
-    // run's cache of it is now about a different server (`commands::ai::models_for`).
+    // run's cache of it is now about a different server (`commands::ai::providers::models_for`).
     if custom != settings.ai_custom
         && let Ok(mut cached) = state.ai_models.lock()
     {
