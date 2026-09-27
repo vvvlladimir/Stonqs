@@ -83,10 +83,18 @@ pub fn check_schema(id: &str, schema: &Value) -> UiResult<()> {
     let Some(properties) = schema["properties"].as_object() else {
         return refuse("has no properties object");
     };
-    let required: Vec<&str> = schema["required"]
-        .as_array()
-        .map(|r| r.iter().filter_map(Value::as_str).collect())
-        .unwrap_or_default();
+    // Strict mode wants the array itself, even empty: a tool without arguments still says so.
+    let Some(required) = schema["required"].as_array() else {
+        return refuse("has no required array (an empty one for a tool without arguments)");
+    };
+    let mut named = Vec::with_capacity(required.len());
+    for entry in required {
+        match entry.as_str() {
+            Some(name) if properties.contains_key(name) => named.push(name),
+            _ => return refuse(&format!("requires {entry}, which is not one of its properties")),
+        }
+    }
+    let required = named;
     for (name, property) in properties {
         if name == "reason" || name == "period" {
             return refuse(&format!("names {name:?}, which the app adds itself"));
@@ -155,6 +163,25 @@ mod tests {
         let mut nested = good.clone();
         nested["properties"]["top"] = json!({ "type": "object" });
         assert!(check_schema("t", &nested).is_err());
+
+        let mut no_arguments = json!({
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {}
+        });
+        assert!(
+            check_schema("t", &no_arguments).is_err(),
+            "without the array, the reason the app adds would be left out of required"
+        );
+        no_arguments["required"] = json!([]);
+        assert!(check_schema("t", &no_arguments).is_ok());
+
+        let mut stray = good.clone();
+        stray["required"] = json!(["top", "bottom"]);
+        assert!(
+            check_schema("t", &stray).is_err(),
+            "requires what it never declares"
+        );
 
         let mut own_period = good;
         own_period["properties"]["period"] = json!({ "type": "string" });

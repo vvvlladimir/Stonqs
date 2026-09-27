@@ -126,7 +126,10 @@ pub fn page(module: &str, nonce: &str) -> (String, String) {
     // regular expression or a comment, where `<\/` means the same thing.
     let module = module.replace("</script", "<\\/script");
     let html = format!(
+        // DNS prefetching is not a request the policy can refuse, and a looked-up name is a
+        // message to whoever answers for its domain.
         "<!doctype html><html><head><meta charset=\"utf-8\">\
+         <meta http-equiv=\"x-dns-prefetch-control\" content=\"off\">\
          <style>html,body{{margin:0;height:100%;background:transparent;overflow:auto}}</style>\
          <script nonce=\"{nonce}\">{SHIM}</script>\
          <script type=\"module\" nonce=\"{nonce}\">{module}</script>\
@@ -165,6 +168,16 @@ mod tests {
             csp.contains("script-src 'nonce-n0'"),
             "no script but the page's own"
         );
+    }
+
+    /// The two ways out a content policy does not cover: a peer connection and a DNS lookup.
+    #[test]
+    fn the_page_closes_what_the_policy_cannot() {
+        let (html, _) = page("", "n0");
+        let shim = html.find("RTC").expect("the shim removes the peer connection");
+        let module = html.find("<script type=\"module\"").unwrap();
+        assert!(shim < module, "removed before the module can take a copy");
+        assert!(html.contains("x-dns-prefetch-control\" content=\"off\""));
     }
 
     #[test]

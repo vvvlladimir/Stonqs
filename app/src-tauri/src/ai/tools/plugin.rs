@@ -7,7 +7,7 @@
 //! one shape. `the_projection_is_the_bridges` pins the two copies together.
 
 use super::args::{period_property, period_summary, resolve_period};
-use super::{AiResult, Params, ToolContext, tool, with_reason};
+use super::{AiResult, Params, ToolContext, add_required, tool, with_reason};
 use crate::plugins::{LoadedTool, Read};
 use serde_json::{Value, json};
 use sq_core::market::DateRange;
@@ -17,10 +17,7 @@ use sq_core::market::DateRange;
 pub fn definition(t: &LoadedTool) -> (String, String, Value) {
     let mut schema = t.schema.clone();
     if t.periodic {
-        schema["properties"]["period"] = period_property();
-        if let Some(required) = schema["required"].as_array_mut() {
-            required.push(json!("period"));
-        }
+        add_required(&mut schema, "period", period_property());
     }
     let description = format!(
         "From the {} plugin, not the app: its figures are the plugin's own, say so when you use \
@@ -291,6 +288,43 @@ mod tests {
             keys(&data["transactions"]["rows"][0]),
             bridge_fields("BridgeTransaction")
         );
+    }
+
+    /// A package installed before the install check demanded `required` still reaches the model
+    /// with every property required — one left out and a strict provider refuses every chat.
+    #[test]
+    fn a_schema_without_required_still_requires_what_the_app_adds() {
+        let loaded = LoadedTool {
+            info: crate::plugins::ToolInfo {
+                key: "p/t".into(),
+                name: "T".into(),
+                plugin: "p".into(),
+                plugin_name: "P".into(),
+                reads: vec![Read::Performance],
+            },
+            model_name: "plugin_p_t".into(),
+            description: String::new(),
+            schema: json!({ "type": "object", "additionalProperties": false, "properties": {} }),
+            periodic: true,
+            module: std::path::PathBuf::new(),
+        };
+        let (_, _, schema) = definition(&loaded);
+        let mut required: Vec<&str> = schema["required"]
+            .as_array()
+            .expect("required is there")
+            .iter()
+            .filter_map(Value::as_str)
+            .collect();
+        required.sort();
+        let mut properties: Vec<&str> = schema["properties"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        properties.sort();
+        assert_eq!(required, properties);
+        assert_eq!(required, ["period", "reason"]);
     }
 
     #[test]

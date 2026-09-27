@@ -86,8 +86,9 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   (`wit/tool.wit`, `plugins/tool.rs`) handed the declared reads, built by `ai/tools/plugin.rs` in
   the **bridge's** field names — `the_projection_is_the_bridges` reads `lib/pluginBridge.ts` back
   and fails on drift. The host adds `reason` and, for a period read, `period`; the schema is
-  checked against the strict subset at install, because a provider refuses the whole request over
-  one bad schema. The model sees `plugin_<plugin>_<tool>`, a description starting "From the …
+  checked against the strict subset at install (a `required` array included, even empty), because a
+  provider refuses the whole request over one bad schema. Every content id is `valid_id`, and a
+  model name another installed plugin's tool already has is refused at install, not skipped. The model sees `plugin_<plugin>_<tool>`, a description starting "From the …
   plugin, not the app", and an answer wrapped as `{ plugin, tool, answer }`; the card's label is
   `PLUGIN_TOOL_LABEL` plus the `plugin`/`tool` values.
 - Anything the user named is matched case-insensitively, and a miss is a tool error naming what was

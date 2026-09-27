@@ -769,6 +769,9 @@ impl Plugins {
             )));
         }
 
+        check_ids(&manifest.provides)?;
+        self.check_tool_names(&manifest)?;
+
         // A layout proves itself before it is installed, against the sample the package carries.
         // The shipped layouts answer to the same check in `core/tests/fixtures/presets/`; this is
         // that promise applied to a layout nobody in this repository has seen.
@@ -833,13 +836,6 @@ impl Plugins {
         // Its schema is checked too, because a schema a provider refuses breaks every chat, not
         // just this tool.
         for def in &manifest.provides.tools {
-            let name = tool_model_name(&manifest.id, &def.id);
-            if name.len() > 64 {
-                return Err(UiError::invalid(format!(
-                    "tool {}: {name} is longer than the 64 characters a provider accepts",
-                    def.id
-                )));
-            }
             let read = |file: &str| {
                 std::fs::read(safe_join(source, file)?).map_err(|e| UiError::invalid(format!("{file}: {e}")))
             };
@@ -949,6 +945,40 @@ impl Plugins {
         })
     }
 
+    /// The names the model will call this package's tools by must fit a provider, and be taken by
+    /// nobody else: `.` and `-` both become `_`, so two ids can meet in one name, and the loser
+    /// would vanish from the chat while a session grant kept under that name passed to the winner.
+    fn check_tool_names(&self, manifest: &Manifest) -> UiResult<()> {
+        let mut taken: Vec<(String, String)> = Vec::new();
+        for plugin in self.list()?.into_iter().filter(|p| p.id != manifest.id) {
+            for def in &plugin.tools {
+                taken.push((tool_model_name(&plugin.id, &def.id), plugin.id.clone()));
+            }
+        }
+        for def in &manifest.provides.tools {
+            let name = tool_model_name(&manifest.id, &def.id);
+            if name.len() > 64 {
+                return Err(UiError::invalid(format!(
+                    "tool {}: {name} is longer than the 64 characters a provider accepts",
+                    def.id
+                )));
+            }
+            if let Some((_, owner)) = taken.iter().find(|(other, _)| *other == name) {
+                let whose = if *owner == manifest.id {
+                    "another tool of this package".to_string()
+                } else {
+                    format!("a tool of plugin {owner}")
+                };
+                return Err(UiError::invalid(format!(
+                    "tool {}: the assistant would call it {name}, which is already {whose}",
+                    def.id
+                )));
+            }
+            taken.push((name, manifest.id.clone()));
+        }
+        Ok(())
+    }
+
     /// Removes a plugin and its folder. What it stored in the profile is not touched here.
     pub fn remove(&self, id: &str) -> UiResult<()> {
         if !valid_id(id) {
@@ -960,6 +990,42 @@ impl Plugins {
         }
         std::fs::remove_dir_all(folder).map_err(io)
     }
+}
+
+/// Every id a package gives its content is a key after `<plugin id>/`, a board's stored widget type
+/// and a tool's name at a provider — so it is as dull as the plugin's own, and unique within its
+/// kind, since a second one of the same id would never be found.
+fn check_ids(provides: &Provides) -> UiResult<()> {
+    let kinds: [(&str, Vec<&str>); 9] = [
+        ("theme", provides.themes.iter().map(|d| d.id.as_str()).collect()),
+        ("layout", provides.layouts.iter().map(|d| d.id.as_str()).collect()),
+        ("reader", provides.readers.iter().map(|d| d.id.as_str()).collect()),
+        (
+            "classification set",
+            provides.taxonomies.iter().map(|d| d.id.as_str()).collect(),
+        ),
+        (
+            "dictionary",
+            provides.dictionaries.iter().map(|d| d.id.as_str()).collect(),
+        ),
+        ("writer", provides.writers.iter().map(|d| d.id.as_str()).collect()),
+        ("widget", provides.widgets.iter().map(|d| d.id.as_str()).collect()),
+        ("screen", provides.screens.iter().map(|d| d.id.as_str()).collect()),
+        ("tool", provides.tools.iter().map(|d| d.id.as_str()).collect()),
+    ];
+    for (kind, ids) in kinds {
+        for (i, id) in ids.iter().enumerate() {
+            if !valid_id(id) {
+                return Err(UiError::invalid(format!(
+                    "{kind} id {id:?} is not lowercase letters, digits, dot, dash or underscore"
+                )));
+            }
+            if ids[..i].contains(id) {
+                return Err(UiError::invalid(format!("two of its {kind}s are called {id:?}")));
+            }
+        }
+    }
+    Ok(())
 }
 
 /// What a classification set must prove before the package carrying it is installed. No store is
@@ -1120,6 +1186,37 @@ mod tests {
 
         let plugins = Plugins::new(&dir);
         assert!(plugins.install(&source).is_err());
+    }
+
+    #[test]
+    fn a_content_id_that_is_not_dull_or_is_taken_twice_is_refused() {
+        let dir = temp();
+        let plugins = Plugins::new(&dir);
+        let with_themes = |themes: &str| {
+            let source = package(&dir, "com.example.ids", API);
+            std::fs::write(
+                source.join(MANIFEST),
+                format!(
+                    r#"{{"id":"com.example.ids","api":1,"name":"Ids","provides":{{"themes":[{themes}]}}}}"#
+                ),
+            )
+            .unwrap();
+            source
+        };
+        let theme = |id: &str| format!(r#"{{"id":"{id}","name":"T","file":"midnight.css"}}"#);
+
+        let spaced = plugins.install(&with_themes(&theme("My Theme"))).unwrap_err();
+        assert!(format!("{spaced:?}").contains("theme id"), "{spaced:?}");
+        let slashed = plugins.install(&with_themes(&theme("a/b"))).unwrap_err();
+        assert!(
+            format!("{slashed:?}").contains("theme id"),
+            "a slash would split the key"
+        );
+        let twice = plugins
+            .install(&with_themes(&format!("{},{}", theme("t"), theme("t"))))
+            .unwrap_err();
+        assert!(format!("{twice:?}").contains("two of its themes"), "{twice:?}");
+        assert!(plugins.list().unwrap().is_empty(), "nothing was written");
     }
 
     #[test]

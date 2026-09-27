@@ -212,13 +212,22 @@ pub(super) fn with_reason(mut schema: Value) -> Value {
         "description": "One short sentence, in the user's language, saying why you need this \
                         for what they asked. It is shown to them before they allow the call."
     });
+    add_required(&mut schema, REASON, described);
+    schema
+}
+
+/// Adds a property and lists it as required, creating the array when the schema has none: a
+/// property left out of `required` makes a strict provider refuse the whole request.
+pub(super) fn add_required(schema: &mut Value, name: &str, property: Value) {
     if let Some(properties) = schema["properties"].as_object_mut() {
-        properties.insert(REASON.to_string(), described);
+        properties.insert(name.to_string(), property);
+    }
+    if !schema["required"].is_array() {
+        schema["required"] = json!([]);
     }
     if let Some(required) = schema["required"].as_array_mut() {
-        required.push(Value::String(REASON.to_string()));
+        required.push(Value::String(name.to_string()));
     }
-    schema
 }
 
 /// Anything a tool body fails at is reported back to the model as a tool error, never as a

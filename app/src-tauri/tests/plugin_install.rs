@@ -590,3 +590,38 @@ fn a_tool_that_does_not_answer_its_own_sample_installs_nothing() {
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+/// `.` and `-` both become `_` in the name the model calls a tool by, so `a.b` + `c` and `a` +
+/// `b_c` meet in `plugin_a_b_c`. The second package is refused rather than hiding one tool.
+#[test]
+fn a_tool_whose_name_another_plugin_already_answers_to_installs_nothing() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/concentration");
+    let dir = std::env::temp_dir().join(format!("stonqs-tool-{}", uuid::Uuid::new_v4()));
+    let plugins = Plugins::new(dir.join("root"));
+    let package = |plugin: &str, tool: &str| {
+        let source = dir.join(plugin);
+        std::fs::create_dir_all(&source).unwrap();
+        for file in ["tool.wasm", "schema.json", "sample.json", "expected.json"] {
+            std::fs::copy(example.join(file), source.join(file)).unwrap();
+        }
+        let manifest = std::fs::read_to_string(example.join("plugin.json"))
+            .unwrap()
+            .replace("app.stonqs.concentration", plugin)
+            .replace(r#""id": "concentration""#, &format!(r#""id": "{tool}""#));
+        std::fs::write(source.join("plugin.json"), manifest).unwrap();
+        source
+    };
+
+    plugins.install(&package("a.b", "c")).unwrap();
+    let failure = plugins.install(&package("a", "b_c")).unwrap_err();
+    assert!(format!("{failure:?}").contains("plugin_a_b_c"), "{failure:?}");
+    assert_eq!(
+        plugins.list().unwrap().len(),
+        1,
+        "the second package was not written"
+    );
+    // Reinstalling the owner is not a clash with itself.
+    plugins.install(&package("a.b", "c")).unwrap();
+
+    std::fs::remove_dir_all(&dir).ok();
+}

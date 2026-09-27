@@ -38,9 +38,11 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   failed is `UiError::Reader` naming the plugin, never a fall-through. The row schema is **not**
   restated in WIT — the document carries its own `format` and `version` (ADR-0066).
 - A plugin's **dashboard widget** (ADR-0083) is the one piece of a stranger's *JavaScript* the app
-  runs. The host serves it from its own scheme (`stonqs-plugin`, `commands::plugins::widget_page`)
+  runs. The host serves it from its own scheme (`stonqs-plugin`, `commands::plugins::page`)
   as one page — `plugins/widget_shim.js` plus the module inline — under a CSP of its own with no
-  `connect-src` and a nonce per response; the frame is `sandbox="allow-scripts"`, so it has no
+  `connect-src` and a nonce per response. What a CSP does not cover the page closes itself: the
+  shim deletes every `RTC*` global before the module runs (a STUN server is the page's to choose)
+  and DNS prefetching is off; the frame is `sandbox="allow-scripts"`, so it has no
   origin, and Tauri injects IPC into the main frame only. Nothing is asked *for*: the manifest's
   `reads` (a closed list) is what `usePluginReads` fetches under the tile's scope and period, and
   `lib/pluginBridge.ts` projects it into the bridge's own field names, versioned by `api`, before

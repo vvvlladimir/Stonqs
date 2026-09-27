@@ -3,6 +3,25 @@
 // own document to keep.
 (() => {
   "use strict";
+  // The policy governs every request a page can make except a peer connection, whose STUN server
+  // is the page's to choose — enough to carry data out. Gone before the module runs, and a page
+  // that may open no frame has no fresh copy to fetch it back from.
+  for (const name of Object.getOwnPropertyNames(window)) {
+    if (!/^(webkit|moz)?RTC/.test(name)) continue;
+    try {
+      delete window[name];
+    } catch {
+      // Not configurable: fall through to overwriting it.
+    }
+    if (window[name] !== undefined) {
+      try {
+        Object.defineProperty(window, name, { value: undefined });
+      } catch {
+        // Neither deletable nor redefinable: nothing further this page can do about it.
+      }
+    }
+  }
+
   const host = window.parent;
   let renderer = null;
   let last = null;

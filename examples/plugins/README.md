@@ -282,6 +282,9 @@ Installation is the check, and it refuses rather than half-installs:
 | --- | --- |
 | A required field is missing or misspelled (`id`, `api`, `name`; a layout's `id`/`file`/`sample`) | Refused, naming the field |
 | `id` has anything but lowercase letters, digits, dot, dash, underscore | Refused |
+| The `id` of a theme, layout, reader, widget, tool… has anything else, or two of one kind share one | Refused |
+| A tool's schema has no `required` array, or requires a property it does not declare | Refused |
+| A tool would reach the assistant under a name another installed plugin's tool already has (`.` and `-` both become `_`) | Refused, naming the plugin |
 | `api` is not the version this build speaks | Installs, and is listed **not loaded** with both versions — a package from a later build is not an error, it is a package for later |
 | `provides` misspelled, or only content this build does not know | Refused: "declares nothing this build can use" |
 | A file the manifest names is missing, or its name leaves the package (`../`) | Refused |
@@ -369,7 +372,9 @@ you compute from it is your figure, not the app's:
 What the page can reach is what it is handed:
 
 - **No network.** The page's policy has no `connect-src`: no `fetch`, no socket, no image from an
-  address. A tile of your positions cannot send them anywhere.
+  address. A peer connection (`RTCPeerConnection`) is removed before your module runs, and DNS
+  prefetching is off — the two ways out a content policy does not cover. A tile of your
+  positions cannot send them anywhere.
 - **No origin.** The frame is sandboxed with scripts only — no storage, no cookies, no popups, no
   navigating the app — and the app's own commands are not reachable from it.
 - A widget that throws, rejects a promise, or never calls `stonqs.render` shows that in its tile,
@@ -477,7 +482,8 @@ call(args, data) -> result<answer, error>     // all three are JSON text
 
 - `args` is what the model called it with. `schema.json` says what that may be, and it must be the
   strict subset every provider accepts — an object, `"additionalProperties": false`, every property
-  required, each one a string, number, integer or boolean. A schema outside it would not fail this
+  required — the `required` array is there even when empty — each one a string, number, integer
+  or boolean. A schema outside it would not fail this
   tool alone: the provider refuses the whole request, and with it every chat. So it is checked at
   install.
 - `data` is exactly the declared `reads`, in the same shape a widget is handed (the table under
