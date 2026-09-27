@@ -652,6 +652,14 @@ msgstr "{dead, plural, one {# площадка скрыта: инструмен�
 #~ msgid "{delta, plural, one {# day} other {# days}}"
 #~ msgstr "{delta, plural, one {# дн.} few {# дн.} many {# дн.} other {# дн.}}"
 
+#: src/screens/dashboard/dialogs.tsx
+msgid "{description} From {plugin}, which is given {reads}."
+msgstr "{description} Из плагина {plugin}; ему передаются: {reads}."
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "{description} From {plugin}, which is given no portfolio data."
+msgstr "{description} Из плагина {plugin}; данные портфеля ему не передаются."
+
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{dictionaries, plural, one {# operation dictionary} other {# operation dictionaries}}"
 msgstr "{dictionaries, plural, one {# словарь операций} few {# словаря операций} many {# словарей операций} other {# словаря операций}}"
@@ -794,6 +802,14 @@ msgstr "{unseen, plural, one {# новое пересечение} few {# нов
 #: src/screens/Risk.tsx
 msgid "{value, plural, one {# day} other {# days}}"
 msgstr "{value, plural, one {# день} few {# дня} many {# дней} other {# дня}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+msgstr "{widgets, plural, one {# виджет дашборда, получает: {reads}} few {# виджета дашборда, получают: {reads}} many {# виджетов дашборда, получают: {reads}} other {# виджета дашборда, получают: {reads}}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{widgets, plural, one {# dashboard widget} other {# dashboard widgets}}"
+msgstr "{widgets, plural, one {# виджет дашборда} few {# виджета дашборда} many {# виджетов дашборда} other {# виджета дашборда}}"
 
 #. placeholder {0}: s.total
 #: src/screens/Import/CommitStep.tsx
@@ -1104,8 +1120,12 @@ msgstr "План — это взнос по расписанию: сколько
 #~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации, названия операций на другом языке и читатели для файлов, которые приложение само открыть не умеет."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
-msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации, названия операций на другом языке, читатели для файлов, которые приложение само открыть не умеет, и форматы выгрузки."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
+#~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации, названия операций на другом языке, читатели для файлов, которые приложение само открыть не умеет, и форматы выгрузки."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки и виджеты дашборда."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -1225,6 +1245,10 @@ msgstr "Цель — это набор весов по узлам таксоно
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 msgstr "Тема из плагина. Она изменяет одну из двух схем выше, а не заменяет её."
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "A tile drawn by a plugin that is no longer installed."
+msgstr "Плитка плагина, который больше не установлен."
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
@@ -6873,6 +6897,15 @@ msgstr "Планирование"
 msgid "Plans"
 msgstr "Планы"
 
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "Plugin not installed"
+msgstr "Плагин не установлен"
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Plugin widget"
+msgstr "Виджет плагина"
+
+#: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "Plugins"
@@ -6955,6 +6988,10 @@ msgstr "Доходность портфеля"
 #: src/screens/dashboard/widgets/index.tsx
 #~ msgid "Position contribution to the return as a staircase, largest first."
 #~ msgstr "Вклад позиций в доходность лесенкой, от большего к меньшему."
+
+#: src/lib/kinds.ts
+msgid "positions"
+msgstr "позиции"
 
 #: src/components/Nav/model.ts
 #: src/lib/tour/steps.ts
@@ -7661,6 +7698,10 @@ msgstr "Доходность сверх безрисковой ставки на
 #: src/screens/Risk.tsx
 msgid "Return above the risk-free rate per unit of volatility. Above 1 is good."
 msgstr "Доходность сверх безрисковой ставки на единицу волатильности. Выше 1 — хорошо."
+
+#: src/lib/kinds.ts
+msgid "return and flows over the period"
+msgstr "доходность и потоки за период"
 
 #: src/screens/Performance/index.tsx
 msgid "Return by month"
@@ -9137,6 +9178,10 @@ msgstr "Взвешенная по времени доходность перио
 msgid "the plan has no targets"
 msgstr "целей в плане нет"
 
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "The plugin that drew this tile has been removed. Install it again, or remove the tile."
+msgstr "Плагин, который рисовал эту плитку, удалён. Установите его снова или уберите плитку."
+
 #: src/screens/Import/AccountTarget.tsx
 msgid "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
 msgstr "В портфеле ещё нет брокерского счёта. Создайте его на экране \"Счета\" — ему нужен денежный счёт для расчётов — и вернитесь на этот шаг."
@@ -9554,6 +9599,18 @@ msgstr "такой темп не приведёт к цели"
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
 msgstr "период против предыдущего"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "This plugin's tile did not start."
+msgstr "Плитка плагина не запустилась."
+
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "This plugin's tile failed: {detail}"
+msgstr "Плитка плагина сломалась: {detail}"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "This plugin's tile never drew anything."
+msgstr "Плитка плагина так ничего и не нарисовала."
 
 #: src/components/domain/positionColumns.tsx
 msgid "This position's share of everything the current scope holds."
@@ -10073,6 +10130,10 @@ msgstr "Стоимость и покупка"
 #: src/screens/Performance/index.tsx
 msgid "Value and flows"
 msgstr "Стоимость и потоки"
+
+#: src/lib/kinds.ts
+msgid "value and results"
+msgstr "стоимость и результаты"
 
 #: src/screens/Performance/Metrics.tsx
 msgid "value changed by"

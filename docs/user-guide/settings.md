@@ -119,11 +119,14 @@ removing a password can be refused while a quote refresh or an AI answer is runn
 that finishes.
 
 **Plugins** — what the app has been extended with, and what each one brings. A plugin is installed
-from a folder on this machine; there is no catalogue to browse and nothing is downloaded. Four
-kinds of content are honoured: colour themes, which then appear under Appearance; broker import
-layouts, which appear in the import wizard's layout list; ready classification sets, which appear
-beside `Import from CSV…` on the Allocation screen; and readers for file formats the app cannot
-open by itself, which are used automatically when such a file is imported.
+from a folder on this machine; there is no catalogue to browse and nothing is downloaded. What a
+plugin may bring: colour themes, which then appear under Appearance; broker import layouts, which
+appear in the import wizard's layout list; ready classification sets, which appear beside `Import
+from CSV…` on the Allocation screen; operation words in another language, used by the import;
+readers for file formats the app cannot open by itself, used automatically when such a file is
+imported; formats to export transactions to, offered by `Export`; and dashboard tiles, offered in
+the dashboard's palette under *Plugins*. The list says what each plugin brings, and for dashboard
+tiles what they will be given.
 
 A plugin never changes what a figure means — how a return, a cost basis or a position is computed
 is fixed in the app. A package built for another version of the app is listed with that as the

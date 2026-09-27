@@ -7,7 +7,7 @@
 //! a plugin has no path into the portfolio of its own.
 
 use crate::error::UiResult;
-use crate::plugins::{PluginInfo, TaxonomySetInfo, ThemeInfo, WriterInfo};
+use crate::plugins::{PluginInfo, TaxonomySetInfo, ThemeInfo, WidgetInfo, WriterInfo};
 use crate::state::AppState;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -23,6 +23,8 @@ pub struct PluginList {
     /// The export formats that can actually be written, addressed as `transactions_export_save`
     /// names them.
     pub writers: Vec<WriterInfo>,
+    /// The dashboard widgets that can actually be placed, addressed as a board stores their type.
+    pub widgets: Vec<WidgetInfo>,
     /// The plugin API this build speaks, so the list can say what a refused package wanted.
     pub api: u32,
 }
@@ -34,6 +36,7 @@ pub fn plugins_list(state: State<AppState>) -> UiResult<PluginList> {
         themes: state.plugins.themes()?,
         taxonomy_sets: state.plugins.taxonomy_sets()?,
         writers: state.plugins.writers()?,
+        widgets: state.plugins.widgets()?,
         api: crate::plugins::API,
     })
 }
@@ -61,4 +64,40 @@ pub fn plugin_theme_css(state: State<AppState>, plugin: String, theme: String) -
 #[tauri::command]
 pub fn plugin_taxonomy_csv(state: State<AppState>, plugin: String, set: String) -> UiResult<Vec<u8>> {
     state.plugins.taxonomy_csv(&plugin, &set)
+}
+
+/// The scheme a widget page is served from (ADR-0083). Its own origin, its own policy, and a
+/// frame the app's IPC is never injected into.
+pub const WIDGET_SCHEME: &str = "stonqs-plugin";
+
+/// Answers `/<plugin id>/<widget id>` with the widget's page. The frontend builds the address with
+/// `convertFileSrc`, which encodes the slash; an id is `[a-z0-9._-]`, so that is all it encodes.
+pub fn widget_page(
+    app: &tauri::AppHandle,
+    request: &tauri::http::Request<Vec<u8>>,
+) -> tauri::http::Response<Vec<u8>> {
+    use tauri::Manager;
+    use tauri::http::{Response, StatusCode, header};
+
+    let path = request
+        .uri()
+        .path()
+        .trim_start_matches('/')
+        .replace("%2F", "/")
+        .replace("%2f", "/");
+    let page = path
+        .split_once('/')
+        .ok_or_else(|| crate::error::UiError::not_found(path.clone()))
+        .and_then(|(plugin, widget)| app.state::<AppState>().plugins.widget_page(plugin, widget));
+    let built = match page {
+        Ok((html, csp)) => Response::builder()
+            .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+            .header(header::CONTENT_SECURITY_POLICY, csp)
+            .body(html.into_bytes()),
+        Err(_) => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .header(header::CONTENT_SECURITY_POLICY, "default-src 'none'")
+            .body(Vec::new()),
+    };
+    built.unwrap_or_else(|_| Response::new(Vec::new()))
 }

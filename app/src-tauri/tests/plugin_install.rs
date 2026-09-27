@@ -432,3 +432,65 @@ fn a_writer_refusing_a_document_names_the_plugin() {
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn the_example_widget_installs_and_is_served_under_its_own_policy() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/heat");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let plugins = Plugins::new(&dir);
+    assert_eq!(plugins.install(&example).unwrap().status, Status::Ok);
+
+    let widgets = plugins.widgets().unwrap();
+    assert_eq!(widgets.len(), 1);
+    assert_eq!(widgets[0].key, "app.stonqs.heat/heat");
+    assert_eq!(
+        widgets[0].plugin_name, "Heat map",
+        "the tile carries whose it is (ADR-0082)"
+    );
+    assert_eq!(widgets[0].reads, [sq_app_lib::plugins::Read::Positions]);
+
+    let (html, csp) = plugins.widget_page("app.stonqs.heat", "heat").unwrap();
+    assert!(
+        html.contains("stonqs.render("),
+        "the module is inlined into the page"
+    );
+    let nonce = csp
+        .split("'nonce-")
+        .nth(1)
+        .and_then(|rest| rest.split('\'').next())
+        .unwrap();
+    assert_eq!(
+        html.matches(&format!("nonce=\"{nonce}\"")).count(),
+        2,
+        "the shim and the module, and nothing else, may run"
+    );
+    let (_, again) = plugins.widget_page("app.stonqs.heat", "heat").unwrap();
+    assert_ne!(csp, again, "a nonce is never reused");
+    assert!(plugins.widget_page("app.stonqs.heat", "missing").is_err());
+    assert!(plugins.widget_page("../heat", "heat").is_err());
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_widget_reading_something_this_api_does_not_offer_installs_nothing() {
+    let dir = std::env::temp_dir().join(format!("stonqs-widget-{}", uuid::Uuid::new_v4()));
+    let source = dir.join("src");
+    std::fs::create_dir_all(&source).unwrap();
+    std::fs::write(
+        source.join("plugin.json"),
+        r#"{"id":"com.example.greedy","api":1,"name":"Greedy","provides":{"widgets":[
+            {"id":"w","name":"W","file":"w.js","reads":["transactions"],
+             "size":{"w":6,"h":6},"min":{"w":3,"h":3}}]}}"#,
+    )
+    .unwrap();
+    std::fs::write(source.join("w.js"), "stonqs.render(() => {});").unwrap();
+
+    let plugins = Plugins::new(&dir);
+    assert!(plugins.install(&source).is_err(), "a read is from a closed list");
+    assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+
+    std::fs::remove_dir_all(&dir).ok();
+}

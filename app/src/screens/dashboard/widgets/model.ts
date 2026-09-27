@@ -16,6 +16,7 @@ import type {
   PeriodSummary,
   PortfolioValuation,
   ScopeKind,
+  WidgetRead,
 } from "../../../lib/types";
 
 export interface MetricCtx {
@@ -225,6 +226,18 @@ export interface WidgetDef {
   /** Whether the period is worth showing: a metric tile consumes one only for some metrics. */
   periodicFor?: (cfg: Record<string, unknown>) => boolean;
   Render: (props: WidgetProps) => JSX.Element;
+  /** Set when a plugin brought the widget: whose it is, and what it is handed (ADR-0082/0083). */
+  plugin?: { name: string; reads: WidgetRead[] };
+}
+
+/** A board stores a plugin's widget as this prefix plus `<plugin id>/<widget id>` (ADR-0083). */
+// A stored prefix, not a word: it is parsed and compared, and never read by anybody.
+// eslint-disable-next-line lingui/no-unlocalized-strings
+export const PLUGIN_WIDGET = "plugin:";
+
+/** The plugin widget a stored type names, or null for a built-in one. */
+export function pluginWidgetKey(type: string): string | null {
+  return type.startsWith(PLUGIN_WIDGET) ? type.slice(PLUGIN_WIDGET.length) : null;
 }
 
 /** Resolve the widget period, falling back to the dashboard period. */

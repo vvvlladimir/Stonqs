@@ -376,7 +376,8 @@ fn profile_list_keys_match_the_typescript_types() {
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
     use sq_app_lib::plugins::{
-        Base, DictionaryDef, PluginInfo, ReaderDef, Status, TaxonomyDef, ThemeDef, WriterDef, WriterInfo,
+        Base, DictionaryDef, PluginInfo, Read, ReaderDef, Size, Status, TaxonomyDef, ThemeDef, WidgetDef,
+        WidgetInfo, WriterDef, WriterInfo,
     };
 
     let json = serde_json::to_value(PluginInfo {
@@ -415,6 +416,16 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             expected: "expected.journal".into(),
             extension: "journal".into(),
         }],
+        widgets: vec![WidgetDef {
+            id: "heat".into(),
+            name: "Heat map".into(),
+            description: String::new(),
+            file: "heat.js".into(),
+            reads: vec![Read::Positions],
+            periodic: false,
+            size: Size { w: 6, h: 8 },
+            min: Size { w: 3, h: 4 },
+        }],
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -435,6 +446,7 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             "themes",
             "version",
             "wants",
+            "widgets",
             "writers"
         ]
     );
@@ -464,4 +476,38 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     })
     .unwrap();
     assert_eq!(keys(&json), ["extension", "key", "name", "plugin"]);
+
+    // What the palette is offered: the reads it will be handed are part of the entry, because
+    // placing the tile is the consent to them (ADR-0083).
+    let json = serde_json::to_value(WidgetInfo {
+        key: "app.stonqs.heat/heat".into(),
+        name: "Heat map".into(),
+        description: "Positions by weight and result.".into(),
+        plugin: "app.stonqs.heat".into(),
+        plugin_name: "Heat map".into(),
+        reads: vec![Read::Positions, Read::Valuation, Read::Performance],
+        periodic: true,
+        size: Size { w: 6, h: 8 },
+        min: Size { w: 3, h: 4 },
+    })
+    .unwrap();
+    assert_eq!(
+        keys(&json),
+        [
+            "description",
+            "key",
+            "min",
+            "name",
+            "periodic",
+            "plugin",
+            "plugin_name",
+            "reads",
+            "size"
+        ]
+    );
+    assert_eq!(
+        json["reads"],
+        serde_json::json!(["positions", "valuation", "performance"])
+    );
+    assert_eq!(keys(&json["size"]), ["h", "w"]);
 }

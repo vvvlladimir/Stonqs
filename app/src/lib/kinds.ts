@@ -11,6 +11,7 @@ import type {
   SecurityEventKind,
   SecurityKind,
   TransactionKind,
+  WidgetRead,
 } from "./types";
 
 /** Central labels and ordering for model enum values. */
@@ -225,3 +226,10 @@ export function providerName(id: string, label?: string): string {
 
 /** The id of the provider the user configures themselves — `ai::catalog::CUSTOM`. */
 export const CUSTOM_PROVIDER = "custom";
+
+/** What a plugin widget is handed, as the palette and the plugin list name it before it is. */
+export const WIDGET_READ_LABELS: Record<WidgetRead, MessageDescriptor> = {
+  valuation: msg`value and results`,
+  positions: msg`positions`,
+  performance: msg`return and flows over the period`,
+};

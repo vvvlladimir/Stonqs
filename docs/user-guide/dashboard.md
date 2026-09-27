@@ -53,6 +53,17 @@ tile's own width is raised to this if it was smaller.
   *Expected dividends* is a forecast, never income: see the income topic for how it is made and
   why an amount may be gross.
 - *Text* — a section heading, and the portfolio summary written by the assistant.
+- *Plugins* — tiles brought by installed plugins, if any. Each one says in the palette which
+  plugin it comes from and what it will be given (positions, value and results, or return and
+  flows over the period); placing it is agreeing to that.
+
+**A plugin's tile is the plugin's work, not the app's.** Its header always names the plugin. It is
+handed the app's own figures for the tile's data source and date, and may compute something of its
+own from them — a percentage, a score, a colour — which the app does not check and which can differ
+from a figure the app shows under a similar name. It cannot change any figure elsewhere in the app,
+cannot reach the internet and cannot see anything beyond what the palette listed. If its plugin is
+removed, the tile stays on the board and says so until the user removes it; a tile that fails shows
+the plugin's own error message instead of its drawing.
 
 **The portfolio summary tile is not a chat.** It reads a fixed set of figures named by the app,
 asks the model once, and keeps the text it got. It never generates on its own: the first generation

@@ -37,6 +37,15 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   reader, which accepts nearly anything. `not-mine` moves on; a reader that claimed the file and
   failed is `UiError::Reader` naming the plugin, never a fall-through. The row schema is **not**
   restated in WIT — the document carries its own `format` and `version` (ADR-0066).
+- A plugin's **dashboard widget** (ADR-0083) is the one piece of a stranger's *JavaScript* the app
+  runs. The host serves it from its own scheme (`stonqs-plugin`, `commands::plugins::widget_page`)
+  as one page — `plugins/widget_shim.js` plus the module inline — under a CSP of its own with no
+  `connect-src` and a nonce per response; the frame is `sandbox="allow-scripts"`, so it has no
+  origin, and Tauri injects IPC into the main frame only. Nothing is asked *for*: the manifest's
+  `reads` (a closed list) is what `usePluginReads` fetches under the tile's scope and period, and
+  `lib/pluginBridge.ts` projects it into the bridge's own field names, versioned by `api`, before
+  posting it. The tile's header names the plugin, because what it shows is the plugin's number
+  (ADR-0082).
 - A plugin's **file writer** is the reader turned round (ADR-0080): `wit/writer.wit`,
   `write(canonical) -> result<bytes, reason>`, run in the same `plugins/sandbox.rs`. It is handed
   what `transactions_export` already built — the screen's filter, the store released first — and

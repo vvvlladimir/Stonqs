@@ -28,7 +28,7 @@ import {
   type TileBox,
 } from "./grid";
 import { WidgetTile } from "./WidgetTile";
-import { makeWidget, WIDGETS } from "./widgets";
+import { makeWidget, useWidgetCatalog } from "./widgets";
 import { useAsOf } from "../../lib/asOf";
 
 type Dialog =
@@ -45,6 +45,7 @@ export function Dashboard() {
   const [period, setPeriod] = useState<PeriodId>("SINCE_INCEPTION");
   const ranges = usePeriodRanges(date);
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const catalog = useWidgetCatalog();
   // The tile under the pointer: it leaves the flow and follows the cursor, and the slot it came
   // from stays behind as the hole that travels to where it would land.
   const [drag, setDrag] = useState<{ id: string; box: DOMRect; dx: number; dy: number } | null>(null);
@@ -213,7 +214,7 @@ export function Dashboard() {
         >
           {shown.map((widget) => (
             <Fragment key={widget.id}>
-              {drag?.id === widget.id && (
+              {drag?.id === widget.id && catalog.of(widget.type) && (
                 // The hole the tile left: it is what reorders, so the landing place is visible
                 // before the tile is dropped into it.
                 <div
@@ -222,7 +223,7 @@ export function Dashboard() {
                   style={placement(
                     { w: widget.w, h: widget.h },
                     cols,
-                    limitsOf(widget, WIDGETS[widget.type]).w,
+                    limitsOf(widget, catalog.of(widget.type)!).w,
                   )}
                 />
               )}
@@ -285,7 +286,8 @@ export function Dashboard() {
         <Palette
           onClose={() => setDialog(null)}
           onPick={(type) => {
-            setBoard([...board.widgets, makeWidget(type, newId("w"))]);
+            const def = catalog.of(type);
+            if (def) setBoard([...board.widgets, makeWidget(type, newId("w"), def)]);
             setDialog(null);
           }}
         />

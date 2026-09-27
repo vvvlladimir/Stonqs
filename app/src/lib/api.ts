@@ -1,7 +1,7 @@
 /** The only frontend module that imports Tauri APIs. */
 
 import { getVersion } from "@tauri-apps/api/app";
-import { Channel, invoke } from "@tauri-apps/api/core";
+import { Channel, convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
@@ -374,7 +374,12 @@ export const api = {
   /** The same preview over bytes, which is what a classification set from a plugin arrives as. */
   taxonomyImportPreview: (content: number[], name?: string | null) =>
     call<TaxonomyPreview>("taxonomy_import_preview", { content, config: null, name: name ?? null }),
-  taxonomyImportCommit: (content: number[], name: string | null, into: string | null, with_targets: boolean) =>
+  taxonomyImportCommit: (
+    content: number[],
+    name: string | null,
+    into: string | null,
+    with_targets: boolean,
+  ) =>
     call<Taxonomy>("taxonomy_import_commit", {
       content,
       config: null,
@@ -538,8 +543,10 @@ export const api = {
   pluginThemeCss: (plugin: string, theme: string) => call<string>("plugin_theme_css", { plugin, theme }),
   /** A classification set's CSV, previewed and committed by the commands every taxonomy file
    *  goes through — the set has no path into the portfolio of its own. */
-  pluginTaxonomyCsv: (plugin: string, set: string) =>
-    call<number[]>("plugin_taxonomy_csv", { plugin, set }),
+  pluginTaxonomyCsv: (plugin: string, set: string) => call<number[]>("plugin_taxonomy_csv", { plugin, set }),
+  /** Where a widget's page is served: the host's own scheme, spelled the way this platform
+   *  spells a custom one (ADR-0083). `key` is `<plugin id>/<widget id>`. */
+  pluginWidgetUrl: (key: string) => convertFileSrc(key, "stonqs-plugin"),
 
   profilesList: () => call<ProfileList>("profiles_list"),
   profileCreate: (name: string) => call<Profile>("profile_create", { name }),

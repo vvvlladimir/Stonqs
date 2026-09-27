@@ -8,8 +8,10 @@ See [ADR-0070](../../docs/decisions/0070-a-plugin-brings-data-and-shows-it-it-ne
 for what a plugin may and may not be, and
 [ADR-0073](../../docs/decisions/0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
 for the file reader, [ADR-0080](../../docs/decisions/0080-a-file-writer-is-the-reader-turned-round.md)
-for the file writer. This build honours six kinds of content: themes, broker import layouts,
-classification sets, operation dictionaries, file readers and file writers.
+for the file writer, [ADR-0083](../../docs/decisions/0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)
+for the dashboard widget. This build honours seven kinds of content: themes, broker import
+layouts, classification sets, operation dictionaries, file readers, file writers and dashboard
+widgets.
 
 ## `midnight` — a theme
 
@@ -297,3 +299,82 @@ at all is refused outright: that is the shape such a typo takes.
 
 An already-installed folder whose `plugin.json` stops parsing is listed as broken, with the reason,
 rather than disappearing.
+
+## `heat` — a dashboard widget
+
+A tile of one's own on the dashboard: here, every position as a cell sized by its weight and
+coloured by its unrealized result over cost. That percentage is the plugin's figure, not the
+app's — a plugin may show numbers of its own, under its own name, and may never replace one the
+app shows ([ADR-0082](../../docs/decisions/0082-a-plugin-may-show-a-number-of-its-own-under-its-own-name.md)).
+The tile's header always names the plugin.
+
+```json
+{
+  "id": "app.stonqs.heat",
+  "api": 1,
+  "name": "Heat map",
+  "version": "1.0.0",
+  "provides": {
+    "widgets": [
+      {
+        "id": "heat",
+        "name": "Position heat map",
+        "description": "Each position as a cell sized by its weight and coloured by its unrealized result.",
+        "file": "heat.js",
+        "reads": ["positions"],
+        "size": { "w": 6, "h": 8 },
+        "min": { "w": 3, "h": 4 }
+      }
+    ]
+  }
+}
+```
+
+- `file` is **one self-contained ES module**. The page allows no script but its own, so a widget
+  that imports another file must be bundled into one first.
+- `reads` is what the tile is handed, from a closed list: `valuation`, `positions`, `performance`.
+  Nothing else is reachable — there is no request to make. The palette tells the user this list
+  before the tile is placed.
+- `periodic: true` gives the tile a period in its settings; `performance` requires it.
+- `size` and `min` are in the board's units: width in twelfths (1–12), height in rows.
+
+The module registers one function, called again whenever the date, the period, the data source,
+the language, the theme or the data itself changes:
+
+```js
+stonqs.render((root, { context, data }) => {
+  // root: the page's <body>, yours to fill
+  // context: { api, date, period: { from, to } | null, base_currency, locale,
+  //            theme: { scheme: "light" | "dark", tokens: { "--text": "…", "--pos": "…", … } } }
+  // data: only the reads the manifest declared
+});
+```
+
+The theme's properties are set on the page's root, so `var(--text)`, `var(--pos)`, `var(--neg)`,
+`var(--surface-2)` and the palette slots `var(--slot-1)` … `var(--slot-8)` follow the app's theme,
+a plugin theme included.
+
+The data are the plugin API's own names, not the app's internal ones, and they change only with
+`api`. Every amount is a **string** in the base currency, exactly as the app keeps it; whatever
+you compute from it is your figure, not the app's:
+
+| read | shape |
+| --- | --- |
+| `valuation` | `date`, `base_currency`, `total_value`, `securities_value`, `cash`, `cost_basis`, `unrealized_result`, `realized_result`, `dividends`, `interest`, `fees`, `taxes` |
+| `positions` | `date`, `base_currency`, `total_value`, `rows[]`: `symbol`, `name`, `currency` (of `price`), `quantity`, `price`, `value`, `cost_basis`, `unrealized_result`, `weight` (`"0.25"` is a quarter), `day_change` (a fraction or `null`) |
+| `performance` | `from`, `to`, `base_currency`, `twr`, `twr_annualized`, `xirr`, `start_value`, `end_value`, `net_flow`, `earned`, `series[]`: `date`, `value`, `flow` |
+
+What the page can reach is what it is handed:
+
+- **No network.** The page's policy has no `connect-src`: no `fetch`, no socket, no image from an
+  address. A tile of your positions cannot send them anywhere.
+- **No origin.** The frame is sandboxed with scripts only — no storage, no cookies, no popups, no
+  navigating the app — and the app's own commands are not reachable from it.
+- A widget that throws, rejects a promise, or never calls `stonqs.render` shows that in its tile,
+  with its own message; the rest of the board is untouched. A busy loop, however, is not
+  interruptible — it runs in the app's window.
+
+There is no `sample` and no `expected` here, unlike a reader: a drawing has no answer the app could
+compare it with. What the install checks is the shape — a `.js` file, known reads, sizes that fit
+the grid.
+

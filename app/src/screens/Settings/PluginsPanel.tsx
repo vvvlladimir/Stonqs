@@ -9,10 +9,11 @@ import { keys, useInvalidate, usePlugins } from "../../lib/queries";
 import { useErrorText } from "../../components/ui/Async";
 import { Banner, Empty, ErrorText, List, ListRow, Panel, Pending, QueryError } from "../../components/ui";
 import type { Plugin } from "../../lib/types";
+import { WIDGET_READ_LABELS } from "../../lib/kinds";
 
 /** Everything the app is extended with: what is installed, and what each one could not be. */
 export function PluginsPanel() {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const invalidate = useInvalidate();
   const plugins = usePlugins();
   const [failure, setFailure] = useState<unknown>(null);
@@ -40,7 +41,7 @@ export function PluginsPanel() {
   return (
     <Panel
       title={t`Plugins`}
-      info={t`A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to.`}
+      info={t`A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets.`}
       tools={
         <button
           className="btn btn--ghost btn--sm"
@@ -63,7 +64,7 @@ export function PluginsPanel() {
             <ListRow
               key={plugin.id}
               title={plugin.name}
-              sub={subtitle(plugin)}
+              sub={subtitle(plugin, i18n)}
               foot={plugin.status === "ok" ? undefined : <Banner tone="warn">{reason(plugin, t)}</Banner>}
               showActions
               end={
@@ -88,20 +89,35 @@ function InstallError({ error }: { error: unknown }) {
 }
 
 type T = ReturnType<typeof useLingui>["t"];
+type I18n = ReturnType<typeof useLingui>["i18n"];
 
-function subtitle(plugin: Plugin): string {
+function subtitle(plugin: Plugin, i18n: I18n): string {
   const themes = plugin.themes.length;
   const layouts = plugin.layouts.length;
   const readers = plugin.readers.length;
   const taxonomies = plugin.taxonomies.length;
   const dictionaries = plugin.dictionaries.length;
   const writers = plugin.writers.length;
+  const widgets = plugin.widgets?.length ?? 0;
+  // What a widget is handed is said here as well as in the palette: installing is when the user
+  // first sees the package, placing a tile is when it first reads (ADR-0083).
+  const reads = [...new Set((plugin.widgets ?? []).flatMap((w) => w.reads))]
+    .map((read) => i18n._(WIDGET_READ_LABELS[read]))
+    .join(", ");
   return [
     plugin.version,
     themes > 0 ? plural(themes, { one: "# theme", other: "# themes" }) : null,
     layouts > 0 ? plural(layouts, { one: "# import layout", other: "# import layouts" }) : null,
     readers > 0 ? plural(readers, { one: "# file reader", other: "# file readers" }) : null,
     writers > 0 ? plural(writers, { one: "# export format", other: "# export formats" }) : null,
+    widgets > 0
+      ? reads
+        ? plural(widgets, {
+            one: `# dashboard widget, given ${reads}`,
+            other: `# dashboard widgets, given ${reads}`,
+          })
+        : plural(widgets, { one: "# dashboard widget", other: "# dashboard widgets" })
+      : null,
     taxonomies > 0
       ? plural(taxonomies, { one: "# classification set", other: "# classification sets" })
       : null,

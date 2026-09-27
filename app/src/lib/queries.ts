@@ -10,6 +10,7 @@ import type {
   TradeGrouping,
   TransactionFilter,
   TransactionKind,
+  WidgetRead,
 } from "./types";
 
 /**
@@ -410,6 +411,39 @@ export function useDashboard(date: DateString, source?: Source) {
     queryKey: keys.dashboard(date, source),
     queryFn: () => api.dashboardSummary(date, source),
   });
+}
+
+/**
+ * What a plugin widget declared it reads, and nothing else (ADR-0083): the same keys and calls as
+ * the built-in tiles, so a plugin tile beside a positions list costs no second query. A read the
+ * widget did not declare is never fetched, which is the whole of its permission.
+ */
+export function usePluginReads(
+  reads: readonly WidgetRead[],
+  date: DateString,
+  range: PeriodRange | undefined,
+  source?: Source,
+) {
+  const [valuation, positions, performance] = useQueries({
+    queries: [
+      {
+        queryKey: keys.dashboard(date, source),
+        queryFn: () => api.dashboardSummary(date, source),
+        enabled: reads.includes("valuation"),
+      },
+      {
+        queryKey: keys.positions(date, source),
+        queryFn: () => api.positionsAt(date, source),
+        enabled: reads.includes("positions"),
+      },
+      {
+        queryKey: keys.performance(range?.from, range?.to, source),
+        queryFn: () => api.performanceSummary(range!.from, range!.to, source),
+        enabled: reads.includes("performance") && range !== undefined,
+      },
+    ],
+  });
+  return { valuation, positions, performance };
 }
 
 export function useTransactions(filter: TransactionFilter) {

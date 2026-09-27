@@ -54,6 +54,27 @@ export interface PluginWriter {
   extension: string;
 }
 
+/** What a widget may be handed, from the closed list of this plugin API (ADR-0083). */
+export type WidgetRead = "valuation" | "positions" | "performance";
+
+/** A size on the board's grid: width in twelfths, height in rows. */
+export interface GridSize {
+  w: number;
+  h: number;
+}
+
+/** A dashboard widget a plugin brings: one module, drawn in a frame with no origin. */
+export interface PluginWidgetDef {
+  id: string;
+  name: string;
+  description: string;
+  file: string;
+  reads: WidgetRead[];
+  periodic: boolean;
+  size: GridSize;
+  min: GridSize;
+}
+
 export type Plugin = {
   id: string;
   name: string;
@@ -64,6 +85,7 @@ export type Plugin = {
   taxonomies: PluginTaxonomy[];
   dictionaries: PluginDictionary[];
   writers: PluginWriter[];
+  widgets: PluginWidgetDef[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */
@@ -101,6 +123,23 @@ export interface PluginList {
   taxonomy_sets: InstalledTaxonomySet[];
   /** Only the export formats that can actually be written. */
   writers: InstalledWriter[];
+  /** Only the widgets that can actually be placed. */
+  widgets: InstalledWidget[];
   /** The plugin API this build speaks. */
   api: number;
+}
+
+/** One dashboard widget on offer, addressed the way a board stores its type after `plugin:`. */
+export interface InstalledWidget {
+  /** `<plugin id>/<widget id>`. */
+  key: string;
+  name: string;
+  description: string;
+  plugin: string;
+  /** The plugin's own name, which every tile it draws carries. */
+  plugin_name: string;
+  reads: WidgetRead[];
+  periodic: boolean;
+  size: GridSize;
+  min: GridSize;
 }

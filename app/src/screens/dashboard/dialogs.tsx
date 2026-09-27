@@ -20,7 +20,8 @@ import type { Security } from "../../lib/types";
 import { periodLabel, usePeriodRanges } from "../../lib/periods";
 import { METRICS } from "./widgets/metrics";
 
-import { WIDGETS, type Field as WidgetField } from "./widgets";
+import { useWidgetCatalog, type Field as WidgetField, type WidgetDef } from "./widgets";
+import { WIDGET_READ_LABELS } from "../../lib/kinds";
 import { GRID_COLS, limitsOf } from "./grid";
 import {
   MAX_BENCHMARKS,
@@ -44,11 +45,24 @@ import { useAsOf } from "../../lib/asOf";
 export function Palette({ onClose, onPick }: { onClose: () => void; onPick: (type: string) => void }) {
   const { t, i18n } = useLingui();
   // Group by the translated name: the catalog's sections are what the user reads.
-  const groups = new Map<string, [string, (typeof WIDGETS)[string]][]>();
-  for (const [type, def] of Object.entries(WIDGETS)) {
+  const catalog = useWidgetCatalog();
+  const groups = new Map<string, [string, WidgetDef][]>();
+  for (const [type, def] of Object.entries(catalog.all)) {
     const group = i18n._(def.group);
     groups.set(group, [...(groups.get(group) ?? []), [type, def]]);
   }
+
+  // Placing a plugin's tile is the consent to what it reads, so the palette says so before the
+  // first time it does (ADR-0083).
+  const describe = (def: WidgetDef) => {
+    const description = i18n._(def.description);
+    if (!def.plugin) return description;
+    const plugin = def.plugin.name;
+    const reads = def.plugin.reads.map((read) => i18n._(WIDGET_READ_LABELS[read])).join(", ");
+    return reads
+      ? t`${description} From ${plugin}, which is given ${reads}.`
+      : t`${description} From ${plugin}, which is given no portfolio data.`;
+  };
 
   return (
     <Modal title={t`Add widget`} onClose={onClose} wide>
@@ -66,7 +80,7 @@ export function Palette({ onClose, onPick }: { onClose: () => void; onPick: (typ
                   wrap
                   lead={<Icon />}
                   title={i18n._(def.label)}
-                  sub={i18n._(def.description)}
+                  sub={describe(def)}
                   onClick={() => onPick(type)}
                 />
               );
@@ -78,18 +92,20 @@ export function Palette({ onClose, onPick }: { onClose: () => void; onPick: (typ
   );
 }
 
-/** Shared configuration dialog for all widget types. */
-export function Config({
-  widget,
-  onClose,
-  onSave,
-}: {
+interface ConfigProps {
   widget: Widget;
   onClose: () => void;
   onSave: (widget: Widget) => void;
-}) {
+}
+
+/** Shared configuration dialog for all widget types. */
+export function Config(props: ConfigProps) {
+  const def = useWidgetCatalog().of(props.widget.type);
+  return def ? <WidgetConfig {...props} def={def} /> : null;
+}
+
+function WidgetConfig({ widget, onClose, onSave, def }: ConfigProps & { def: WidgetDef }) {
   const { t, i18n } = useLingui();
-  const def = WIDGETS[widget.type];
   const [draft, setDraft] = useState<Widget>({ ...widget, cfg: { ...widget.cfg } });
   const taxonomies = useTaxonomies();
   const securities = useSecurities();

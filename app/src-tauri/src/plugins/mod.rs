@@ -8,17 +8,20 @@
 //! Plain filesystem work over an explicitly passed root, so it is tested on a temporary folder.
 //! This build honours data content — themes, broker layouts, classification sets and operation
 //! dictionaries — plus two kinds of compute over one sandbox, the file reader (ADR-0073) and the
-//! file writer (ADR-0080); the rest of a manifest is read without being acted on, so a package
-//! built for a later version is listed rather than rejected.
+//! file writer (ADR-0080), and one kind of UI, the dashboard widget (ADR-0083); the rest of a
+//! manifest is read without being acted on, so a package built for a later version is listed
+//! rather than rejected.
 
 pub mod reader;
 mod sandbox;
+pub mod widget;
 pub mod writer;
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
 use sq_core::import::{BrokerPreset, KindWords};
 use std::path::{Path, PathBuf};
+pub use widget::{Read, Size, WidgetDef};
 
 const FOLDER: &str = "plugins";
 const MANIFEST: &str = "plugin.json";
@@ -63,6 +66,8 @@ pub struct Provides {
     pub dictionaries: Vec<DictionaryDef>,
     #[serde(default)]
     pub writers: Vec<WriterDef>,
+    #[serde(default)]
+    pub widgets: Vec<WidgetDef>,
 }
 
 /// A file writer: a WASM component that turns the app's own transaction file into another format
@@ -193,6 +198,8 @@ pub struct PluginInfo {
     pub dictionaries: Vec<DictionaryDef>,
     #[serde(default)]
     pub writers: Vec<WriterDef>,
+    #[serde(default)]
+    pub widgets: Vec<WidgetDef>,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -214,6 +221,22 @@ pub struct WriterInfo {
     pub name: String,
     pub plugin: String,
     pub extension: String,
+}
+
+/// One dashboard widget on offer, addressed the way a board stores its type after `plugin:`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct WidgetInfo {
+    /// `<plugin id>/<widget id>`.
+    pub key: String,
+    pub name: String,
+    pub description: String,
+    pub plugin: String,
+    /// The plugin's own name: every tile it draws carries it (ADR-0082).
+    pub plugin_name: String,
+    pub reads: Vec<Read>,
+    pub periodic: bool,
+    pub size: Size,
+    pub min: Size,
 }
 
 /// One installed theme, addressed the way the stored preference addresses it.
@@ -275,6 +298,7 @@ impl Plugins {
                     taxonomies: manifest.provides.taxonomies,
                     dictionaries: manifest.provides.dictionaries,
                     writers: manifest.provides.writers,
+                    widgets: manifest.provides.widgets,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
@@ -286,6 +310,7 @@ impl Plugins {
                     taxonomies: Vec::new(),
                     dictionaries: Vec::new(),
                     writers: Vec::new(),
+                    widgets: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -437,6 +462,59 @@ impl Plugins {
         })
     }
 
+    /// The dashboard widgets on offer, from plugins this build can load.
+    pub fn widgets(&self) -> UiResult<Vec<WidgetInfo>> {
+        Ok(self
+            .list()?
+            .into_iter()
+            .filter(|p| p.status == Status::Ok)
+            .flat_map(|p| {
+                p.widgets.into_iter().map(move |def| WidgetInfo {
+                    key: format!("{}/{}", p.id, def.id),
+                    name: def.name,
+                    description: def.description,
+                    plugin: p.id.clone(),
+                    plugin_name: p.name.clone(),
+                    reads: def.reads,
+                    periodic: def.periodic,
+                    size: def.size,
+                    min: def.min,
+                })
+            })
+            .collect())
+    }
+
+    /// A widget's page and the policy it must be served under, as the `stonqs-plugin` scheme
+    /// answers `/<plugin id>/<widget id>`.
+    pub fn widget_page(&self, plugin: &str, widget: &str) -> UiResult<(String, String)> {
+        let folder = self.loadable(plugin)?;
+        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        let def = manifest
+            .provides
+            .widgets
+            .into_iter()
+            .find(|w| w.id == widget)
+            .ok_or_else(|| UiError::not_found(format!("widget {plugin}/{widget}")))?;
+        let module = std::fs::read_to_string(safe_join(&folder, &def.file)?).map_err(io)?;
+        Ok(widget::page(&module, &uuid::Uuid::new_v4().simple().to_string()))
+    }
+
+    /// The folder of a plugin this build can load, or why not.
+    fn loadable(&self, plugin: &str) -> UiResult<PathBuf> {
+        if !valid_id(plugin) {
+            return Err(UiError::not_found(format!("plugin {plugin}")));
+        }
+        let folder = self.folder_of(plugin);
+        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        if status_of(&manifest) != Status::Ok {
+            return Err(UiError::invalid(format!(
+                "plugin {plugin} is built for plugin API {}",
+                manifest.api
+            )));
+        }
+        Ok(folder)
+    }
+
     /// A theme's stylesheet. Read on demand rather than at startup: only one is ever applied.
     pub fn theme_css(&self, plugin: &str, theme: &str) -> UiResult<String> {
         if !valid_id(plugin) {
@@ -518,11 +596,12 @@ impl Plugins {
             && manifest.provides.taxonomies.is_empty()
             && manifest.provides.dictionaries.is_empty()
             && manifest.provides.writers.is_empty()
+            && manifest.provides.widgets.is_empty()
         {
             return Err(UiError::invalid(format!(
                 "plugin {} declares nothing this build can use: expected `provides.themes`, \
                  `provides.layouts`, `provides.readers`, `provides.writers`, \
-                 `provides.taxonomies` or `provides.dictionaries`",
+                 `provides.widgets`, `provides.taxonomies` or `provides.dictionaries`",
                 manifest.id
             )));
         }
@@ -573,6 +652,13 @@ impl Plugins {
             let expected = std::fs::read(safe_join(source, &def.expected)?)
                 .map_err(|e| UiError::invalid(format!("{}: {e}", def.expected)))?;
             writer::check(&def.id, &safe_join(source, &def.file)?, &sample, &expected)?;
+        }
+
+        // A widget has no answer to be compared with — it draws — so what is checked is its shape.
+        for def in &manifest.provides.widgets {
+            let module = std::fs::read(safe_join(source, &def.file)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.file)))?;
+            widget::check(def, &module)?;
         }
 
         // A classification set proves itself the same way, and needs no expectation of its own:
@@ -628,6 +714,7 @@ impl Plugins {
                     .iter()
                     .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
             )
+            .chain(manifest.provides.widgets.iter().map(|def| def.file.clone()))
             .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()))
             .chain(
                 manifest
@@ -656,6 +743,7 @@ impl Plugins {
             taxonomies: manifest.provides.taxonomies,
             dictionaries: manifest.provides.dictionaries,
             writers: manifest.provides.writers,
+            widgets: manifest.provides.widgets,
         })
     }
 

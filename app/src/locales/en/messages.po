@@ -652,6 +652,14 @@ msgstr "{dead, plural, one {# venue hidden: the instrument is listed there but r
 #~ msgid "{delta, plural, one {# day} other {# days}}"
 #~ msgstr "{delta, plural, one {# day} other {# days}}"
 
+#: src/screens/dashboard/dialogs.tsx
+msgid "{description} From {plugin}, which is given {reads}."
+msgstr "{description} From {plugin}, which is given {reads}."
+
+#: src/screens/dashboard/dialogs.tsx
+msgid "{description} From {plugin}, which is given no portfolio data."
+msgstr "{description} From {plugin}, which is given no portfolio data."
+
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{dictionaries, plural, one {# operation dictionary} other {# operation dictionaries}}"
 msgstr "{dictionaries, plural, one {# operation dictionary} other {# operation dictionaries}}"
@@ -794,6 +802,14 @@ msgstr "{unseen, plural, one {# new crossing} other {# new crossings}}"
 #: src/screens/Risk.tsx
 msgid "{value, plural, one {# day} other {# days}}"
 msgstr "{value, plural, one {# day} other {# days}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+msgstr "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{widgets, plural, one {# dashboard widget} other {# dashboard widgets}}"
+msgstr "{widgets, plural, one {# dashboard widget} other {# dashboard widgets}}"
 
 #. placeholder {0}: s.total
 #: src/screens/Import/CommitStep.tsx
@@ -1104,8 +1120,12 @@ msgstr "A plan is a contribution on a schedule: how much, how often, and what it
 #~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language and readers for files the app cannot open by itself."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
-msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -1225,6 +1245,10 @@ msgstr "A target is a set of weights over taxonomy nodes. Without one there is n
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 msgstr "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "A tile drawn by a plugin that is no longer installed."
+msgstr "A tile drawn by a plugin that is no longer installed."
 
 #: src/screens/dashboard/dialogs.tsx
 msgid "A token is about three quarters of an English word, less in Russian. Left empty, the model decides how long to be."
@@ -6878,6 +6902,15 @@ msgstr "Planning"
 msgid "Plans"
 msgstr "Plans"
 
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "Plugin not installed"
+msgstr "Plugin not installed"
+
+#: src/screens/dashboard/widgets/index.tsx
+msgid "Plugin widget"
+msgstr "Plugin widget"
+
+#: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "Plugins"
@@ -6960,6 +6993,10 @@ msgstr "Portfolio yield"
 #: src/screens/dashboard/widgets/index.tsx
 #~ msgid "Position contribution to the return as a staircase, largest first."
 #~ msgstr "Position contribution to the return as a staircase, largest first."
+
+#: src/lib/kinds.ts
+msgid "positions"
+msgstr "positions"
 
 #: src/components/Nav/model.ts
 #: src/lib/tour/steps.ts
@@ -7666,6 +7703,10 @@ msgstr "Return above the risk-free rate per unit of volatility."
 #: src/screens/Risk.tsx
 msgid "Return above the risk-free rate per unit of volatility. Above 1 is good."
 msgstr "Return above the risk-free rate per unit of volatility. Above 1 is good."
+
+#: src/lib/kinds.ts
+msgid "return and flows over the period"
+msgstr "return and flows over the period"
 
 #: src/screens/Performance/index.tsx
 msgid "Return by month"
@@ -9142,6 +9183,10 @@ msgstr "The period's time-weighted return restated as a yearly rate."
 msgid "the plan has no targets"
 msgstr "the plan has no targets"
 
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "The plugin that drew this tile has been removed. Install it again, or remove the tile."
+msgstr "The plugin that drew this tile has been removed. Install it again, or remove the tile."
+
 #: src/screens/Import/AccountTarget.tsx
 msgid "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
 msgstr "The portfolio has no brokerage account yet. Create one on the \"Accounts\" screen — it needs a cash account to settle on — and come back to this step."
@@ -9559,6 +9604,18 @@ msgstr "this pace does not arrive"
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
 msgstr "this period against the one before"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "This plugin's tile did not start."
+msgstr "This plugin's tile did not start."
+
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "This plugin's tile failed: {detail}"
+msgstr "This plugin's tile failed: {detail}"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+msgid "This plugin's tile never drew anything."
+msgstr "This plugin's tile never drew anything."
 
 #: src/components/domain/positionColumns.tsx
 msgid "This position's share of everything the current scope holds."
@@ -10078,6 +10135,10 @@ msgstr "Value and cost"
 #: src/screens/Performance/index.tsx
 msgid "Value and flows"
 msgstr "Value and flows"
+
+#: src/lib/kinds.ts
+msgid "value and results"
+msgstr "value and results"
 
 #: src/screens/Performance/Metrics.tsx
 msgid "value changed by"
