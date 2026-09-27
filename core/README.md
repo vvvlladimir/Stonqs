@@ -28,7 +28,7 @@ inflation/  the same shape again for consumer-price indices.
 import/     broker file -> parsed rows -> mapping -> preview -> one database transaction.
 calc/       the maths: holdings -> valuation -> series -> every metric above it.
             Knows model plus two small traits, and nothing about SQLite or the network.
-sources.rs  the catalogue of shipped data sources and the only builder of the services.
+sources/    the catalogue of shipped data sources and the only builder of the services.
 ```
 
 `calc` depending on `PriceLookup` / `RateLookup` rather than on `Store` is what makes a TWR test

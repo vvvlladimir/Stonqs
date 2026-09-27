@@ -68,23 +68,23 @@ model/    domain types (Account, AccountGroup, Security, SecurityAttributeDef, T
           SecurityAlert, SecurityEvent, Watchlist)
 storage/  Store owns one rusqlite Connection; per-entity repository files.
           Implements PriceLookup (quotes.rs) and RateLookup (fx_rates.rs).
-market/   QuoteProvider (yahoo.rs live, stooq.rs kept as a second example),
+market/   QuoteProvider (yahoo/ live, stooq.rs kept as a second example),
           SecuritySearch (instrument directory), ListingDirectory (openfigi.rs +
           mic.rs), MarketDataService = provider registry + cache + resolve().
 fx/       mirrors market/: FxProvider, ecb.rs, StaticFxProvider (offline/tests), FxService.
 inflation/ mirrors fx/ again for consumer-price indices (eurostat.rs, imf.rs, codes.rs) — an
           index is monthly, so its lookup steps rather than interpolates (ADR-0060).
-sources.rs the catalogue of shipped sources (SourceInfo rows, one constructor per role) and
+sources/   the catalogue of shipped sources (SourceInfo rows, one constructor per role) and
           the only builder of MarketDataService/FxService from a `Setup` (keys, switches,
           custom sources — ADR-0050/0053). Quotes and FX are chains with a fallback guard
-          (market/guard.rs, ADR-0051/0052); market/custom.rs is the user-described feed (ADR-0054).
-calc/     holdings.rs -> valuation.rs -> series.rs -> risk.rs / benchmark.rs
+          (market/guard.rs, ADR-0051/0052); market/custom/ is the user-described feed (ADR-0054).
+calc/     holdings.rs -> valuation.rs -> series.rs -> risk/ / benchmark.rs
           -> allocation.rs / rebalance/, capital_gains.rs, dividends.rs,
-          income.rs, charges.rs, journal.rs, periods.rs, plans.rs, alerts.rs, watchlist.rs;
+          income.rs, charges.rs, journal.rs, periods/, plans.rs, alerts.rs, watchlist.rs;
           twr.rs / xirr.rs;
           engine/ glues everything as PortfolioAnalytics, its impl split by subject.
 app/      Tauri host: commands/ (thin), state.rs (Mutex<Store> + Portfolio of the open
-          profile), profiles.rs (one folder per profile), vault.rs + secrets.rs
+          profile), profiles.rs (one folder per profile), vault/ + secrets.rs
           (password-sealed provider keys, the lock), dbfile.rs (plain <-> encrypted
           database file, ADR-0049),
           error.rs (UiError), plugins/ (installed packages, one folder each: the
@@ -92,9 +92,9 @@ app/      Tauri host: commands/ (thin), state.rs (Mutex<Store> + Portfolio of th
           plugin is handed — ADR-0070). Frontend: lib/api.ts is the only file that
           imports @tauri-apps/api; lib/types/ is a barrel, still imported as
           "lib/types".
-import/   parse_file -> parse.rs | ibflex.rs (IB Flex XML, ADR-0061) -> mapping/
+import/   parse_file -> parse/ | ibflex/ (IB Flex XML, ADR-0061) -> mapping/
           -> preview/ -> service.rs (only place that touches Store).
-          taxonomy.rs handles taxonomy CSV. checks.rs is the
+          taxonomy/ handles taxonomy CSV. checks/ is the
           plausibility layer. presets.rs ships broker layouts from
           presets/brokers.json.
 ```
@@ -132,7 +132,8 @@ stale one makes it confidently wrong rather than merely vague (`.claude/rules/as
 - Doc comments and code comments are written in English. Comment only what the code does not already say: a non-obvious decision, an invariant that would break silently, or a gotcha a future reader would hit. Skip comments that restate the line below them. Keep comments to 1–2 lines; move longer explanations to the relevant `.claude/rules/*.md` file or an ADR.
 - Every calculation test starts with the arithmetic worked out longhand in a comment, then the same computation in code — see `core/tests/calc_examples/`. Keep that shape.
 - Tests needing network are `#[ignore = "requires network"]`.
-- Unit tests live next to the code (`mod tests`); cross-layer tests live in `core/tests/`. A test
+- Unit tests live next to the code (`mod tests`); once they outweigh ~100 lines the module becomes
+  `<name>/mod.rs` + `<name>/tests.rs` (`#[cfg(test)] mod tests;`). Cross-layer tests live in `core/tests/`. A test
   binary that outgrows one file becomes `core/tests/<name>/main.rs` plus a module per subject —
   one binary, so link time does not grow with the number of themes. `support` is shared, so a
   folder reaches it with `#[path = "../support/mod.rs"]`.

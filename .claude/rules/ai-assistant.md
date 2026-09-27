@@ -17,7 +17,7 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   `signature` on `Block::ToolCall`/`Block::Reasoning` exists only because a provider that signs a
   step refuses it handed back unsigned — Anthropic's thinking block, and Gemini's
   `thoughtSignature` on the function call itself.
-- Gemini is the odd one in four specific ways, all of them in `ai/gemini.rs` and nowhere else: it
+- Gemini is the odd one in four specific ways, all of them in `ai/gemini/` and nowhere else: it
   takes a **subset of OpenAPI 3.0** rather than JSON Schema, so the catalogue's strict-mode
   schemas are translated on the way out (`gemini::schema` — an allowlist of fields, a union type
   becoming `type` plus `nullable`, `null` dropped out of an enum), and both `args` and a tool
@@ -35,7 +35,7 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   once it has an address and a model, and its key is *optional* — a model served from the user's
   own machine authenticates nothing (`keys::for_call`). `Wire::OpenAiChat` is the default and the
   point of the feature: outside OpenAI itself, "OpenAI-compatible" always means
-  `POST {base}/chat/completions`, which is `ai/compat.rs`. The other three wires are the existing
+  `POST {base}/chat/completions`, which is `ai/compat/`. The other three wires are the existing
   adapters with their host replaced (`OpenAiProvider::at`, `AnthropicProvider::at`,
   `GeminiProvider::at`). No table of
   vendors ships in the binary. See ADR-0042.
@@ -176,7 +176,7 @@ ADR-0037 says why the assistant lives in the host and not in `core`.
   it names. `catalog::Provider::default_model` (small tier) answers only when no list can be read.
   The tool mode is **not** carried (ADR-0037), and `settings_save` never overwrites the remembered
   picks.
-- The model list comes from the provider (`ai/models.rs`, cached per provider in
+- The model list comes from the provider (`ai/models/`, cached per provider in
   `AppState::ai_models`, cleared for the custom one when its address changes), cut to **three**: the newest of each tier the catalogue already has
   (`gpt-…-sol / -terra / -luna` — or the older `gpt-… / -mini / -nano`, same slots — and
   `opus / sonnet / haiku`). The three are derived from what the provider

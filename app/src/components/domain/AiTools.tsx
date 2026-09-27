@@ -366,7 +366,7 @@ export function ProviderPicker({
 
 /**
  * Which model answers this chat: the three the provider's catalogue puts at the top of each of
- * its tiers (`ai/models.rs`). The chat's current one is always an option, even when the list
+ * its tiers (`ai/models/`). The chat's current one is always an option, even when the list
  * could not be fetched and even when it is not one of the three.
  */
 export function ModelPicker({
