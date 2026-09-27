@@ -55,7 +55,8 @@ export interface PluginWriter {
 }
 
 /** What a widget may be handed, from the closed list of this plugin API (ADR-0083). */
-export type WidgetRead = "valuation" | "positions" | "performance";
+/** `transactions` is a screen's read only (ADR-0084). */
+export type WidgetRead = "valuation" | "positions" | "performance" | "transactions";
 
 /** A size on the board's grid: width in twelfths, height in rows. */
 export interface GridSize {
@@ -75,6 +76,18 @@ export interface PluginWidgetDef {
   min: GridSize;
 }
 
+/** A whole screen a plugin brings: a larger widget that follows the app's lenses. */
+export interface PluginScreenDef {
+  id: string;
+  name: string;
+  description: string;
+  file: string;
+  reads: WidgetRead[];
+  periodic: boolean;
+  /** Keeps one document in the profile. */
+  storage: boolean;
+}
+
 export type Plugin = {
   id: string;
   name: string;
@@ -86,6 +99,7 @@ export type Plugin = {
   dictionaries: PluginDictionary[];
   writers: PluginWriter[];
   widgets: PluginWidgetDef[];
+  screens: PluginScreenDef[];
 } & PluginStatus;
 
 /** One installed theme, addressed the way the stored preference addresses it. */
@@ -125,6 +139,8 @@ export interface PluginList {
   writers: InstalledWriter[];
   /** Only the widgets that can actually be placed. */
   widgets: InstalledWidget[];
+  /** Only the screens that can actually be opened. */
+  screens: InstalledScreen[];
   /** The plugin API this build speaks. */
   api: number;
 }
@@ -142,4 +158,17 @@ export interface InstalledWidget {
   periodic: boolean;
   size: GridSize;
   min: GridSize;
+}
+
+/** One screen on offer, addressed the way the navigation hint names it. */
+export interface InstalledScreen {
+  /** `<plugin id>/<screen id>`. */
+  key: string;
+  name: string;
+  description: string;
+  plugin: string;
+  plugin_name: string;
+  reads: WidgetRead[];
+  periodic: boolean;
+  storage: boolean;
 }

@@ -46,6 +46,13 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   `lib/pluginBridge.ts` projects it into the bridge's own field names, versioned by `api`, before
   posting it. The tile's header names the plugin, because what it shows is the plugin's number
   (ADR-0082).
+- A plugin's **screen** (ADR-0084) is the same page under `/screen/<plugin>/<id>` beside
+  `/widget/…`, following the app's lenses rather than a source of its own — which is why
+  `transactions` is a screen's read only (`transactions_list` has no `source`). It may keep **one
+  document** in the profile (`plugin_state`, migration 0031) if its manifest says `storage`:
+  `plugin_state_get/save` refuse anybody else, cap it at 256 KiB, and ask nothing, because it is
+  the plugin's data and reaches no operation, account or figure. The frame's `save` message is the
+  bridge's only write.
 - A plugin's **file writer** is the reader turned round (ADR-0080): `wit/writer.wit`,
   `write(canonical) -> result<bytes, reason>`, run in the same `plugins/sandbox.rs`. It is handed
   what `transactions_export` already built — the screen's filter, the store released first — and

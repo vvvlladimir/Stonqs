@@ -142,6 +142,11 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
         "latest_source",
         include_str!("../../migrations/0030_latest_source.sql"),
     ),
+    (
+        31,
+        "plugin_state",
+        include_str!("../../migrations/0031_plugin_state.sql"),
+    ),
 ];
 
 /// Applies all pending migrations.

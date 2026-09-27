@@ -9,9 +9,10 @@ for what a plugin may and may not be, and
 [ADR-0073](../../docs/decisions/0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)
 for the file reader, [ADR-0080](../../docs/decisions/0080-a-file-writer-is-the-reader-turned-round.md)
 for the file writer, [ADR-0083](../../docs/decisions/0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)
-for the dashboard widget. This build honours seven kinds of content: themes, broker import
-layouts, classification sets, operation dictionaries, file readers, file writers and dashboard
-widgets.
+for the dashboard widget, [ADR-0084](../../docs/decisions/0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md)
+for the screen. This build honours eight kinds of content: themes, broker import layouts,
+classification sets, operation dictionaries, file readers, file writers, dashboard widgets and
+screens.
 
 ## `midnight` — a theme
 
@@ -377,4 +378,64 @@ What the page can reach is what it is handed:
 There is no `sample` and no `expected` here, unlike a reader: a drawing has no answer the app could
 compare it with. What the install checks is the shape — a `.js` file, known reads, sizes that fit
 the grid.
+
+## `spending` — a screen
+
+Where the money that left went: every withdrawal of the period sorted into a category by the first
+rule whose text the operation's note contains. It is the test this API was built against — a
+feature of its own, written as a plugin, needing no hole in the app. Import a bank statement (the
+`mt940` reader above is one way), open **Plugins → Spending**, and sort what it asks about.
+
+```json
+{
+  "id": "app.stonqs.spending",
+  "api": 1,
+  "name": "Spending",
+  "version": "1.0.0",
+  "provides": {
+    "screens": [
+      {
+        "id": "spending",
+        "name": "Spending",
+        "description": "Where the money that left went: withdrawals sorted into categories by rules you write.",
+        "file": "spending.js",
+        "reads": ["transactions"],
+        "periodic": true,
+        "storage": true
+      }
+    ]
+  }
+}
+```
+
+A screen is a widget with the whole page: the same module, the same `stonqs.render`, the same
+page with no network and no origin. Three things differ.
+
+- **It follows the app's lenses** — the account picker and the date — and has no data source of
+  its own. With `periodic`, the app puts its period control in the screen's header.
+- **`transactions` is a screen's read**, and requires `periodic`: the operations of the accounts in
+  view over the period. A widget cannot ask for it, because a widget has a source of its own and
+  the operation list does not.
+
+  | read | shape |
+  | --- | --- |
+  | `transactions` | `base_currency`, `rows[]`: `id` (opaque, stable while the row exists), `date`, `kind` (`BUY`, `WITHDRAWAL`, …), `account` (its name), `symbol`, `amount` and `currency`, `amount_base`, `net_base` (signed cash leg), `note` |
+
+- **With `storage`, it keeps one document** in the open profile:
+
+  ```js
+  stonqs.render((root, { data }) => {
+    const rules = data.state?.rules ?? []; // null before the first save
+    // …
+    stonqs.save({ rules: [...rules, { match: "REWE", category: "Groceries" }] });
+  });
+  ```
+
+  `save` replaces the whole document (up to 256 KiB) and the page is rendered again with it. It is
+  the plugin's data, not the portfolio's: it cannot change an operation, an account or a figure, and
+  nothing in the app reads it — which is why saving asks nothing. It lives in the profile's
+  database, so a profile with a password encrypts it, and removing the plugin leaves it in place.
+
+The page has no forms (`<form>` does not submit in a sandbox with scripts only): use buttons with
+click handlers, as `spending.js` does.
 

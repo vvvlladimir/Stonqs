@@ -376,8 +376,8 @@ fn profile_list_keys_match_the_typescript_types() {
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
     use sq_app_lib::plugins::{
-        Base, DictionaryDef, PluginInfo, Read, ReaderDef, Size, Status, TaxonomyDef, ThemeDef, WidgetDef,
-        WidgetInfo, WriterDef, WriterInfo,
+        Base, DictionaryDef, PluginInfo, Read, ReaderDef, ScreenDef, ScreenInfo, Size, Status, TaxonomyDef,
+        ThemeDef, WidgetDef, WidgetInfo, WriterDef, WriterInfo,
     };
 
     let json = serde_json::to_value(PluginInfo {
@@ -426,6 +426,15 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             size: Size { w: 6, h: 8 },
             min: Size { w: 3, h: 4 },
         }],
+        screens: vec![ScreenDef {
+            id: "spending".into(),
+            name: "Spending".into(),
+            description: String::new(),
+            file: "spending.js".into(),
+            reads: vec![Read::Transactions],
+            periodic: true,
+            storage: true,
+        }],
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -440,6 +449,7 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
             "layouts",
             "name",
             "readers",
+            "screens",
             "speaks",
             "status",
             "taxonomies",
@@ -510,4 +520,31 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
         serde_json::json!(["positions", "valuation", "performance"])
     );
     assert_eq!(keys(&json["size"]), ["h", "w"]);
+
+    // A screen is addressed like a widget and says whether it keeps a document (ADR-0084).
+    let json = serde_json::to_value(ScreenInfo {
+        key: "app.stonqs.spending/spending".into(),
+        name: "Spending".into(),
+        description: String::new(),
+        plugin: "app.stonqs.spending".into(),
+        plugin_name: "Spending".into(),
+        reads: vec![Read::Transactions],
+        periodic: true,
+        storage: true,
+    })
+    .unwrap();
+    assert_eq!(
+        keys(&json),
+        [
+            "description",
+            "key",
+            "name",
+            "periodic",
+            "plugin",
+            "plugin_name",
+            "reads",
+            "storage"
+        ]
+    );
+    assert_eq!(json["reads"], serde_json::json!(["transactions"]));
 }

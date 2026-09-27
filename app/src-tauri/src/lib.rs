@@ -42,10 +42,10 @@ pub fn run() {
         .plugin(tauri_plugin_process::init());
 
     builder
-        // A plugin widget's page: served here rather than written into the frame, so it runs under
-        // a policy of its own instead of inheriting the app's (ADR-0083).
-        .register_uri_scheme_protocol(commands::plugins::WIDGET_SCHEME, |ctx, request| {
-            commands::plugins::widget_page(ctx.app_handle(), &request)
+        // A plugin's page, widget or screen: served here rather than written into the frame, so it
+        // runs under a policy of its own instead of inheriting the app's (ADR-0083).
+        .register_uri_scheme_protocol(commands::plugins::PAGE_SCHEME, |ctx, request| {
+            commands::plugins::page(ctx.app_handle(), &request)
         })
         .setup(|app| {
             let state = AppState::bootstrap(app)?;
@@ -72,6 +72,8 @@ pub fn run() {
             commands::plugins::plugin_remove,
             commands::plugins::plugin_theme_css,
             commands::plugins::plugin_taxonomy_csv,
+            commands::plugins::plugin_state_get,
+            commands::plugins::plugin_state_save,
             commands::profiles::profiles_list,
             commands::profiles::profile_create,
             commands::profiles::profile_rename,

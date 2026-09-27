@@ -98,7 +98,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [45](0045-a-dashboard-tile-is-resized-from-the-edge-being-dragged.md) | A dashboard tile is resized from the edge being dragged | Accepted |
 | [59](0059-a-tile-may-hold-assumptions-and-a-ratio-is-a-rendering.md) | A tile may hold assumptions, and a ratio of two shown figures is a rendering | Accepted |
 | [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted |
-| [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins, the file reader ([73](0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)) the file writer ([80](0080-a-file-writer-is-the-reader-turned-round.md)) and dashboard widgets ([83](0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)) implemented; "what a number means" narrowed by [82](0082-a-plugin-may-show-a-number-of-its-own-under-its-own-name.md) |
+| [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins, the file reader ([73](0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)) the file writer ([80](0080-a-file-writer-is-the-reader-turned-round.md)) dashboard widgets ([83](0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)) and screens ([84](0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md)) implemented; "what a number means" narrowed by [82](0082-a-plugin-may-show-a-number-of-its-own-under-its-own-name.md) |
 | [77](0077-the-tour-is-a-declaration-over-the-real-screens.md) | The guided tour is a declaration over the real screens | Accepted |
 | [78](0078-the-app-states-what-it-is-not.md) | The app states what it is not, and carries its notices | Accepted |
 | [79](0079-a-latest-close-source-extends-the-tail-and-never-rewrites-the-history.md) | A latest-close source extends the tail and never rewrites the history | Accepted |
@@ -106,6 +106,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [81](0081-a-trade-may-be-cut-per-lot.md) | A trade may be cut per lot | Accepted |
 | [82](0082-a-plugin-may-show-a-number-of-its-own-under-its-own-name.md) | A plugin may show a number of its own, under its own name | Accepted |
 | [83](0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md) | A plugin widget is a page with no origin, fed by the host | Accepted |
+| [84](0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md) | A plugin screen, and the one document a plugin keeps | Accepted |
 
 ## Profiles, keys and encryption
 

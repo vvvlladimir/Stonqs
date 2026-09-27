@@ -544,9 +544,14 @@ export const api = {
   /** A classification set's CSV, previewed and committed by the commands every taxonomy file
    *  goes through — the set has no path into the portfolio of its own. */
   pluginTaxonomyCsv: (plugin: string, set: string) => call<number[]>("plugin_taxonomy_csv", { plugin, set }),
-  /** Where a widget's page is served: the host's own scheme, spelled the way this platform
-   *  spells a custom one (ADR-0083). `key` is `<plugin id>/<widget id>`. */
-  pluginWidgetUrl: (key: string) => convertFileSrc(key, "stonqs-plugin"),
+  /** Where a plugin's page is served: the host's own scheme, spelled the way this platform
+   *  spells a custom one (ADR-0083). `key` is `<plugin id>/<widget or screen id>`. */
+  pluginPageUrl: (kind: "widget" | "screen", key: string) =>
+    convertFileSrc(`${kind}/${key}`, "stonqs-plugin"),
+  /** A plugin's one document in the open profile; null before it saved one (ADR-0084). */
+  pluginStateGet: (plugin: string) => call<unknown>("plugin_state_get", { plugin }),
+  pluginStateSave: (plugin: string, document: unknown) =>
+    call<void>("plugin_state_save", { plugin, document }),
 
   profilesList: () => call<ProfileList>("profiles_list"),
   profileCreate: (name: string) => call<Profile>("profile_create", { name }),

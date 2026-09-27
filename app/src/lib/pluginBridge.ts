@@ -15,6 +15,8 @@ import type {
   PeriodRange,
   PositionsData,
   DashboardData,
+  TransactionKind,
+  TransactionsData,
   WidgetRead,
 } from "./types";
 
@@ -74,10 +76,36 @@ export interface BridgePerformance {
   series: { date: DateString; value: MoneyString; flow: MoneyString }[];
 }
 
+export interface BridgeTransaction {
+  /** Opaque and stable for as long as the row exists: what a plugin may remember a choice by. */
+  id: string;
+  date: DateString;
+  kind: TransactionKind;
+  /** The account's name. */
+  account: string;
+  symbol: string | null;
+  /** In `currency`; before charges, as the app stores it. */
+  amount: MoneyString;
+  currency: string;
+  /** `amount` in the base currency at the date's rate. */
+  amount_base: MoneyString;
+  /** The signed cash leg in the base currency; purchases are negative. */
+  net_base: MoneyString;
+  note: string | null;
+}
+
+export interface BridgeTransactions {
+  base_currency: string;
+  rows: BridgeTransaction[];
+}
+
 export interface BridgeData {
   valuation?: BridgeValuation;
   positions?: BridgePositions;
   performance?: BridgePerformance;
+  transactions?: BridgeTransactions;
+  /** The plugin's own document, for a screen that declared `storage`; null before the first save. */
+  state?: unknown;
 }
 
 export interface BridgeContext {
@@ -92,13 +120,15 @@ export interface BridgeContext {
 
 /** What the frame may say. Anything else is ignored. */
 export type FrameMessage =
-  { stonqs: 1; type: "ready" } | { stonqs: 1; type: "error"; code: "threw" | "no_render"; detail: string };
+  | { stonqs: 1; type: "ready" }
+  | { stonqs: 1; type: "error"; code: "threw" | "no_render"; detail: string }
+  | { stonqs: 1; type: "save"; state: unknown };
 
 export function isFrameMessage(value: unknown): value is FrameMessage {
   if (!value || typeof value !== "object") return false;
   const m = value as Record<string, unknown>;
   if (m.stonqs !== 1) return false;
-  if (m.type === "ready") return true;
+  if (m.type === "ready" || m.type === "save") return true;
   return m.type === "error" && (m.code === "threw" || m.code === "no_render") && typeof m.detail === "string";
 }
 
@@ -217,9 +247,27 @@ export function projectPerformance(d: PerformanceData): BridgePerformance {
   };
 }
 
-/** Whether every declared read has arrived: a widget is rendered once, with all it asked for. */
-export function complete(reads: readonly WidgetRead[], data: BridgeData): boolean {
-  return reads.every((read) => data[read] !== undefined);
+export function projectTransactions(d: TransactionsData): BridgeTransactions {
+  return {
+    base_currency: d.base_currency,
+    rows: d.rows.map((r) => ({
+      id: r.id,
+      date: r.date,
+      kind: r.kind,
+      account: r.account_name,
+      symbol: r.symbol,
+      amount: r.amount,
+      currency: r.currency,
+      amount_base: r.amount_base,
+      net_base: r.net_base,
+      note: r.note,
+    })),
+  };
+}
+
+/** Whether every declared read has arrived: a page is rendered once, with all it asked for. */
+export function complete(reads: readonly WidgetRead[], data: BridgeData, storage = false): boolean {
+  return reads.every((read) => data[read] !== undefined) && (!storage || data.state !== undefined);
 }
 
 /** The period the frame is told about: only a periodic widget has one. */

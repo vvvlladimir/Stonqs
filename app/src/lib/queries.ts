@@ -34,6 +34,7 @@ export const keys = {
   profiles: () => key("profiles"),
   plugins: () => key("plugins"),
   pluginTheme: (key_?: string) => key("plugin-theme", key_),
+  pluginState: (plugin?: string) => key("plugin-state", plugin),
   portfolio: () => key("portfolio"),
   aiKeyStatus: (provider?: string) => key("ai-key-status", provider),
   aiChats: () => key("ai-chats"),
@@ -414,9 +415,10 @@ export function useDashboard(date: DateString, source?: Source) {
 }
 
 /**
- * What a plugin widget declared it reads, and nothing else (ADR-0083): the same keys and calls as
- * the built-in tiles, so a plugin tile beside a positions list costs no second query. A read the
- * widget did not declare is never fetched, which is the whole of its permission.
+ * What a plugin page declared it reads, and nothing else (ADR-0083/0084): the same keys and calls
+ * as the built-in screens, so a plugin tile beside a positions list costs no second query. A read
+ * the page did not declare is never fetched, which is the whole of its permission. `transactions`
+ * has only the app's lens, which is why a widget (with a source of its own) is never given it.
  */
 export function usePluginReads(
   reads: readonly WidgetRead[],
@@ -424,7 +426,7 @@ export function usePluginReads(
   range: PeriodRange | undefined,
   source?: Source,
 ) {
-  const [valuation, positions, performance] = useQueries({
+  const [valuation, positions, performance, transactions] = useQueries({
     queries: [
       {
         queryKey: keys.dashboard(date, source),
@@ -441,9 +443,23 @@ export function usePluginReads(
         queryFn: () => api.performanceSummary(range!.from, range!.to, source),
         enabled: reads.includes("performance") && range !== undefined,
       },
+      {
+        queryKey: keys.transactions({ from: range?.from, to: range?.to }),
+        queryFn: () => api.transactionsList({ from: range!.from, to: range!.to }),
+        enabled: reads.includes("transactions") && range !== undefined,
+      },
     ],
   });
-  return { valuation, positions, performance };
+  return { valuation, positions, performance, transactions };
+}
+
+/** A plugin's own document in the profile, for a page that declared `storage` (ADR-0084). */
+export function usePluginState(plugin: string | null) {
+  return useQuery({
+    queryKey: keys.pluginState(plugin ?? undefined),
+    queryFn: () => api.pluginStateGet(plugin!),
+    enabled: plugin !== null,
+  });
 }
 
 export function useTransactions(filter: TransactionFilter) {

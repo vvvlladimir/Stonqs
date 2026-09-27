@@ -1,5 +1,6 @@
-// The whole of what a widget page knows about the app (ADR-0083): one message in, carrying the
-// context and the reads the manifest declared, and three out — ready, an error, nothing else.
+// The whole of what a plugin page knows about the app (ADR-0083/0084): one message in, carrying
+// the context and the reads the manifest declared, and three out — ready, an error, and a screen's
+// own document to keep.
 (() => {
   "use strict";
   const host = window.parent;
@@ -34,6 +35,11 @@
       if (typeof fn !== "function") throw new TypeError("stonqs.render takes a function");
       renderer = fn;
       run();
+    },
+    /** Replaces the plugin's one document in the profile; it comes back as `data.state` on the
+     *  next render. Only a screen declaring `storage` is answered (ADR-0084). */
+    save(state) {
+      post({ type: "save", state: JSON.parse(JSON.stringify(state)) });
     },
   });
 

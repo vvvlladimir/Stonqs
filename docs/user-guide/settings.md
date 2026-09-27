@@ -124,9 +124,10 @@ plugin may bring: colour themes, which then appear under Appearance; broker impo
 appear in the import wizard's layout list; ready classification sets, which appear beside `Import
 from CSV…` on the Allocation screen; operation words in another language, used by the import;
 readers for file formats the app cannot open by itself, used automatically when such a file is
-imported; formats to export transactions to, offered by `Export`; and dashboard tiles, offered in
-the dashboard's palette under *Plugins*. The list says what each plugin brings, and for dashboard
-tiles what they will be given.
+imported; formats to export transactions to, offered by `Export`; dashboard tiles, offered in
+the dashboard's palette under *Plugins*; and whole screens, listed under *Plugins* in the
+navigation. The list says what each plugin brings, what its tiles and screens will be given, and
+whether it keeps settings of its own in the profile.
 
 A plugin never changes what a figure means — how a return, a cost basis or a position is computed
 is fixed in the app. A package built for another version of the app is listed with that as the

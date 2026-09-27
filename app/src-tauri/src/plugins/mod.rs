@@ -8,7 +8,8 @@
 //! Plain filesystem work over an explicitly passed root, so it is tested on a temporary folder.
 //! This build honours data content — themes, broker layouts, classification sets and operation
 //! dictionaries — plus two kinds of compute over one sandbox, the file reader (ADR-0073) and the
-//! file writer (ADR-0080), and one kind of UI, the dashboard widget (ADR-0083); the rest of a
+//! file writer (ADR-0080), and two kinds of UI, the dashboard widget (ADR-0083) and the screen
+//! (ADR-0084); the rest of a
 //! manifest is read without being acted on, so a package built for a later version is listed
 //! rather than rejected.
 
@@ -21,7 +22,7 @@ use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
 use sq_core::import::{BrokerPreset, KindWords};
 use std::path::{Path, PathBuf};
-pub use widget::{Read, Size, WidgetDef};
+pub use widget::{Read, ScreenDef, Size, WidgetDef};
 
 const FOLDER: &str = "plugins";
 const MANIFEST: &str = "plugin.json";
@@ -68,6 +69,8 @@ pub struct Provides {
     pub writers: Vec<WriterDef>,
     #[serde(default)]
     pub widgets: Vec<WidgetDef>,
+    #[serde(default)]
+    pub screens: Vec<ScreenDef>,
 }
 
 /// A file writer: a WASM component that turns the app's own transaction file into another format
@@ -200,6 +203,8 @@ pub struct PluginInfo {
     pub writers: Vec<WriterDef>,
     #[serde(default)]
     pub widgets: Vec<WidgetDef>,
+    #[serde(default)]
+    pub screens: Vec<ScreenDef>,
     #[serde(flatten)]
     pub status: Status,
 }
@@ -222,6 +227,41 @@ pub struct WriterInfo {
     pub plugin: String,
     pub extension: String,
 }
+
+/// One screen on offer, addressed the way the navigation hint names it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ScreenInfo {
+    /// `<plugin id>/<screen id>`.
+    pub key: String,
+    pub name: String,
+    pub description: String,
+    pub plugin: String,
+    /// The plugin's own name, which the screen's header always shows (ADR-0082).
+    pub plugin_name: String,
+    pub reads: Vec<Read>,
+    pub periodic: bool,
+    pub storage: bool,
+}
+
+/// Which kind of page the `stonqs-plugin` scheme is asked for: the first segment of its path.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PageKind {
+    Widget,
+    Screen,
+}
+
+impl PageKind {
+    pub fn parse(segment: &str) -> Option<Self> {
+        match segment {
+            "widget" => Some(PageKind::Widget),
+            "screen" => Some(PageKind::Screen),
+            _ => None,
+        }
+    }
+}
+
+/// The largest document a plugin may keep (ADR-0084).
+pub const STATE_LIMIT: usize = 256 * 1024;
 
 /// One dashboard widget on offer, addressed the way a board stores its type after `plugin:`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -299,6 +339,7 @@ impl Plugins {
                     dictionaries: manifest.provides.dictionaries,
                     writers: manifest.provides.writers,
                     widgets: manifest.provides.widgets,
+                    screens: manifest.provides.screens,
                 },
                 Err(detail) => PluginInfo {
                     id: id.clone(),
@@ -311,6 +352,7 @@ impl Plugins {
                     dictionaries: Vec::new(),
                     writers: Vec::new(),
                     widgets: Vec::new(),
+                    screens: Vec::new(),
                     status: Status::Broken { detail },
                 },
             });
@@ -484,19 +526,57 @@ impl Plugins {
             .collect())
     }
 
-    /// A widget's page and the policy it must be served under, as the `stonqs-plugin` scheme
-    /// answers `/<plugin id>/<widget id>`.
-    pub fn widget_page(&self, plugin: &str, widget: &str) -> UiResult<(String, String)> {
+    /// The screens on offer, from plugins this build can load, in the list's order.
+    pub fn screens(&self) -> UiResult<Vec<ScreenInfo>> {
+        Ok(self
+            .list()?
+            .into_iter()
+            .filter(|p| p.status == Status::Ok)
+            .flat_map(|p| {
+                p.screens.into_iter().map(move |def| ScreenInfo {
+                    key: format!("{}/{}", p.id, def.id),
+                    name: def.name,
+                    description: def.description,
+                    plugin: p.id.clone(),
+                    plugin_name: p.name.clone(),
+                    reads: def.reads,
+                    periodic: def.periodic,
+                    storage: def.storage,
+                })
+            })
+            .collect())
+    }
+
+    /// A page and the policy it must be served under, as the `stonqs-plugin` scheme answers
+    /// `/<widget|screen>/<plugin id>/<id>`.
+    pub fn page(&self, kind: PageKind, plugin: &str, id: &str) -> UiResult<(String, String)> {
         let folder = self.loadable(plugin)?;
         let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
-        let def = manifest
-            .provides
-            .widgets
-            .into_iter()
-            .find(|w| w.id == widget)
-            .ok_or_else(|| UiError::not_found(format!("widget {plugin}/{widget}")))?;
-        let module = std::fs::read_to_string(safe_join(&folder, &def.file)?).map_err(io)?;
+        let file = match kind {
+            PageKind::Widget => manifest
+                .provides
+                .widgets
+                .into_iter()
+                .find(|w| w.id == id)
+                .map(|w| w.file),
+            PageKind::Screen => manifest
+                .provides
+                .screens
+                .into_iter()
+                .find(|w| w.id == id)
+                .map(|w| w.file),
+        }
+        .ok_or_else(|| UiError::not_found(format!("{kind:?} {plugin}/{id}")))?;
+        let module = std::fs::read_to_string(safe_join(&folder, &file)?).map_err(io)?;
         Ok(widget::page(&module, &uuid::Uuid::new_v4().simple().to_string()))
+    }
+
+    /// Whether a loadable plugin declared a screen that keeps a document: the state commands
+    /// answer nobody else, so a package cannot store what its manifest never admitted to.
+    pub fn keeps_state(&self, plugin: &str) -> UiResult<bool> {
+        let folder = self.loadable(plugin)?;
+        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        Ok(manifest.provides.screens.iter().any(|s| s.storage))
     }
 
     /// The folder of a plugin this build can load, or why not.
@@ -597,11 +677,13 @@ impl Plugins {
             && manifest.provides.dictionaries.is_empty()
             && manifest.provides.writers.is_empty()
             && manifest.provides.widgets.is_empty()
+            && manifest.provides.screens.is_empty()
         {
             return Err(UiError::invalid(format!(
                 "plugin {} declares nothing this build can use: expected `provides.themes`, \
                  `provides.layouts`, `provides.readers`, `provides.writers`, \
-                 `provides.widgets`, `provides.taxonomies` or `provides.dictionaries`",
+                 `provides.widgets`, `provides.screens`, `provides.taxonomies` or \
+                 `provides.dictionaries`",
                 manifest.id
             )));
         }
@@ -660,6 +742,11 @@ impl Plugins {
                 .map_err(|e| UiError::invalid(format!("{}: {e}", def.file)))?;
             widget::check(def, &module)?;
         }
+        for def in &manifest.provides.screens {
+            let module = std::fs::read(safe_join(source, &def.file)?)
+                .map_err(|e| UiError::invalid(format!("{}: {e}", def.file)))?;
+            widget::check_screen(def, &module)?;
+        }
 
         // A classification set proves itself the same way, and needs no expectation of its own:
         // the file *is* the data, so an expectation would be a copy of it. What it must show is
@@ -715,6 +802,7 @@ impl Plugins {
                     .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
             )
             .chain(manifest.provides.widgets.iter().map(|def| def.file.clone()))
+            .chain(manifest.provides.screens.iter().map(|def| def.file.clone()))
             .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()))
             .chain(
                 manifest
@@ -744,6 +832,7 @@ impl Plugins {
             dictionaries: manifest.provides.dictionaries,
             writers: manifest.provides.writers,
             widgets: manifest.provides.widgets,
+            screens: manifest.provides.screens,
         })
     }
 

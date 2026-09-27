@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from "@phosphor-icons/react";
 
 /** Page archetypes define allowed slots and validate them in development. */
 
-export type Archetype = "overview" | "registry" | "analysis" | "object" | "wizard" | "form";
+export type Archetype = "overview" | "registry" | "analysis" | "object" | "wizard" | "form" | "plugin";
 
 type Slot = "head" | "lead" | "steps" | "controls" | "filters" | "banner" | "metrics" | "body" | "foot";
 
@@ -48,6 +48,12 @@ const ARCHETYPES: Record<Archetype, Rule> = {
     allow: ["head", "lead", "steps", "banner", "body", "foot"],
     require: ["head", "steps", "body", "foot"],
     deny: { metrics: "a wizard computes nothing; it assembles a decision" },
+  },
+  /* A plugin's screen: the host's header around the plugin's frame (ADR-0084). */
+  plugin: {
+    allow: ["head", "controls", "banner", "body"],
+    require: ["head", "body"],
+    deny: { metrics: "a plugin's figures are its own and live inside its frame (ADR-0082)" },
   },
   /* Forms edit settings; they have neither metrics nor an analysis axis. */
   form: {

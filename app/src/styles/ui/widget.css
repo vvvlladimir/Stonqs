@@ -541,13 +541,3 @@
     margin-bottom: var(--sp-2);
   }
 }
-/* A plugin's tile: its frame fills the body, and the frame's own page is transparent, so the tile
-   underneath is what shows through (ADR-0083). */
-.w__frame {
-  flex: 1;
-  display: block;
-  width: 100%;
-  min-height: 0;
-  border: 0;
-  background: transparent;
-}

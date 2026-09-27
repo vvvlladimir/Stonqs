@@ -6,8 +6,8 @@
 //! to the frontend and in again through `taxonomy_import_preview`, which is the point: a set from
 //! a plugin has no path into the portfolio of its own.
 
-use crate::error::UiResult;
-use crate::plugins::{PluginInfo, TaxonomySetInfo, ThemeInfo, WidgetInfo, WriterInfo};
+use crate::error::{UiError, UiResult};
+use crate::plugins::{PluginInfo, ScreenInfo, TaxonomySetInfo, ThemeInfo, WidgetInfo, WriterInfo};
 use crate::state::AppState;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -25,6 +25,8 @@ pub struct PluginList {
     pub writers: Vec<WriterInfo>,
     /// The dashboard widgets that can actually be placed, addressed as a board stores their type.
     pub widgets: Vec<WidgetInfo>,
+    /// The screens that can actually be opened, addressed as the navigation hint names them.
+    pub screens: Vec<ScreenInfo>,
     /// The plugin API this build speaks, so the list can say what a refused package wanted.
     pub api: u32,
 }
@@ -37,6 +39,7 @@ pub fn plugins_list(state: State<AppState>) -> UiResult<PluginList> {
         taxonomy_sets: state.plugins.taxonomy_sets()?,
         writers: state.plugins.writers()?,
         widgets: state.plugins.widgets()?,
+        screens: state.plugins.screens()?,
         api: crate::plugins::API,
     })
 }
@@ -66,16 +69,55 @@ pub fn plugin_taxonomy_csv(state: State<AppState>, plugin: String, set: String) 
     state.plugins.taxonomy_csv(&plugin, &set)
 }
 
-/// The scheme a widget page is served from (ADR-0083). Its own origin, its own policy, and a
-/// frame the app's IPC is never injected into.
-pub const WIDGET_SCHEME: &str = "stonqs-plugin";
+/// A plugin's one document in the open profile, or null before it saved one (ADR-0084).
+#[tauri::command]
+pub fn plugin_state_get(state: State<AppState>, plugin: String) -> UiResult<Option<serde_json::Value>> {
+    if !state.plugins.keeps_state(&plugin)? {
+        return Err(UiError::invalid(format!("plugin {plugin} declares no storage")));
+    }
+    let store = state.store()?;
+    let Some(text) = store.plugin_state(&plugin)? else {
+        return Ok(None);
+    };
+    serde_json::from_str(&text)
+        .map(Some)
+        .map_err(|e| UiError::internal(e.to_string()))
+}
 
-/// Answers `/<plugin id>/<widget id>` with the widget's page. The frontend builds the address with
-/// `convertFileSrc`, which encodes the slash; an id is `[a-z0-9._-]`, so that is all it encodes.
-pub fn widget_page(
+/// Replaces a plugin's document. Its own data, not the portfolio's, so nothing is asked: it can
+/// change no operation, account or figure, and nothing in the app reads it.
+#[tauri::command]
+pub fn plugin_state_save(
+    state: State<AppState>,
+    plugin: String,
+    document: serde_json::Value,
+) -> UiResult<()> {
+    if !state.plugins.keeps_state(&plugin)? {
+        return Err(UiError::invalid(format!("plugin {plugin} declares no storage")));
+    }
+    let text = document.to_string();
+    if text.len() > crate::plugins::STATE_LIMIT {
+        return Err(UiError::invalid(format!(
+            "plugin {plugin} tried to keep {} bytes; the limit is {}",
+            text.len(),
+            crate::plugins::STATE_LIMIT
+        )));
+    }
+    state.store()?.save_plugin_state(&plugin, &text)?;
+    Ok(())
+}
+
+/// The scheme a plugin page is served from (ADR-0083). Its own origin, its own policy, and a
+/// frame the app's IPC is never injected into.
+pub const PAGE_SCHEME: &str = "stonqs-plugin";
+
+/// Answers `/<widget|screen>/<plugin id>/<id>` with that page. The frontend builds the address with
+/// `convertFileSrc`, which encodes the slashes; an id is `[a-z0-9._-]`, so that is all it encodes.
+pub fn page(
     app: &tauri::AppHandle,
     request: &tauri::http::Request<Vec<u8>>,
 ) -> tauri::http::Response<Vec<u8>> {
+    use crate::plugins::PageKind;
     use tauri::Manager;
     use tauri::http::{Response, StatusCode, header};
 
@@ -85,10 +127,11 @@ pub fn widget_page(
         .trim_start_matches('/')
         .replace("%2F", "/")
         .replace("%2f", "/");
-    let page = path
-        .split_once('/')
-        .ok_or_else(|| crate::error::UiError::not_found(path.clone()))
-        .and_then(|(plugin, widget)| app.state::<AppState>().plugins.widget_page(plugin, widget));
+    let mut parts = path.splitn(3, '/');
+    let page = match (parts.next().and_then(PageKind::parse), parts.next(), parts.next()) {
+        (Some(kind), Some(plugin), Some(id)) => app.state::<AppState>().plugins.page(kind, plugin, id),
+        _ => Err(UiError::not_found(path.clone())),
+    };
     let built = match page {
         Ok((html, csp)) => Response::builder()
             .header(header::CONTENT_TYPE, "text/html; charset=utf-8")

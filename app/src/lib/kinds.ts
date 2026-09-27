@@ -232,4 +232,5 @@ export const WIDGET_READ_LABELS: Record<WidgetRead, MessageDescriptor> = {
   valuation: msg`value and results`,
   positions: msg`positions`,
   performance: msg`return and flows over the period`,
+  transactions: msg`operations over the period`,
 };

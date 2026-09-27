@@ -3,7 +3,7 @@
 //! It is the format's documentation, so it has to be a package this build actually accepts —
 //! a README that does not install is worse than none.
 
-use sq_app_lib::plugins::{Base, Plugins, Status};
+use sq_app_lib::plugins::{Base, PageKind, Plugins, Status};
 use std::path::Path;
 
 #[test]
@@ -451,7 +451,7 @@ fn the_example_widget_installs_and_is_served_under_its_own_policy() {
     );
     assert_eq!(widgets[0].reads, [sq_app_lib::plugins::Read::Positions]);
 
-    let (html, csp) = plugins.widget_page("app.stonqs.heat", "heat").unwrap();
+    let (html, csp) = plugins.page(PageKind::Widget, "app.stonqs.heat", "heat").unwrap();
     assert!(
         html.contains("stonqs.render("),
         "the module is inlined into the page"
@@ -466,10 +466,15 @@ fn the_example_widget_installs_and_is_served_under_its_own_policy() {
         2,
         "the shim and the module, and nothing else, may run"
     );
-    let (_, again) = plugins.widget_page("app.stonqs.heat", "heat").unwrap();
+    let (_, again) = plugins.page(PageKind::Widget, "app.stonqs.heat", "heat").unwrap();
     assert_ne!(csp, again, "a nonce is never reused");
-    assert!(plugins.widget_page("app.stonqs.heat", "missing").is_err());
-    assert!(plugins.widget_page("../heat", "heat").is_err());
+    assert!(
+        plugins
+            .page(PageKind::Widget, "app.stonqs.heat", "missing")
+            .is_err()
+    );
+    assert!(plugins.page(PageKind::Screen, "app.stonqs.heat", "heat").is_err());
+    assert!(plugins.page(PageKind::Widget, "../heat", "heat").is_err());
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -491,6 +496,49 @@ fn a_widget_reading_something_this_api_does_not_offer_installs_nothing() {
     let plugins = Plugins::new(&dir);
     assert!(plugins.install(&source).is_err(), "a read is from a closed list");
     assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn the_example_screen_installs_keeps_a_document_and_is_served() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/spending");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let plugins = Plugins::new(&dir);
+    assert_eq!(plugins.install(&example).unwrap().status, Status::Ok);
+
+    let screens = plugins.screens().unwrap();
+    assert_eq!(screens.len(), 1);
+    assert_eq!(screens[0].key, "app.stonqs.spending/spending");
+    assert!(screens[0].periodic && screens[0].storage);
+    assert_eq!(screens[0].reads, [sq_app_lib::plugins::Read::Transactions]);
+
+    assert!(plugins.keeps_state("app.stonqs.spending").unwrap());
+    let (html, _) = plugins
+        .page(PageKind::Screen, "app.stonqs.spending", "spending")
+        .unwrap();
+    assert!(html.contains("stonqs.save("), "the screen keeps its rules");
+    assert!(
+        plugins
+            .page(PageKind::Widget, "app.stonqs.spending", "spending")
+            .is_err(),
+        "a screen is not served as a widget"
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn a_plugin_without_storage_keeps_nothing() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/heat");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let plugins = Plugins::new(&dir);
+    plugins.install(&example).unwrap();
+    assert!(!plugins.keeps_state("app.stonqs.heat").unwrap());
 
     std::fs::remove_dir_all(&dir).ok();
 }

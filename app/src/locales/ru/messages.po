@@ -719,6 +719,10 @@ msgstr "{positiveDays} из {0}"
 msgid "{readers, plural, one {# file reader} other {# file readers}}"
 msgstr "{readers, plural, one {# читатель файлов} few {# читателя файлов} many {# читателей файлов} other {# читателя файлов}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{screens, plural, one {# screen} other {# screens}}"
+msgstr "{screens, plural, one {# экран} few {# экрана} many {# экранов} other {# экрана}}"
+
 #: src/screens/Rebalance/model.ts
 msgid "{sign}{size} pp"
 msgstr "{sign}{size} пп"
@@ -804,8 +808,8 @@ msgid "{value, plural, one {# day} other {# days}}"
 msgstr "{value, plural, one {# день} few {# дня} many {# дней} other {# дня}}"
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
-msgstr "{widgets, plural, one {# виджет дашборда, получает: {reads}} few {# виджета дашборда, получают: {reads}} many {# виджетов дашборда, получают: {reads}} other {# виджета дашборда, получают: {reads}}}"
+#~ msgid "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+#~ msgstr "{widgets, plural, one {# виджет дашборда, получает: {reads}} few {# виджета дашборда, получают: {reads}} many {# виджетов дашборда, получают: {reads}} other {# виджета дашборда, получают: {reads}}}"
 
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{widgets, plural, one {# dashboard widget} other {# dashboard widgets}}"
@@ -1124,8 +1128,12 @@ msgstr "План — это взнос по расписанию: сколько
 #~ msgstr "Плагин расширяет приложение, не меняя того, что значит цифра: цветовые темы, раскладки импорта, наборы классификации, названия операций на другом языке, читатели для файлов, которые приложение само открыть не умеет, и форматы выгрузки."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
-msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки и виджеты дашборда."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+#~ msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки и виджеты дашборда."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+msgstr "Плагин дополняет приложение, не меняя смысла ни одной цифры: цветовые темы, раскладки импорта брокеров, наборы классификаций, слова операций на другом языке, читатели файлов, которые приложение само не открывает, форматы выгрузки, виджеты дашборда и целые экраны."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -2122,6 +2130,10 @@ msgstr "Вернуть убранные встроенные периоды"
 #: src/screens/Import/FileStep.tsx
 msgid "Broker export"
 msgstr "Выгрузка брокера"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Built for plugin version {wants}; this app speaks {speaks}. Update the app, or the plugin."
+msgstr "Собран для версии плагинов {wants}, а приложение говорит на {speaks}. Обновите приложение или плагин."
 
 #: src/lib/kinds.ts
 msgid "Buy"
@@ -4056,6 +4068,10 @@ msgstr "из колонки «{0}»"
 msgid "From high"
 msgstr "От макс."
 
+#: src/screens/PluginScreen/index.tsx
+msgid "From the {plugin} plugin"
+msgstr "Из плагина {plugin}"
+
 #. placeholder {0}: symbol.value
 #: src/screens/Import/AssetRow.tsx
 msgid "from the file: {0}"
@@ -4118,6 +4134,10 @@ msgstr "Поставьте вес хотя бы одной категории: �
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Поставьте вес хотя бы одной категории этого уровня — в режиме «Изменить дерево» у каждой есть поле «Целевой вес»."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "given {reads}"
+msgstr "получает: {reads}"
 
 #: src/components/domain/menuBar/model.ts
 msgid "Go"
@@ -4848,6 +4868,10 @@ msgstr "Запомнит раскладку колонок и все псевд�
 msgid "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
 msgstr "Ключ для него задаётся в разделе выше, под тем именем, которое вы указали. Серверу на этом компьютере ключ обычно не нужен — оставьте его пустым."
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Its plugin.json could not be read: {detail}"
+msgstr "Его plugin.json не читается: {detail}"
+
 #: src/screens/Onboarding.tsx
 msgid "Just looking"
 msgstr "Просто посмотреть"
@@ -4855,6 +4879,10 @@ msgstr "Просто посмотреть"
 #: src/lib/format.ts
 msgid "k"
 msgstr "тыс."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "keeps its own settings in the profile"
+msgstr "хранит свои настройки в профиле"
 
 #: src/screens/Settings/AiPanel.tsx
 #~ msgid "Kept in your operating system's keychain, never in the app's database — the app never reads it back, only whether one is saved."
@@ -6063,6 +6091,10 @@ msgstr "Нет операций — считать риск не по чему."
 msgid "No transactions — there is nothing to report yet."
 msgstr "Нет операций — отчитываться пока не о чем."
 
+#: src/screens/PluginScreen/index.tsx
+msgid "No transactions yet"
+msgstr "Операций пока нет"
+
 #: src/screens/dashboard/widgets/chart.tsx
 #: src/screens/dashboard/widgets/list.tsx
 #: src/screens/dashboard/widgets/value.tsx
@@ -6621,6 +6653,10 @@ msgstr "Начало, {currency}"
 msgid "operation"
 msgstr "операция"
 
+#: src/lib/kinds.ts
+msgid "operations over the period"
+msgstr "операции за период"
+
 #: src/components/domain/AlertDialogs.tsx
 #: src/screens/Securities/Splits.tsx
 msgid "optional"
@@ -6898,13 +6934,20 @@ msgid "Plans"
 msgstr "Планы"
 
 #: src/screens/dashboard/widgets/plugin.tsx
+#: src/screens/PluginScreen/index.tsx
 msgid "Plugin not installed"
 msgstr "Плагин не установлен"
+
+#: src/components/Nav/model.ts
+#: src/screens/PluginScreen/index.tsx
+msgid "Plugin screen"
+msgstr "Экран плагина"
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Plugin widget"
 msgstr "Виджет плагина"
 
+#: src/components/Nav/index.tsx
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PluginsPanel.tsx
@@ -9178,6 +9221,10 @@ msgstr "Взвешенная по времени доходность перио
 msgid "the plan has no targets"
 msgstr "целей в плане нет"
 
+#: src/screens/PluginScreen/index.tsx
+msgid "The plugin that brought this screen has been removed."
+msgstr "Плагин, который добавил этот экран, удалён."
+
 #: src/screens/dashboard/widgets/plugin.tsx
 msgid "The plugin that drew this tile has been removed. Install it again, or remove the tile."
 msgstr "Плагин, который рисовал эту плитку, удалён. Установите его снова или уберите плитку."
@@ -9600,17 +9647,29 @@ msgstr "такой темп не приведёт к цели"
 msgid "this period against the one before"
 msgstr "период против предыдущего"
 
-#: src/screens/dashboard/widgets/plugin.tsx
-msgid "This plugin's tile did not start."
-msgstr "Плитка плагина не запустилась."
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page did not start."
+msgstr "Страница плагина не запустилась."
+
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page failed: {detail}"
+msgstr "Страница плагина сломалась: {detail}"
+
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page never drew anything."
+msgstr "Страница плагина так ничего и не нарисовала."
 
 #: src/screens/dashboard/widgets/plugin.tsx
-msgid "This plugin's tile failed: {detail}"
-msgstr "Плитка плагина сломалась: {detail}"
+#~ msgid "This plugin's tile did not start."
+#~ msgstr "Плитка плагина не запустилась."
 
 #: src/screens/dashboard/widgets/plugin.tsx
-msgid "This plugin's tile never drew anything."
-msgstr "Плитка плагина так ничего и не нарисовала."
+#~ msgid "This plugin's tile failed: {detail}"
+#~ msgstr "Плитка плагина сломалась: {detail}"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+#~ msgid "This plugin's tile never drew anything."
+#~ msgstr "Плитка плагина так ничего и не нарисовала."
 
 #: src/components/domain/positionColumns.tsx
 msgid "This position's share of everything the current scope holds."
@@ -9651,6 +9710,10 @@ msgstr "Данные профиля хранятся без шифрования
 #: src/components/domain/UpdateDialog.tsx
 msgid "This release ships no notes of its own."
 msgstr "У этого выпуска нет собственного описания."
+
+#: src/screens/PluginScreen/index.tsx
+msgid "This screen reads over a period, and there is nothing to read yet."
+msgstr "Этот экран читает данные за период, а читать пока нечего."
 
 #: src/screens/dashboard/widgets/ai.tsx
 msgid "This summary reads:"

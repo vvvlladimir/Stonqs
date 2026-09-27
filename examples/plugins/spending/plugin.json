@@ -1,0 +1,19 @@
+{
+  "id": "app.stonqs.spending",
+  "api": 1,
+  "name": "Spending",
+  "version": "1.0.0",
+  "provides": {
+    "screens": [
+      {
+        "id": "spending",
+        "name": "Spending",
+        "description": "Where the money that left went: withdrawals sorted into categories by rules you write.",
+        "file": "spending.js",
+        "reads": ["transactions"],
+        "periodic": true,
+        "storage": true
+      }
+    ]
+  }
+}

@@ -719,6 +719,10 @@ msgstr "{positiveDays} of {0}"
 msgid "{readers, plural, one {# file reader} other {# file readers}}"
 msgstr "{readers, plural, one {# file reader} other {# file readers}}"
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "{screens, plural, one {# screen} other {# screens}}"
+msgstr "{screens, plural, one {# screen} other {# screens}}"
+
 #: src/screens/Rebalance/model.ts
 msgid "{sign}{size} pp"
 msgstr "{sign}{size} pp"
@@ -804,8 +808,8 @@ msgid "{value, plural, one {# day} other {# days}}"
 msgstr "{value, plural, one {# day} other {# days}}"
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
-msgstr "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+#~ msgid "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
+#~ msgstr "{widgets, plural, one {# dashboard widget, given {reads}} other {# dashboard widgets, given {reads}}}"
 
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{widgets, plural, one {# dashboard widget} other {# dashboard widgets}}"
@@ -1124,8 +1128,12 @@ msgstr "A plan is a contribution on a schedule: how much, how often, and what it
 #~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself and formats to export to."
 
 #: src/screens/Settings/PluginsPanel.tsx
-msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
-msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+#~ msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+#~ msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to and dashboard widgets."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
+msgstr "A plugin adds to the app without changing what a figure means: colour themes, broker import layouts, classification sets, operation words in another language, readers for files the app cannot open by itself, formats to export to, dashboard widgets and whole screens."
 
 #: src/screens/Settings/PluginsPanel.tsx
 #~ msgid "A plugin adds to the app without changing what a figure means: for now, colour themes."
@@ -2122,6 +2130,10 @@ msgstr "Bring back the shipped periods that were removed"
 #: src/screens/Import/FileStep.tsx
 msgid "Broker export"
 msgstr "Broker export"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Built for plugin version {wants}; this app speaks {speaks}. Update the app, or the plugin."
+msgstr "Built for plugin version {wants}; this app speaks {speaks}. Update the app, or the plugin."
 
 #: src/lib/kinds.ts
 msgid "Buy"
@@ -4056,6 +4068,10 @@ msgstr "from column \"{0}\""
 msgid "From high"
 msgstr "From high"
 
+#: src/screens/PluginScreen/index.tsx
+msgid "From the {plugin} plugin"
+msgstr "From the {plugin} plugin"
+
 #. placeholder {0}: symbol.value
 #: src/screens/Import/AssetRow.tsx
 msgid "from the file: {0}"
@@ -4118,6 +4134,10 @@ msgstr "Give at least one category a weight: under \"Edit tree\" every category 
 #: src/screens/Allocation/BreakdownView.tsx
 msgid "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
 msgstr "Give at least one category on this level a weight — under \"Edit tree\" every category has a \"Target weight\" field."
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "given {reads}"
+msgstr "given {reads}"
 
 #: src/components/domain/menuBar/model.ts
 msgid "Go"
@@ -4848,6 +4868,10 @@ msgstr "It remembers the column layout and every alias. The next export from the
 msgid "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
 msgstr "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Its plugin.json could not be read: {detail}"
+msgstr "Its plugin.json could not be read: {detail}"
+
 #: src/screens/Onboarding.tsx
 msgid "Just looking"
 msgstr "Just looking"
@@ -4855,6 +4879,10 @@ msgstr "Just looking"
 #: src/lib/format.ts
 msgid "k"
 msgstr "k"
+
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "keeps its own settings in the profile"
+msgstr "keeps its own settings in the profile"
 
 #: src/screens/Settings/AiPanel.tsx
 #~ msgid "Kept in your operating system's keychain, never in the app's database — the app never reads it back, only whether one is saved."
@@ -6068,6 +6096,10 @@ msgstr "No transactions — there is no risk to compute."
 msgid "No transactions — there is nothing to report yet."
 msgstr "No transactions — there is nothing to report yet."
 
+#: src/screens/PluginScreen/index.tsx
+msgid "No transactions yet"
+msgstr "No transactions yet"
+
 #: src/screens/dashboard/widgets/chart.tsx
 #: src/screens/dashboard/widgets/list.tsx
 #: src/screens/dashboard/widgets/value.tsx
@@ -6626,6 +6658,10 @@ msgstr "Opening, {currency}"
 msgid "operation"
 msgstr "operation"
 
+#: src/lib/kinds.ts
+msgid "operations over the period"
+msgstr "operations over the period"
+
 #: src/components/domain/AlertDialogs.tsx
 #: src/screens/Securities/Splits.tsx
 msgid "optional"
@@ -6903,13 +6939,20 @@ msgid "Plans"
 msgstr "Plans"
 
 #: src/screens/dashboard/widgets/plugin.tsx
+#: src/screens/PluginScreen/index.tsx
 msgid "Plugin not installed"
 msgstr "Plugin not installed"
+
+#: src/components/Nav/model.ts
+#: src/screens/PluginScreen/index.tsx
+msgid "Plugin screen"
+msgstr "Plugin screen"
 
 #: src/screens/dashboard/widgets/index.tsx
 msgid "Plugin widget"
 msgstr "Plugin widget"
 
+#: src/components/Nav/index.tsx
 #: src/screens/dashboard/widgets/index.tsx
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/PluginsPanel.tsx
@@ -9183,6 +9226,10 @@ msgstr "The period's time-weighted return restated as a yearly rate."
 msgid "the plan has no targets"
 msgstr "the plan has no targets"
 
+#: src/screens/PluginScreen/index.tsx
+msgid "The plugin that brought this screen has been removed."
+msgstr "The plugin that brought this screen has been removed."
+
 #: src/screens/dashboard/widgets/plugin.tsx
 msgid "The plugin that drew this tile has been removed. Install it again, or remove the tile."
 msgstr "The plugin that drew this tile has been removed. Install it again, or remove the tile."
@@ -9605,17 +9652,29 @@ msgstr "this pace does not arrive"
 msgid "this period against the one before"
 msgstr "this period against the one before"
 
-#: src/screens/dashboard/widgets/plugin.tsx
-msgid "This plugin's tile did not start."
-msgstr "This plugin's tile did not start."
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page did not start."
+msgstr "This plugin's page did not start."
+
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page failed: {detail}"
+msgstr "This plugin's page failed: {detail}"
+
+#: src/components/domain/PluginFrame.tsx
+msgid "This plugin's page never drew anything."
+msgstr "This plugin's page never drew anything."
 
 #: src/screens/dashboard/widgets/plugin.tsx
-msgid "This plugin's tile failed: {detail}"
-msgstr "This plugin's tile failed: {detail}"
+#~ msgid "This plugin's tile did not start."
+#~ msgstr "This plugin's tile did not start."
 
 #: src/screens/dashboard/widgets/plugin.tsx
-msgid "This plugin's tile never drew anything."
-msgstr "This plugin's tile never drew anything."
+#~ msgid "This plugin's tile failed: {detail}"
+#~ msgstr "This plugin's tile failed: {detail}"
+
+#: src/screens/dashboard/widgets/plugin.tsx
+#~ msgid "This plugin's tile never drew anything."
+#~ msgstr "This plugin's tile never drew anything."
 
 #: src/components/domain/positionColumns.tsx
 msgid "This position's share of everything the current scope holds."
@@ -9656,6 +9715,10 @@ msgstr "This profile's data is stored unencrypted. Set a password before saving 
 #: src/components/domain/UpdateDialog.tsx
 msgid "This release ships no notes of its own."
 msgstr "This release ships no notes of its own."
+
+#: src/screens/PluginScreen/index.tsx
+msgid "This screen reads over a period, and there is nothing to read yet."
+msgstr "This screen reads over a period, and there is nothing to read yet."
 
 #: src/screens/dashboard/widgets/ai.tsx
 msgid "This summary reads:"

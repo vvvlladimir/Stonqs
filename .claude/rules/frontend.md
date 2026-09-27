@@ -209,7 +209,12 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   `plugin:<plugin id>/<widget id>`: `useWidgetCatalog()` is the catalog every caller reads — never
   `WIDGETS` directly — and its `of(type)` keeps a tile whose plugin is gone on the board, saying so.
   Its body is `widgets/plugin.tsx`, a frame fed by `lib/pluginBridge.ts`; the bridge's field names
-  are the plugin API's, not `lib/types`' (ADR-0083).
+  are the plugin API's, not `lib/types`' (ADR-0083). The frame itself is
+  `components/domain/PluginFrame.tsx`, shared with a plugin's screen.
+- A plugin's screen is the one `ScreenId` `plugin`, with the navigation hint naming which
+  (`go("plugin", "<plugin>/<screen>")`), so every closed list of screens stays closed. `Nav` lists
+  them in a `Plugins` section after the shipped ones — not dragged, not pinned, not stored — and the
+  palette lists them beside the screens; the menu bar does not (ADR-0084).
 - A widget configures itself: `WidgetDef::fields` names what its dialog offers, and every widget
   that reads data offers `source` (its own data scope) on top of whatever is specific to it —
   `period`, `taxonomy`, `count`, `benchmark`, `target`. `sourceOf` turns the stored `cfg.source`

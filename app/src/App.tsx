@@ -58,6 +58,7 @@ const Watchlist = lazy(() => import("./screens/Watchlist").then((m) => ({ defaul
 const Alerts = lazy(() => import("./screens/Alerts").then((m) => ({ default: m.Alerts })));
 const Reports = lazy(() => import("./screens/Reports").then((m) => ({ default: m.Reports })));
 const Import = lazy(() => import("./screens/Import").then((m) => ({ default: m.Import })));
+const PluginScreen = lazy(() => import("./screens/PluginScreen").then((m) => ({ default: m.PluginScreen })));
 
 // Dev-only: walks every screen for the website's screenshots (`pnpm record:tour`).
 const RecordTour = import.meta.env.VITE_RECORD_TOUR
@@ -99,9 +100,13 @@ export function App() {
   // the user is; after a switch focus lands on the new screen instead of staying in the nav.
   const main = useRef<HTMLElement>(null);
   const arrived = useRef(false);
+  // A plugin screen is named by the plugin, not by the generic entry that routes to it.
+  const screenTitle =
+    (screen === "plugin" && plugins.data?.screens?.find((s) => s.key === focus)?.name) ||
+    i18n._(SCREENS[screen].title);
   useEffect(() => {
-    document.title = `${i18n._(SCREENS[screen].title)} · Stonqs`;
-  }, [screen, i18n]);
+    document.title = `${screenTitle} · Stonqs`;
+  }, [screenTitle]);
   useEffect(() => {
     if (!arrived.current) {
       arrived.current = true;
@@ -195,17 +200,11 @@ export function App() {
                     >
                       <Trans>Skip to content</Trans>
                     </a>
-                    <Nav screen={screen} go={go} alertsDot={(unseen.data ?? 0) > 0} />
+                    <Nav screen={screen} focus={focus} go={go} alertsDot={(unseen.data ?? 0) > 0} />
 
                     <div className="main">
                       <AsOfBanner />
-                      <main
-                        ref={main}
-                        id="main"
-                        className="app"
-                        tabIndex={-1}
-                        aria-label={i18n._(SCREENS[screen].title)}
-                      >
+                      <main ref={main} id="main" className="app" tabIndex={-1} aria-label={screenTitle}>
                         <Suspense fallback={<Pending />}>
                           {screen === "dashboard" && <Dashboard />}
                           {screen === "positions" && <Positions />}
@@ -224,6 +223,7 @@ export function App() {
                           {screen === "accounts" && <Accounts />}
                           {screen === "securities" && <Securities key={focus} focus={focus} />}
                           {screen === "settings" && <Settings status={status.data} />}
+                          {screen === "plugin" && <PluginScreen key={focus} screenKey={focus} />}
                         </Suspense>
                       </main>
                     </div>

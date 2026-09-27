@@ -106,6 +106,7 @@ const REFERENCE: &[(&str, &str)] = &[
 /// and the prompt turns that into "I do not know how that part works", so a screen added before
 /// its guide is written never produces a plausible invention.
 const GUIDES: &[(&str, &str)] = &[
+    ("plugin", include_str!("../../../../docs/user-guide/plugin.md")),
     (
         "dashboard",
         include_str!("../../../../docs/user-guide/dashboard.md"),
@@ -175,6 +176,7 @@ pub const SCREEN_IDS: &[&str] = &[
     "import",
     "reports",
     "settings",
+    "plugin",
 ];
 
 pub fn topics() -> Vec<&'static str> {
