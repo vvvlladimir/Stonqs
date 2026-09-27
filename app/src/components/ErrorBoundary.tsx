@@ -2,10 +2,7 @@ import { Trans } from "@lingui/react/macro";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ErrorText } from "./ui";
 
-/**
- * Shows the exception instead of a blank window: React unmounts the whole tree on
- * a render error, and a white rectangle gives no clue where to look.
- */
+/** Shows the exception instead of the blank window React leaves on a render error. */
 interface State {
   error: Error | null;
 }

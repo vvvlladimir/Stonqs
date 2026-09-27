@@ -101,12 +101,7 @@ impl PeriodPreset {
     }
 }
 
-/// A period the user defined: a window back from today, or two dates written down.
-///
-/// The seven [`PeriodPreset`]s stay a closed, core-owned list — see ADR-0018 — because their
-/// wording, their cache key and their stored id all have one owner. This is the open half of
-/// the same axis: the *shape* is still core's (the arithmetic and the inception clamp live
-/// here), only the numbers come from the user. See ADR-0026.
+/// A user-defined period; the shape and inception clamp stay core's (ADR-0018, ADR-0026).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PeriodSpec {
@@ -122,11 +117,7 @@ pub enum PeriodSpec {
 }
 
 impl PeriodSpec {
-    /// Resolves the spec against a reporting date, under the same clamp a preset gets.
-    ///
-    /// `Err` when nothing is left to show — a fixed window that ends before the portfolio
-    /// existed. The caller drops such a period from the strip rather than offering a range
-    /// no query can answer.
+    /// `Err` when nothing is left — a fixed window ending before inception — and the caller drops it.
     pub fn range(self, as_of: NaiveDate, inception: Option<NaiveDate>) -> Result<DateRange> {
         match self {
             PeriodSpec::Relative { unit, count } => {

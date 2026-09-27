@@ -3,10 +3,7 @@
 use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
 
-/// ISO 4217 currency code (`"EUR"`, `"USD"`).
-///
-/// Plain `String`, not a newtype — the DB stores text anyway, so a wrapper
-/// would only add ceremony. Normalization lives in [`normalize_currency`].
+/// ISO 4217 code; normalised by [`normalize_currency`].
 pub type Currency = String;
 
 /// Canonicalizes a currency code (uppercase, trimmed) so sources spelling it
@@ -26,9 +23,7 @@ struct MinorUnit {
     exact_case: bool,
 }
 
-/// Minor units seen in quotes: pence (London), cents (Johannesburg), agorot
-/// (Tel Aviv), fils (Kuwait). List is closed on purpose — guessing from the
-/// code's shape risks a 100x error.
+/// Closed list on purpose: guessing from the code's shape risks a 100x error.
 const MINOR_UNITS: &[MinorUnit] = &[
     // London: Yahoo emits `GBp`, Stooq and broker exports emit `GBX`.
     MinorUnit {
@@ -66,10 +61,7 @@ const MINOR_UNITS: &[MinorUnit] = &[
     },
 ];
 
-/// Source currency folded to its major unit, with the multiplier to reach it
-/// (e.g. `("GBP", 0.01)` for pence). See `money-and-fx.md` for why this
-/// isn't part of [`normalize_currency`] and why GBX isn't kept as its own
-/// currency with a synthetic FX rate.
+/// Minor unit folded to its major one with the multiplier (`("GBP", 0.01)` for pence).
 pub fn major_currency(code: &str) -> (Currency, Decimal) {
     let raw = code.trim();
     for unit in MINOR_UNITS {
@@ -85,9 +77,7 @@ pub fn major_currency(code: &str) -> (Currency, Decimal) {
     (normalize_currency(raw), Decimal::ONE)
 }
 
-/// An amount with its currency attached, used at the UI boundary so a
-/// report never reads as a bare `12345`. Calc code uses plain [`Decimal`]
-/// internally, where the currency is already fixed by context.
+/// An amount with its currency, for the UI boundary.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Money {
     #[serde(with = "rust_decimal::serde::str")]
@@ -110,9 +100,7 @@ impl std::fmt::Display for Money {
     }
 }
 
-/// Rounds to currency cents (2dp, half-up). Only for display/storage of a
-/// final total — never mid-calculation, where `Decimal`'s 28 digits should
-/// be left alone to avoid accumulating rounding error.
+/// 2dp half-up, for final totals only, never mid-calculation.
 pub fn round_money(v: Decimal) -> Decimal {
     v.round_dp_with_strategy(2, RoundingStrategy::MidpointAwayFromZero)
 }

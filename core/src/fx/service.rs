@@ -54,9 +54,7 @@ impl FxService {
         self.providers.iter().map(|p| p.id()).collect()
     }
 
-    /// Fetches and stores one pair from the first source that covers it, falling through to the
-    /// next when one fails. An empty answer is final: a weekend is not a reason to mix sources.
-    /// Returns the rows saved and the source that answered.
+    /// First covering source upserts; an error falls through, an empty answer is final (ADR-0051).
     pub fn ensure_rates(
         &self,
         store: &Store,

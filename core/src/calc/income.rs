@@ -125,16 +125,8 @@ pub struct TaxonomyIncome {
     pub nodes: Vec<IncomeNode>,
 }
 
-/// Splits income through a taxonomy: a payment follows the assignment of whoever paid it.
-///
-/// The payer is the instrument for a dividend and the account-currency cash subject for
-/// interest, so an account classified as "Cash" reports its interest there. Splitting a
-/// subject 60/40 splits its payments the same way; the unassigned remainder is
-/// [`UNCLASSIFIED_KEY`]. An excluded subject leaves the tree and its total entirely — it is
-/// not moved to the remainder, exactly as in [`super::allocation_by_taxonomy`].
-///
-/// Unlike an allocation, this reads no valuation: a security sold last spring paid its
-/// dividend all the same, and the tree still knows what it was.
+/// Income through a taxonomy: a payment follows its payer's assignment (instrument or cash
+/// subject). Excluded subjects leave entirely; needs no valuation, so sold payers still count.
 pub fn income_by_taxonomy(
     items: &[IncomeRecord],
     nodes: &[TaxonomyNode],

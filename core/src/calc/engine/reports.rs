@@ -26,9 +26,7 @@ impl PortfolioAnalytics<'_> {
         Ok(income_between(&self.holdings_at(to)?, from, to))
     }
 
-    /// Income of a period split through a classification tree. The tree classifies payers, so
-    /// this needs no valuation and a payer sold since still reports where it paid from.
-    /// `kind` narrows here rather than on the caller's side, as every income rollup does.
+    /// Income split by a tree of payers: needs no valuation, and a payer sold since still reports.
     pub fn income_by_taxonomy(
         &self,
         taxonomy_id: &str,
@@ -54,9 +52,7 @@ impl PortfolioAnalytics<'_> {
         Ok(dividend_profiles(&self.holdings_at(as_of)?.income, as_of))
     }
 
-    /// Every dated figure of the period on one axis: income by kind and by payer, costs,
-    /// savings and closed-trade results. Built at `to`, then filtered to the window inside
-    /// [`payment_grid`] — a rollup of a window still needs the lots the window opened with.
+    /// Built at `to` then filtered to the window: a window's rollup needs the lots it opened with.
     pub fn payments(&self, from: NaiveDate, to: NaiveDate, period: PaymentPeriod) -> Result<PaymentGrid> {
         Ok(payment_grid(&self.holdings_at(to)?, from, to, period))
     }

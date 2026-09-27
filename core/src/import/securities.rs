@@ -39,9 +39,7 @@ impl SecurityDraft {
         }
     }
 
-    /// Builds a draft from a venue the directory named. Used when the search could not place
-    /// the broker's code at all: the listing was probed, so it is known to have candles, which
-    /// a search hit is not. The kind is unknown — a listing carries none.
+    /// A draft from a probed directory listing, known to have candles; its kind is unknown.
     pub fn from_listing(listing: &Listing, fallback_currency: &str) -> Option<Self> {
         let symbol = listing.symbol.clone()?;
         Some(SecurityDraft {

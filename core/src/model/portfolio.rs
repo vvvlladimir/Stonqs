@@ -2,12 +2,7 @@ use crate::error::{Error, Result};
 use crate::money::{Currency, normalize_currency};
 use serde::{Deserialize, Serialize};
 
-/// Both methods are "correct" but answer different questions: FIFO is what
-/// most tax jurisdictions require and gives a holding period per lot;
-/// average cost is a common default elsewhere and is needed to
-/// reconcile against history already accumulated there. Lives on the
-/// portfolio, not globally — the same trades can legitimately be viewed
-/// either way.
+/// FIFO or average cost; per portfolio, since the same trades may be viewed either way.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CostBasisMethod {
@@ -36,11 +31,7 @@ impl CostBasisMethod {
     }
 }
 
-/// A set of accounts plus a reporting base currency.
-///
-/// Base currency lives here, not in global settings — the same accounts can
-/// legitimately be reported in EUR and in USD as two different portfolios.
-/// The calc engine never assumes a currency; it's always passed in.
+/// Accounts plus a reporting base currency; calc never assumes a currency.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Portfolio {
     pub id: String,
@@ -50,9 +41,7 @@ pub struct Portfolio {
     pub account_ids: Vec<String>,
     #[serde(default)]
     pub cost_basis_method: CostBasisMethod,
-    /// Where the owner spends, as a consumer-price region (`DE`, `EA`, `US`). It is not derived
-    /// from `base_currency`: reporting in USD says nothing about which prices the owner pays.
-    /// `None` means real returns are not reported.
+    /// The owner's consumer-price region, independent of `base_currency`; `None` = no real returns.
     #[serde(default)]
     pub inflation_region: Option<String>,
 }

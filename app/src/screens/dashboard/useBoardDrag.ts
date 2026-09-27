@@ -10,10 +10,7 @@ export interface Drag {
   dy: number;
 }
 
-/**
- * Moving and resizing tiles. What the pointer does is kept out of the saved layout until the
- * gesture ends, so a drag writes settings once rather than on every move.
- */
+/** Pointer state stays out of the saved layout until the gesture ends. */
 export function useBoardDrag(
   widgets: Widget[],
   setBoard: (widgets: Widget[]) => void,

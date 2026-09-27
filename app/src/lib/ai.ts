@@ -8,18 +8,10 @@ import { useNav } from "./nav";
 import type { AiEvent, AiUsage, ChatMessage, ToolDecision, ToolParams, UiError } from "./types";
 import { useAsOf } from "./asOf";
 
-/**
- * What the dashboard brief reads, always and only. Mirrors `ai/brief.rs::READINGS` so the tile
- * can name the readings before the first generation; a Rust test pins the two lists together,
- * the way `guide::SCREEN_IDS` is pinned against `lib/nav.tsx`.
- */
+/** Mirrors `ai/brief.rs::READINGS`; a Rust test pins the two lists together. */
 export const BRIEF_READINGS = ["portfolio_overview", "portfolio_performance", "positions_list"];
 
-/**
- * What to call a provider. A brand name for the built-in ones and the user's own words for the
- * custom one — which may be blank, and a picker offering an unnamed entry is a picker offering
- * nothing, so an unnamed server gets one word of ours.
- */
+/** A brand name for built-ins, the user's label for the custom one, or one word of ours if blank. */
 export function useProviderName() {
   const { t } = useLingui();
   return (id: string, label?: string) =>
@@ -37,11 +29,7 @@ export interface ToolRequest {
   reason: string;
 }
 
-/**
- * A reading as it happens. The same thing the stored blocks show afterwards, but during the
- * turn — otherwise the panel goes quiet for however long the model takes, and the user cannot
- * see what it has already looked at.
- */
+/** A reading while the turn runs, shaped like the stored block. */
 export interface LiveTool {
   kind: "tool" | "search";
   /** The tool's name, or the search query. */
@@ -52,13 +40,7 @@ export interface LiveTool {
   content?: string;
 }
 
-/**
- * The streaming part of a chat, kept out of `lib/queries/`: a stream is not a query and does not
- * belong in its cache, only its *result* does (the persisted turns, refetched once `done` fires).
- *
- * A failure is kept as the host's `UiError`, never as a sentence — the panel renders it through
- * `useUiErrorText`, the same wording every other failure in the app gets.
- */
+/** The stream, kept out of the query cache: only its persisted result belongs there. Failures stay `UiError`. */
 export function useChatSend(chatId: string | null) {
   const client = useQueryClient();
   // Taken at send time, not at render: the screen behind the panel is part of the question.
@@ -89,9 +71,7 @@ export function useChatSend(chatId: string | null) {
       setUsage(null);
       setBusy(true);
 
-      // The user's line goes into the cache before the request leaves, so the panel shows what
-      // was typed at once rather than when the model finishes. The host writes the same turn
-      // before its own network call, so the refetch below replaces this with an identical row.
+      // Shown at once; the host writes the same turn, so the refetch replaces it with an identical row.
       const optimistic: ChatMessage = {
         id: `pending-${Date.now()}`,
         chat_id: chatId,

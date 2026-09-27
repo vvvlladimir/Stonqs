@@ -405,10 +405,7 @@ const MISSING_PLUGIN: WidgetDef = {
   Render: PluginWidget,
 };
 
-/**
- * The catalog as a board sees it: the built-in widgets plus those the installed plugins bring,
- * the latter keyed as a board stores them (`plugin:<plugin id>/<widget id>`).
- */
+/** Built-in widgets plus plugins' (`plugin:<plugin>/<widget>`). */
 export function useWidgetCatalog() {
   // `widgets` is optional here only for IPC recorded before plugins could bring one.
   const widgets = usePlugins().data?.widgets;

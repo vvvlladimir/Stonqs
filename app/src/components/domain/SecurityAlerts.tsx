@@ -19,10 +19,7 @@ const PROBLEMS: Record<AlertProblem, ReturnType<typeof msg>> = {
 /** An arrow, not a word: the direction reads at a glance in a line of dates. */
 const ARROWS: Record<AlertCrossing["direction"], string> = { UP: "↑", DOWN: "↓", REACHED: "•" };
 
-/**
- * Triggers with where the price stands and a trail of their latest crossings. `named` prints the
- * instrument for a list across instruments; `onEdit` adds edit and delete.
- */
+/** Triggers with their price and latest crossings; `named` adds the instrument, `onEdit` edit/delete. */
 export function AlertList({
   rows,
   named,
@@ -161,10 +158,7 @@ export function CrossingLog({ rows, compact }: { rows: CrossingRow[]; compact?: 
   );
 }
 
-/**
- * Notes, dividends and splits, newest first. A reported split is offered as a split to record,
- * since a reported one moves no quantity. `onEditNote` adds editing and deleting.
- */
+/** Newest first; a reported split is offered for recording. `onEditNote` adds edit/delete. */
 export function EventList({
   rows,
   named,

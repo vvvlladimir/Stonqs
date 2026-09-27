@@ -1,8 +1,4 @@
-//! Supported ISO 10383 market identifiers and display names.
-//!
-//! A hand-picked subset of the ISO 10383 register — only the venues a registered quote source can
-//! build a symbol for. The codes are the published standard's; the display names are shortened for
-//! the interface and are not the register's official entries.
+//! A hand-picked subset of ISO 10383: only venues a quote source can build a symbol for. Names are shortened.
 
 /// A supported market and its display name.
 pub struct Market {

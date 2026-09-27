@@ -94,9 +94,7 @@ pub fn performance_summary(
     })
 }
 
-/// The calculation sheet of the period: one row per calendar chunk, showing how the opening
-/// value, the flows and what was earned add up to the closing one. The granularity is the
-/// screen's, not the core's — a decade reads by year and a month by day.
+/// The granularity is the screen's: a decade reads by year, a month by day.
 #[tauri::command]
 pub fn performance_breakdown(
     state: State<AppState>,

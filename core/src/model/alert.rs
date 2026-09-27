@@ -124,10 +124,7 @@ impl AlertDirection {
     }
 }
 
-/// A trigger the user set on an instrument: a price level or a date. See ADR-0034.
-///
-/// `side` and `checked_through` are the check's bookmark: the side of the last close it read and
-/// that close's date. A crossing is a change of side, logged as an [`AlertCrossing`].
+/// A price level or a date (ADR-0034). `side`/`checked_through` are the check's bookmark.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SecurityAlert {
     pub id: String,

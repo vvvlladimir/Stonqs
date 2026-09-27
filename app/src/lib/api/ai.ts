@@ -75,10 +75,7 @@ export const aiApi = {
     });
   },
 
-  /**
-   * Streams the reply through `onEvent`. The promise settles once dispatched; a rejection means
-   * the turn never started, and a mid-turn failure arrives as an `error` event.
-   */
+  /** The promise settles once dispatched; a mid-turn failure arrives as an `error` event. */
   aiSend: (
     chatId: string,
     text: string,

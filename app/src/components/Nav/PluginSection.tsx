@@ -3,10 +3,7 @@ import { CaretRightIcon, PuzzlePieceIcon } from "@phosphor-icons/react";
 import { Trans } from "@lingui/react/macro";
 import type { InstalledScreen } from "../../lib/types";
 
-/**
- * Plugin screens: one section after the shipped ones, in the plugin list's order. Nothing here
- * is dragged or pinned — the stored arrangement names only what the app defines (ADR-0084).
- */
+/** Plugin screens after the shipped sections; never dragged or pinned (ADR-0084). */
 export function PluginSection({
   screens,
   active,

@@ -1,6 +1,4 @@
-//! Server-Sent Events framing, nothing else: `event:`/`data:` lines, blocks separated by a blank
-//! line. What the event *names* mean is `openai.rs`'s business, not this file's — a second
-//! SSE-based provider reuses this reader unchanged.
+//! SSE framing only; what events mean is each adapter's business.
 
 use std::io::{BufRead, Result};
 

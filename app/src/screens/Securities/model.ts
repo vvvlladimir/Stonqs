@@ -29,10 +29,7 @@ export function cuts(i18n: I18n) {
   ];
 }
 
-/**
- * Two different faults, so two slices: a row without a MIC is priced from an unstated venue,
- * while an unidentified one carries an ISIN where the provider expects a ticker.
- */
+/** No MIC (unstated venue) and unidentified (an ISIN as ticker) are different faults. */
 export function inCut(row: SecurityRow, cut: Cut): boolean {
   if (cut === "no_venue") return row.mic === null;
   if (cut === "unidentified") return row.needs_lookup;

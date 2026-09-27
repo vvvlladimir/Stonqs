@@ -6,11 +6,7 @@ import { Buttons, DataTable, ErrorText, Modal, Money } from "../ui";
 import { toNumber } from "../../lib/format";
 import type { Listing, SecurityRow } from "../../lib/types";
 
-/**
- * Choose which venue to price a security from — one instrument trades on a dozen
- * exchanges, each with its own currency, and there's no "correct" one except the
- * one the broker actually used.
- */
+/** Which venue prices the instrument: the right one is the one the broker used. */
 export function ListingPicker({ row, onClose }: { row: SecurityRow; onClose: () => void }) {
   const { t } = useLingui();
   const queryClient = useQueryClient();

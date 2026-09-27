@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Container size in real pixels, not a stretched `viewBox` — that would
- * scale axis labels down with the geometry on narrow screens. The height is
- * what a chart asked to fill its tile measures itself against.
- */
+/** Container size in real pixels, not a stretched `viewBox`; a filling chart measures its height. */
 export function useSize<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });

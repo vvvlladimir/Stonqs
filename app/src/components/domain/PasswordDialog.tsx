@@ -6,10 +6,7 @@ import { MIN_PASSWORD } from "../../lib/profiles";
 import { keys, useInvalidate } from "../../lib/queries";
 import { Field, FormDialog, SecretInput } from "../ui";
 
-/**
- * Gives the open profile a password, or changes it. A change asks for the current one even though
- * the profile is open: an unattended, unlocked app must not be enough to take it over.
- */
+/** A change asks for the current password even though the profile is open. */
 export function PasswordDialog({
   change,
   reason,

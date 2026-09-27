@@ -1,10 +1,5 @@
-//! Turning a parsed file into a preview: what each row would become, what is already in the
-//! database, and what the user still has to decide.
-//!
-//! `build_preview` is a pipeline of named stages and nothing else. It is **pure** — securities
-//! and fingerprints arrive as slices, never a `Store` — because the same file has to preview the
-//! same way twice; `ImportService` is the only place that reads the database
-//! (`.claude/rules/import.md`).
+//! Parsed file → preview. `build_preview` is pure (no `Store`), so a file previews the same way
+//! twice; only `ImportService` reads the database.
 
 mod cells;
 mod fields;
@@ -123,9 +118,7 @@ pub enum RowStatus {
 
     UnknownSecurity,
 
-    /// A stored operation of the same day, account, instrument and quantity differs only in what
-    /// it is worth: what a row edited by hand after import looks like on the next re-import.
-    /// Not written unless asked for — the content fingerprint cannot recognise it (ADR-0005).
+    /// Same day, account, instrument and quantity, different value: written only if asked (ADR-0005).
     Similar,
 
     /// Its operation value is on the skip list: not a problem, just not imported.
@@ -138,9 +131,7 @@ pub enum RowStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportRow {
     pub number: usize,
-    /// Which operation of that row this is, 1-based. A rule can turn one row into several —
-    /// a reinvested dividend is an income and a purchase — and they share the row's number
-    /// because they are one line of the file (ADR-0067).
+    /// 1-based part of a row a rule split into several operations (ADR-0067).
     #[serde(default = "one")]
     pub part: usize,
 
@@ -450,9 +441,7 @@ pub fn build_preview(
     }
 }
 
-/// Whether the amount column is the trade's own value or what the account moved. Asked of the
-/// file, like the sign: one row where the two readings differ by a commission answers it, and a
-/// broker is consistent about which of the two it prints.
+/// Gross or net amounts, voted across the file.
 fn vote_on_basis(
     raw_rows: &[cells::RowInput],
     mapping: &ImportMapping,
@@ -489,9 +478,7 @@ fn vote_on_basis(
     checks::decide_amount_basis(vote)
 }
 
-/// Whether the file carries direction in the sign of its amounts. The question is asked of the
-/// whole file rather than of a row: one type value can span both directions, and it is the
-/// correlation across every cash-moving row that answers it (`.claude/rules/import.md`).
+/// Whether the sign of the amount carries direction, voted across the whole file.
 fn vote_on_signs(
     raw_rows: &[cells::RowInput],
     mapping: &ImportMapping,

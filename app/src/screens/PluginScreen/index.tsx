@@ -8,10 +8,7 @@ import { PeriodControl } from "../../components/domain/PeriodControl";
 import { PluginFrame } from "../../components/domain/PluginFrame";
 import { Empty, Pending, QueryError } from "../../components/ui";
 
-/**
- * A screen a plugin brings (ADR-0084): the app's header — its name, the plugin's, the period —
- * around the plugin's frame. It follows the app's lenses like every built-in screen.
- */
+/** A plugin's screen (ADR-0084): the app's header around its frame, following the app's lenses. */
 export function PluginScreen({ screenKey }: { screenKey: string | null }) {
   const { t } = useLingui();
   const asOf = useAsOf().date;

@@ -10,10 +10,7 @@ import {
 import type { DateString, PeriodRange, WatchRow } from "../../lib/types";
 import { useWatchColumns } from "./columns";
 
-/**
- * What a watch row is drawn with besides its own quotes. A held instrument also shows its
- * position, joined from the positions screen's own queries rather than recomputed for the list.
- */
+/** Position figures joined from the positions screen's queries, not recomputed. */
 export function useWatchContext(date: DateString, range: PeriodRange | undefined, stored: string[]) {
   const { i18n } = useLingui();
   const positions = usePositions(date);

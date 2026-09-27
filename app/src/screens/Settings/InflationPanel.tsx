@@ -6,12 +6,7 @@ import { affects, useInflationStatus, useInvalidate } from "../../lib/queries";
 import { Async, Field, Form, Panel } from "../../components/ui";
 import { formatDay, formatRegion } from "../../lib/format";
 
-/**
- * Where the portfolio's owner spends, which is what real returns are measured against.
- *
- * The host sends region codes only, so the names are written here — `Intl` has every country in
- * the languages the app ships, and the two aggregates it has no code for are translated.
- */
+/** The owner's consumer-price region; names come from `Intl`, codes from the host. */
 export function InflationPanel() {
   const { t } = useLingui();
   const invalidate = useInvalidate();

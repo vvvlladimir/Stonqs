@@ -99,9 +99,7 @@ impl Store {
         rows.next().transpose().map_err(Into::into)
     }
 
-    /// First and last quote actually stored, which is not what `quote_coverage` records: a
-    /// provider asked for five years and answering with one day leaves coverage wide and this
-    /// span empty. That gap is the shape a wrong ticker leaves behind.
+    /// First and last stored quote, unlike `quote_coverage` (what was asked); a gap between the two means a wrong ticker.
     pub fn quote_span(&self, security_id: &str) -> Result<Option<DateRange>> {
         let row: Option<(String, String)> = self.conn.query_row(
             "SELECT min(date), max(date) FROM quotes WHERE security_id = ?1",

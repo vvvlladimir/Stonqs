@@ -1,13 +1,5 @@
-//! The same position read under both cost-basis methods at once.
-//!
-//! The portfolio answers to one method ([`crate::model::CostBasisMethod`]), and every figure
-//! elsewhere in `calc` uses it. This module exists because the two methods disagree about one
-//! thing only — *which* shares a sale took — and that disagreement is worth showing rather than
-//! deciding for the user: FIFO sells the oldest shares, average cost sells an average share, so
-//! after a partial sale what is left has a different purchase value under each.
-//!
-//! Neither is more correct; they are different tax conventions. What they cannot disagree about
-//! is the end: once a position is closed, realised plus unrealised is the same total either way.
+//! One position under both cost-basis methods. They differ only in which shares a sale took;
+//! a closed position's realised + unrealised total is the same either way.
 
 use super::{Holdings, PortfolioValuation};
 use crate::money::Currency;
@@ -58,14 +50,8 @@ impl CostBasisRow {
     }
 }
 
-/// Reads every open position of `valuation` under both methods.
-///
-/// The two holdings must be built from the same transactions through the same date and differ
-/// only in their [`crate::calc::HoldingsOptions::cost_basis`] — quantities are method-free, which
-/// is why one valuation serves both and no price is read twice.
-///
-/// Only open positions are listed: a closed one has no purchase value left to disagree about,
-/// and its realised total is the same under either method.
+/// Both holdings must differ only in `cost_basis`: quantities are method-free, so one valuation
+/// serves both. Closed positions are omitted.
 pub fn compare_cost_basis(
     fifo: &Holdings,
     average: &Holdings,

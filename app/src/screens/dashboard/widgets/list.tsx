@@ -170,9 +170,7 @@ export function CashWidget({ widget, date }: WidgetProps) {
     >
       {(data) => {
         const accountOf = new Map(data.accounts.map((a) => [a.id, a]));
-        // An account holds a balance per currency it was ever paid in, so one account can be
-        // two rows — a euro deposit that settled a Hong Kong purchase is one. The currency then
-        // names the row: two lines reading "Test · Cash" look like two accounts.
+        // One account can hold several currencies, so the currency names the row.
         const currencies = new Map<string, number>();
         for (const balance of data.cash)
           currencies.set(balance.account_id, (currencies.get(balance.account_id) ?? 0) + 1);
@@ -197,6 +195,7 @@ export function CashWidget({ widget, date }: WidgetProps) {
   );
 }
 
+/** Contributions still to come. Not scoped: a plan is about the whole portfolio. */
 export function ContributionsWidget({ widget }: WidgetProps) {
   const count = Number(widget.cfg.count) || 6;
   // A window wide enough that a yearly plan still shows up in the list.
@@ -233,11 +232,7 @@ export function ContributionsWidget({ widget }: WidgetProps) {
   );
 }
 
-/**
- * Dividends the open positions should pay next, soonest first: the source's reported payments
- * carried a year forward. The amount is net once a payment was received to learn the
- * withholding from, gross before that.
- */
+/** Reported payments carried a year forward; net once a payment taught the withholding. */
 export function ExpectedDividendsWidget({ widget }: WidgetProps) {
   const { t } = useLingui();
   const source = sourceOf(widget);

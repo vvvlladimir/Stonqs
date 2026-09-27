@@ -35,10 +35,7 @@ function NewSecuritySource({
   );
 }
 
-/**
- * The last step is the decision and its evidence on one screen: what will be written sits
- * above, broken down by why a row is or is not part of it, and every row it came from below.
- */
+/** What will be written, broken down by why, above the rows it came from. */
 export function CommitStep({
   preview,
   overrides,

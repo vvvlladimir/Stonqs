@@ -4,11 +4,7 @@ import { Badge, List, ListRow, Panel } from "../../components/ui";
 import type { ImportProblem, ProblemCode } from "../../lib/types";
 import { PROBLEM_LABELS, problemDetail } from "./labels";
 
-/**
- * Parser notices grouped by code: a broken column complains on every row, and a
- * hundred identical lines say no more than one line plus a count. Opening a group
- * shows example rows, which is what makes the complaint fixable.
- */
+/** Notices grouped by code with a count; opening a group shows example rows. */
 export function ProblemList({
   problems,
   title,

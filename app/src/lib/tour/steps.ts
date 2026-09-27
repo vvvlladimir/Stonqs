@@ -2,23 +2,12 @@ import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import type { ScreenId } from "../nav";
 
-/**
- * One stop of the guided tour.
- *
- * A step points at a control and says what it is for. It **never names a figure, an instrument
- * or an amount**: the same steps run over the demo portfolio a new profile is filled with and
- * over somebody's real one, and a sentence about a number would be wrong in one of them
- * (ADR-0077).
- */
+/** One stop. It never names a figure, instrument or amount: the same steps run over real portfolios (ADR-0077). */
 export interface TourStep {
   id: string;
   /** Opened before the step is shown. */
   screen: ScreenId;
-  /**
-   * `data-tour` of the element to point at. Absent, the card is centred and the step is about
-   * the screen as a whole. A named anchor that never appears is skipped, not waited for: a
-   * widget can be deleted from the board and a dock control can be off on a narrow window.
-   */
+  /** `data-tour` target; absent = the whole screen. One that never appears is skipped. */
   anchor?: string;
   title: MessageDescriptor;
   body: MessageDescriptor;

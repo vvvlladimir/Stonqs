@@ -20,22 +20,14 @@ interface Tour {
   stop: () => void;
   /** Turns the offer down. The sources question has already been asked by then. */
   decline: () => void;
-  /** The first thing a new profile is shown, while the sources are unchosen: the one question
-   *  nobody else can answer, ahead of the offer to walk through screens it decides the content
-   *  of. Answered or left, it is not asked again by itself. */
+  /** The sources question comes first on a new profile and is not re-asked by itself. */
   chooseSources: boolean;
   closeSources: () => void;
 }
 
 const TourContext = createContext<Tour | null>(null);
 
-/**
- * The guided tour's state: which stop is showing, and what happens at the end of it.
- *
- * It holds no DOM and draws nothing — `components/domain/tour` does, the way the updater's
- * dialog is separate from `lib/updates`. The tour writes no portfolio data and changes no
- * setting but the one that records it was offered (ADR-0077).
- */
+/** Tour state only; drawing is `components/domain/tour`. Writes nothing but `UiState::tour` (ADR-0077). */
 export function TourProvider({ children }: { children: ReactNode }) {
   const nav = useNav();
   const { ui, ready, save } = useUiState();
@@ -65,9 +57,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       step: index === null ? null : (STEPS[index] ?? null),
       index: index ?? 0,
       count: STEPS.length,
-      // Offered once the app is on screen with settings loaded, and once the sources question
-      // has been put: an offer drawn over a shell that is still opening has nothing to point
-      // at yet, and one drawn over that dialog asks two things at once.
+      // Only once the shell is up and the sources question is out of the way.
       offered: firstRun && !unchosen,
       start: () => {
         answer();

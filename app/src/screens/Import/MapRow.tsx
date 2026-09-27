@@ -2,10 +2,7 @@ import { Plural, useLingui } from "@lingui/react/macro";
 import type { ReactNode } from "react";
 import { ListRow, Tag } from "../../components/ui";
 
-/**
- * One value out of the file and the decision it is waiting for. Every mapping
- * list in the wizard is this row, so "not decided yet" looks the same everywhere.
- */
+/** One file value and the decision it waits for; every mapping list uses this row. */
 export function MapRow({
   value,
   occurrences,

@@ -1,9 +1,4 @@
-//! The payments grid: every line of the cash story against a time axis.
-//!
-//! One rollup rather than seven, because the question it answers is comparative — "what did
-//! June bring, and how does it sit against what I paid in and what I sold". Every figure here
-//! already exists somewhere in [`Holdings`]; the grid only lays them on one axis, so a caller
-//! never adds two reports together to get a third.
+//! The payments grid: every figure already in [`Holdings`], laid on one time axis.
 
 use super::Holdings;
 use crate::model::TransactionKind;
@@ -110,10 +105,7 @@ pub struct PaymentGrid {
     pub earnings_total: Decimal,
 }
 
-/// Lays every dated figure of `holdings` on one axis over `[from, to]`.
-///
-/// Empty buckets are kept: a year with no dividend in August is a fact about the payer, and a
-/// grid that silently skips the column would hide it.
+/// Empty buckets are kept: a missing August dividend is a fact about the payer.
 pub fn payment_grid(
     holdings: &Holdings,
     from: NaiveDate,

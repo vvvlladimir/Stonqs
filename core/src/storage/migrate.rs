@@ -149,10 +149,7 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
     ),
 ];
 
-/// Applies all pending migrations.
-///
-/// `path` is the database's own file when it has one, and is what makes the pre-upgrade copy
-/// possible; an in-memory database passes `None` and is never backed up.
+/// `path` enables the pre-upgrade copy; an in-memory database passes `None`.
 pub fn run(conn: &Connection, path: Option<&Path>) -> Result<()> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -207,11 +204,7 @@ pub fn run(conn: &Connection, path: Option<&Path>) -> Result<()> {
     Ok(())
 }
 
-/// Copies the database beside itself as `<name>.bak-v<from>` before an upgrade touches it.
-///
-/// Each migration is atomic on its own, but a *sequence* of them is not undoable: a version that
-/// drops a column cannot give it back. An encrypted database copies as the encrypted bytes it
-/// already is, so the backup is no weaker than the original.
+/// Copies the file to `<name>.bak-v<from>` before upgrading: a sequence of migrations cannot be undone (ADR-0062).
 fn back_up(conn: &Connection, path: &Path, from: i64) -> Result<()> {
     let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
         return Err(Error::Backup(format!("{} is not a file", path.display())));
@@ -227,9 +220,7 @@ fn back_up(conn: &Connection, path: &Path, from: i64) -> Result<()> {
     Ok(())
 }
 
-/// Deletes all but the [`KEEP_BACKUPS`] newest copies. A failure here is not the caller's
-/// problem: the backup that matters has already been written, and a full disk is a better
-/// complaint from the next upgrade than from this one.
+/// Keeps the [`KEEP_BACKUPS`] newest; a failure here is ignored, the needed copy already exists.
 fn prune_backups(path: &Path, name: &str) {
     let Some(dir) = path.parent() else { return };
     let prefix = format!("{name}.bak-v");

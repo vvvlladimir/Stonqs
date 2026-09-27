@@ -5,10 +5,7 @@ use chrono::NaiveDate;
 use rusqlite::{Row, params};
 use std::collections::BTreeMap;
 
-/// How far back market data has to reach for the ledger to be valuable at all: the first
-/// operation touching each instrument, and the first touching each currency. A refresh that
-/// stops short of these dates leaves a hole no later catch-up ever fills — the window a
-/// catch-up asks for begins at what is already stored.
+/// First operation per instrument and per currency: how far back market data must reach.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct HistoryNeed {
     /// Security id -> date of its first operation.
@@ -22,9 +19,7 @@ fn row_to_transaction(row: &Row<'_>) -> rusqlite::Result<Transaction> {
     let date: String = row.get("date")?;
     let fx: Option<SqlDecimal> = row.get("fx_rate_to_base")?;
     let currency: String = row.get("currency")?;
-    // A charge in the transaction's own currency is stored as NULL; a row written before that
-    // rule existed is folded back to it here, so nothing downstream sees two spellings of one
-    // currency.
+    // A charge in the row's own currency is folded to NULL on read, for rows written before that rule.
     let charge_currency = |column| -> rusqlite::Result<Option<String>> {
         Ok(row.get::<_, Option<String>>(column)?.filter(|c| *c != currency))
     };
@@ -158,10 +153,7 @@ impl Store {
         Ok(need)
     }
 
-    /// Ties two stored operations together as the two legs of one move. Both get the same new
-    /// link id, so `calc` stops reading them as money crossing the portfolio boundary
-    /// (`paired_links` believes a link only when two rows make it). Refuses anything other than
-    /// exactly two rows: a link is a claim about a pair.
+    /// Links exactly two rows as one move, so `paired_links` believes it.
     pub fn link_transactions(&self, ids: &[String]) -> Result<String> {
         if ids.len() != 2 || ids[0] == ids[1] {
             return Err(Error::Invalid(

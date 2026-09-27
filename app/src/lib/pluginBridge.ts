@@ -1,14 +1,7 @@
 /**
- * The bridge between a plugin widget's frame and the app (ADR-0083): what the frame is handed, in
- * what shape, and which messages it may send back. The only module that knows the protocol; the
- * frame's side of it is `app/src-tauri/src/plugins/widget_shim.js`.
- *
- * The data is a **projection**, not the wire: field names here are the plugin API's own and
- * change only with `api`, so a rename in `lib/types` never breaks somebody else's package. The
- * host builds it (`plugins::reads`, through `plugin_reads`) — the same projection an assistant
- * tool of the package is handed — and these interfaces type what arrives;
- * `the_projection_is_the_bridges` pins the two together.
- * Money stays a string, instruments are named by ticker and name, never by an internal id.
+ * The widget frame's bridge (ADR-0083), the only module that knows the protocol; the frame side
+ * is `plugins/widget_shim.js`. Field names are the plugin API's, versioned by `api`, and
+ * `the_projection_is_the_bridges` pins them to `plugins::reads`. Money stays a string.
  */
 import { useEffect, useState } from "react";
 import type { DateString, MoneyString, PeriodRange, TransactionKind } from "./types";
@@ -131,10 +124,7 @@ export function renderMessage(context: BridgeContext, data: BridgeData) {
   return { stonqs: 1, type: "render", context, data };
 }
 
-/**
- * The theme properties a widget may paint with: colours, radii and type sizes — the look, not the
- * layout. Read off the app's root at render time, so a plugin theme reaches the frame too.
- */
+/** Theme tokens a widget may paint with: colours, radii, type sizes. */
 const TOKENS = [
   "--bg",
   "--surface",
@@ -188,10 +178,7 @@ export function periodOfRange(range: PeriodRange | undefined): BridgeContext["pe
   return range ? { from: range.from, to: range.to } : null;
 }
 
-/**
- * The theme as the frame should see it, re-read whenever the app's scheme or a plugin stylesheet
- * changes — both are a mutation of the document, which is cheaper to watch than to re-derive.
- */
+/** Re-read on any document mutation, cheaper than re-deriving the theme. */
 export function useThemeTokens(): BridgeContext["theme"] {
   const [theme, setTheme] = useState(themeTokens);
   useEffect(() => {

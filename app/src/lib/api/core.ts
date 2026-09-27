@@ -36,10 +36,7 @@ export async function call<T>(command: string, args?: Record<string, unknown>): 
   }
 }
 
-/**
- * The data source a reporting call is answered in. Absent — the usual case — means the one the
- * picker holds; a dashboard widget names its own so a board can carry a tile per account.
- */
+/** Absent = the picker's scope; a widget may name its own (ADR-0030). */
 export type Source = DataScope | null | undefined;
 
 /** Returns today's local calendar date without timezone shifting. */

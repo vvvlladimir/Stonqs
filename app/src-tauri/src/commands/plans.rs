@@ -49,10 +49,7 @@ pub struct PlansData {
     pub monthly_base: Decimal,
 }
 
-/// One occurrence a plan still owes, with the draft it would write.
-///
-/// `problem` is a code, never a sentence: the frontend owns the wording (ADR-0023). A date with
-/// no quote yet keeps its row so the screen can say which month is stuck rather than failing.
+/// `problem` is a code (ADR-0023); a date with no quote keeps its row.
 #[derive(Debug, Serialize)]
 pub struct PlanDue {
     pub date: String,
@@ -200,10 +197,7 @@ pub fn plan_due(state: State<AppState>, plan_id: String, as_of: Option<String>) 
         .collect()
 }
 
-/// Writes the transactions the user confirmed and records the occurrence as executed.
-///
-/// One command rather than "save each, then mark": a half-written occurrence would leave the
-/// plan offering a month whose purchases are already in the ledger.
+/// Rows and the execution link in one command, so an occurrence is never half-written (ADR-0033).
 #[tauri::command]
 pub fn plan_commit(
     app: AppHandle,
@@ -333,11 +327,7 @@ fn amount(value: &str, what: &str) -> UiResult<Decimal> {
     decimal(Some(value), what)?.ok_or_else(|| UiError::invalid(format!("{what} is required")))
 }
 
-/// What the portfolio must be worth to pay for a year, and when this pace would get there.
-///
-/// Not scoped, for the same reason [`plans_list`] is not: the contribution comes from the
-/// plans, which belong to the portfolio rather than to a lens, and a target read against one
-/// account's value while counting every account's savings would compare two different things.
+/// Not scoped: the contribution comes from the portfolio's plans.
 #[tauri::command]
 pub fn fire_projection(
     state: State<AppState>,

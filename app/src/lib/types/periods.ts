@@ -24,10 +24,7 @@ export interface PeriodRange {
 /** Calendar unit a relative window counts back in. */
 export type PeriodUnit = "DAY" | "WEEK" | "MONTH" | "QUARTER" | "YEAR";
 
-/**
- * How a user period finds its dates. Tagged, so the two kinds differ by a field, not a shape.
- * A `FIXED` window with `to: null` is open-ended: it runs to the reporting date.
- */
+/** A `FIXED` window with `to: null` runs to the reporting date. */
 export type PeriodSpec =
   | { kind: "RELATIVE"; unit: PeriodUnit; count: number }
   | { kind: "FIXED"; from: DateString; to: DateString | null };

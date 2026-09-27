@@ -1,6 +1,4 @@
-/**
- * Every query key, spelled once. A shared key is what lets two screens reuse one calculation.
- */
+/** Every query key, spelled once. */
 
 import { type QueryKey } from "@tanstack/react-query";
 import { type Source } from "../api";
@@ -14,11 +12,7 @@ import type {
   WidgetRead,
 } from "../types";
 
-/**
- * Drops trailing `undefined` arguments, so `keys.positions()` is a prefix of
- * `keys.positions(date)` — invalidating the prefix covers every date.
- * `null` is a real argument (no taxonomy, every kind) and stays in the key.
- */
+/** Trailing `undefined`s are dropped so a shorter key is a prefix; `null` stays. */
 function key(...parts: unknown[]): QueryKey {
   while (parts.length > 0 && parts[parts.length - 1] === undefined) parts.pop();
   return parts;

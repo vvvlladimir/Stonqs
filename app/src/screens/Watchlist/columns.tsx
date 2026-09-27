@@ -259,10 +259,7 @@ const HOLDING = new Set([
   "accounts",
 ]);
 
-/**
- * A positions column read through the watchlist's row: every one of them describes the
- * holding, so they are filed under one group however the positions table files them.
- */
+/** Every positions column is filed under one "held" group here. */
 function held(column: Column): WatchColumn {
   return {
     id: column.id,

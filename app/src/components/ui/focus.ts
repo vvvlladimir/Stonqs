@@ -13,11 +13,7 @@ export function focusables(root: HTMLElement): HTMLElement[] {
   );
 }
 
-/**
- * What a modal dialog owes the keyboard (WAI-ARIA dialog pattern): focus moves in when it opens —
- * to a field that asked for it, else the first field, else the dialog itself — `Tab` cycles
- * inside it, and focus returns to whatever opened it once it closes.
- */
+/** WAI-ARIA dialog focus: in on open, `Tab` trapped, back to the opener on close. */
 export function useDialogFocus(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const root = ref.current;

@@ -1,7 +1,4 @@
-//! Price triggers, date rules, their crossing log, and dated events of an instrument. See ADR-0034.
-//!
-//! Not scoped: a trigger is about an instrument, and the account picker does not change whether
-//! its price crossed a level.
+//! Price and date triggers, their crossing log, and instrument events (ADR-0034). Not scoped.
 
 use crate::commands::parse_date;
 use crate::error::{UiError, UiResult};
@@ -251,9 +248,8 @@ pub fn alerts_mark_seen(state: State<AppState>) -> UiResult<usize> {
     Ok(state.store()?.mark_crossings_seen()?)
 }
 
-/// Checks every rule, then hands over the crossings nobody was told about, marked as told in the
-/// same call. The frontend writes the notification: the host knows no language (ADR-0023), and
-/// the startup refresh can finish before any window listens, so the UI asks.
+/// Checks every rule and hands over unannounced crossings, marked in the same call; the frontend
+/// words the notification (ADR-0023).
 #[tauri::command]
 pub fn alerts_take_notifications(app: AppHandle, state: State<AppState>) -> UiResult<Vec<CrossingRow>> {
     let (logged, rows) = {

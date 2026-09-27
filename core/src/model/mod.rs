@@ -1,10 +1,4 @@
-//! Domain model: accounts, securities, transactions, positions, portfolio.
-//!
-//! Module-wide rules: money is always [`rust_decimal::Decimal`], never
-//! `f64` (`0.1 + 0.2 != 0.3` is unacceptable for accounting); every struct
-//! derives `Serialize`/`Deserialize` up front, since retrofitting it later
-//! means touching every type at once; ids are `String` (UUID v4) so an
-//! object can exist before it's written to the database.
+//! Domain model. Money is always `Decimal`; ids are UUID strings, so an object exists before it is stored.
 
 mod account;
 mod account_group;

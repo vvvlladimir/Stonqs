@@ -1,6 +1,4 @@
-//! The demo's operations: three years of a monthly savings habit, with the irregular things a
-//! real ledger also holds — a portfolio moved in from another broker, currency exchanges, a
-//! closed trade, dividends, custody fees and one withdrawal.
+//! Three years of monthly saving, plus a broker move, exchanges, a closed trade, dividends, fees and a withdrawal.
 
 use super::World;
 use chrono::{Datelike, Months, NaiveDate};

@@ -1,8 +1,3 @@
-//! What is held on a date, and what it is worth there.
-//!
-//! The order is always transactions to `Holdings` to `PortfolioValuation`: holdings are
-//! deterministic and price-free, and only the valuation reaches for market data.
-
 use crate::calc::cash_balances;
 use crate::calc::{
     CostBasisRow, Holdings, HoldingsOptions, PortfolioValuation, build_holdings_with, compare_cost_basis,
@@ -89,10 +84,7 @@ impl PortfolioAnalytics<'_> {
         value_holdings(&holdings, self.base_currency(), date, self.store, self.store)
     }
 
-    /// Every open position's purchase value under both cost-basis methods.
-    ///
-    /// Two holdings passes and one valuation: the methods disagree about the cost of what is
-    /// left, never about how much of it there is, so the prices are read once.
+    /// Two holdings passes, one valuation: the methods never disagree about quantity.
     pub fn cost_basis_comparison(&self, date: NaiveDate) -> Result<Vec<CostBasisRow>> {
         let transactions = self.transactions_until(Some(date))?;
         let base = self.base_currency();

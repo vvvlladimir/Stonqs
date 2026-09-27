@@ -79,9 +79,7 @@ export function ValueChart({ series, currency, height = CH.h.md }: Props) {
         const barWidth = Math.max(Math.min(pitch - 2, 10), 2);
         const columnX = (c: number) => frame.left + (c + 0.5) * pitch;
 
-        // A single large transfer would flatten every regular one under a linear scale,
-        // so the lane compares flows by square root: this lane answers "when and roughly
-        // how much", the exact amount is in the readout.
+        // Square-root scale so one large transfer does not flatten the rest.
         const peak = Math.max(...deposits, ...withdrawals, 1);
         const size = (value: number) => Math.max(Math.sqrt(value / peak) * laneHalf, 3);
         const lit = hover === null ? null : columnOf(hover);

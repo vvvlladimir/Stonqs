@@ -4,10 +4,7 @@ use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-/// An amount the user means to have by a date, over the accounts they name. See ADR-0068.
-///
-/// It is an intention about the portfolio, not a reading of it, so it carries its own accounts
-/// and ignores the picker — an empty `accounts` is the whole portfolio.
+/// An amount by a date over the accounts the goal names; empty = the whole portfolio (ADR-0068).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Goal {
     pub id: String,
@@ -66,11 +63,8 @@ impl Goal {
     }
 }
 
-/// What one account may take in one limit year: an ISA, a 401(k), an ИИС ceiling.
-///
-/// The app ships no country and no ceiling of its own — the rules differ per country *and* per
-/// year, and a stale one stated confidently is worse than none (ADR-0068). It is measured, never
-/// enforced: nothing here refuses a transaction.
+/// One account's ceiling per limit year. No jurisdiction ships in the app; measured, never
+/// enforced (ADR-0068).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContributionLimit {
     pub id: String,
@@ -130,11 +124,7 @@ impl ContributionLimit {
         }
     }
 
-    /// The limit year `date` falls in: `[from, to]`, both inclusive.
-    ///
-    /// A year opening on 6 April runs to 5 April, so a deposit on 5 April 2025 belongs to the
-    /// year that opened in 2024 — reading it into the calendar year would spend the wrong
-    /// allowance.
+    /// The limit year `date` falls in, both ends inclusive; a year opening 6 April ends 5 April.
     pub fn year_of(&self, date: NaiveDate) -> Result<(NaiveDate, NaiveDate)> {
         use chrono::Datelike;
         let (month, day) = self.month_day()?;

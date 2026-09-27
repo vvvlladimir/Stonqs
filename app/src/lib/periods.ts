@@ -5,11 +5,7 @@ import { api } from "./api";
 import { keys, useInvalidate } from "./queries";
 import type { BuiltinPreset, DateString, PeriodRange, PeriodSpec, UserPeriod } from "./types";
 
-/**
- * The period axis. Dates come from the core (`period_ranges`), which resolves the seven
- * shipped presets and whatever the user added — see ADR-0018 and ADR-0026. The frontend owns
- * the wording of the shipped seven and nothing else; a user period carries its own name.
- */
+/** Dates are the core's (ADR-0018/0026); only the shipped seven's wording lives here. */
 
 /** A period's identity on the wire: a shipped preset's code or a user period's id. */
 export type PeriodId = string;
@@ -59,10 +55,7 @@ export const UNIT_LABELS = {
   YEAR: msg`years`,
 } as const;
 
-/**
- * A period's name. The user's own wording wins; a shipped preset falls back to the catalog,
- * and an id that is neither is shown as-is rather than as a blank button.
- */
+/** The user's own name wins; an unknown id is shown as is, never blank. */
 export function periodLabel(i18n: I18n, range: Pick<PeriodRange, "id" | "name">, short = true): string {
   if (range.name) return range.name;
   const table = short ? BUILTIN_SHORT : BUILTIN_LABELS;
@@ -78,10 +71,7 @@ export function usePeriodSettings() {
   return useQuery({ queryKey: keys.periodSettings(), queryFn: api.periodsGet });
 }
 
-/**
- * Every period mutation invalidates the resolved strip as well as the editor's own list,
- * because adding a period changes what every screen may pick.
- */
+/** Invalidates the resolved strip too: every screen's choices change. */
 export function usePeriodEdit() {
   const invalidate = useInvalidate();
   const done = () => invalidate(keys.periodSettings(), keys.periods());
@@ -101,11 +91,7 @@ export function newPeriodId(): PeriodId {
 /** The spec a freshly opened editor starts from. */
 export const DEFAULT_SPEC: PeriodSpec = { kind: "RELATIVE", unit: "MONTH", count: 6 };
 
-/**
- * Returns the requested range or the nearest available one. A stored id that no longer
- * resolves — a period the user deleted, or one this portfolio's history cannot cover — falls
- * back to the first offered range rather than leaving the screen without a period.
- */
+/** The requested range, else the first offered: a deleted or uncovered period never leaves a screen periodless. */
 export function pickRange(ranges: PeriodRange[] | undefined, id: PeriodId): PeriodRange | undefined {
   return ranges?.find((r) => r.id === id) ?? ranges?.[0];
 }

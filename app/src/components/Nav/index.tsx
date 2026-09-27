@@ -30,12 +30,7 @@ const OPENING_MS = 700;
 /** A sheet pulled down further than this closes. */
 const CLOSE_PULL = 80;
 
-/**
- * The navigation: Favorites, sections folded to one open at a time, Settings and the two lenses
- * at the foot. On a wide window it is the side rail; below that the same element is a sheet
- * behind the tab bar's `Menu`, so the order and the pins are one thing at every width.
- * The arrangement is `UiState::nav`; see `model.ts` for how a stored order is read.
- */
+/** Side rail from 1000px, a sheet behind the tab bar's `Menu` below; order is `UiState::nav`. */
 export function Nav({ screen, focus, go, alertsDot }: Props) {
   const { t, i18n } = useLingui();
   const { ui, save } = useUiState();

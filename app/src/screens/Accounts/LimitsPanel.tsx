@@ -22,10 +22,7 @@ const BLANK: LimitInput = {
   note: null,
 };
 
-/**
- * A yearly contribution ceiling — an ISA, a 401(k), an ИИС. It is measured and never enforced:
- * nothing here refuses a transaction, and the app ships no country's rules of its own.
- */
+/** A yearly contribution ceiling: measured, never enforced; no country's rules ship (ADR-0068). */
 export function LimitsPanel({ accounts, base }: { accounts: AccountRow[]; base: string }) {
   const { t } = useLingui();
   const date = useAsOf().date;

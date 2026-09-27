@@ -10,14 +10,7 @@ import { PasswordDialog } from "../../../components/domain/PasswordDialog";
 import type { AiProvider } from "../../../lib/types";
 import { Badge, Field, FormDialog, ListRow, Panel, SecretInput } from "../../../components/ui";
 
-/**
- * One row per provider: whether a key is saved, and one way to change it. A panel per provider
- * pushed everything else off the screen, and the answer this screen owes is the same for each —
- * connected or not.
- *
- * The key never comes back: `ai_key_status` reports whether one is saved and nothing more, so
- * the field is always empty and always a replacement.
- */
+/** One row per provider; `ai_key_status` answers yes/no only, so the field is always empty. */
 export function KeysPanel({
   providers,
   extraModels,

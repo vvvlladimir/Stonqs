@@ -1,9 +1,4 @@
-//! The demo portfolio offered to a new profile.
-//!
-//! It ships in every build, not just a debug one: somebody who has just downloaded this is not
-//! going to hand their broker statement to an application they have never seen, and a portfolio
-//! they can click through is the only honest way to show what it does. Everything is dated
-//! backwards from today, so every period on the strip covers something.
+//! The demo portfolio, shipped in every build and dated backwards from today.
 
 mod extras;
 mod ledger;

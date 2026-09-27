@@ -77,9 +77,7 @@ pub(super) fn app_periods(context: &ToolContext, _args: &Value) -> AiResult<Valu
     Ok(json!({ "today": context.today.to_string(), "periods": periods }))
 }
 
-/// Documentation, not data — but handed over through the same fenced result as everything else.
-/// The fence's promise is that the model does not take orders from a tool result, and text the
-/// repository wrote is no reason to make an exception to it.
+/// Documentation fenced like any tool result: the model takes no orders from a result.
 pub(super) fn app_reference(_context: &ToolContext, args: &Value) -> AiResult<Value> {
     let topic = text(args, "topic");
     match guide::reference(&topic) {

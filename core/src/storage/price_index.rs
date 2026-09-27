@@ -9,9 +9,7 @@ use rust_decimal::Decimal;
 use std::collections::BTreeMap;
 
 impl Store {
-    /// Index levels from one source. A source other than the one the region is already stored
-    /// under replaces the whole series rather than filling into it: publishers use different
-    /// bases, and a ratio taken across two of them measures the rebasing, not inflation.
+    /// A different source replaces the region's whole series: index bases differ.
     pub fn save_index_from(
         &self,
         region: &str,

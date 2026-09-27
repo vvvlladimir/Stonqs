@@ -29,9 +29,7 @@ impl AiToolMode {
     }
 }
 
-/// How hard the model is asked to think. Every provider spells this differently (OpenAI
-/// `reasoning.effort`, Anthropic `thinking`, Gemini `thinkingConfig`) and some models support
-/// none of it — the adapter decides what to make of it, including nothing.
+/// How hard the model thinks; the adapter maps it to its provider's setting, or ignores it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AiEffort {
@@ -84,13 +82,8 @@ pub struct AiMessage {
     pub created_at: String,
 }
 
-/// What one request to a model cost, as the provider counted it. Every adapter fills the same
-/// four figures and reports 0 for one its provider does not count — a neutral shape the way
-/// [`AiToolMode`] is, so a second provider adds no column.
-///
-/// `cached_tokens` is part of `input_tokens`, not beside it: it says how much of the prompt the
-/// provider served from its own cache, which is the number that says whether the fixed prefix
-/// still matches (`.claude/rules/ai-assistant.md`).
+/// One request's cost as the provider counted it; unreported figures are 0. `cached_tokens` is
+/// part of `input_tokens`, not beside it.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AiUsage {
     pub input_tokens: i64,

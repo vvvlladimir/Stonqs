@@ -1,17 +1,6 @@
 import type { CustomSource, MarketSourceRow } from "../../../lib/types";
 
-/**
- * What a set of sources still lacks before the app can price a portfolio by itself.
- *
- * Two answers are needed and neither substitutes for the other: something that publishes
- * prices, and something that publishes exchange rates — a portfolio held in one currency and
- * reported in another is the ordinary case, and a missing rate is `MissingMarketData`, not a
- * smaller number. Everything else a catalogue offers (venues, search, inflation) makes the app
- * better informed, never able or unable to value a holding.
- *
- * A source with a required key it does not have is counted as absent: it is switched on into
- * the state that reads as broken.
- */
+/** Something for prices and something for rates are both needed; a source missing its required key counts as absent. */
 export interface SourceNeeds {
   quotes: boolean;
   rates: boolean;
@@ -19,12 +8,7 @@ export interface SourceNeeds {
   ok: boolean;
 }
 
-/**
- * What is picked answers this, not what is being asked: confirming is what turns one into the
- * other. `switched` is `AppSettings::market_sources`, which is the only place a source of the
- * user's own carries a switch — the catalogue's rows carry their own, and a custom source with
- * no entry there is on.
- */
+/** Answered by what is picked, not what is asked; a custom source with no switch entry is on. */
 export function sourceNeeds(
   rows: MarketSourceRow[],
   custom: CustomSource[] = [],

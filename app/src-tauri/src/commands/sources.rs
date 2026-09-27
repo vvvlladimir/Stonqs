@@ -31,9 +31,8 @@ impl AppState {
         if let Ok(settings) = self.settings() {
             setup.switched = settings.market_sources.clone().into_iter().collect();
             setup.custom = settings.market_custom.clone();
-            // Nothing is asked of anybody until the owner has said who may be asked (ADR-0076).
-            // Written over the switches rather than beside them, so every reader of a `Setup` —
-            // the services, `quote_ids`, `default_quotes` — is gated by the one line.
+            // Nothing is asked until the owner chose (ADR-0076); written over the switches so every
+            // `Setup` reader is gated by this one line.
             if !settings.sources_configured {
                 setup.switched = sources::CATALOG
                     .iter()
@@ -74,9 +73,7 @@ pub struct MarketSourceRow {
 #[tauri::command]
 pub fn market_sources_list(state: State<AppState>) -> UiResult<Vec<MarketSourceRow>> {
     let setup = state.market_setup();
-    // What the owner picked, ungated: while the sources have not been confirmed the gate reads
-    // every switch as off, and a picker that answered "off" to what was just switched on would
-    // look broken. `active` is the gated answer, which is the one that decides a request.
+    // Ungated picks: `active` is the gated answer that decides a request.
     let picked = state.settings()?.market_sources.clone();
     Ok(sources::CATALOG
         .iter()
@@ -107,24 +104,15 @@ pub fn market_sources_list(state: State<AppState>) -> UiResult<Vec<MarketSourceR
         .collect())
 }
 
-/// Records that the owner has answered where data may come from, whatever they answered.
-///
-/// Turning nothing on is an answer too: the portfolio is then priced by hand. Nothing here
-/// switches a source — `market_source_switch` already did, one row at a time.
+/// Records that the owner answered, even with nothing on (then priced by hand).
 #[tauri::command]
 pub fn market_sources_confirm(state: State<AppState>) -> UiResult<()> {
     state.settings()?.sources_configured = true;
     state.persist_settings()
 }
 
-/// Switches a source on or off; a switch back to the default is forgotten rather than stored.
-///
-/// Turning one **on** answers the question `sources_configured` records: the owner named a
-/// service that may be asked, which is the whole of what is being asked for (ADR-0076). Without
-/// this the settings panel would need a second press meaning "yes, the switches I just set", and
-/// a switch that changes nothing until it is confirmed elsewhere reads as broken. Turning one
-/// off answers nothing: it is a narrowing of an answer already given, and the last source off is
-/// still an answered state, priced by hand.
+/// A switch back to default is forgotten. Switching one on also answers `sources_configured`;
+/// switching off narrows an answer already given (ADR-0076).
 #[tauri::command]
 pub fn market_source_switch(state: State<AppState>, source: String, on: bool) -> UiResult<()> {
     let default = match sources::info(&source) {
@@ -208,9 +196,7 @@ pub struct CustomTestRow {
     pub currency: String,
 }
 
-/// Asks an unsaved definition for the last 30 days of `symbol` and returns the newest ten rows,
-/// so the form can show what the paths actually read before anything is stored. A rate source
-/// reads `symbol` as a pair, `EUR/USD`; each row's `currency` is then the quote currency.
+/// Tests an unsaved definition on 30 days of `symbol`; a rate source reads it as `EUR/USD`.
 #[tauri::command]
 pub async fn market_custom_test(
     state: State<'_, AppState>,

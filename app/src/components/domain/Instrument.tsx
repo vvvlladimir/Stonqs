@@ -4,11 +4,7 @@ import { securityKindLabel } from "../../lib/kinds";
 import { SecurityLink } from "./SecurityCardProvider";
 import type { SecurityKind } from "../../lib/types";
 
-/**
- * Security row: monogram, name, ticker and kind. One component shared by positions,
- * the security directory and the transaction log, so the same instrument looks the same everywhere.
- *
- */
+/** Monogram, name, ticker and kind — one look for an instrument everywhere. */
 export function Logo({ symbol, name, icon }: { symbol: string; name?: string; icon?: ReactNode }) {
   const source = symbol || name || "";
   const mono = source

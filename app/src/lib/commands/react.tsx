@@ -14,12 +14,8 @@ import { chordMatches, sequence, typing } from "./keys";
 import { createRegistry, type ChoiceOption, type CommandArg, type Handler, type Registry } from "./registry";
 
 /**
- * The React side of the command layer: the one window `keydown` listener, and the hooks by
- * which a component answers a command, publishes a choice or takes the keyboard as a layer.
- *
- * - A bare key never fires while text is being typed and is switched off as a whole by
- *   `UiState::shortcuts.single_keys` (WCAG 2.1.4). A `mod` binding works everywhere.
- * - While a layer is open only `Escape` and the commands it lets `pass` reach anything.
+ * The one window `keydown` listener and the hooks. Bare keys never fire while typing and can be
+ * switched off (WCAG 2.1.4); under a layer only `Escape` and `pass` commands get through.
  */
 
 const Context = createContext<Registry | null>(null);
@@ -112,10 +108,7 @@ export function useRegistryVersion(): number {
 const noSubscribe = () => () => {};
 const zero = () => 0;
 
-/**
- * Answers a command while mounted. A screen's own answer outranks the shell's (`priority` 0),
- * so `mod+n` on Transactions opens the form in place instead of navigating to it.
- */
+/** A screen's own answer outranks the shell's. */
 export function useCommand(
   id: CommandId,
   handler: Handler,
@@ -134,11 +127,7 @@ export function useCommand(
   }, [registry, id, enabled, label, priority]);
 }
 
-/**
- * `useCommand` as an element, for a screen that declares its actions in JSX beside the button.
- * It also runs an intent left for it: a command with a `screen` pressed elsewhere opened this
- * screen, and the element is what is mounted once the screen can answer.
- */
+/** `useCommand` as an element; it also runs an intent left for this screen. */
 export function Command({
   id,
   run,
@@ -162,10 +151,7 @@ export function Command({
   return null;
 }
 
-/**
- * Publishes a choice while mounted. The options are compared by value, so a parent that
- * rebuilds the array on every render does not re-publish it.
- */
+/** Options are compared by value, so rebuilt arrays do not re-publish. */
 export function useChoice(
   id: ChoiceId,
   choice: {
@@ -192,10 +178,7 @@ export function useChoice(
 
 const noPick = () => {};
 
-/**
- * Takes `Escape` and the keyboard while mounted: a dialog, the assistant, the palette. The
- * newest layer answers first, so `Escape` closes one thing at a time.
- */
+/** The newest layer answers `Escape` first. */
 export function useLayer(
   onEscape: () => void,
   options: { pass?: readonly CommandId[]; active?: boolean } = {},

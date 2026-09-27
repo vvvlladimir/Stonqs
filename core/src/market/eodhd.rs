@@ -23,9 +23,7 @@ impl EodhdProvider {
         }
     }
 
-    /// `close` is split-adjusted like every stored quote; `adjusted_close` also folds dividends in
-    /// and is not used. The endpoint names no currency, so the instrument's own is assumed and the
-    /// fallback guard's ratio check is what catches a venue quoting in pence.
+    /// `close` is split-adjusted; the endpoint names no currency, so a pence venue is caught by the fallback guard.
     pub(crate) fn parse(security: &Security, body: &str) -> Result<Vec<Quote>> {
         let rows: Vec<serde_json::Value> =
             serde_json::from_str(body).map_err(|e| Error::BadProviderData {

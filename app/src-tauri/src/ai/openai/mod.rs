@@ -76,12 +76,7 @@ impl AiProvider for OpenAiProvider {
     }
 }
 
-/// The stream, separated from the socket so it can be replayed from a recorded fixture.
-///
-/// Deltas are forwarded for the live UI and nothing else. The finished turn is read off the
-/// `response.completed` envelope, which already carries every output item — so there is no
-/// partial JSON to reassemble and no assumption to get wrong about the order parallel tool
-/// calls arrive in.
+/// Separated from the socket for fixture replay. The finished turn is read off `response.completed`.
 fn read_stream<R: std::io::BufRead>(
     reader: R,
     sink: &mut dyn FnMut(AiEvent),
@@ -160,9 +155,7 @@ fn build_request(request: &AiRequest) -> serde_json::Value {
         .flat_map(|(role, blocks)| turn_to_items(*role, blocks))
         .collect();
 
-    // The Responses API's flat form — `{type, name, parameters}` — not Chat Completions' nested
-    // `{type: "function", function: {...}}`. `strict` makes the model match the schema instead
-    // of occasionally sending arguments that do not parse.
+    // The Responses API's flat tool form; `strict` makes arguments always match the schema.
     let tools: Vec<serde_json::Value> = request
         .tools
         .iter()

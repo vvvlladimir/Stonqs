@@ -5,11 +5,7 @@ import { useIsWide } from "../../lib/useLayout";
 import { FIELDS, focusables } from "./focus";
 import { List, ListRow } from "./List";
 
-/**
- * The only `<table>` in the product. A screen describes its columns; the primitive
- * decides markup, alignment, widths, ordering and — below the wide breakpoint — whether
- * the same columns are shown as cards instead.
- */
+/** The only `<table>`: columns in, markup, widths, ordering and the narrow card layout out. */
 
 export type SortDir = "asc" | "desc";
 
@@ -44,10 +40,7 @@ export interface Column<T> {
   factLabel?: ReactNode;
   /** Totals cell; a footer row appears as soon as one column declares one. */
   foot?: ReactNode;
-  /**
-   * Makes the column sortable: the value its rows are ordered by. Declared rather than
-   * read off the cell, because a cell is markup — a logo, a bar, a whole component.
-   */
+  /** The value rows are ordered by; a cell is markup, so it is declared, not read off. */
   sort?: (row: T) => SortValue;
   /** Direction the first click picks; text opens at A, every other column at the largest. */
   sortFirst?: SortDir;
@@ -79,20 +72,12 @@ export interface DataTableProps<T> {
   variant?: "rows" | "nested";
   /** Column widths only hold with a fixed layout. */
   fixed?: boolean;
-  /**
-   * `content` sizes every column by what is in it instead of sharing the width out:
-   * the table grows past its container and is expected to sit inside a `Scrolly x`.
-   * Cells are capped, wrapping to two lines before they are cut.
-   */
+  /** Columns sized by content; the table overflows and must sit in a `Scrolly x`. */
   sizing?: "content";
   className?: string;
   /** Extra footer rows, wrapped in their own `<tr>`s by the caller. */
   foot?: ReactNode;
-  /**
-   * Narrow layout: cards derived from the columns (default), a presenter of the
-   * screen's own returning the whole item, or `false` to keep the table — dense
-   * previews scroll instead.
-   */
+  /** Narrow layout: derived cards, a screen's own presenter, or `false` to keep the table. */
   card?: false | ((row: T) => ReactNode);
   /** Card list laid out as plain lines rather than boxes. */
   cards?: "cards" | "lines";
@@ -100,10 +85,7 @@ export interface DataTableProps<T> {
   empty?: ReactNode;
   /** Ordering the table opens with; clicking a heading takes it from there. */
   defaultSort?: SortState;
-  /**
-   * Ordering held by the caller, for a table whose order outlives the screen. Given together
-   * with `onSortChange`; without it the table keeps the order in its own state.
-   */
+  /** Caller-held ordering, with `onSortChange`; otherwise the table keeps its own. */
   sort?: SortState | null;
   onSortChange?: (sort: SortState | null) => void;
 }
@@ -112,11 +94,7 @@ function used<T>(columns: DataTableProps<T>["columns"], isWide: boolean): Column
   return (columns.filter(Boolean) as Column<T>[]).filter((c) => c.only !== "wide" || isWide);
 }
 
-/**
- * A heading is not a cell: a column with nothing to head has nothing for its class to style,
- * and `acts` on a `<th>` makes it `display: flex`, which the row then wraps in an anonymous
- * cell — a phantom column that widens the table and shifts every heading off its data.
- */
+/** An empty head gets no classes: `acts` on a `<th>` would add a phantom column. */
 function headClasses<T>(column: Column<T>): string {
   const classes: string[] = [];
   if (column.align !== "left") classes.push("r", "num");
@@ -297,11 +275,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
   );
 }
 
-/**
- * ↑/↓ from a control in a row moves to the same column of the next row that has one — a ticker
- * to the ticker below, a row's actions to the next row's — so a long table is not a hundred Tabs.
- * An input keeps its own arrows.
- */
+/** ↑/↓ move to the same column of the next row; inputs keep their own arrows. */
 function moveInRows(e: React.KeyboardEvent<HTMLElement>) {
   if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
   if (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || e.defaultPrevented) return;
@@ -351,10 +325,7 @@ function ordered<T>(
   }));
 }
 
-/**
- * An absent value sorts last whichever way the column points — "no price" is not "the
- * lowest price" — so it is settled before the direction is applied at all.
- */
+/** Absent values sort last either way: "no price" is not "the lowest price". */
 function compare(a: SortValue, b: SortValue, dir: number): number {
   const missingA = a === null || a === undefined || a === "" || (typeof a === "number" && Number.isNaN(a));
   const missingB = b === null || b === undefined || b === "" || (typeof b === "number" && Number.isNaN(b));
@@ -365,11 +336,7 @@ function compare(a: SortValue, b: SortValue, dir: number): number {
   return dir * String(a).localeCompare(String(b), currentLocale(), { numeric: true });
 }
 
-/**
- * Sideways scrolling only once the columns really do not fit. Measured rather than assumed
- * because a scroll container is also a sticky container: while the table fits, the wrapper
- * stays a plain box and the sticky header keeps sticking to the page.
- */
+/** Scrolls sideways only when the columns really overflow, so the sticky header keeps working. */
 function useOverflow() {
   const boxRef = useRef<HTMLDivElement>(null);
   const [over, setOver] = useState(false);

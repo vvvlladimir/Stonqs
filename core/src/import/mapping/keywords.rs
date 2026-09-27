@@ -1,17 +1,13 @@
-//! What an operation may be called, per transaction kind.
-//!
-//! Ordered canonical-first like the header aliases, and sell wordings precede buy ones because
-//! one contains the other ("Verkoop" contains "Koop").
+//! Operation wordings per kind. Canonical-first, and sell wordings precede buy ones ("Verkoop"
+//! contains "Koop").
 
 use super::normalize_alias;
 use crate::model::TransactionKind;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-/// Operation wordings brought from outside the binary — a plugin's dictionary for a language the
-/// shipped table does not speak. Read like the shipped keywords, by containment and first hit
-/// first, but only **after** them: an added word fills a gap and never re-answers a wording the
-/// app already reads, so a stranger's package cannot turn a buy into a sale.
+/// A plugin's wordings, read only *after* the shipped keywords, so they fill gaps and never
+/// re-answer a wording the app reads.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(from = "KindWordsFile", into = "KindWordsFile")]
 pub struct KindWords(Vec<(String, TransactionKind)>);
@@ -90,9 +86,7 @@ impl KindWords {
             .collect()
     }
 
-    /// Words the shipped keywords already answer as another kind. Such a word is never reached —
-    /// the shipped reading comes first — so a dictionary carrying one says something it will
-    /// never do.
+    /// Words the shipped keywords already read as another kind: never reached, so refused at install.
     pub fn shadowed(&self) -> Vec<(&str, TransactionKind)> {
         self.0
             .iter()
@@ -173,10 +167,7 @@ pub fn default_kind_aliases() -> BTreeMap<String, TransactionKind> {
     table.iter().map(|(k, v)| (normalize_alias(k), *v)).collect()
 }
 
-/// Operation wording recognised by keyword: "Stocks/ETF purchase", "Market buy" and
-/// "Aankoop" all say Buy. The table is per language, never per broker — a rule for one
-/// broker's file helps only that broker's customers. Order matters: the first hit wins, so
-/// "Withdrawal Conversion Fee" is a fee and "Verkoop" is not the "Koop" it contains.
+/// Operation wording by keyword; the first hit wins, so order matters.
 pub(crate) fn kind_from_keywords(normalized: &str) -> Option<TransactionKind> {
     use TransactionKind::*;
     const KEYWORDS: &[(&str, TransactionKind)] = &[
@@ -269,9 +260,7 @@ pub(crate) fn kind_from_keywords(normalized: &str) -> Option<TransactionKind> {
         ("COTISATION", Deposit),
         ("SUBVENTION", Deposit),
         ("ПОПОЛНЕНИЕ", Deposit),
-        // Moving value inside the portfolio: a currency exchange, a crypto conversion, a
-        // stake, a wallet-to-wallet move. Direction comes from the amount's sign, so one
-        // keyword covers both legs — `TransferIn` is the reversible side of the pair.
+        // Value moving inside the portfolio: one keyword for both legs, direction from the sign.
         (">", TransferIn),
         ("CONVERSION", TransferIn),
         ("CONVERT", TransferIn),

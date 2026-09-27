@@ -13,13 +13,7 @@ import { ChatList } from "./aiChat/ChatList";
 
 const AI_PASS: readonly CommandId[] = ["ai"];
 
-/**
- * A global drawer, not a screen — mounted once at the shell level next to `TooltipLayer`.
- *
- * Nothing in here carries a `data-tip`: the panel is a conversation, and a hover bubble over the
- * text of one is noise. What a control does is on the control, and what it is for is its
- * `aria-label`.
- */
+/** A global drawer mounted once in the shell. No `data-tip` anywhere in it. */
 export function AiChatPanel({ onClose }: { onClose: () => void }) {
   const { t } = useLingui();
   const [chatId, setChatId] = useState<string | null>(null);
@@ -94,11 +88,7 @@ export function AiChatPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-/**
- * The drag on the panel's left edge. The width follows the pointer in local state and is only
- * written to `UiState` when the gesture ends — a settings write per pixel would be one file
- * write per pixel.
- */
+/** Width follows the pointer locally and is written to `UiState` once, on drag end. */
 function usePanelWidth() {
   const { ui, save } = useUiState();
   const [dragged, setDragged] = useState<number | null>(null);

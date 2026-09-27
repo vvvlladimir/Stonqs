@@ -16,10 +16,7 @@ export interface LegendItem {
   slot?: number;
 }
 
-/**
- * How tall a chart is: a fixed number of pixels, or `"fill"` — every plot on the dashboard
- * takes that one, so a tile dragged taller is drawn into rather than padded out.
- */
+/** Pixels, or `"fill"`: dashboard plots fill their tile. */
 export type ChartHeight = number | "fill";
 
 interface Props {
@@ -44,12 +41,7 @@ const LANE_GAP = 10;
 /** Narrowest the value labels may be squeezed to: "-1.2 M" still fits. */
 const GUTTER_MIN = 34;
 
-/**
- * Room kept to the right of the plot for the value labels. The caller's figure is sized for a
- * full-width chart; on a phone column it was a fifth of the box left blank, because the axis
- * prints compact labels ("4 k") there and never needed it. Never more than a ninth of the box,
- * never less than a label.
- */
+/** Room for value labels: at most a ninth of the box, at least one label. */
 function sideRoom(gutter: number, width: number): number {
   if (width <= 0) return gutter;
   return Math.max(Math.min(gutter, Math.round(width / 9)), GUTTER_MIN);

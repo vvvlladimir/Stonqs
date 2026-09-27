@@ -12,9 +12,7 @@ pub enum Error {
     #[error("network error: {0}")]
     Network(String),
 
-    /// A likely-transient failure (timeout, dropped connection, 429, 5xx),
-    /// kept separate from [`Error::Network`] so retry policy can switch on
-    /// the error type instead of parsing the message.
+    /// Transient (timeout, 429, 5xx): retry policy switches on the variant, not the message.
     #[error("temporarily unavailable: {0}")]
     Unavailable(String),
 
@@ -47,9 +45,7 @@ pub enum Error {
     #[error("math error: {0}")]
     Math(String),
 
-    /// The copy taken before a schema upgrade could not be written, so the upgrade did not run.
-    /// A migration cannot be undone, and refusing to start is recoverable where a lost portfolio
-    /// is not.
+    /// The pre-migration copy failed, so the upgrade did not run (ADR-0062).
     #[error("could not back up the database before migrating: {0}")]
     Backup(String),
 }

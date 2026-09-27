@@ -12,14 +12,7 @@ import { formatDateTime } from "../../lib/format";
 import { useUpdates } from "../../lib/updates";
 import { Bar, Markdown, Modal } from "../ui";
 
-/**
- * The one place an update is offered. It shows what the release says about itself and leaves the
- * decision to the user: nothing is downloaded, and nothing is restarted, until a button here.
- *
- * Every stage wears the same shape — a status line naming the two versions, then whatever that
- * stage has to say — so pressing `Update now` changes the sentence and the controls, never the
- * dialog under them.
- */
+/** The one place an update is offered; nothing downloads or restarts until a button here. */
 export function UpdateDialog() {
   const updates = useUpdates();
   const { t } = useLingui();
@@ -189,11 +182,7 @@ function UpdateNote({ tone, icon, children }: { tone: "ok" | "warn"; icon: React
   );
 }
 
-/**
- * The release body cut down to what a reader of this dialog wants. Its own version heading is
- * already the line above, and the commit hash the changelog generator appends to every entry
- * links into the repository rather than describing the change.
- */
+/** The release body without its own version heading and commit hashes. */
 function releaseNotes(raw: string): string {
   return raw
     .replace(/^\s*#{1,6}[ \t]+\[?v?\d[^\n]*\n+/, "")

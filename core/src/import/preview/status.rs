@@ -1,6 +1,4 @@
-//! What a row *is* once it has been read: ready, a duplicate, missing its instrument, ignored or
-//! invalid. Only an `Error` makes a row invalid — a direction corrected from the sign is a
-//! warning, and a warned row still imports.
+//! A row's status. Only an `Error` makes it invalid; warned rows still import.
 
 use super::{ImportRow, RowStatus, TransactionDraft};
 use crate::import::dedupe::{KnownRow, fingerprint, loose_fingerprint};
@@ -8,9 +6,7 @@ use crate::import::parse::{ImportProblem, ProblemCode, Severity};
 use crate::model::TransactionKind;
 use std::collections::{HashMap, HashSet};
 
-/// Re-importing the same file must be a no-op, so a row is compared both against the database
-/// and against the rows already read out of this file. A file that names its rows is compared
-/// by that name first: the broker restating an operation is not a second operation.
+/// Compares against the database and against earlier rows of the file, by broker id first.
 pub(super) struct Dedupe<'a> {
     /// Stored rows by content, consumed as rows of the file are matched to them.
     known: HashMap<String, usize>,
@@ -116,9 +112,7 @@ pub(super) fn decide(
             );
             return RowStatus::Updated;
         }
-        // Two rows of one content that the broker names apart are two operations — two
-        // identical orders a few seconds apart — so each is matched against one stored row, and
-        // only a repeated name makes a row repeat another in the file.
+        // Two same-content rows with different broker ids are two operations.
         let seen_key = format!("{print}#{}", d.external_id.as_deref().unwrap_or_default());
         let loose = loose_fingerprint(d);
         if let Some(count) = dedupe.known.get_mut(&print).filter(|c| **c > 0) {
@@ -147,9 +141,7 @@ pub(super) fn decide(
             .filter(|n| **n > 0)
         {
             *n -= 1;
-            // Same day, same account, same instrument, same quantity — and a different value.
-            // Either the stored row was corrected by hand, or the same size really traded twice
-            // that day at two prices. Only the user knows which, so it is offered, not decided.
+            // A different value for the same trade: offered as `Similar`, never decided.
             problems.push(
                 ImportProblem::row(
                     ProblemCode::SimilarInStore,

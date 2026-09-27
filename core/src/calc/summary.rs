@@ -2,11 +2,8 @@ use super::{ValueSeries, dietz_capital};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-/// The money view of one reporting period, next to the return view a TWR gives.
-///
-/// A rise in value is not a result: half of it may be a deposit. `absolute_change_base` is what
-/// the account statement shows, `delta_base` is what was earned, and `average_capital_base` is
-/// the capital that earned it — the denominator every cost rate is measured against.
+/// The money view of a period. `absolute_change_base` is the statement's change, `delta_base`
+/// what was earned, `average_capital_base` what cost rates divide by.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PeriodSummary {
     #[serde(with = "rust_decimal::serde::str")]
@@ -41,11 +38,8 @@ impl PeriodSummary {
     }
 }
 
-/// Summarizes a value series. A window opens on what was there *before* it, so the first day's
-/// own deposits are money paid in rather than an opening balance — at inception that makes the
-/// opening zero instead of the first purchase. The first day's value is still what the capital
-/// at work is measured from: money that arrived that day worked the whole window, which is the
-/// same assumption [`dietz_capital`] makes about every later flow.
+/// The opening is the value *before* the first day's flows (zero at inception); capital at work
+/// still counts from the first day's value (ADR-0043).
 pub fn period_summary(series: &ValueSeries) -> PeriodSummary {
     let day_one_value = series.total_value_base.first().copied().unwrap_or_default();
     let day_one_flow = series.external_flow_base.first().copied().unwrap_or_default();

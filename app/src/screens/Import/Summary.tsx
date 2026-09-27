@@ -2,10 +2,7 @@ import { Trans } from "@lingui/react/macro";
 import { Badge } from "../../components/ui";
 import type { ImportPreviewData } from "../../lib/types";
 
-/**
- * What the file amounts to right now. It rides in the wizard's footer rather
- * than in a step, because every decision the user makes moves these numbers.
- */
+/** Rides in the footer: every decision moves these numbers. */
 export function Summary({ preview, pending }: { preview: ImportPreviewData; pending: boolean }) {
   const s = preview.summary;
   return (

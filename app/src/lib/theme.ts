@@ -2,11 +2,7 @@
 
 import { useEffect } from "react";
 
-/**
- * `system`, one of the two built in, or `plugin:<plugin id>/<theme id>` — a stylesheet installed
- * as a plugin (ADR-0070). A plugin theme is a *variation*: the document still carries the base
- * scheme it was declared against, so what the stylesheet leaves alone still has a value.
- */
+/** A plugin theme is a variation over its base scheme (ADR-0070). */
 export type ThemePreference = "system" | "light" | "dark" | `plugin:${string}`;
 
 const QUERY = "(prefers-color-scheme: dark)";
@@ -42,10 +38,7 @@ export function applyTheme(preference: ThemePreference, base: "light" | "dark" =
   document.documentElement.setAttribute("data-theme", built);
 }
 
-/**
- * Puts a plugin's stylesheet in force, or takes the last one out. Injected rather than linked,
- * so a theme's file needs no origin of its own and a theme author writes plain `:root` rules.
- */
+/** Injected, not linked, so a theme file needs no origin. */
 export function applyPluginCss(css: string | null): void {
   const existing = document.getElementById(STYLE_ID);
   if (css === null) {
@@ -65,12 +58,7 @@ export function watchSystemTheme(onChange: () => void): () => void {
   return () => mql.removeEventListener("change", onChange);
 }
 
-/**
- * Keeps the document in step with the saved preference, and with the OS while it follows it.
- * A plugin theme arrives a moment later than the rest of the app — it is a file being read — so
- * the base scheme is applied at once and the stylesheet joins it; a plugin that has been removed
- * since simply never arrives, and its base is what stays on screen.
- */
+/** The base scheme applies at once and the stylesheet joins it; a removed plugin leaves the base. */
 export function useTheme(preference: ThemePreference, css?: string, base?: "light" | "dark"): void {
   useEffect(() => {
     applyTheme(preference, base);

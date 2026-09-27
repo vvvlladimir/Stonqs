@@ -54,11 +54,8 @@ impl ExpectedDividend {
     }
 }
 
-/// Every dividend expected with its cash date in `(range.from, range.to]`, soonest first.
-///
-/// `holdings` says how many shares (the lens's); `received` is the payment history the lag and
-/// the withholding are read from (the whole portfolio's — see `positions_at`); `reported` is
-/// every instrument event, of which only the provider's dividends are used.
+/// Dividends expected with cash date in `(from, to]`. Shares are the lens's; payment history is
+/// the whole portfolio's (see `positions_at`).
 pub fn expected_dividends(
     holdings: &Holdings,
     reported: &[SecurityEvent],
@@ -212,9 +209,8 @@ impl<'a> Schedule<'a> {
         })
     }
 
-    /// Monthly and quarterly payers pay equal amounts, so a raise shows in the latest one; a
-    /// half-yearly or yearly payer splits interim and final, and only the same payment a year
-    /// ago says what that one will be.
+    /// Monthly/quarterly payers repeat the latest amount; half-yearly and yearly ones repeat last
+    /// year's same payment.
     fn frequency_carries_latest(&self) -> bool {
         matches!(
             self.frequency,
@@ -223,9 +219,7 @@ impl<'a> Schedule<'a> {
     }
 }
 
-/// Median days from a reported ex-date to the payment this portfolio received for it. A payment
-/// pairs with the latest ex-date before it, and only within one gap — an older one is another
-/// payment's.
+/// Median days from ex-date to the payment received, each payment paired within one gap.
 fn pay_lag(history: &[Reported], own: &[&IncomeRecord], gap: i64) -> Option<i64> {
     let mut lags: Vec<i64> = own
         .iter()

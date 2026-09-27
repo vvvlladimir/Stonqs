@@ -50,10 +50,7 @@ const SHELL = { priority: 0 };
 /** Scope kind and id together are what tells two options apart; the portfolio has no id. */
 const scopeKey = (o: Pick<ScopeOption, "kind" | "id">) => `${o.kind}:${o.id ?? ""}`;
 
-/**
- * The shell's side of the command layer: the commands and choices that mean the same on every
- * screen, the palette and the shortcut list, and the macOS menu bar. Renders only overlays.
- */
+/** The shell's commands, choices, palette, shortcut list and macOS menu bar. Renders overlays only. */
 export function Commands({ aiOpen, onAi }: { aiOpen: boolean; onAi: () => void }) {
   const { t, i18n } = useLingui();
   const nav = useNav();

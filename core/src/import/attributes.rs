@@ -1,8 +1,4 @@
-//! Instrument attributes as a CSV: an export of what is filled in, and an import that fills it.
-//!
-//! One row per instrument, one column per attribute. Instruments are joined the same way the
-//! taxonomy import joins them — ISIN first, then the ticker — because an ISIN is the instrument
-//! while a ticker is only one of its listings.
+//! Instrument attributes as CSV, joined like the taxonomy import: ISIN first, then ticker.
 
 use super::parse::{ImportProblem, ParsedCsv, ProblemCode, Severity};
 use super::taxonomy::{match_security, quote};
@@ -256,10 +252,7 @@ pub fn build_attribute_preview(
     }
 }
 
-/// Writes the plan: creates the attributes the file introduces, then fills the values.
-///
-/// A value already stored under an attribute the file does not name is left alone — the file is
-/// a set of columns, not the whole state of the instrument.
+/// Merges into what is stored: attributes the file does not name are left alone.
 pub fn commit_attributes(store: &Store, preview: &AttributePreview) -> Result<AttributeImportResult> {
     let mut result = AttributeImportResult::default();
 

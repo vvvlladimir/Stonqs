@@ -1,14 +1,11 @@
-//! Opening a profile's database with or without its key, and turning the file from plain into
-//! encrypted and back (ADR-0049). SQLCipher cannot convert a file in place, so a conversion
-//! exports a copy and swaps it in; this module is the only place that renames a database file.
+//! Opening a profile's database and converting it between plain and encrypted (ADR-0049) — the
+//! only place that renames a database file.
 
 use crate::error::{UiError, UiResult};
 use sq_core::storage::Store;
 use std::path::{Path, PathBuf};
 
-/// Opens the database — encrypted when a key is given. A file that the key does not open but
-/// that opens plain is one whose encryption was interrupted before the swap (the vault already
-/// held the key): it is encrypted now instead of being reported as unreadable.
+/// A file the key does not open but that opens plain was interrupted mid-encryption: it is encrypted now.
 pub fn open(path: &Path, key: Option<&[u8; 32]>) -> UiResult<Store> {
     let Some(key) = key else {
         return Ok(Store::open(path)?);
@@ -22,11 +19,7 @@ pub fn open(path: &Path, key: Option<&[u8; 32]>) -> UiResult<Store> {
     }
 }
 
-/// Rewrites the database under `key` (or plain for `None`) and returns it reopened. `store` must
-/// be the only connection to the file — the caller guarantees it (`AppState::db_gate`).
-///
-/// The swap keeps a way back at every step: the copy is complete and opened before the original
-/// moves, and the original is removed only once the copy is in its place and opens there.
+/// `store` must be the only connection (`AppState::db_gate`). Every step keeps a way back.
 pub fn convert(store: Store, path: &Path, key: Option<&[u8; 32]>) -> UiResult<Store> {
     let copy = sibling(path, "converting");
     let old = sibling(path, "previous");

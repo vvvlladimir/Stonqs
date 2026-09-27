@@ -1,7 +1,4 @@
-//! The file's cells, after the user's per-cell overrides.
-//!
-//! Every stage downstream reads a row through here, so the preview and the commit see the same
-//! input: a value corrected in the wizard is corrected once, before anything is parsed.
+//! Cells after the user's overrides; preview and commit both read rows through here.
 
 use super::RowOverride;
 use crate::import::mapping::{ImportField, ImportMapping};
@@ -12,9 +9,7 @@ use std::collections::BTreeMap;
 /// One source row ready to be read: the file's cells, and the user's hand edits beside them.
 pub(super) struct RowInput {
     pub raw: BTreeMap<String, String>,
-    /// Edits that have no column to live in. A delivery whose file states no price is corrected
-    /// by *adding* the value, not by changing a cell, so an override of an unmapped field is
-    /// carried on its own instead of being dropped.
+    /// Overrides of fields the file has no column for.
     pub added: BTreeMap<ImportField, String>,
 }
 

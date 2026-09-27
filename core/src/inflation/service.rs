@@ -45,11 +45,8 @@ impl InflationService {
         self.providers.iter().find(|p| p.covers(&region)).map(|p| p.id())
     }
 
-    /// Fetches one region from the first source that covers it, falling through to the next
-    /// when one fails. Unlike the FX chain a fallback does not fill gaps: publishers use
-    /// different index bases (2015 = 100 against 2010 = 100), so one region's series comes
-    /// whole from one source or the ratio of two months inside it would be a fiction.
-    /// Returns the rows saved and the source that answered.
+    /// Fetches a region from the first covering source. No gap-filling from another: index bases
+    /// differ, so a series comes whole from one source.
     pub fn ensure_index(
         &self,
         store: &Store,

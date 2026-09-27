@@ -70,17 +70,13 @@ pub enum UiError {
     Busy {
         message: String,
     },
-    /// A plugin's file reader recognised the file and needs the password it is sealed with.
-    /// `reader` is the one that asked — the password goes to it alone — and `tried` says a
-    /// password was already given and refused, so the prompt can say it was wrong.
+    /// `reader` alone gets the password; `tried` means one was already refused.
     FileProtected {
         reader: String,
         tried: bool,
         message: String,
     },
-    /// A plugin's file reader failed over a file it claimed: it trapped, ran past its deadline,
-    /// ran out of its memory, or said the file is malformed. One code, because the user's action
-    /// is the same in every case — this plugin cannot read this file (ADR-0086).
+    /// Any failure of a reader over a file it claimed: the user's action is the same (ADR-0086).
     Reader {
         plugin: String,
         message: String,

@@ -118,9 +118,7 @@ pub struct ChargeRow {
     pub account: String,
 }
 
-/// Everything the Reports screen shows for one window, plus the window before it so a
-/// tile can say which way a number moved. Every figure is filtered to `[from, to]`;
-/// `yield_on_cost` is the one lifetime exception and says so on its field.
+/// Every figure is filtered to `[from, to]` except `yield_on_cost`, which says so.
 #[derive(Debug, Serialize)]
 pub struct ReportsData {
     pub from: String,

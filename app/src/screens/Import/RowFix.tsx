@@ -4,10 +4,7 @@ import { Banner, Field, FormDialog } from "../../components/ui";
 import type { ImportField, RowOverride } from "../../lib/types";
 import { fieldLabel, problemDetail, type PreviewRow } from "./labels";
 
-/**
- * Repair one row by hand. Edits are collected and applied on save, so a row with
- * five wrong cells costs one recalculation rather than five.
- */
+/** Edits are applied together on save: one recalculation, not five. */
 export function RowFix({
   row,
   columns,
@@ -22,9 +19,7 @@ export function RowFix({
   onClose: () => void;
 }) {
   const { t, i18n } = useLingui();
-  // Fields the row needs and the file has no column for. A delivery stating only a quantity is
-  // repaired by *adding* what it was worth, so those fields are offered even though no cell of
-  // the file holds them; the core carries such an edit on its own (`RowInput::added`).
+  // Fields without a column are offered too, carried as `RowInput::added`.
   const extra = useMemo(() => {
     const mapped = new Set(columns.map(([field]) => field));
     const wanted: ImportField[] = row.problems.some((p) => p.code === "DELIVERY_WITHOUT_COST")

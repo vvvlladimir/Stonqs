@@ -1,8 +1,4 @@
-//! Accounts and the groups over them. `portfolio.rs` answers what the accounts in view are
-//! worth; these are the writes that change which accounts exist at all.
-//!
-//! A new account joins the portfolio as it is created, exactly as the form does it — an account
-//! outside the portfolio is one no report would ever count.
+//! Account and group writes. A new account joins the portfolio as it is created, as the form does.
 
 use super::args::*;
 use super::lookup::*;

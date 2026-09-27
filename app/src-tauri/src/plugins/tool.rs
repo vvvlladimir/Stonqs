@@ -1,7 +1,4 @@
-//! Running a plugin's assistant tool (ADR-0085): the model's arguments and the declared reads in,
-//! one JSON answer out, in the same sandbox as the reader and the writer — no filesystem, no
-//! network, a frozen clock. What the tool is shown and when it may run is the assistant's
-//! business (`ai::tools::plugin`); this file only runs a module and checks a package.
+//! Running a plugin's assistant tool (ADR-0085) in the shared sandbox, and checking its package.
 
 use super::sandbox;
 use super::widget::Read;
@@ -69,9 +66,7 @@ pub fn call(module: &Path, args: &Value, data: &Value) -> Result<Value, String> 
     serde_json::from_str(&answer).map_err(|e| format!("the answer is not JSON: {e}"))
 }
 
-/// The strict subset of JSON Schema every provider accepts: an object whose every property is
-/// required, nothing else allowed, and properties that are plain values. A schema outside it
-/// would not fail this tool alone — a provider refuses the whole request, and with it every chat.
+/// Every property required, nothing else allowed: one bad schema makes a provider refuse every chat.
 pub fn check_schema(id: &str, schema: &Value) -> UiResult<()> {
     let refuse = |why: &str| Err(UiError::invalid(format!("tool {id}: its schema {why}")));
     if schema["type"] != "object" {
@@ -112,9 +107,7 @@ pub fn check_schema(id: &str, schema: &Value) -> UiResult<()> {
     Ok(())
 }
 
-/// What a tool must prove before its package installs: a schema every provider accepts, and its
-/// own sample answered exactly as the package says — compared as JSON, like a reader's, because
-/// the answer is a document the model parses, not bytes another program judges.
+/// A valid schema, and the sample answered exactly — compared as JSON.
 pub fn check(def: &ToolDef, module: &Path, schema: &[u8], sample: &[u8], expected: &[u8]) -> UiResult<()> {
     let id = &def.id;
     let json = |what: &str, bytes: &[u8]| -> UiResult<Value> {

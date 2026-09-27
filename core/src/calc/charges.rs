@@ -79,14 +79,8 @@ pub fn charges_total(items: &[ChargeRecord]) -> ChargeSummary {
     total
 }
 
-/// Every fee and tax actually paid in `[from, to]`, trade commissions included.
-///
-/// The rollups above deliberately see standalone Fee/Tax operations only: a buy commission is
-/// already inside the cost basis and counting it twice would overstate expenses. A cost *rate*
-/// asks the opposite question — what did holding and trading this portfolio cost — so it must
-/// count the commission that a purchase buried in the cost basis and the tax withheld from a
-/// dividend. This is a separate function rather than a flag because the two answers are both
-/// right and neither may be silently substituted for the other.
+/// Every fee and tax paid in `[from, to]`, trade commissions included — unlike the rollups
+/// above, which see standalone Fee/Tax only (ADR-0024).
 pub fn costs_paid(
     transactions: &[Transaction],
     base: &str,
@@ -103,9 +97,7 @@ pub fn costs_paid(
     Ok(total)
 }
 
-/// The same costs split over consecutive windows, in one pass over the ledger. The calculation
-/// sheet asks for one summary per row, and [`costs_paid`] would walk every transaction again for
-/// each of them. Ranges are assumed not to overlap; a cost outside all of them is dropped.
+/// [`costs_paid`] over consecutive, non-overlapping windows in one pass.
 pub fn costs_paid_over(
     transactions: &[Transaction],
     base: &str,

@@ -71,9 +71,7 @@ export function AssetsStep({
     onChange({ ...mapping, new_securities });
   };
 
-  // An instrument nobody identified enters the portfolio under the export's own code and stays
-  // without prices, which is only discovered days later on a chart that has none. The step
-  // therefore does its own work on arrival and leaves the corrections to the user.
+  // Identify on arrival: an unidentified instrument silently gets no prices.
   useEffect(() => {
     if (searched.current || unknown.length === 0) return;
     searched.current = true;

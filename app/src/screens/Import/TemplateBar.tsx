@@ -14,11 +14,7 @@ const GROUPS: Record<TemplateSource, (t: (s: TemplateStringsArray) => string) =>
   BUILTIN: (t) => t`Shipped`,
 };
 
-/**
- * Reusable broker layouts, as one line: pick one, save what is on screen as a new one,
- * drop the one picked. It sits above the step's only panel because a template answers
- * every question below it at once — reaching for it later means redoing the work.
- */
+/** Layouts in one line above the step: a template answers every question below it at once. */
 export function TemplateBar({
   config,
   mapping,

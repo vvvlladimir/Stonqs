@@ -1,13 +1,5 @@
-//! A chat as one Markdown file. The panel renders markdown already, so exporting it is writing
-//! down what is on screen — plus the tool calls and their readings, which is the part a chat kept
-//! outside the app is worth keeping for.
-//!
-//! Raw HTML is deliberately absent, the same choice `components/ui/Markdown.tsx` makes: this text
-//! was written by a model that had read somebody's CSV, and a file that renders script tags in a
-//! notes app is the same hazard as a panel that does.
-//!
-//! The few English words here (`You`, `Assistant`) are of a piece with the CSV exports' column
-//! names — a saved file is not IPC, and nothing in the app reads this back.
+//! A chat as Markdown, readings included. No raw HTML, as in the panel: the text came from a
+//! model that read somebody's CSV.
 
 use super::store::ChatTurn;
 use super::{Block, Role};
@@ -24,9 +16,7 @@ pub fn markdown(chat: &AiChat, turns: &[ChatTurn]) -> String {
     );
 
     for turn in turns {
-        // A turn carrying nothing but tool results is the loop handing readings back, not a side
-        // of the conversation — the panel does not draw it either. Its results are written under
-        // the call that asked for them.
+        // A turn of only tool results is the loop handing readings back; they are written under their call.
         if turn.blocks.iter().all(|b| matches!(b, Block::ToolResult { .. })) {
             continue;
         }
@@ -74,10 +64,7 @@ fn write_block(out: &mut String, block: &Block, turns: &[ChatTurn]) {
     }
 }
 
-/// A fence long enough to survive whatever the model or a tool put inside — a reading quoting a
-/// note that itself contains ``` would otherwise end the block early. The longest run anywhere
-/// counts, not only one at the start of a line: a run is cheap to measure and a fence one
-/// backtick too short is a file that renders as nonsense.
+/// A fence longer than any backtick run in the body.
 fn fenced(out: &mut String, body: &str) {
     let mut longest = 0;
     let mut run = 0;

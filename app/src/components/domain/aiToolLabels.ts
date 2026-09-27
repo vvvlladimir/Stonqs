@@ -2,15 +2,7 @@ import { msg } from "@lingui/core/macro";
 import type { MessageDescriptor } from "@lingui/core";
 import type { ToolParams } from "../../lib/types";
 
-/**
- * What each tool is called, in the user's language. The host sends the tool's name and the
- * values it was asked for; the sentence on the consent card is written here — never by the host,
- * which does not know the language, and never by the model, which must not write the label on a
- * button the user is about to press (`ai/consent.rs`).
- *
- * A tool with no entry still shows its name rather than a blank card: a catalogue that grew
- * faster than this table is a missing translation, not a reason to hide what is being asked.
- */
+/** Tool labels for the consent card, written here in the user's language, never by host or model. A missing entry shows the name. */
 export const TOOL_LABELS: Record<string, MessageDescriptor> = {
   portfolio_overview: msg`what the portfolio is worth`,
   portfolio_performance: msg`how the portfolio performed`,
@@ -83,11 +75,7 @@ export const TOOL_LABELS: Record<string, MessageDescriptor> = {
   app_user_guide: msg`the guide for a screen`,
 };
 
-/** The values on the card, spelled out. Keys come from the tool's own `Params`. */
-/**
- * A tool an installed plugin brought (ADR-0085). Its own name is the plugin's words and arrives
- * as a value on the card (`plugin`, `tool`), so the label says only what kind of thing runs.
- */
+/** A plugin's tool (ADR-0085); its names arrive as values, so the label says only what kind of thing runs. */
 export const PLUGIN_TOOL_PREFIX = "plugin_";
 export const PLUGIN_TOOL_LABEL = msg`a reading by an installed plugin`;
 

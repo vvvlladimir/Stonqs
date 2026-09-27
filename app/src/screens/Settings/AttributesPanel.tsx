@@ -21,10 +21,7 @@ import type { AttributeDefInput, SecurityAttributeDef } from "../../lib/types";
 
 const EMPTY: AttributeDefInput = { id: null, name: "", kind: "TEXT", unit: null, position: 0 };
 
-/**
- * The columns the user adds to the instrument directory: TER, country of risk, replication.
- * The values themselves are filled in on the instrument, because that is where they belong.
- */
+/** The user's instrument columns (TER, country…); values are filled in on the instrument. */
 export function AttributesPanel() {
   const { t, i18n } = useLingui();
   const invalidate = useInvalidate();

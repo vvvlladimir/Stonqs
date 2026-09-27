@@ -1,6 +1,5 @@
-//! Turning an [`InvestmentPlan`] into the transactions it proposes, and into a schedule of
-//! contributions still to come. Nothing here writes: a plan proposes, the user commits.
-//! See ADR-0033.
+//! A plan's proposed transactions and its schedule. Nothing here writes: a plan proposes, the
+//! user commits (ADR-0033).
 
 use crate::error::{Error, Result};
 use crate::fx::RateLookup;
@@ -67,10 +66,7 @@ impl PlanOccurrence {
     }
 }
 
-/// Occurrences up to `as_of` that have not been committed yet, oldest first.
-///
-/// An inactive plan is due for nothing: stopping a plan must not leave a backlog waiting to be
-/// written the moment it is switched on again.
+/// Uncommitted occurrences up to `as_of`. An inactive plan is due for nothing, so no backlog builds up.
 pub fn due_occurrences(
     plan: &InvestmentPlan,
     executed: &BTreeSet<NaiveDate>,
@@ -87,11 +83,8 @@ pub fn due_occurrences(
         .collect())
 }
 
-/// Builds what the plan would buy on `date`.
-///
-/// The flat fee and tax are taken off the contribution first — a 500 € debit carrying a 1 € fee
-/// buys 499 € of shares — and then divided across the legs by the same weights, so a leg's cost
-/// basis carries its own share of the cost rather than the first instrument carrying all of it.
+/// Flat costs come off the contribution first, then everything splits by leg weight, so each
+/// leg's cost basis carries its share of the costs.
 pub fn plan_occurrence(
     plan: &InvestmentPlan,
     date: NaiveDate,
@@ -188,10 +181,7 @@ pub fn plan_occurrence(
     Ok(occurrence)
 }
 
-/// The draft transactions for an occurrence, ready to be edited and committed.
-///
-/// A leg that rounded down to nothing produces no transaction: writing a zero-quantity buy would
-/// put a row in the ledger that never happened.
+/// A leg that rounded down to zero produces no transaction.
 pub fn plan_transactions(plan: &InvestmentPlan, occurrence: &PlanOccurrence) -> Vec<Transaction> {
     if plan.is_cash_only() {
         let mut deposit = Transaction::cash(
@@ -237,10 +227,7 @@ pub struct Contribution {
     pub amount_base: Decimal,
 }
 
-/// Contributions every active plan would make inside `range`, oldest first.
-///
-/// A future date has no exchange rate, so every leg is converted at the rate known on `as_of`:
-/// the projection answers "at today's rates", which is the only honest reading of it.
+/// Every leg is converted at the rate known on `as_of`: a future date has no rate.
 pub fn contribution_schedule(
     plans: &[InvestmentPlan],
     range: DateRange,
@@ -285,11 +272,7 @@ pub fn contributions_by_month(contributions: &[Contribution]) -> BTreeMap<String
     out
 }
 
-/// What the active plans add up to in an average month, in base currency.
-///
-/// Read off the next twelve months rather than from the interval: a quarterly plan and a monthly
-/// one then land on the same scale without anyone dividing by an interval length, and a plan that
-/// ends inside the year counts only for the months it still runs.
+/// Averaged over the next twelve months, so plans of any interval land on one scale.
 pub fn monthly_contribution(
     plans: &[InvestmentPlan],
     base: &str,
@@ -309,9 +292,7 @@ pub fn monthly_contribution(
     Ok(round_money(total / Decimal::from(12)))
 }
 
-/// What the legs of a plan would ask for as a rebalance top-up: the contribution after costs.
-/// Feeding it to [`super::rebalance`] as `cash_to_invest` is what makes a plan and a target
-/// allocation one screen rather than two.
+/// The contribution after costs, fed to [`super::rebalance`] as `cash_to_invest`.
 pub fn investable_amount(plan: &InvestmentPlan) -> Decimal {
     if plan.is_cash_only() {
         plan.amount

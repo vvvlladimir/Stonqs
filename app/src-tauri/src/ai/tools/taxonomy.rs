@@ -1,7 +1,4 @@
-//! Classification trees: their shape, what is filed where, and the writes that change either.
-//!
-//! What the tree *divides* — weights, drift, members — lives in `allocation.rs`. Here is the
-//! structure itself, so a model asked to file something can see where it would go first.
+//! Tree structure and filing; what a tree divides lives in `allocation.rs`.
 
 use super::args::*;
 use super::fmt::*;
@@ -254,9 +251,7 @@ pub(super) fn taxonomy_tree(context: &ToolContext, args: &Value) -> AiResult<Val
     }))
 }
 
-/// The body of `classification_save` for an instrument. A share is stored as a fraction, and the
-/// store refuses one outside (0, 1] — an instrument counted twice over would silently change
-/// every weight in the tree (`.claude/rules/taxonomy-and-rebalance.md`).
+/// Shares outside (0, 1] are refused by the store.
 pub(super) fn taxonomy_assign(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let taxonomy = taxonomy_by_name(context, &text(args, "tree"))?;
     let node = node_by_name(context, &taxonomy, &text(args, "node"))?;

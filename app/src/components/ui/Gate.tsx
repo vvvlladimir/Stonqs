@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 
-/**
- * A screen standing before the app itself — choosing a profile, unlocking one, setting one up:
- * one centred card, and below it the ways out that are not the card's own question.
- */
+/** A screen before the app: one centred card and the ways out below it. */
 export function Gate({
   title,
   lead,

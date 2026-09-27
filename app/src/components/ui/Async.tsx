@@ -15,12 +15,7 @@ export function Pending() {
   );
 }
 
-/**
- * A host failure as one line: the headline comes from the error's code, so it is in the
- * user's language, and the host's English detail follows it. Takes the payload rather than a
- * thrown error, because not every failure arrives as one — a streamed turn hands its `UiError`
- * over the channel (`lib/ai.ts`), and it deserves the same wording as a rejected command.
- */
+/** The headline from the error's code, then the host's English detail. Takes the payload, since streamed turns send one too. */
 export function useUiErrorText(detail: UiError): string {
   const { i18n } = useLingui();
   switch (detail.code) {
@@ -96,11 +91,7 @@ export interface AsyncProps<T> {
   children: (data: T) => ReactNode;
 }
 
-/**
- * The three states of a query in one place: failure, waiting, answer.
- * A query disabled by a missing precondition stays pending forever — guard
- * that before rendering `Async`, not inside it.
- */
+/** Failure, waiting, answer. A query disabled by a missing precondition stays pending forever — guard it outside. */
 export function Async<T>({ query, empty, isEmpty, pending, children }: AsyncProps<T>) {
   if (query.isError) return <QueryError error={query.error} />;
   if (query.data === undefined) return <>{pending ?? <Pending />}</>;

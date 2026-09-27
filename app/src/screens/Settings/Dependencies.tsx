@@ -30,10 +30,7 @@ const BY: Record<string, (d: Dependency) => string> = {
   licence: (d) => d.licence,
 };
 
-/**
- * The dependency table of `AboutPanel`, in its own chunk and rendered only once asked for: the
- * generated list is eight hundred rows, which is a thing to search rather than a page to scroll.
- */
+/** Its own lazily rendered chunk: eight hundred rows to search, not scroll. */
 export default function Dependencies() {
   const { t } = useLingui();
   const [query, setQuery] = useState("");

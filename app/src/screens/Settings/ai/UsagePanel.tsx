@@ -4,14 +4,7 @@ import { DataTable, Empty, ListRow, Num, Panel, Pending, QueryError } from "../.
 import { formatDay, formatDecimal } from "../../../lib/format";
 import type { AiUsageTotal } from "../../../lib/types";
 
-/**
- * What has been asked of every model so far, counted by the provider. Tokens and not money on
- * purpose: prices change between releases, so a price list in the app would quietly lie — the
- * figures here are what the provider's own bill is computed from.
- *
- * Per model rather than per chat, and a deleted chat's requests still count: the question is
- * what the key was billed for (ADR-0041).
- */
+/** Tokens per model as the provider counted them, never money; deleted chats still count (ADR-0041). */
 export function UsagePanel() {
   const { t } = useLingui();
   const usage = useAiUsage();

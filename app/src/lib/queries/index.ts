@@ -1,7 +1,6 @@
 /**
- * The data layer: one place where a query key is spelled and one place that says what a write
- * invalidates. A screen calls a hook, never `useQuery` with a key. A hook with a nullable id or an
- * absent range stays disabled itself, so callers carry no `enabled` and no `!`.
+ * The data layer: keys spelled once, invalidation named once, a hook per query. A hook with a
+ * nullable id stays disabled itself, so callers carry no `enabled` and no `!`.
  */
 
 export { keys } from "./keys";

@@ -12,18 +12,11 @@ export interface CommandDef {
   group: CommandGroup;
   /** Kept out of the palette, which lists screens and choices by itself. */
   hidden?: boolean;
-  /**
-   * The screen that answers the command. Run anywhere else, the registry opens that screen and
-   * leaves an intent the screen's `<Command>` consumes on arrival — `mod+n` from Overview.
-   */
+  /** Run elsewhere, the registry opens this screen and leaves an intent its `<Command>` consumes. */
   screen?: ScreenId;
 }
 
-/**
- * Every command the app has, whoever answers it. The keyboard, the palette, the shortcut list,
- * tooltips and the macOS menu bar all read this one table; a new command is a row here plus a
- * `useCommand` / `<Command>` where it is answered.
- */
+/** Every command; keyboard, palette, shortcut list, tooltips and menu bar all read this table. */
 /* eslint-disable lingui/no-unlocalized-strings -- bindings and ids; the labels are the text */
 export const COMMANDS = {
   palette: { keys: ["mod+k"], label: msg`Command palette`, group: "general" },
@@ -88,9 +81,5 @@ export function commandDef(id: CommandId): CommandDef {
   return COMMANDS[id];
 }
 
-/**
- * A set of mutually exclusive options owned by whoever shows them — the period strip, the
- * data scope, the colour scheme, the open profile. Published with `useChoice`; the menu bar
- * draws each as a submenu of checkable items and the palette lists its options.
- */
+/** Exclusive options published by their owner via `useChoice`. */
 export type ChoiceId = "period" | "scope" | "theme" | "profile";

@@ -106,9 +106,7 @@ pub(super) fn or_all(args: &Value, key: &str) -> String {
     }
 }
 
-/// The operations the editor offers, spelled as they cross everywhere else. Deliberately not
-/// every variant the ledger knows: the paired transfer kinds are two rows linked to each other,
-/// and half of such a pair written on its own reads to `calc` as money leaving the portfolio.
+/// Not every kind: half of a paired transfer written alone reads as money leaving the portfolio.
 pub(super) const TRANSACTION_KINDS: &[&str] = &[
     "BUY",
     "SELL",

@@ -9,10 +9,7 @@ import { formatDay, formatDayNumeric } from "../../lib/format";
 import { Banner, Field, ListRow, Modal } from "../ui";
 import type { DateString } from "../../lib/types";
 
-/**
- * The date the reading screens answer for, beside the scope picker and wearing its look: two
- * lenses, one control shape. The date is not stored — see `lib/asOf`.
- */
+/** The date the reading screens answer for; session-only, see `lib/asOf`. */
 export function AsOfPicker() {
   const { t } = useLingui();
   const { date, isToday, set, reset } = useAsOf();
@@ -82,10 +79,7 @@ export function AsOfPicker() {
   );
 }
 
-/**
- * Says that the screen is not showing the present. Without it a portfolio read at a past date
- * looks like one whose prices stopped updating.
- */
+/** Says the screen is not showing the present, so a past portfolio does not look stale. */
 export function AsOfBanner() {
   const { isToday, date, reset } = useAsOf();
   if (isToday) return null;

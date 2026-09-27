@@ -149,12 +149,7 @@ function priceOf(row: SecurityRow) {
   );
 }
 
-/**
- * The cached quote period and count. A series far shorter than the instrument has been held is
- * the symptom of a ticker on a venue this source does not quote, so it is stated in red instead
- * of read as a history: the refresh moves such an instrument by itself, and "Venues…" does the
- * rest where it cannot.
- */
+/** A series far shorter than the holding is the wrong-venue symptom, stated in red. */
 function HistoryCell(row: SecurityRow) {
   const thin = row.sparse_history;
   if (row.quote_count === 0 || !row.coverage_from || !row.coverage_to)

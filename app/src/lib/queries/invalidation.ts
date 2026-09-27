@@ -53,10 +53,7 @@ const PLANS: QueryKey[] = [keys.plans(), keys.planDue(), keys.planProjection(), 
 /** A goal reads a valuation and a limit reads the ledger, so both move with either. */
 const GOALS: QueryKey[] = [keys.goals(), keys.limits()];
 
-/**
- * Stored lists that nonetheless carry computed fields: an account row holds its balance,
- * a security row its quote count and trade count. A write to one of them moves all three.
- */
+/** Stored lists that carry computed fields (balances, counts). */
 const LISTS: QueryKey[] = [keys.accounts(), keys.accountGroups(), keys.securities()];
 
 /** Taxonomy trees and everything derived from them; transactions do not touch these. */
@@ -72,10 +69,7 @@ const TREES: QueryKey[] = [
   keys.rebalance(),
 ];
 
-/**
- * What a change invalidates, named after the `scope` the host puts on `data:changed`
- * (`app/src-tauri/src/events.rs`), so a mutation and the host event agree on one list.
- */
+/** Keyed by the host's `data:changed` scope, so mutations and host events agree. */
 export const affects: Record<DataChangeKind, QueryKey[]> = {
   ai_chats: [keys.aiChats(), keys.aiGrants(), keys.aiUsage()],
   // An import writes transactions and may create securities; both rows carry counts.
@@ -122,10 +116,7 @@ export const affects: Record<DataChangeKind, QueryKey[]> = {
   scope: [keys.scope(), ...REPORTS],
 };
 
-/**
- * Invalidates the listed keys. Pass a group: `invalidate(...affects.accounts)`.
- * Keys are prefixes, so one entry covers every date or filter under it.
- */
+/** Pass a group: `invalidate(...affects.accounts)`. Keys are prefixes. */
 export function useInvalidate() {
   const client = useQueryClient();
   // Stable across renders: callers put it in an effect's dependency list.

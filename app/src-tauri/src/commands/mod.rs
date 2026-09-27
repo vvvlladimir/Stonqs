@@ -34,9 +34,7 @@ use crate::error::{UiError, UiResult};
 use chrono::NaiveDate;
 use sq_core::storage::Store;
 
-/// Runs `work` on a blocking thread. A synchronous command runs on the main thread in Tauri 2, so
-/// anything that can take seconds — the network, a plugin's module — goes through here instead of
-/// freezing the window.
+/// A synchronous command runs on the main thread in Tauri 2, so slow work goes through here.
 pub(crate) async fn off_thread<T, F>(work: F) -> UiResult<T>
 where
     T: Send + 'static,

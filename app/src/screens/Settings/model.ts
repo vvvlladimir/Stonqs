@@ -47,10 +47,7 @@ export const CATEGORIES: { id: CategoryId; label: MessageDescriptor; icon: Icon 
   { id: "about", label: msg`About`, icon: InfoIcon },
 ];
 
-/**
- * `portfolio_save` takes the whole portfolio, so a panel editing one part of it
- * starts from everything that is stored and replaces only its own fields.
- */
+/** `portfolio_save` takes the whole portfolio, so a panel replaces only its own fields. */
 export function inputOf(portfolio: Portfolio): PortfolioInput {
   return {
     name: portfolio.name,

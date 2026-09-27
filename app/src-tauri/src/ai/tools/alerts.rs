@@ -180,9 +180,7 @@ pub(super) fn alerts_crossings(context: &ToolContext, args: &Value) -> AiResult<
     Ok(json!({ "shown": rows.len(), "crossings": rows }))
 }
 
-/// The body of `alert_save` for a new rule: the same two constructors, so a rule the assistant
-/// wrote behaves exactly like one typed into the dialog — including starting its watch today,
-/// which is what keeps a level crossed last month from arriving as news (ADR-0034).
+/// Built by the dialog's constructors, so its watch starts today (ADR-0034).
 pub(super) fn alert_create(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let security = security_by_symbol(context, &text(args, "symbol"))?;
 

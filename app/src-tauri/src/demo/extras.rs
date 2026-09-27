@@ -1,6 +1,4 @@
-//! Everything the demo needs besides the ledger: classifications and a target, a savings goal
-//! and an allowance, two plans, a watchlist, alerts, instrument events and attributes — so every
-//! screen and every dashboard widget has real rows to draw rather than an empty state.
+//! Everything the demo needs besides the ledger, so every screen and widget has rows to draw.
 
 use super::World;
 use chrono::{Datelike, Days, Months};
@@ -27,9 +25,7 @@ pub fn write(store: &Store, portfolio: &Portfolio, world: &World) -> Result<()> 
     Ok(())
 }
 
-/// The shipped asset-class tree leaves cash out, and a target that ignores the cash a portfolio
-/// holds drifts by definition. The demo adds the node rather than the migration: an existing
-/// database must keep the tree its owner arranged.
+/// The shipped asset-class tree has no cash node; the demo adds one rather than a migration.
 fn cash_node(store: &Store) -> Result<TaxonomyNode> {
     let node = TaxonomyNode {
         color: Some(8),
@@ -204,11 +200,7 @@ fn watchlist(store: &Store, world: &World) -> Result<()> {
     store.save_watchlist(&list)
 }
 
-/// Levels sit where the series has already been, so the first check finds crossings to log and
-/// the alert screen is not an empty list on a portfolio three years long.
-/// A level sits where the series has already been, so the first check finds a crossing or two to
-/// log — but only over a few months: every crossing is an announcement, and a demo that greets
-/// its user with twenty notifications has misread what a demo is for.
+/// Levels sit where the series has been, so a few months of crossings are logged — not twenty notifications.
 fn alerts(store: &Store, world: &World) -> Result<()> {
     let months_ago = |months: u32| {
         world

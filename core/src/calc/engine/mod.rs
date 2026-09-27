@@ -1,9 +1,4 @@
-//! `PortfolioAnalytics` glues the rest of `calc` together: it owns the store, the portfolio and
-//! the scope, and every reading is a method on it.
-//!
-//! The methods are grouped by subject, one file each, all writing into the same type — the
-//! struct and its lifetime live here, and so does everything the groups share: what the scope
-//! is, which transactions it admits, and where the prices and rates come from.
+//! `PortfolioAnalytics`: the store, portfolio and scope, with every reading a method, one file per subject.
 
 mod allocation;
 mod goals;

@@ -17,9 +17,7 @@ export function linearScale(domain: [number, number], range: [number, number]): 
   return (value: number) => r0 + ((value - d0) / span) * (r1 - r0);
 }
 
-/** Rounded axis ticks using 1/2/5 × 10^n steps. The step is the *nearest* of them, not the
- *  next smaller one, which would double the number of gridlines whenever the range lands
- *  just under a round step. */
+/** 1/2/5 × 10^n ticks; the nearest step, not the next smaller one. */
 export function niceTicks(min: number, max: number, count = 4): number[] {
   if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) return [min];
   const raw = (max - min) / count;
@@ -216,9 +214,7 @@ export function slotFor(index: number): number {
   return (((index % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT) + 1;
 }
 
-/** The one place a palette slot becomes a chart colour: every categorical shape — treemap tile,
- *  sunburst arc — names its colour through this, so one category looks the same in every view.
- *  `index` is only the fallback for data that carries no slot of its own. */
+/** The one place a palette slot becomes a chart colour; `index` is only a fallback. */
 export function slotClass(slot: number | undefined, index = 0): string {
   const pick = slot && slot > 0 ? slot - 1 : index;
   return `slot-${((pick % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT}`;
@@ -255,11 +251,7 @@ export function valueAxis(values: number[], frame: Frame, includeZero = false) {
   return { y, ticks, min, max };
 }
 
-/**
- * A 0–1 share as a CSS width. A track cannot be more than full or less than empty, and every
- * caller was clamping that by hand — `Math.min(Math.max(Number(x) ?? 0, 0), 1)`, five times,
- * once with the `Number("")` that reads an empty string as zero rather than as absent.
- */
+/** A 0–1 share as a clamped CSS width; an empty value is absent, not zero. */
 export function trackWidth(share: string | number | null | undefined): string {
   const value = Number(share);
   if (!Number.isFinite(value)) return "0%";

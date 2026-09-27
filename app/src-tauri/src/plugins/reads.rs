@@ -1,11 +1,5 @@
-//! What a plugin is handed: the reads its manifest declared, projected into the plugin API's own
-//! field names (ADR-0083/0085). The one place that builds them — a widget's and a screen's frame
-//! get them through `plugin_reads`, an assistant tool through `ai::tools::plugin` — so a widget
-//! and a tool of one package cannot read two different shapes or two different numbers.
-//!
-//! The field names are the plugin API's, versioned by `api`, not `lib/types`': a rename there
-//! never breaks somebody else's package. `lib/pluginBridge.ts` types the same shape for the
-//! frontend, and `the_projection_is_the_bridges` pins the two together.
+//! The one projection of a plugin's declared reads (ADR-0083/0085/0088), in the plugin API's own
+//! field names; `the_projection_is_the_bridges` pins it to `lib/pluginBridge.ts`.
 
 use super::Read;
 use crate::error::UiResult;

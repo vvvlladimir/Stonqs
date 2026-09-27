@@ -30,10 +30,7 @@ interface Context {
   layout: Arrangement;
 }
 
-/**
- * An item's id carries what picking it does: `c` runs a command with its argument, `o` picks a
- * choice's option. The position keeps two listings of one command apart.
- */
+/** `c` runs a command with its argument, `o` picks a choice's option; the position tells duplicates apart. */
 function commandItem(
   ctx: Context,
   at: string,
@@ -93,10 +90,7 @@ function resolve(ctx: Context, spec: MenuSpec, at: string): AppMenuEntry[] {
   }));
 }
 
-/**
- * The macOS menu bar, drawn from `model.ts` and kept current with the registry: a command
- * nobody answers is greyed out, a choice is checked at its value. Renders nothing.
- */
+/** The macOS menu bar from `model.ts`, resolved against the registry. Renders nothing. */
 export function MenuBar() {
   const { i18n } = useLingui();
   const registry = useRegistry();

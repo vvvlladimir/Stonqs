@@ -102,10 +102,7 @@ export function SubjectFields({ ctx }: { ctx: FieldsCtx }) {
   );
 }
 
-/**
- * The instruments a benchmark chart compares against: one select per line, and a blank one after
- * them while there is room for another. Emptying a select removes that line.
- */
+/** One select per benchmark plus a blank one while there is room; emptying one removes it. */
 function BenchmarkFields({
   chosen,
   securities,

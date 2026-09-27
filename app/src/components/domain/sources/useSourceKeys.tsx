@@ -5,12 +5,7 @@ import { PasswordDialog } from "../PasswordDialog";
 import { SourceKeyDialog } from "./SourceKeyDialog";
 import type { MarketSourceRow } from "../../../lib/types";
 
-/**
- * The two dialogs a key needs, wherever a source is switched on from.
- *
- * A key is sealed with the profile's password (ADR-0048), so a profile without one is asked to
- * set it first — the key dialog then opens by itself.
- */
+/** The key dialogs; a profile without a password is asked to set one first (ADR-0048). */
 export function useSourceKeys(
   sources: MarketSourceRow[],
   onSaved: () => void,

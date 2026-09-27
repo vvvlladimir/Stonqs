@@ -46,11 +46,7 @@ export function SourcesPanel() {
     onSuccess: refresh,
   });
 
-  // The rows below *are* the picker: `Turn on` is the answer, and the notice says what the
-  // answer still lacks rather than asking for a second press to apply it (ADR-0076). It is
-  // about what cannot be priced, not about the switches — a set that is merely small is fine.
-  // Read through the same gate the host applies: while the question has never been answered
-  // every switch is off whatever it says, so a default-on rate source is not an answer to it.
+  // The rows are the answer (ADR-0076); the notice names what cannot be priced, read through the host's gate.
   const picked = sourceNeeds(rows, custom.data ?? [], settings.data?.market_sources ?? {});
   const needs = configured ? picked : { quotes: false, rates: false, ok: false };
 

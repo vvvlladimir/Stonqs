@@ -1,17 +1,5 @@
-//! The app's own transaction file: what every reader produces and what the app writes back.
-//!
-//! It is a *third reader* rather than a second import (ADR-0066): the rows are flattened into the
-//! same `ParsedCsv` the CSV and Flex readers hand over, with this module's column names and a
-//! fixed mapping, so the wizard, the overrides, the identity rules and the commit are the ones
-//! every file goes through.
-//!
-//! Two spellings, one meaning. JSON is the interchange — a reader, a plugin or somebody's script
-//! writes it. A CSV whose headers are these same names needs no reader at all: they are the
-//! canonical header aliases, so ordinary detection maps them one to one.
-//!
-//! Nothing here names an internal id. An account is its name and an instrument its ticker and
-//! ISIN, because a file that carried database ids would only ever import back into the database
-//! it came from.
+//! The app's own transaction file, read as a third reader into the same `ParsedCsv` (ADR-0066).
+//! JSON is the interchange; a CSV with these headers needs no reader. No internal ids appear in it.
 
 use super::mapping::{AmountBasis, AmountSign, ImportField, ImportMapping};
 use super::parse::{ParseConfig, ParsedCsv};
@@ -26,10 +14,7 @@ pub const FORMAT: &str = "stonqs.transactions";
 /// The only version this build writes, and the newest it reads.
 pub const VERSION: u32 = 1;
 
-/// Column names, which are also the canonical header aliases — the first alias of each field,
-/// so a CSV written with these headers is understood by plain detection. Public because they are
-/// the format's own vocabulary: a reader that flattens something else into this table
-/// (`ibflex`) names its columns from here rather than inventing a second spelling.
+/// Column names, which are also the first header alias of each field.
 pub const DATE: &str = "date";
 pub const KIND: &str = "type";
 pub const ACCOUNT: &str = "account";
@@ -70,9 +55,7 @@ const COLUMNS: &[&str] = &[
     NOTE,
 ];
 
-/// One operation, as text. Every value is a string on purpose: the file states what the broker
-/// stated, and the same parsing that reads a CSV reads this — one place where a number becomes a
-/// `Decimal`, not two.
+/// One operation, all text: the same parsing as a CSV turns it into numbers.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CanonicalRow {
     pub date: String,
@@ -183,9 +166,6 @@ fn row_cells(row: &CanonicalRow) -> Vec<String> {
     ]
 }
 
-/// The fixed layout of what `parse_canonical` produces. The columns are this module's own, so
-/// there is nothing for a user to lay out differently — and every operation the model has is
-/// spelled here, because the file writes the model's own wording rather than a broker's.
 pub fn mapping() -> ImportMapping {
     let mut mapping = ImportMapping {
         // The file states the amount before charges and signs nothing: this is our own shape,

@@ -39,9 +39,7 @@ import { SecurityCardProvider } from "./components/domain/SecurityCardProvider";
 import { UpdateDialog } from "./components/domain/UpdateDialog";
 import { Pending, ToastProvider, TooltipLayer } from "./components/ui";
 
-// One screen is one chunk: the shell is what has to be on screen first, and nobody opens
-// seventeen screens in a session. `Onboarding` stays eager — it is what an empty database shows
-// before any screen exists — and so does the dock, which draws while a screen is still loading.
+// One screen per chunk; `Onboarding` and the dock stay eager (they draw before any screen).
 const Dashboard = lazy(() => import("./screens/dashboard/Dashboard").then((m) => ({ default: m.Dashboard })));
 const Accounts = lazy(() => import("./screens/Accounts").then((m) => ({ default: m.Accounts })));
 const Securities = lazy(() => import("./screens/Securities").then((m) => ({ default: m.Securities })));

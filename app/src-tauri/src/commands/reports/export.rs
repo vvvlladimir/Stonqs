@@ -298,10 +298,7 @@ fn charges_detail(data: &ReportsData, c: &str) -> String {
     csv
 }
 
-/// `footer` is the disclaimer the file leaves with, written by the frontend because it is a
-/// sentence and the language is known only there (ADR-0023). It is one cell on a row of its own
-/// after a blank line, so a spreadsheet shows it and a parser reading the header sees the tables
-/// end first.
+/// `footer` is the frontend's disclaimer (ADR-0023), one cell on its own row after a blank line.
 #[tauri::command]
 pub fn report_save(
     state: State<AppState>,

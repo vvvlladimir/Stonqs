@@ -1,9 +1,4 @@
-/**
- * Dev-only IPC recorder for the website's screenshots (site/scripts/screenshots.mjs). Started as
- * `pnpm record:tour` (src/lib/ipcTour.tsx) or `pnpm record:ipc`; every command answer is sent to the Vite dev server, which keeps the latest
- * one per command and arguments in e2e/fixtures/ipc.json. Absent from a release build: the whole
- * module sits behind `import.meta.env.VITE_RECORD_IPC`, which only that script sets.
- */
+/** Dev-only IPC recorder for the site's screenshots, behind `VITE_RECORD_IPC`. */
 
 export function recordIpc(command: string, args: Record<string, unknown> | undefined, outcome: Outcome) {
   // The tour's own setup (a profile deleted, a demo seeded) is not something a screen asks.

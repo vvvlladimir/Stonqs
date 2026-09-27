@@ -3,11 +3,7 @@ import { slotFor, slotVar, trackWidth } from "../../lib/plot";
 import { formatPercent } from "../../lib/format";
 import { Legend, LegendItem } from "./Legend";
 
-/**
- * Every horizontal track in the product: a single fill, a stacked split, or a
- * weight against its target. Colour comes from a palette slot, never a class on
- * the bar itself, so a slot cannot paint over the surrounding row.
- */
+/** Every horizontal track. Colour is a palette slot on the track, never a class on the bar. */
 
 export interface BarSegment {
   key: string;
@@ -112,14 +108,7 @@ export interface ShareSlice {
   tip?: string;
 }
 
-/**
- * A stacked track and the legend that names it — one shape for every "what is this made of":
- * a plan's split across instruments, a year's income by kind, a level's shares.
- *
- * The segments, the clamping, the fallback colours and the wording of the tip are built here
- * rather than at each call site, which is where they had drifted into three spellings of one
- * thing. Colour is still a palette slot on the track, never a class on the row.
- */
+/** A stacked track and its legend: the one "what is this made of" shape. */
 export function ShareBar({
   slices,
   size = "sm",

@@ -1,12 +1,5 @@
-//! Finding the other half of a move that crossed the portfolio boundary on paper only.
-//!
-//! Two brokers export separately, so a withdrawal at one and a deposit at the other arrive as
-//! two unrelated rows. `calc` reads both as money entering and leaving the portfolio, which is
-//! exactly what TWR, XIRR and every capital figure divide by — the same reason a leg with no
-//! partner is never treated as internal on its own (`.claude/rules/import.md`).
-//!
-//! Matching is a *suggestion*, never a decision: two amounts agreeing is not proof that one
-//! payment is the other. The caller confirms a pair before anything is written.
+//! Suggesting the other half of a move exported by two brokers separately. A match is only a
+//! suggestion: the caller confirms before anything is linked (`.claude/rules/import.md`).
 
 use crate::model::{Transaction, TransactionKind};
 use rust_decimal::Decimal;
@@ -62,9 +55,7 @@ fn close_enough(a: Decimal, b: Decimal) -> bool {
     larger > Decimal::ZERO && (a.abs() - b.abs()).abs() <= larger * AMOUNT_TOLERANCE
 }
 
-/// Unlinked outgoing and incoming operations that match in currency, amount and date, on two
-/// different accounts. Each operation appears in at most one suggestion — the closest in time —
-/// so confirming the whole list cannot link one leg twice.
+/// Each operation appears in at most one suggestion, so confirming the list cannot link a leg twice.
 pub fn transfer_candidates(transactions: &[Transaction]) -> Vec<TransferPair> {
     let legs: Vec<&Transaction> = transactions.iter().filter(|t| is_candidate(t)).collect();
     let (out, into): (Vec<&Transaction>, Vec<&Transaction>) =

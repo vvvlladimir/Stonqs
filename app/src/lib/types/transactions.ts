@@ -54,11 +54,7 @@ export interface TransactionRow extends Transaction {
   net_base: MoneyString;
 }
 
-/**
- * Two stored operations that look like the two halves of one move between the user's own
- * accounts — the shape a portfolio carried from one broker to another leaves behind, where each
- * export knows only its own leg. A suggestion, never a decision: linking is the user's press.
- */
+/** Two rows that look like one move between own accounts; linking is the user's press. */
 export interface TransferSuggestion {
   out_id: string;
   in_id: string;

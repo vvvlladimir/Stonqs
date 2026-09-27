@@ -15,6 +15,7 @@ import {
 
 import { Figure } from "./figure";
 
+/** One figure over another; a share of two displayed values is rendering, not money. */
 export function RatioWidget({ widget, date, period }: WidgetProps) {
   const { i18n } = useLingui();
   const ctx = { date, period: periodOf(widget, period), source: sourceOf(widget) };
@@ -87,9 +88,3 @@ function RatioValue({
     );
   return <Percent value={String(ratio)} digits={1} />;
 }
-
-/**
- * A figure over a track. Which figure is a setting, not a widget: a goal, a contribution limit
- * and financial independence are one shape — a percentage, a bar and the facts that read it —
- * and three catalog entries only made the picker longer.
- */

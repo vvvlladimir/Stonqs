@@ -18,9 +18,7 @@ import { useMenu, type MenuItem } from "../ui/Menu";
 import { formatDecimal } from "../../lib/format";
 import { useProviderName } from "../../lib/ai";
 
-/** A footer control: a pill that opens the app's own menu. Never a native `<select>` — the
- * platform one opens a list as long as the catalogue and lands under the pointer, which is how
- * a four-item choice ended up looking like a directory. */
+/** A footer pill opening the app's menu — never a native `<select>`. */
 function Pill({
   icon,
   label,
@@ -53,13 +51,7 @@ function Pill({
   );
 }
 
-/**
- * The chat's standing answer about tools: ask each time, or read freely. One control, and the
- * card's "Allow all" flips the same switch — two ways to say one thing, never two settings.
- *
- * It is per chat on purpose: a conversation opened to poke around does not make the next one
- * permissive. What it covers is reads; a write tool is confirmed on its own whatever this says.
- */
+/** Per chat: ask each time or read freely; the card's "Allow all" flips the same switch. Writes are always confirmed. */
 export function ToolModeToggle({
   mode,
   onChange,
@@ -106,15 +98,7 @@ export function EffortPicker({
   return <Pill icon={<GaugeIcon />} label={labels[effort]} items={items} ariaLabel={t`Thinking`} />;
 }
 
-/**
- * Which provider answers this chat. Per chat rather than an app setting, for the reason the model
- * and the tool mode are: two conversations open side by side may be answered by different ones,
- * and switching here must not reach into the next chat.
- *
- * Every provider this build can talk to is listed, connected or not — a picker that hides the
- * other one when only one key is saved reads as no choice at all. One without a key cannot be
- * chosen, and says why rather than failing on the next send.
- */
+/** Per chat. Every provider is listed; one without a key is shown but cannot be chosen. */
 export function ProviderPicker({
   provider,
   providers,
@@ -149,11 +133,7 @@ export function ProviderPicker({
   );
 }
 
-/**
- * Which model answers this chat: the three the provider's catalogue puts at the top of each of
- * its tiers (`ai/models/`). The chat's current one is always an option, even when the list
- * could not be fetched and even when it is not one of the three.
- */
+/** The provider's three tiers; the chat's own model is always an option. */
 export function ModelPicker({
   model,
   models,
@@ -178,16 +158,7 @@ export function ModelPicker({
   return <Pill icon={<CpuIcon />} label={model} items={items} ariaLabel={t`Which model answers`} />;
 }
 
-/**
- * What the question being answered has cost, in tokens the provider counted — never in money:
- * a price list compiled into the app is wrong by the provider's next release, and the running
- * total per model lives in Settings anyway.
- *
- * It covers one turn, not the chat: a new message starts the count again. Providers report at
- * different moments — OpenAI only once a request finishes, so a turn that calls tools counts up
- * as it goes and a plain answer lands its figure at the end. The spinner says which is happening
- * rather than showing a guessed number: nothing here is estimated from the text on screen.
- */
+/** The current turn's tokens as the provider counted them, never priced or estimated. */
 export function TokenCount({ usage, busy }: { usage: AiUsage | null; busy: boolean }) {
   const { t } = useLingui();
   if (!usage && !busy) return null;

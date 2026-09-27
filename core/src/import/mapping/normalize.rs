@@ -1,6 +1,4 @@
-//! Folding a header or a value down to something comparable: case, accents, separators and
-//! punctuation all differ between one broker's export and the next, and none of them carry
-//! meaning.
+//! Folding headers and values to something comparable: case, accents, separators, punctuation.
 
 pub fn normalize_alias(value: &str) -> String {
     value

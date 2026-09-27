@@ -1,8 +1,5 @@
-//! Rebalancing: what a target tree says the portfolio should hold, against what it does hold.
-//!
-//! The options change what is *computed*, not what is displayed: new cash is added to the total
-//! before targets are derived, and buy-only mode leaves overweights alone
-//! (`.claude/rules/taxonomy-and-rebalance.md`).
+//! Rebalancing a target tree against holdings. Options change what is computed, not what is
+//! displayed (`.claude/rules/taxonomy-and-rebalance.md`).
 
 mod budget;
 mod items;
@@ -129,9 +126,7 @@ pub struct RebalancePlan {
     pub cash_left_base: Decimal,
 }
 
-/// Everything the plan reads off the valuation, gathered once rather than looked up per node.
-/// A unit price is in base currency — the quote price times its own rate — and the quantity step
-/// is the one the broker was observed to use, not the one the instrument kind implies.
+/// Unit prices in base currency; the quantity step is the one the broker was observed to use.
 pub(super) struct Prices<'a> {
     pub securities: HashMap<&'a str, &'a Security>,
     pub unit_price: HashMap<&'a str, Decimal>,

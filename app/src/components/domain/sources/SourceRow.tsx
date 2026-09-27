@@ -12,13 +12,7 @@ const CAPABILITY = {
   price_index: msg`inflation`,
 } as const;
 
-/**
- * One shipped source: what it answers, where its requests go, and the two decisions about it.
- *
- * `active` is whether it is really asked, and `wanted` is only what was picked — before the
- * sources are confirmed nothing is active, so `pending` is what the setup dialog passes to keep
- * a source it just switched on from reading as "off".
- */
+/** `active` is really asked, `wanted` only picked; `pending` keeps a just-picked source from reading "off". */
 export function SourceRow({
   row,
   busy,

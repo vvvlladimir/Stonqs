@@ -16,10 +16,7 @@ function span(preview: ImportPreviewData): string | null {
   return from === to ? from : `${from} — ${to}`;
 }
 
-/**
- * Where this file is about to land, stated before the mapping work starts: the whole
- * step is answering "is this right", and that question needs its subject first.
- */
+/** Where the file lands, stated before the mapping work. */
 export function TargetSummary({
   preview,
   mapping,

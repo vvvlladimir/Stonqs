@@ -43,9 +43,7 @@ pub struct RiskMetrics {
     /// never fills is the one that costs years.
     pub longest_drawdown: Option<Drawdown>,
     pub longest_drawdown_days: Option<i64>,
-    /// Distance from the running peak at the last point; `0.0` means the period ends at a peak.
-    /// Not the open episode's `depth`, which is its trough: a portfolio down 10% and since
-    /// recovered to -3% is 3% from whole, and saying 10% would report a hole already climbed.
+    /// Distance from the running peak at the last point, not the open episode's trough.
     pub current_drawdown: f64,
     /// The peak not yet climbed back to; `None` when the period ends at one.
     pub current_drawdown_since: Option<NaiveDate>,
@@ -82,10 +80,7 @@ pub(crate) fn metrics_from_returns(returns: &[(NaiveDate, f64)], risk_free_rate:
     };
     let volatility = variance.sqrt() * TRADING_DAYS_PER_YEAR.sqrt();
 
-    // Downside deviation is measured from zero, not from the mean, and divided by *every* day
-    // rather than by the losing ones — the same denominator as the volatility above it, which
-    // is what makes the two comparable. Dividing by the losing days answers "how bad is a bad
-    // day" instead, and would call a portfolio that rarely falls the riskier of two.
+    // Measured from zero and divided by every day, like volatility, so the two are comparable.
     let downside: f64 = values.iter().filter(|r| **r < 0.0).map(|r| r.powi(2)).sum();
     // A portfolio that never fell is asked for explicitly: Rust sums an empty iterator to
     // `-0.0`, which survives the division and the square root and reaches a screen as "-0.00%".

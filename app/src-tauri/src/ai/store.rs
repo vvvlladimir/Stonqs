@@ -1,9 +1,4 @@
-//! Chat history as neutral turns: `Role`/`Block` in, `Role`/`Block` out. `sq_core::Store` keeps
-//! `role` and `content` as opaque strings (see the migration's own comment), and this file is the
-//! one place that knows what those strings mean — the agentic loop and the commands both read
-//! through it rather than each decoding JSON of their own.
-//!
-//! Knows nothing about Tauri, like the rest of `ai/` outside `keys.rs`.
+//! Chat history as neutral `Role`/`Block` turns: the one place that decodes the stored JSON.
 
 use super::{AiError, AiResult, Block, Role};
 use serde::Serialize;

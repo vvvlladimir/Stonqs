@@ -1,9 +1,6 @@
 import { Fragment } from "react";
 
-/**
- * A key combination as printed on the keyboard. Takes what `keyParts` returns: one group per
- * step of a sequence, one cap per key of a chord.
- */
+/** A key combination from `keyParts`: one group per step, one cap per key. */
 export function Kbd({ steps }: { steps: string[][] }) {
   return (
     <span className="kbd">

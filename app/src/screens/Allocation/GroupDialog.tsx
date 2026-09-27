@@ -4,11 +4,7 @@ import { Async, DataTable, Field, FormDialog, Metric, Metrics, Scrolly } from ".
 import { useAttributeDefs, useTaxonomyGrouping } from "../../lib/queries";
 import type { TaxonomyData, TaxonomyPreview } from "../../lib/types";
 
-/**
- * Builds categories out of one attribute: a node per distinct value, every instrument carrying
- * that value assigned whole. What the tree already classifies is left alone — a split typed by
- * hand outranks a value read off a column.
- */
+/** A node per attribute value; what the tree already classifies is left alone. */
 export function GroupDialog({
   into,
   busy,

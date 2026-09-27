@@ -1,10 +1,6 @@
 import { COMMANDS, commandDef, type CommandId } from "./catalog";
 
-/**
- * Bindings: parsing, matching a `KeyboardEvent`, and printing them for the platform.
- * A letter is matched by what it types on a Latin layout and by its physical position on any
- * other, so ⌘K still works with a Cyrillic layout active.
- */
+/** Bindings; a letter matches by what it types on Latin layouts, by position on others. */
 
 export const IS_MAC =
   typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
@@ -103,11 +99,7 @@ export function ariaKeys(id: CommandId): string {
     .join(" ");
 }
 
-/**
- * The accelerator a menu item shows: the binding at `index` when the command has one per
- * argument (the favourites), else its first `mod` binding. Bare keys never go to the menu,
- * where they would fire while typing.
- */
+/** Bare keys never become menu accelerators. */
 export function menuAccelerator(id: CommandId, index?: number): string | undefined {
   const keys = COMMANDS[id].keys as string[];
   const binding = index !== undefined ? keys[index] : keys.find((b) => b.startsWith("mod+"));

@@ -1,6 +1,5 @@
-//! Keeping an instrument's series complete: its own source first, the others only for a gap it
-//! could not fill (ADR-0052), and its latest-close source for the days it has not published yet
-//! (ADR-0079).
+//! An instrument's series: its own source first, others only for a gap it failed (ADR-0052), and
+//! its latest-close source for the unpublished tail (ADR-0079).
 
 use super::{MarketDataService, OVERLAP_DAYS, RESTS_AFTER};
 use crate::error::{Error, Result};

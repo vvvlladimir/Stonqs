@@ -301,9 +301,7 @@ export function AllocationWidget({ widget, date }: WidgetProps) {
   );
 }
 
-/** The period's income under the tree's top level. Not the composition widget over a
- * different number: value is a state and a payment is an event, so a category holding
- * nothing may still have paid, and one paying nothing is left out rather than shown at zero. */
+/** Income by the tree's top level; categories that paid nothing are left out. */
 export function IncomeTaxonomyWidget({ widget, date, period }: WidgetProps) {
   const source = sourceOf(widget);
   const { i18n } = useLingui();

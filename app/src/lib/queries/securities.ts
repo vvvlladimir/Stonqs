@@ -85,10 +85,7 @@ export function useListings(securityId: string) {
 /** Length of the quote window behind a sparkline; not a period preset (see ADR-0018). */
 export const QUOTE_WINDOW_DAYS = 90;
 
-/**
- * Quotes for the last `days` calendar days. The window is computed here so every caller
- * asking for the same one shares a key — and no screen does date arithmetic of its own.
- */
+/** The window is computed here, so callers share a key and no screen does date arithmetic. */
 export function useQuoteWindow(securityId: string, days: number = QUOTE_WINDOW_DAYS) {
   const to = today();
   const from = daysBefore(to, days);

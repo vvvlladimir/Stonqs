@@ -67,10 +67,7 @@ fn price_in_base(
     Ok(price.close * rate)
 }
 
-/// The first of `dates` the benchmark has a price for, `None` if it has none at all.
-///
-/// `price_as_of` is forward-fill, so "has a price" only ever turns on as the date moves
-/// forward: the day can be bisected instead of scanned.
+/// First date with a price. Forward fill makes "has a price" monotone, so it is bisected.
 pub fn benchmark_start(
     security_id: &str,
     dates: &[NaiveDate],
@@ -94,14 +91,8 @@ pub fn benchmark_start(
     Ok(Some(dates[low]))
 }
 
-/// Growth of one benchmark unit on the portfolio's date grid; forward-filled prices cover
-/// days when the benchmark does not trade.
-///
-/// A benchmark younger than the period is not missing data — it did not exist yet. The series
-/// then starts on the first day it has a price for and is based at that price, so the caller
-/// draws a line that begins later rather than no line at all. It is aligned by date, not by
-/// index: the two series need not be the same length. A benchmark with no price anywhere in
-/// the window is still `MissingMarketData` — that one really is a gap.
+/// Growth of one benchmark unit on the portfolio's dates. A younger benchmark starts later rather
+/// than being missing; no price anywhere in the window is still `MissingMarketData`.
 pub fn benchmark_series(
     security_id: &str,
     base: &str,

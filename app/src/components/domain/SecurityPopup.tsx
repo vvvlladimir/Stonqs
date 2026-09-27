@@ -15,13 +15,7 @@ import { FactsPanel } from "./securityCard/FactsPanel";
 import { QuotePanel } from "./securityCard/QuotePanel";
 import { RecentTransactions } from "./securityCard/RecentTransactions";
 
-/**
- * The instrument's card: market history, facts, classification and its latest transactions.
- *
- * It is opened from an id alone, because a ticker is printed on every screen and most of them
- * hold nothing else. An instrument that is sold out has no position row, and the card then shows
- * what is still true about it rather than refusing to open.
- */
+/** Opened from an id alone; a sold-out instrument still shows what is true of it. */
 
 export function SecurityCard({ securityId, onClose }: { securityId: string; onClose: () => void }) {
   const { t } = useLingui();

@@ -73,11 +73,7 @@ export function BriefFields({ ctx }: { ctx: FieldsCtx }) {
   );
 }
 
-/**
- * Which provider and model write this tile. Its own component so the model list — a network call
- * — is asked for only by a widget that offers the choice. Switching provider clears the model:
- * an id from one catalogue names nothing in another.
- */
+/** Its own component so only a tile offering it fetches the model list; switching provider clears the model. */
 function ModelFields({
   widget,
   onChange,
@@ -92,9 +88,7 @@ function ModelFields({
   const chosen = modelOf(widget);
   const listed = chosen.provider ?? settings.data?.ai_provider ?? null;
   const models = useAiModels(listed, true);
-  // Every provider this build can talk to is listed, the user's own server once configured; one
-  // without a key is shown but cannot be picked. The chosen one stays pickable whatever the
-  // keychain says, so the select never shows a value it does not hold.
+  // A keyless provider is shown but disabled; the chosen one always stays pickable.
   const listedProviders = providers.data ?? [];
   const modelOptions = [...(models.data ?? [])];
   if (chosen.model && !modelOptions.includes(chosen.model)) modelOptions.unshift(chosen.model);

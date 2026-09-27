@@ -1,10 +1,5 @@
-//! The one sandbox every compute plugin runs in (ADR-0086, ADR-0080). A reader and a writer are two
-//! contracts over the same grant, and the grant is written once, here.
-//!
-//! There is no filesystem, no preopened directory, no reachable address and no real clock; what
-//! WASI is linked for at all is that a guest carrying a language runtime will not instantiate
-//! without `wasi:clocks` and `wasi:random`, and those two are handed over frozen and seeded — so a
-//! plugin is not merely denied the time, it is unable to answer differently twice.
+//! The one sandbox for compute plugins (ADR-0086): no filesystem, no network, a frozen clock and a
+//! seeded generator — WASI is linked only because language runtimes need those two.
 
 use crate::error::{UiError, UiResult};
 use rand::SeedableRng;
@@ -51,9 +46,7 @@ fn engine() -> UiResult<&'static Engine> {
         .map_err(|e| UiError::internal(format!("the plugin runtime is unavailable: {e}")))
 }
 
-/// How many compiled modules are kept. Compiling is most of what a call costs — a tenth of a
-/// second for a small Rust guest, seconds for one carrying a language runtime — and a chat asks
-/// the same tool turn after turn, so the last few are kept rather than every one ever run.
+/// Compiling dominates a call, so the last few modules are kept.
 const KEPT: usize = 16;
 
 struct Compiled {
@@ -138,10 +131,7 @@ impl HostMonotonicClock for Frozen {
     }
 }
 
-/// Loads `module` and hands `call` a store, the component and a linker holding nothing but the
-/// stubbed WASI. Whatever goes wrong on this side — a file that is not a component, a trap, the
-/// deadline, the memory ceiling — is one `Err(String)`: from the caller's side they are one thing,
-/// which is that this plugin could not do it.
+/// Every failure on this side is one `Err(String)`.
 pub fn run<T>(
     module: &Path,
     call: impl FnOnce(&mut Store<Host>, &Component, &Linker<Host>) -> Result<T, String>,
@@ -158,9 +148,7 @@ pub fn run<T>(
         .secure_random(rand::rngs::StdRng::seed_from_u64(SEED))
         .insecure_random(rand::rngs::StdRng::seed_from_u64(SEED))
         .insecure_random_seed(u128::from(SEED));
-    // Everything a `WasiCtxBuilder` is not told stays off: no preopened directory, no inherited
-    // standard input, and an address list that is empty. Output is swallowed — a plugin says what
-    // it has to say in what it returns, not onto a console nobody reads.
+    // Nothing preopened, no stdin, no addresses; output is swallowed.
     let host = Host {
         table: ResourceTable::new(),
         wasi: wasi.build(),
@@ -180,9 +168,7 @@ const TICK: Duration = Duration::from_millis(100);
 /// does not wake ten times a second for nothing.
 static RUNNING: AtomicUsize = AtomicUsize::new(0);
 
-/// The one thread that moves the engine's epoch. The epoch is the *engine's*, shared by every
-/// store, so a deadline is a number of ticks from where the epoch stood when that call began —
-/// never a bump of its own, which would have ended every other plugin's call along with it.
+/// The epoch is the engine's, shared by every store: a deadline counts ticks, never bumps it.
 fn ticker(engine: &Engine) -> &'static std::thread::Thread {
     static TICKER: OnceLock<std::thread::Thread> = OnceLock::new();
     TICKER.get_or_init(|| {

@@ -53,11 +53,7 @@ export function amountOf(value: string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/**
- * A rebalance plan turned into a standing one: what the drift says to buy today becomes the
- * split of every future contribution. Sales are dropped — a plan pays money in, it does not
- * liquidate — and the amounts become the weights, so the proportions survive price moves.
- */
+/** Buys become the split of future contributions, amounts become weights; sales are dropped. */
 export function planFromTrades({
   name,
   accountId,

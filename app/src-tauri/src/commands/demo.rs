@@ -6,10 +6,7 @@ use crate::state::AppState;
 use chrono::Local;
 use tauri::State;
 
-/// Fills an empty portfolio with three years of generated history.
-///
-/// It refuses once the portfolio has an account, so it can never write over real data. The data
-/// itself is `demo`: prices, operations, classifications, goals, plans and alerts.
+/// Three years of generated history; refused once the portfolio has an account.
 #[tauri::command]
 pub fn demo_seed(state: State<AppState>) -> UiResult<()> {
     {

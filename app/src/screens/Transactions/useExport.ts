@@ -6,9 +6,7 @@ import { usePlugins } from "../../lib/queries";
 import type { useMenu } from "../../components/ui";
 import type { InstalledWriter, TransactionFilter } from "../../lib/types";
 
-/** The screen's export: the app's own file, or — once a plugin brings one — another format written
- *  from that same file. The file holds what the screen holds: the same filter, not the whole
- *  journal. */
+/** The app's own file, or a plugin's format written from it; the screen's filter, not the whole journal. */
 export function useExport(filter: TransactionFilter, menu: ReturnType<typeof useMenu>) {
   const { t } = useLingui();
   const plugins = usePlugins();

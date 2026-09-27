@@ -4,10 +4,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 
-/**
- * What an available update says about itself. The plugin's own handle stays in this module: a
- * screen decides whether to install, it never holds an installer.
- */
+/** The plugin's handle stays in this module; a screen never holds an installer. */
 export interface AvailableUpdate {
   version: string;
   /** The release body, as markdown. */
@@ -23,10 +20,7 @@ export function appVersion(): Promise<string> {
 
 let pending: Update | null = null;
 
-/**
- * Asks the release feed whether something newer is signed and published. `null` is the normal
- * answer. Throws when the feed cannot be reached — being offline is not "up to date".
- */
+/** `null` is the normal answer; being offline throws rather than reading as up to date. */
 export async function checkForUpdate(): Promise<AvailableUpdate | null> {
   const update = await check();
   pending = update;
@@ -34,11 +28,7 @@ export async function checkForUpdate(): Promise<AvailableUpdate | null> {
   return { version: update.version, notes: update.body ?? "", date: update.date ?? null };
 }
 
-/**
- * Downloads and installs what the last check found, reporting how much has arrived: a fraction
- * while the size is known, `null` while it is not, because a server may send no content length.
- * False when there is nothing pending — the check was superseded, so it is asked again.
- */
+/** Progress is a fraction, or `null` without a content length. False when nothing is pending. */
 export async function installUpdate(onProgress: (done: number | null) => void): Promise<boolean> {
   const update = pending;
   if (!update) return false;

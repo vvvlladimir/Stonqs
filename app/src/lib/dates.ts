@@ -1,9 +1,6 @@
 import type { DateString } from "./types";
 
-/**
- * Points in time the app offers as shortcuts — a date, never a period (ADR-0018). A period is
- * resolved by the core; these only name a day the as-of lens can be moved to.
- */
+/** Date shortcuts for the as-of lens — days, never periods (ADR-0018). */
 
 /** Last day of the month before this one. */
 export function endOfPreviousMonth(date: DateString): DateString {

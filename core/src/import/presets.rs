@@ -1,15 +1,5 @@
-//! Broker layouts shipped with the application.
-//!
-//! Detection reads an unknown file; a preset is the answer for a file we have already seen.
-//! It is data, not code: adding a broker means one entry in `presets/brokers.json`, which is
-//! also the shape a downloaded preset would arrive in.
-//!
-//! Every entry is written by hand from a broker's published column documentation or from a
-//! redacted sample — nothing here is copied from another project, and no broker endorses it.
-//! Which of them have been tried against a real export is not a matter of opinion: a layout with
-//! a fixture under `core/tests/fixtures/presets/` is checked end to end, and the rest are named in
-//! `WITHOUT_A_FIXTURE` in that harness. Either way a preset is only ever a starting point — the
-//! import wizard lets the user override every part of it (`import.md`).
+//! Shipped broker layouts, as data in `presets/brokers.json`. Only those with a fixture under
+//! `core/tests/fixtures/presets/` are checked; every preset stays overridable.
 
 use super::mapping::{ImportMapping, default_kind_aliases, normalize_header};
 use super::parse::ParseConfig;
@@ -17,9 +7,7 @@ use crate::error::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
-/// What makes a file recognisable as this broker's export. Everything in it is optional and
-/// everything declared must hold, so a rule is a claim the preset makes about the file rather
-/// than a guess the app makes about the preset.
+/// What a file must show to be this broker's; everything declared must hold.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PresetMatch {
     /// Column names the file must all have. Derived from the layout itself when the preset

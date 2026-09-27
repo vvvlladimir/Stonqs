@@ -68,12 +68,8 @@ fn in_currency(
     Ok(point.close * rate)
 }
 
-/// Reads the closes from the alert's bookmark through `today` and logs every change of side.
-///
-/// The first close ever read — the one on or before `created_on`, else the first one after —
-/// only sets the side: the trigger starts from where the price was. The check restarts at the
-/// last close still on file up to `checked_through`, so a rewritten last quote is read again
-/// and a crossing it now makes is not missed. No quote at all changes nothing.
+/// Logs every change of side from the rule's bookmark through `today`. The first close only sets
+/// the side; the last close on file is re-read, so a rewritten quote is not missed.
 pub fn check_alert(
     alert: &SecurityAlert,
     prices: &BTreeMap<NaiveDate, PricePoint>,

@@ -3,15 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { appVersion, checkForUpdate, installUpdate, restart, today, type AvailableUpdate } from "./api";
 import { useUiState } from "./uiState";
 
-/**
- * In-app updates. The plugin verifies the signature and replaces the bundle; everything the user
- * sees is decided here, so the check lives in one place and two parts of the app cannot offer the
- * same version at once.
- *
- * The check is throttled to once a calendar day and never runs while an answer is on screen. A
- * version the user skipped is dropped silently — asking again is how an update prompt becomes
- * something people learn to dismiss without reading.
- */
+/** In-app updates: checked at most daily, never while an answer is on screen; a skipped version is not offered again. */
 
 export type UpdateStage = "idle" | "checking" | "found" | "current" | "installing" | "ready" | "failed";
 

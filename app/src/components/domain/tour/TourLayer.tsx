@@ -13,11 +13,7 @@ const EDGE = 12;
 /** Below this the card is a sheet at the foot of the window and is not placed at all. */
 const NARROW = 700;
 
-/**
- * Draws the tour: the offer, the card of the current step, and the hole cut around what it
- * points at. Everything under it is inert — a tour that can be clicked through is a tour that
- * ends on a screen nobody meant to open.
- */
+/** The tour's offer, card and hole; everything beneath is inert. */
 export function TourLayer() {
   const tour = useTour();
   if (!tour) return null;
@@ -142,10 +138,7 @@ function TourCard() {
   );
 }
 
-/**
- * The hole is the mask's own shadow rather than a second element: one box, so nothing can drift
- * out of step with what it is cut around.
- */
+/** The hole is the mask's own shadow, one box, so it cannot drift from its target. */
 function holeOf(rect: DOMRect | null) {
   if (!rect) return undefined;
   return {

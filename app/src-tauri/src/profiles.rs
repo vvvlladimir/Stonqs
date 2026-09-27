@@ -1,9 +1,4 @@
-//! Profiles: independent sets of everything the app stores — database, settings, import layouts —
-//! one folder each under `profiles/<id>/` in the app's data directory. `profiles.json` beside
-//! that folder lists them and remembers which one was open last. See ADR-0047.
-//!
-//! Plain filesystem work over an explicitly passed root, so it is tested on a temporary folder;
-//! swapping the open profile inside the running app is `AppState::open_profile`.
+//! Profiles: one folder each under `profiles/<id>/`, listed in `profiles.json` (ADR-0047).
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
@@ -17,9 +12,7 @@ const DATABASE: &str = "portfolio.db";
 /// interrupted move finishes into the same folder on the next start.
 pub const ADOPTED_ID: &str = "default";
 
-/// What a single-profile install kept directly in the data directory. Every file the host writes
-/// sits beside the database (`settings::path_for`, `import_templates::path_for`), so this list is
-/// the whole of it — a file added there must be added here too.
+/// Every file a single-profile install wrote beside its database; a new such file must be added here.
 const LEGACY_FILES: &[&str] = &[
     "portfolio.db",
     "portfolio.db-wal",
@@ -60,9 +53,7 @@ impl Profiles {
         self.root.join(FOLDER).join(id).join(DATABASE)
     }
 
-    /// Makes sure at least one profile exists and returns the one to open: the last one used,
-    /// or the first. On the first start after profiles arrived, the data already in the data
-    /// directory becomes the first profile instead of being left behind.
+    /// The last profile used, or the first; on the first start, the legacy data becomes the first profile.
     pub fn ensure(&self, first_name: &str) -> UiResult<Profile> {
         let mut registry = self.read()?;
         if registry.profiles.is_empty() {
@@ -84,9 +75,7 @@ impl Profiles {
             registry.last = Some(ADOPTED_ID.into());
             self.write(&registry)?;
         }
-        // The block above leaves the list non-empty, so the fallback always finds something. It is
-        // written as one rather than indexed because this runs before a window exists: were that
-        // invariant ever to move, an index would take the whole app down with no way to say why.
+        // Never indexed: this runs before a window exists, where a panic could not be reported.
         let chosen = registry
             .last
             .as_ref()
@@ -137,9 +126,7 @@ impl Profiles {
         Ok(renamed)
     }
 
-    /// Deletes a profile and its folder — every portfolio, quote and setting in it. The open
-    /// profile is refused (its database is open), and so is the last one: the app always has
-    /// somewhere to be.
+    /// Refuses the open profile and the last one.
     pub fn delete(&self, id: &str, open: &str) -> UiResult<()> {
         let mut registry = self.read()?;
         if id == open {

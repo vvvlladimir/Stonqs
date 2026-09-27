@@ -60,9 +60,7 @@ impl Store {
         Self::init(conn, Some(path))
     }
 
-    /// Opens or creates a database file encrypted with SQLCipher under a raw 256-bit key — raw, so
-    /// SQLCipher runs no key derivation of its own; the caller's key is already a random one. A
-    /// wrong key fails here, on the first read, never later.
+    /// SQLCipher with a raw 256-bit key (no KDF); a wrong key fails on the first read.
     pub fn open_encrypted(path: impl AsRef<Path>, key: &[u8; 32]) -> Result<Self> {
         let path = path.as_ref();
         let conn = Connection::open(path)?;
@@ -70,9 +68,7 @@ impl Store {
         Self::init(conn, Some(path))
     }
 
-    /// Writes a complete copy of this database to `dest` — encrypted under `key`, or plain when
-    /// there is none. This is how a file changes between plain and encrypted: SQLCipher cannot
-    /// encrypt or decrypt a database in place. `dest` must not exist yet.
+    /// A full copy to `dest`, encrypted or plain: SQLCipher cannot convert in place. `dest` must not exist.
     pub fn export_to(&self, dest: impl AsRef<Path>, key: Option<&[u8; 32]>) -> Result<()> {
         let dest = dest.as_ref().to_string_lossy().into_owned();
         self.conn

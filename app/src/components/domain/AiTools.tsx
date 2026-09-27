@@ -46,11 +46,7 @@ function Values({ params }: { params: ToolParams }) {
   );
 }
 
-/**
- * The question in the flow of the chat, not a dialog: the turn is paused behind it, and a modal
- * over the conversation would hide what was asked. Three answers, and refusing is one of them —
- * the model is told and answers around it.
- */
+/** Inline in the chat, not a modal: the turn pauses behind it. Refusing is an answer. */
 export function ToolConsent({
   request,
   onDecide,
@@ -111,10 +107,7 @@ export function ToolConsent({
   );
 }
 
-/** A run of steps as one rail. Consecutive readings are one block whatever turns they came from:
- * a dozen bordered cards is the answer buried, not the answer explained. Once the turn is over
- * and the run is long, the rail folds itself away — the count stays visible, which is the fact
- * consent rests on. */
+/** Consecutive steps as one rail, folded once a long finished run is over. */
 export function Steps({ steps }: { steps: Step[] }) {
   const busy = steps.some((step) => step.busy);
   const foldable = !busy && steps.length >= 4;
@@ -140,11 +133,7 @@ export function Steps({ steps }: { steps: Step[] }) {
   );
 }
 
-/**
- * One step, expandable into what went out and what came back. This is the transparency that
- * makes consent mean something: the list of calls is a fact, unlike any claim about where a
- * number in the answer came from.
- */
+/** One step, expandable into what went out and what came back. */
 function StepRow({ step }: { step: Step }) {
   const { t } = useLingui();
   const name = useToolName();
@@ -206,10 +195,7 @@ function StepRow({ step }: { step: Step }) {
   );
 }
 
-/**
- * What this chat may read from now on without asking. Shown because a permission the user
- * granted once and cannot see afterwards is not really a permission they hold.
- */
+/** Tools this chat may read without asking. */
 export function GrantedTools({ tools }: { tools: string[] }) {
   const name = useToolName();
   return (

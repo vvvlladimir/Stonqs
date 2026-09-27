@@ -1,9 +1,5 @@
-//! A savings goal: how far a named set of accounts is from an amount, and what it would take.
-//!
-//! Everything here is the user's intention (ADR-0068). The expected return is an assumption they
-//! typed and is never read from what the portfolio actually returned — the same rule FIRE follows
-//! (ADR-0059) — and the annuity solved is the one `fire` already solves, so the two cannot
-//! disagree about what compounding means.
+//! A savings goal (ADR-0068): the user's assumption, never a measured return, solved by the same
+//! annuity as `fire`.
 
 use super::fire::{monthly_needed, months_needed};
 use crate::error::Result;
@@ -52,10 +48,7 @@ pub struct GoalProgress {
     pub expected_return: Decimal,
 }
 
-/// Measures `goal` against `current_base` at `as_of`.
-///
-/// The goal's own currency is converted here rather than by the caller, so an amount typed in
-/// one currency and a portfolio reported in another cannot be compared by accident.
+/// Converts the goal's own currency here, so no caller compares two currencies by accident.
 pub fn goal_progress(
     goal: &Goal,
     current_base: Decimal,

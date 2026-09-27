@@ -4,10 +4,7 @@ import { signOf } from "../../lib/format";
 import type { TradesData } from "../../lib/types";
 import { days } from "./model";
 
-/**
- * A trade ledger read twice: what leaving positions brought in, and what is still riding.
- * The two never merge into one average — an open trade has no exit to divide by.
- */
+/** Closed and open trades never merge: an open trade has no exit to divide by. */
 export function TradeMetrics({ data }: { data?: TradesData }) {
   const { t } = useLingui();
   const currency = data?.base_currency ?? "";

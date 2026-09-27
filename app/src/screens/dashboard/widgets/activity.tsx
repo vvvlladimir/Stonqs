@@ -141,10 +141,7 @@ export function FromTrades({
   return <Async query={query}>{(data) => <Figure ctx={ctx} value={pick(data)} foot={foot?.(data)} />}</Async>;
 }
 
-/**
- * What the active plans add up to in an average month. Read off the coming year rather than
- * off an interval, so a quarterly plan and a monthly one land on the same scale (ADR-0033).
- */
+/** The active plans' average month, over the coming year (ADR-0033). */
 export function ContributionMetric({ ctx }: { ctx: MetricCtx }) {
   const plans = usePlans();
   return (
@@ -167,9 +164,3 @@ export function ContributionMetric({ ctx }: { ctx: MetricCtx }) {
     </Async>
   );
 }
-
-/**
- * One figure over another — a yield, a cost share, a cash quota. Both sides are figures the
- * core computed; the division happens here because a share of two displayed values is a
- * rendering, not money: nothing is added, rounded or stored.
- */

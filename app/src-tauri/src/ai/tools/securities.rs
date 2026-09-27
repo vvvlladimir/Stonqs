@@ -271,9 +271,7 @@ pub(super) fn securities_find(context: &ToolContext, args: &Value) -> AiResult<V
     Ok(json!({ "found": matches.len(), "instruments": matches }))
 }
 
-/// The body of `security_save`'s data-source half, and nothing more: the same validation and the
-/// same consequence. `.claude/rules/money-and-fx.md` — changing the provider symbol throws away
-/// the series stored under the old one, because the series belongs to the symbol.
+/// Changing the provider symbol drops the stored series: it belongs to the symbol.
 pub(super) fn security_set_data_source(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let existing = security_by_symbol(context, &text(args, "symbol"))?;
     let updated = sq_core::model::Security {

@@ -1,14 +1,5 @@
-//! How far the portfolio is from paying for the year, and how long the current pace would take.
-//!
-//! Two questions, one arithmetic. The target is what a portfolio must be worth for a yearly
-//! withdrawal to be sustainable at a chosen rate — the "4% rule" is a withdrawal rate of `0.04`
-//! and therefore a target of twenty-five years' spending. The horizon is when saving at the
-//! current monthly rate, compounded at an assumed return, first reaches it.
-//!
-//! Everything here is an *assumption* the user typed, not a measurement: the expected return is
-//! not this portfolio's past return and is never read from it, because the question is "what
-//! would it take", not "what happened". The only measured inputs are today's value and what the
-//! active plans add up to in a month.
+//! FIRE: the target is spending / withdrawal rate (0.04 → 25 years); the horizon is when saving at
+//! the current pace reaches it. Every rate is the user's assumption, never a measured return.
 
 use crate::error::{Error, Result};
 use chrono::NaiveDate;
@@ -64,10 +55,7 @@ pub struct FireProjection {
     pub withdrawal_rate: Decimal,
 }
 
-/// Projects `current_base` forward under `assumptions`.
-///
-/// A withdrawal rate of zero has no target to speak of and is refused; a negative one, or
-/// negative spending, is not a question this answers.
+/// Refuses a withdrawal rate ≤ 0 and negative spending.
 pub fn fire_projection(
     current_base: Decimal,
     assumptions: FireAssumptions,
@@ -108,14 +96,8 @@ pub fn fire_projection(
     })
 }
 
-/// Months of saving `contribution` into `current`, compounded monthly at `yearly_return`, before
-/// it first reaches `target`.
-///
-/// `f64`: this is a horizon read off a logarithm, not money. The result is a whole month either
-/// way, so the precision `Decimal` would add lands well below what the assumptions are worth.
-///
-/// Shared with [`super::goals`], which asks the same question about an amount and a date rather
-/// than about a spending and a withdrawal rate.
+/// Months of saving until `current` reaches `target`, compounded monthly. `f64`: a horizon read
+/// off a logarithm, not money. Shared with [`super::goals`].
 pub(crate) fn months_needed(
     current: Decimal,
     target: Decimal,
@@ -162,11 +144,8 @@ pub(crate) fn months_needed(
     Some(months as u32)
 }
 
-/// The monthly contribution that turns `current` into `target` in exactly `months`, compounded
-/// at `yearly_return` — the inverse of [`months_needed`].
-///
-/// `None` when the question has no answer: no months to pay over, or a rate that destroys the
-/// capital outright. A target already met needs nothing, which is zero rather than `None`.
+/// Monthly contribution reaching `target` in exactly `months`; inverse of [`months_needed`].
+/// `None` when unanswerable; a met target needs zero, not `None`.
 pub(crate) fn monthly_needed(
     current: Decimal,
     target: Decimal,

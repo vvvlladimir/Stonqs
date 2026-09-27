@@ -82,9 +82,7 @@ impl<'a> ImportService<'a> {
         }
     }
 
-    /// Operation wordings to read after the shipped keywords. Handed to the preview rather than
-    /// written into the mapping, so a dictionary that is later removed leaves nothing behind in a
-    /// layout beyond the wordings the user actually saw answered.
+    /// Handed to the preview, not written into the mapping, so removing the plugin removes them.
     pub fn with_kind_dictionary(mut self, words: KindWords) -> Self {
         self.kind_words = words;
         self
@@ -111,10 +109,7 @@ impl<'a> ImportService<'a> {
         let parsed = super::parse_file(content, config)?;
         let mapping = match mapping {
             Some(m) => m.clone(),
-            // A Flex statement's columns are this crate's own, so detecting them off their
-            // headers would be guessing at an answer we already know.
-            // Our own file states the model's own wording, so detecting it off the headers
-            // would be guessing at an answer the format already gives.
+            // Both formats carry their own fixed mapping; nothing to detect.
             None if super::canonical::is_canonical(content) => super::canonical::mapping(),
             None if ibflex::is_flex(content) => ibflex::mapping(),
             None => ImportMapping::detect_with_values(&parsed.headers, &parsed.rows),
@@ -150,11 +145,8 @@ impl<'a> ImportService<'a> {
         let mut created: HashMap<String, String> = HashMap::new();
         let tx = self.store.conn().unchecked_transaction()?;
 
-        // A preview is a snapshot of the store taken before this call. Between the two the
-        // rows may already have been written — a second click on the same preview, another
-        // import in between — so identity is checked again here, against the store, inside
-        // the transaction. A row the preview already called a duplicate is excluded: writing
-        // it is what `import_duplicates` was answered about.
+        // The store may have changed since the preview, so identity is checked again inside the
+        // transaction.
         let (counted, _) = self.known_fingerprints()?;
         // A row the broker names is identified by that name, so two identical operations with
         // two ids are both written; a row without one falls back to its content.
@@ -231,10 +223,8 @@ impl<'a> ImportService<'a> {
                             .store
                             .find_security_by_symbol(&plan.symbol)?
                             .or(self.store.find_security_by_symbol(symbol)?);
-                        // A ticker names a listing, an ISIN names the instrument. The stored row
-                        // under this ticker carrying a different ISIN is a different company, and
-                        // a ticker is unique, so neither reusing it nor creating beside it is
-                        // possible: the row waits for a ticker of its own.
+                        // Same ticker, different ISIN: a different company, so the row waits
+                        // for a ticker of its own.
                         if let (Some(found), Some(wanted)) = (&existing, &plan.isin)
                             && found
                                 .isin

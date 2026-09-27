@@ -10,10 +10,7 @@ export function usePlugins() {
   return useQuery({ queryKey: keys.plugins(), queryFn: api.pluginsList });
 }
 
-/**
- * The stylesheet of the theme in use, if one comes from a plugin. Kept forever once read: it is
- * a file on this machine, and re-reading it on every focus would repaint the app for nothing.
- */
+/** Kept forever once read: a local file. */
 export function usePluginTheme(theme: string | null) {
   const [plugin, id] = (theme ?? "").split("/");
   return useQuery({
@@ -24,12 +21,7 @@ export function usePluginTheme(theme: string | null) {
   });
 }
 
-/**
- * What a plugin page declared it reads, and nothing else (ADR-0083/0084), built by the host in
- * one call — the projection an assistant tool of the same package is handed too, so the two
- * cannot drift. A read the page did not declare is never built, which is the whole of its
- * permission. A page that reads over a period waits for one.
- */
+/** Only the declared reads are built — that is the whole permission (ADR-0088). A period read waits for a period. */
 export function usePluginReads(
   reads: readonly WidgetRead[],
   date: DateString,

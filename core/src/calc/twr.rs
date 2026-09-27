@@ -16,9 +16,7 @@ pub struct TwrPoint {
     pub external_flow: Decimal,
 }
 
-/// Computes true time-weighted return: `r_i = V_i / (V_{i-1} + F_i) - 1`.
-/// Returns the chained factor minus one; the first point's flow is ignored. A sub-period
-/// whose flow empties the holding uses `-F_i / V_{i-1}` instead — see the comment inside.
+/// `r_i = V_i / (V_{i-1} + F_i) - 1`, chained; the first point's flow is ignored.
 pub fn time_weighted_return(points: &[TwrPoint]) -> Result<Decimal> {
     if points.len() < 2 {
         return Err(Error::Math("TWR needs at least two points".into()));
@@ -29,10 +27,8 @@ pub fn time_weighted_return(points: &[TwrPoint]) -> Result<Decimal> {
         let (prev, cur) = (&window[0], &window[1]);
         let start_capital = prev.end_value + cur.external_flow;
 
-        // A flow that empties the holding is measured against the value it had before the
-        // withdrawal: what came out over what was there. The start-of-period formula would
-        // divide zero by whatever the sale missed the last close by — a few cents of residue —
-        // and report −100% for every position that was simply sold off.
+        // A flow that empties the holding is measured against the value before it; otherwise a
+        // sale would read as −100%.
         if cur.end_value.is_zero() && cur.external_flow.is_sign_negative() {
             if prev.end_value.is_zero() {
                 continue;
@@ -58,16 +54,10 @@ pub fn time_weighted_return(points: &[TwrPoint]) -> Result<Decimal> {
     Ok(cumulative - Decimal::ONE)
 }
 
-/// Calendar days per year used to annualize a period return. Calendar days, not the 252
-/// trading days of [`super::TRADING_DAYS_PER_YEAR`]: a reporting period is a stretch of the
-/// calendar, and a portfolio held over a closed exchange is still held.
+/// Calendar days, not trading days: a period is a stretch of the calendar.
 const DAYS_PER_YEAR: f64 = 365.0;
 
-/// Restates a period return as a yearly rate: `(1 + twr)^(365 / days) - 1`.
-///
-/// `None` when the period is shorter than a day or the portfolio lost everything — there is no
-/// real root of a negative base, and "-100% a year, forever" answers nothing.
-/// The exponent needs `powf`, so this one is `f64`; it is a rate, never an amount of money.
+/// `(1 + twr)^(365 / days) - 1`, `f64` for `powf` (a rate, not money). `None` under a day or at a total loss.
 pub fn annualize(twr: Decimal, from: NaiveDate, to: NaiveDate) -> Option<Decimal> {
     let days = (to - from).num_days();
     if days <= 0 {

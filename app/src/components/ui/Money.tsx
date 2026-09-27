@@ -10,11 +10,7 @@ import {
   toneClass,
 } from "../../lib/format";
 
-/**
- * Values are rendered by these components, never by calling `format*` in markup:
- * the `num` class and the positive/negative colour belong to the value, not to
- * whoever happens to print it.
- */
+/** Values render through these, never `format*` in markup: the class and colour belong to the value. */
 
 interface ValueProps {
   /** Colour by sign; defaults to on whenever a sign is printed. */
@@ -99,12 +95,7 @@ export function Num({ children, dim, className }: { children: ReactNode } & Valu
   return <span className={`num${dim ? " dim" : ""}${className ? ` ${className}` : ""}`}>{children}</span>;
 }
 
-/**
- * A date as a stacked block — day, month, year. A one-line date wraps into three lines in a
- * narrow table column; this shape is the same height whatever the column width is. A list that
- * only ever looks a few months ahead drops the year (`year={false}`): inside a dashboard tile
- * the third line costs a row of the list and says nothing the list does not already imply.
- */
+/** A date stacked as day, month, year; `year={false}` for lists that only look a few months ahead. */
 export function DayMark({ date, year: withYear = true }: { date: string; year?: boolean }) {
   const [year, month, day] = date.split("-");
   if (!year || !month || !day) return <span className="daymark">{date}</span>;

@@ -1,7 +1,4 @@
-//! What a column's values look like, independent of any language.
-//!
-//! A header alias can lie; the values cannot. A currency or ISIN column is required to look
-//! like one, a date is not — its format may simply be unknown to us.
+//! Value shapes, independent of language: a currency or ISIN column must look like one, a date need not.
 
 use crate::import::parse::{parse_date_any, parse_decimal};
 
@@ -36,10 +33,7 @@ pub(crate) enum ValueShape {
     Number,
     CurrencyCode,
     Isin,
-    /// A pairing key: the two legs of one internal move carry the same value, so a value has
-    /// to occur twice. Brokers print a per-row identifier under the very words this field's
-    /// aliases list ("Reference", "Transaction ID"), and reading one as a link makes every
-    /// transfer look internal — see `calc::holdings::paired_links` for what that costs.
+    /// A pairing key: a value must occur twice, or it is a per-row id (see `paired_links`).
     Link,
     /// The opposite claim to `Link`: a broker's own row identifier is unique per row, so a
     /// column that repeats itself is a pairing key, not an id.
@@ -112,9 +106,7 @@ impl ValueShape {
     }
 }
 
-/// Values veto a weak header match, never a literal one. A field with a checkable shape
-/// must fit it; a free-text field must not be sitting on a column that is plainly a date,
-/// a number, or a currency code.
+/// Values veto a weak header match, never a literal one.
 pub(super) fn shape_allows(shape: ValueShape, tier: MatchTier, values: &[&str]) -> bool {
     // A link overrules an exact header too, unlike every other shape: "Reference" names a
     // pairing key as literally as it names a row id, and only the values tell the two apart.
@@ -134,9 +126,7 @@ pub(super) fn shape_allows(shape: ValueShape, tier: MatchTier, values: &[&str]) 
                 .iter()
                 .all(|other| other.fit(values).is_none_or(|fit| fit < 0.8))
         }
-        // "Fee currency" names a fee as squarely as "Fee amount" does, so a number is
-        // required even from a whole-word match. A date is the one exception: its format
-        // may simply be one we do not know, and refusing the column is worse than guessing.
+        // Required even from a whole-word match; a date is exempt, its format may be unknown to us.
         ValueShape::CurrencyCode | ValueShape::Isin | ValueShape::Number => {
             shape.fit(values).is_none_or(|fit| fit >= 0.5)
         }

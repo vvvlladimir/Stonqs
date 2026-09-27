@@ -1,8 +1,5 @@
-//! What a header may be called, per field.
-//!
-//! Detection is per *language*, never per broker: a rule keyed to one broker's file helps only
-//! that broker's customers. Each list is ordered **canonical-first**, because the index breaks
-//! ties inside a match tier — reordering one of these changes which column wins.
+//! Header aliases per field. Per language, never per broker; ordered canonical-first, because the
+//! index breaks ties.
 
 use super::ImportField;
 

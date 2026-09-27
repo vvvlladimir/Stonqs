@@ -1,11 +1,5 @@
-//! One row, read in the order the fields depend on each other: the account decides the currency,
-//! the kind decides which number carries the direction, and the direction decides whether the
-//! instrument is required at all.
-//!
-//! A row is usually one operation and sometimes several: a rule can say that a reinvested
-//! dividend is an income *and* a purchase (ADR-0067). The parts share the file row's number,
-//! because they are one line of the file, and are read the same way — a rule changes what a row
-//! says, never how it is read.
+//! One row, read in dependency order: account → currency, kind → direction, direction → whether
+//! an instrument is needed. A rule may split it into parts sharing its number (ADR-0067).
 
 use super::cells::{Cells, RowInput};
 use super::fields::{self, Index};
@@ -82,10 +76,7 @@ pub(super) fn read(
         .collect()
 }
 
-/// What one emitted operation says instead of the row it came from. Two values are the rule's
-/// own rather than the author's: the broker's identifier gains the part's number, so a
-/// restatement still recognises each half (ADR-0065), and a linked pair shares a link id
-/// derived from the row, so the preview stays reproducible.
+/// A part's broker id gains `#n` (ADR-0065) and a linked pair gets a link id derived from the row.
 fn emitted_values(
     emit: &Emit,
     rule: &ImportRule,

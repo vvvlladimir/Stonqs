@@ -1,9 +1,6 @@
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 
-/**
- * The one search field of the product: a magnifier and an input in a single control.
- * Filtering is always the caller's — the box only reports what was typed.
- */
+/** The one search field; filtering is the caller's. */
 export function SearchBox({
   value,
   onChange,

@@ -5,11 +5,8 @@ use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-/// A nominal return restated in the money of the period's first day.
-///
-/// The window is reported rather than assumed: a month's index is published weeks after the
-/// month ends, so a period running to today is deflated only through the last published month.
-/// `factor` is what one unit of money at `from` costs at `to` — `1.023` is 2.3% of inflation.
+/// A nominal return in the money of the period's first day. `factor` 1.023 = 2.3% inflation; the
+/// window stops at the last published month.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RealReturn {
     pub region: String,
@@ -33,12 +30,8 @@ pub struct RealReturn {
     pub real_annualized: Option<Decimal>,
 }
 
-/// What one unit of money at `from` costs at `to`: `I(to) / I(from)`.
-///
-/// Both levels come from one region's stored series, which is written by a single source, so
-/// the ratio measures prices rather than a change of index base. `MissingMarketData` when the
-/// region has nothing published on or before `from` — that is a gap, unlike the tail of the
-/// window, which is merely not published yet.
+/// `I(to) / I(from)` from one region's single-source series. Nothing published on or before
+/// `from` is `MissingMarketData`; an unpublished tail is not.
 pub fn inflation_factor(
     region: &str,
     from: NaiveDate,
@@ -61,10 +54,7 @@ pub fn inflation_factor(
     Ok(level(to)? / start)
 }
 
-/// The last day of a period that the region's index actually covers.
-///
-/// An index level published for a month holds to the end of that month, so a series running
-/// through June covers the 30th. `None` when the region has no series at all.
+/// Last day the region's index covers (a monthly level holds to month end); `None` without a series.
 pub fn deflation_end(region: &str, to: NaiveDate, index: &dyn IndexLookup) -> Result<Option<NaiveDate>> {
     let Some(month) = index.index_through(region)? else {
         return Ok(None);
@@ -76,11 +66,7 @@ pub fn deflation_end(region: &str, to: NaiveDate, index: &dyn IndexLookup) -> Re
     Ok(Some(to.min(last_day)))
 }
 
-/// Takes inflation out of a return: `(1 + nominal) / factor - 1`.
-///
-/// Not `nominal - inflation`. Money earned is spent at the later price level, so the two
-/// compound rather than add; at the rates a quiet year produces the difference is small, and
-/// over a decade or in a high-inflation economy it is not.
+/// `(1 + nominal) / factor - 1` — compounded, not `nominal - inflation`.
 pub fn real_return(nominal: Decimal, factor: Decimal) -> Result<Decimal> {
     if factor <= Decimal::ZERO {
         return Err(Error::Math("inflation factor is not positive".into()));
@@ -88,12 +74,8 @@ pub fn real_return(nominal: Decimal, factor: Decimal) -> Result<Decimal> {
     Ok((Decimal::ONE + nominal) / factor - Decimal::ONE)
 }
 
-/// Restates a period's nominal return in the money of its first day.
-///
-/// The period is narrowed to what the index covers, and the nominal return is *not* recomputed
-/// for that shorter window: the caller passes the return of the window it reports, and the
-/// figure says which window the deflation was measured over. That understates real return by
-/// whatever the unpublished tail earned, which is the honest direction to be wrong in.
+/// Narrows to the index's coverage without recomputing the nominal return, which understates
+/// real return — the honest direction to err.
 pub fn real_period_return(
     region: &str,
     from: NaiveDate,
@@ -116,20 +98,12 @@ pub fn real_period_return(
         inflation: factor - Decimal::ONE,
         nominal,
         real,
-        // Over the window the *return* covers, not the shorter one the index does. `real` is
-        // the caller's nominal return with what inflation is published taken out of it, so
-        // dividing it by the published months alone would scale a full period's earnings by a
-        // part of it — overstating the yearly rate, in the opposite direction to the understated
-        // `real` this deliberately accepts.
+        // Annualised over the return's window, not the index's shorter one.
         real_annualized: annualize(real, from, to),
     })
 }
 
-/// The internal rate of return earned on flows restated in the money of `base_date`.
-///
-/// Each flow is deflated at *its own* date rather than the result being deflated once: a
-/// payment made three years in was made in cheaper money, and discounting the answer instead
-/// would credit every flow with the same purchasing power.
+/// IRR on flows each deflated at its own date, not the result deflated once.
 pub fn real_xirr(
     region: &str,
     base_date: NaiveDate,
@@ -147,12 +121,8 @@ pub fn real_xirr(
     xirr(&deflated)
 }
 
-/// Growth of one unit of money's *cost* on the portfolio's date grid, based at the first day —
-/// the same shape a benchmark has, so a chart draws it as one more line.
-///
-/// It steps: a monthly level holds until the next is published, and interpolating it would
-/// draw a daily inflation rate nobody measured. Days past the last published month are left
-/// out rather than flattened, so the line stops where the data does.
+/// Cost of money on the portfolio's dates, shaped like a benchmark. Steps monthly and stops at
+/// the last published month instead of interpolating.
 pub fn inflation_series(region: &str, dates: &[NaiveDate], index: &dyn IndexLookup) -> Result<GrowthSeries> {
     let mut out = GrowthSeries::default();
     let (Some(&first), Some(&last)) = (dates.first(), dates.last()) else {

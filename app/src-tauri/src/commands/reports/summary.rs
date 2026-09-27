@@ -1,9 +1,4 @@
-//! The reports screen's one reading: realised gains, dividends and charges over a window, each
-//! beside the same window a step earlier.
-//!
-//! Three unrelated reports share one command because they share one build of the holdings and
-//! one comparison window. They do not share anything else, so each is assembled on its own and
-//! only spread into the payload at the end.
+//! Gains, dividends and charges over a window beside the previous one, sharing one holdings build.
 
 use super::names::Names;
 use super::types::*;

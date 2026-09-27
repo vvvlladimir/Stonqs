@@ -1,9 +1,5 @@
-//! A sale the ledger cannot cover once the file is in.
-//!
-//! The file alone does not answer it — the purchase may have been imported last year — so the
-//! stored operations are replayed together with the rows about to be written, in the order the
-//! holdings builder applies them (`calc::quantity_gaps`). A warning, like every heuristic here:
-//! the missing purchase may simply be in the next file (ADR-0089).
+//! A sale the ledger cannot cover once the file is in: stored operations are replayed with the
+//! file's rows. A warning only (ADR-0089).
 
 use super::cells::cell_of;
 use super::{ImportContext, ImportRow, RowStatus};
@@ -119,9 +115,7 @@ fn identities(row: &ImportRow, mapping: &ImportMapping) -> Vec<String> {
         .collect()
 }
 
-/// Rows of the file that will not be written — an unmapped wording, a value marked "do not
-/// import", a row that failed to read — by instrument: the likeliest place the missing
-/// purchase is hiding.
+/// Unwritten rows by instrument — the likeliest place the missing purchase is.
 fn unread_rows(rows: &[ImportRow], mapping: &ImportMapping) -> HashMap<String, (usize, BTreeSet<String>)> {
     let mut out: HashMap<String, (usize, BTreeSet<String>)> = HashMap::new();
     for row in rows

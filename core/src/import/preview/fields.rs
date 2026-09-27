@@ -1,6 +1,4 @@
-//! Reading one field out of one row. Each stage answers a single question, pushes whatever went
-//! wrong onto the row's problems, and hands back `None` rather than a guess — a row missing a
-//! date is a row the user has to look at, not a row dated today.
+//! Reading one field of one row: problems are pushed, and `None` is returned rather than a guess.
 
 use super::cells::Cells;
 use super::{AccountMapping, ImportContext, KindMapping, SymbolMapping};
@@ -110,10 +108,7 @@ pub(super) fn date(
     }
 }
 
-/// The operation, and whether the user chose to skip this wording entirely. An ignored value is
-/// not an unknown one: it stays visible in the preview so the choice can be taken back.
-/// Counts the file's own wording without deciding anything by it — a rule has already said
-/// what the operation is, and the wizard still lists what the file called it.
+/// Counts the file's own wording for the wizard's kind list without deciding anything by it.
 pub(super) fn count_kind(cells: &Cells, stats: &mut BTreeMap<String, KindMapping>) {
     let Some(value) = cells.get(ImportField::Kind) else {
         return;
@@ -275,9 +270,7 @@ pub(super) fn currency(
     }
 }
 
-/// Every number the row carries. `amount` falls back to quantity × price for a file that prints
-/// only the two, and `signed_quantity` keeps the sign the file gave because a share movement has
-/// no cash to carry direction.
+/// `amount` falls back to quantity × price; `signed_quantity` keeps the file's sign.
 pub(super) struct Amounts {
     pub signed_quantity: Decimal,
     pub quantity: Decimal,
@@ -314,9 +307,7 @@ pub(super) fn amounts(cells: &Cells, problems: &mut Vec<ImportProblem>) -> Amoun
     }
 }
 
-/// Puts back what a net amount had taken out of it. The model stores the trade's own value and
-/// the charges beside it, so a file printing the sum of the two has to be undone here — only for
-/// the charges in the row's own currency, since the others were never in that total.
+/// Undoes a net amount, for charges in the row's own currency only.
 pub(super) fn restore_gross(
     amounts: &mut Amounts,
     kind: Option<TransactionKind>,
@@ -436,10 +427,7 @@ pub(super) fn instrument(
             .map(str::to_uppercase)
     });
     let file_name = cells.get(ImportField::Name).map(|s| s.to_string());
-    // The ISIN identifies the instrument and a ticker only one of its listings, so the ISIN is
-    // asked first. Two brokers print the same ticker for different instruments often enough —
-    // a local listing, a renamed company — and joining them silently writes one company's
-    // trades into another's position.
+    // ISIN before ticker: the same ticker names different companies often enough.
     let by_isin = isin
         .as_deref()
         .and_then(|i| index.by_isin.get(&normalize_alias(i)))

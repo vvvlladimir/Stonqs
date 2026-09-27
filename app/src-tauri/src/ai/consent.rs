@@ -1,14 +1,5 @@
-//! The consent gate. A tool call the user has not allowed stops the loop, asks, and waits.
-//!
-//! The decision is resolved **by `request_id` out of host state**, never from what the frontend
-//! sends back. The frontend replies with an id and a yes/no and nothing else — no tool name, no
-//! arguments, no slice of history. Otherwise "what the user approved" and "what the host ran"
-//! are two different objects, and a careful injection only has to separate them.
-//!
-//! Injection is not hypothetical here: instrument names, operation wording and account names all
-//! came out of somebody else's CSV (`.claude/rules/import.md`) and end up inside a tool result.
-//! That is why the card's text is built by the host from the tool's own `Params`, never by the
-//! model — otherwise the model writes the label on the button the user is about to press.
+//! The consent gate. A decision is resolved by `request_id` from host state, never from what the
+//! frontend sends, and the card's text is built from `Params`, never by the model.
 
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, channel};

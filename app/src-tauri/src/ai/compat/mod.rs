@@ -1,16 +1,5 @@
-//! The OpenAI **chat completions** wire: `POST {base}/chat/completions`, bearer key, SSE deltas.
-//! Knows nothing about Tauri — see the module-level note in `ai/mod.rs`.
-//!
-//! This is what "OpenAI-compatible" means everywhere outside OpenAI itself. OpenRouter, Groq,
-//! Together, DeepSeek, Mistral, xAI, vLLM, llama.cpp, LM Studio, Ollama and every LiteLLM proxy
-//! answer this one shape, which is why the custom provider speaks it by default.
-//!
-//! Unlike the Responses API, nothing here hands over a finished turn: the answer exists only as
-//! deltas, so the blocks are assembled as they arrive — text into one buffer, each tool call
-//! into the slot its `index` names, because arguments arrive one fragment at a time and two
-//! calls interleave. A server that reports usage does so on the last chunk, asked for with
-//! `stream_options`; one that ignores that field simply reports zeros, which is what "not
-//! counted" looks like everywhere else in this app.
+//! The OpenAI chat-completions wire, spoken by nearly every "OpenAI-compatible" server. The turn
+//! is assembled from deltas; tool calls by `index`, since fragments interleave.
 
 use super::sse::SseReader;
 use super::{
@@ -80,9 +69,7 @@ impl AiProvider for CompatProvider {
     }
 }
 
-/// A tool call being assembled. The name arrives once, the arguments in fragments, and the whole
-/// thing is identified by its position in the chunk rather than by its id — which some servers
-/// only send with the first fragment.
+/// Identified by chunk position, not id: some servers send the id with the first fragment only.
 #[derive(Default)]
 struct PartialCall {
     id: String,
@@ -228,9 +215,7 @@ fn turn(
     }
 }
 
-/// `usage` is absent from every chunk but the last, and absent altogether from a server that
-/// ignores `stream_options`. Both cached and reasoning counts are extensions rather than part of
-/// the original schema, so a server reporting neither leaves them at zero.
+/// Present only on the last chunk, if at all; unreported counts stay zero.
 fn usage_of(usage: &Value) -> Option<Usage> {
     if !usage.is_object() {
         return None;

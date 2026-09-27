@@ -298,10 +298,7 @@ pub(super) fn transactions_list(context: &ToolContext, args: &Value) -> AiResult
     }))
 }
 
-/// The body of `transaction_save` for a new row, with the same rule about what `amount` means:
-/// for a kind that moves shares it is quantity times price, and typing one directly would let a
-/// row exist whose amount and its own legs disagree. The direction is the kind's, never the
-/// sign of a number — "sell minus five shares" cannot happen.
+/// `amount` of a share-moving kind is quantity × price, never typed; direction is the kind's.
 pub(super) fn transaction_create(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let kind: sq_core::model::TransactionKind = serde_json::from_value(json!(text(args, "kind")))
         .map_err(|_| AiError::Tool(format!("unknown operation {}", text(args, "kind"))))?;
@@ -515,9 +512,7 @@ pub(super) fn income_calendar(context: &ToolContext, args: &Value) -> AiResult<V
 /// How many payers one calendar names. The rows are largest first, so the tail is noise.
 pub(super) const PAYERS_CAP: usize = 20;
 
-/// The body of `transaction_save` for a row that already exists. The amount of a share-moving
-/// row stays its own legs multiplied, so changing either recomputes it rather than leaving a
-/// row whose amount and legs disagree.
+/// Changing either leg recomputes the amount of a share-moving row.
 pub(super) fn transaction_update(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let existing = matching_transaction(context, args)?;
 

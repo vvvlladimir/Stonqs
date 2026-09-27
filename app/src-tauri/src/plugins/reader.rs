@@ -1,9 +1,4 @@
-//! Running a plugin's file reader (ADR-0086): bytes in, a `stonqs.transactions` document out.
-//!
-//! What the module may reach is `sandbox.rs`, shared with the writer.
-//!
-//! Nothing here touches the store or the portfolio. A reader is run once, by `import_load`, and
-//! what it produced is what every later preview and the commit read.
+//! Running a plugin's file reader (ADR-0086), once, in `import_load`; it touches no store.
 
 use super::sandbox;
 use crate::error::{UiError, UiResult};
@@ -49,9 +44,7 @@ pub enum Refusal {
     NeedsPassword,
     /// Recognised and unreadable: the reader said so, in its own words.
     Malformed(String),
-    /// The module itself failed — trapped, timed out, ran out of memory, or was not a component at
-    /// all. It never got as far as saying the file was its own, so the host moves past it rather
-    /// than letting one broken package refuse every file.
+    /// The module failed before claiming the file, so the host moves past it.
     Broken(String),
 }
 
@@ -81,12 +74,8 @@ impl Refusal {
     }
 }
 
-/// Runs one reader over one file.
-///
-/// `module` is a path inside the plugin's own folder, already checked by `safe_join`. Everything
-/// that can go wrong on this side — a file that is not a component, a trap, the deadline, the
-/// memory ceiling — comes back as `Refusal::Broken`; only the reader's own `malformed` is
-/// `Refusal::Malformed`.
+/// `module` is already `safe_join`ed. Every host-side failure is `Broken`; only the reader's own
+/// `malformed` is `Malformed`.
 pub fn read(
     module: &Path,
     bytes: &[u8],
@@ -126,13 +115,8 @@ pub fn read(
     }
 }
 
-/// What a reader must prove before the package carrying it is installed: that it recognises the
-/// sample it ships, that what it produces is the app's own transaction file, and that the file is
-/// the one the package says it is.
-///
-/// The last of the three is what a broker layout cannot be asked for and a reader must be: a
-/// layout that misreads a column leaves a question in the wizard, while a reader that misreads one
-/// hands over a document that looks perfectly correct.
+/// A reader must recognise its sample and produce exactly the expected document: a misread column
+/// would otherwise look perfectly correct.
 pub fn check(id: &str, module: &Path, sample: &[u8], sample_name: &str, expected: &str) -> UiResult<()> {
     let reading = read(module, sample, sample_name, None).map_err(|refusal| match refusal {
         Refusal::NotMine => UiError::invalid(format!("reader {id} does not recognise the sample it ships")),

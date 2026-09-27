@@ -129,10 +129,7 @@ pub struct AppState {
     /// Tool calls waiting on the user. The decision is resolved out of here by `request_id`,
     /// never from what the frontend echoes back — see `ai/consent.rs`.
     pub ai_consent: crate::ai::consent::Pending,
-    /// What each provider last said it offers, keyed by provider id. In memory rather than
-    /// `settings.json`: the list is cheap to refetch once per run, and a cached one on disk is a
-    /// list to go stale. Keyed because a chat switched to another provider asks a second
-    /// catalogue, and one slot would answer it with the first provider's models.
+    /// Per provider and in memory only: refetched once per run, never stale on disk.
     pub ai_models: Mutex<HashMap<String, Vec<String>>>,
     /// What the app is extended with. Beside the profiles rather than inside one, so a theme
     /// survives switching profile (ADR-0070).
@@ -198,9 +195,7 @@ impl AppState {
         })
     }
 
-    /// Held by every connection opened beside the main one, for as long as it is open. A file
-    /// conversion (`dbfile::convert`) needs to be the only connection, so it takes this for
-    /// writing and answers `busy` rather than wait.
+    /// Held by every side connection, so `dbfile::convert` can require being the only one.
     pub fn db_in_use(&self) -> RwLockReadGuard<'_, ()> {
         self.db_gate
             .read()
@@ -220,10 +215,7 @@ impl AppState {
             .map_err(|_| UiError::internal("the profile state is poisoned"))
     }
 
-    /// Replaces everything this state holds for one profile with another's. The new database is
-    /// opened before anything is touched, so a profile that cannot be opened leaves the current
-    /// one in place. A running refresh or AI turn is cancelled: each works on its own `Store`
-    /// and finishes into the profile it started in.
+    /// The new database opens before anything changes; running refreshes and turns finish into the old profile.
     pub fn open_profile(&self, id: &str) -> UiResult<()> {
         self.profiles.find(id)?;
         let db_path = self.profiles.db_path(id);
@@ -236,9 +228,7 @@ impl AppState {
         self.ai_cancel.store(true, Ordering::Relaxed);
         self.ai_consent.clear();
 
-        // Swapped under the store lock, which every command takes first: none of them sees one
-        // profile's database beside another's portfolio. Taken raw — the profile being left may
-        // itself be locked.
+        // Swapped under the store lock, taken raw since the profile being left may be locked.
         let mut open = self.store_raw()?;
         self.locked.store(opened.locked, Ordering::Relaxed);
         self.remembered.store(opened.remembered, Ordering::Relaxed);
@@ -319,9 +309,7 @@ impl AppState {
         self.scope_selection_in(store, None)
     }
 
-    /// The same, in a scope the request names for itself. The picker is the app's lens and
-    /// stays the default; a dashboard widget is allowed one of its own, so a board can hold a
-    /// tile per account without the screen around it changing.
+    /// A scope the request names itself, for a widget's own tile (ADR-0030).
     pub fn scope_selection_in(
         &self,
         store: &Store,

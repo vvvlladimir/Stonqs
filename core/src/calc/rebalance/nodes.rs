@@ -1,8 +1,5 @@
-//! The target tree, resolved against what is actually held.
-//!
-//! A weight is a share of its *parent*, so the absolute share is a product along the path and is
-//! always derived, never stored. Only the deepest weighted nodes divide money: a weighted parent
-//! gets its own row and its own drift, but no trades (`.claude/rules/taxonomy-and-rebalance.md`).
+//! The target tree against holdings. Weights are shares of the parent; only the deepest weighted
+//! nodes get trades (`.claude/rules/taxonomy-and-rebalance.md`).
 
 use super::RebalanceOptions;
 use crate::calc::{Allocation, AllocationBucket};

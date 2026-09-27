@@ -1,15 +1,5 @@
-//! Rules: what a file row becomes, when one wording is not the whole answer.
-//!
-//! The kind dictionary answers "this word means this operation", which is most of every broker
-//! file and none of the rest: a reinvested dividend is an income *and* a purchase, a wording
-//! that spans both directions is told apart by the sign of a different column, and a line that
-//! is not an operation at all has to be dropped by something other than its name.
-//!
-//! A rule is deliberately not a language. It matches on the *mapped fields* — never on raw
-//! column names, so it survives a change of layout — with a closed set of tests joined by AND,
-//! and it emits a fixed list of operations whose fields are either constants or references to
-//! the row's own values. No arithmetic, no loops, no variables: a rule that cannot be read aloud
-//! in one sentence is a rule nobody can review (ADR-0067).
+//! Rules: conditions over mapped fields (AND) and a fixed list of operations to emit, with
+//! constants or `{field}` references. No arithmetic, no loops (ADR-0067).
 
 use super::ImportField;
 use crate::import::parse::parse_decimal;
@@ -71,9 +61,7 @@ impl Emit {
     }
 }
 
-/// A match and what it produces. An empty `emit` is a row left out of the import — a broker
-/// prints lines that are not operations, and some of them are only recognisable by a condition
-/// rather than by a wording on the skip list.
+/// A match and what it emits; an empty `emit` drops the row.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportRule {
     #[serde(default)]
@@ -153,9 +141,7 @@ pub(crate) fn first_match<'a>(
     rules.iter().find(|rule| rule.matches(row, decimal_separator))
 }
 
-/// Resolves what an emitted operation says in one field: a constant, or `{field}` naming a
-/// value of the row it came from. An unknown name resolves to nothing rather than to its own
-/// text — a typo must not become an amount.
+/// A constant, or `{field}` from the same row; an unknown name resolves to nothing, never to its text.
 pub(crate) fn resolve(template: &str, row: &dyn Fn(ImportField) -> Option<String>) -> String {
     let mut out = String::with_capacity(template.len());
     let mut rest = template;

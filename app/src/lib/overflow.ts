@@ -1,12 +1,6 @@
 import { useEffect, type RefObject } from "react";
 
-/**
- * Marks a scrolling box with what it is hiding: `is-cut` while there is more below, plus
- * `is-scrolled` / `is-ended` for which edge to fade (`styles/ui/widget.css`).
- *
- * A class rather than a piece of state: the fade is a look, and re-rendering a widget on every
- * scroll frame to change one would be the expensive way to draw a gradient.
- */
+/** Marks a scrolling box `is-cut` / `is-scrolled` / `is-ended` with classes, not state. */
 export function useOverflow(ref: RefObject<HTMLElement | null>, deps: unknown[] = []) {
   useEffect(() => {
     const node = ref.current;

@@ -1,10 +1,5 @@
-//! Anthropic Messages API adapter: JSON request body, SSE event interpretation, error mapping.
-//! Knows nothing about Tauri, like the rest of `ai/` outside `keys.rs`.
-//!
-//! Shaped like `openai.rs` and deliberately different where the wire is: Anthropic has no final
-//! envelope carrying the finished message, so the turn is **assembled from the deltas** rather
-//! than read off one object at the end. Blocks arrive strictly one at a time (`index` only ever
-//! moves forward), which is what makes a single in-progress block enough.
+//! Anthropic Messages adapter. No final envelope, so the turn is assembled from deltas; blocks
+//! arrive one at a time, so one in-progress block is enough.
 
 use super::sse::SseReader;
 use super::{
@@ -343,9 +338,7 @@ fn build_request(request: &AiRequest) -> Value {
     body
 }
 
-/// Two blocks, and the cache breakpoint on the first: tools and system render before the
-/// messages, so marking the end of the fixed text caches everything up to it. The moving part
-/// goes after it, exactly as in `openai.rs` — the reason is the same, the mechanism explicit.
+/// Two system blocks with the cache breakpoint on the fixed one; the moving context goes after it.
 fn system_blocks(request: &AiRequest) -> Value {
     let mut blocks = vec![json!({
         "type": "text",
@@ -390,9 +383,8 @@ fn turn_to_message(role: Role, blocks: &[Block]) -> Option<Value> {
             })),
             // Ours to display, not to replay: the provider ran it and holds the results.
             Block::WebSearch { .. } => None,
-            // The one place a summary *is* sent back. The provider signs its own thinking and
-            // refuses a turn whose tool call arrived without it, so a signed block is replayed
-            // exactly as it came; an unsigned one (another provider's, or an older row) is not.
+            // A signed thinking block is replayed as it came (the provider refuses a tool call
+            // without it); an unsigned one is not.
             Block::Reasoning { text, signature } => signature
                 .as_ref()
                 .map(|signature| json!({ "type": "thinking", "thinking": text, "signature": signature })),

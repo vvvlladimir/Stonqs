@@ -15,11 +15,7 @@ interface Props {
   real?: RealPerformance | null;
 }
 
-/**
- * The period read twice over: what the portfolio returned, and what the money did. A rise in
- * value is not a result while half of it was deposited, so `delta` sits beside `absolute
- * change` rather than replacing it.
- */
+/** Return and money side by side: a rise in value is not a result while half was deposited. */
 export function PerformanceMetrics({ data, benchmarkId, benchmarkLabel, comparison, since, real }: Props) {
   const { t } = useLingui();
   const currency = data?.base_currency ?? "";

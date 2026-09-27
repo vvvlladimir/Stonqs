@@ -1,10 +1,5 @@
-//! Plugins: list what is installed, install a folder the user picked, remove one, and hand over
-//! the files of the content in use — a theme's stylesheet, a classification set's CSV.
-//! See ADR-0070.
-//!
-//! Nothing here takes the store, so a locked profile still has its colours. A set's CSV goes back
-//! to the frontend and in again through `taxonomy_import_preview`, which is the point: a set from
-//! a plugin has no path into the portfolio of its own.
+//! Plugin commands (ADR-0070). None takes the store, so a locked profile keeps its theme; a
+//! set's CSV goes back through `taxonomy_import_preview`.
 
 use super::performance::date_range;
 use super::{off_thread, parse_date};
@@ -55,9 +50,7 @@ pub fn plugins_list(state: State<AppState>) -> UiResult<PluginList> {
     })
 }
 
-/// Installs from a folder the user chose in the file picker. A path, not bytes: this is the one
-/// thing that is a directory rather than a file, and the picker hands its path over. Off the main
-/// thread, because installing runs every module the package ships against its sample.
+/// A path, not bytes: the one directory the picker hands over. Off the main thread: every module runs against its sample.
 #[tauri::command]
 pub async fn plugin_install(app: AppHandle, path: PathBuf) -> UiResult<PluginInfo> {
     off_thread(move || app.state::<AppState>().plugins.install(&path)).await
@@ -81,9 +74,7 @@ pub fn plugin_taxonomy_csv(state: State<AppState>, plugin: String, set: String) 
     state.plugins.taxonomy_csv(&plugin, &set)
 }
 
-/// What a plugin page declared it reads, built by the host (`plugins::reads`) exactly as an
-/// assistant tool of the same package is handed it. `from`/`to` are the period of a read over one;
-/// `source` is a widget's own data scope, absent for the app's lens.
+/// The declared reads, built as for the package's assistant tool (ADR-0088); `source` is a widget's own scope.
 #[tauri::command]
 pub fn plugin_reads(
     state: State<AppState>,

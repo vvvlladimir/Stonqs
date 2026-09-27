@@ -9,9 +9,7 @@ use chrono::NaiveDate;
 use super::PortfolioAnalytics;
 
 impl PortfolioAnalytics<'_> {
-    /// Measures one goal at `as_of`. A goal carries the accounts it counts, so the reading is
-    /// taken over those and never over the lens the user happens to be looking through; naming
-    /// none means the whole portfolio.
+    /// Read over the goal's own accounts, never the lens; none named = the whole portfolio.
     pub fn goal_progress(&self, goal: &Goal, as_of: NaiveDate) -> Result<GoalProgress> {
         let whole = PortfolioAnalytics::new(self.store, self.portfolio)?;
         let analytics = if goal.accounts.is_empty() {
@@ -23,9 +21,7 @@ impl PortfolioAnalytics<'_> {
         goal_progress(goal, current, self.base_currency(), as_of, self.store)
     }
 
-    /// Reads one limit over the limit year `as_of` falls in. The ledger is the portfolio's:
-    /// a scope rewrites transfer legs into external flows, which is exactly the distinction a
-    /// contribution turns on.
+    /// Reads the portfolio's ledger, not the lens: a scope turns transfer legs into external flows.
     pub fn limit_usage(&self, limit: &ContributionLimit, as_of: NaiveDate) -> Result<LimitUsage> {
         let whole = PortfolioAnalytics::new(self.store, self.portfolio)?;
         let transactions = whole.transactions_until(Some(as_of))?;

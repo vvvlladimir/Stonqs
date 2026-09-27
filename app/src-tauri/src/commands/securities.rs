@@ -33,9 +33,7 @@ pub struct SecurityRow {
     /// The one of `other_symbols` asked for the days the own source has not published yet
     /// (ADR-0079); `None` when history and latest close come from one source.
     pub latest_source: Option<String>,
-    /// The stored series covers far less than the instrument has been held — what a ticker on a
-    /// venue the source does not quote leaves behind. The table says so rather than showing a
-    /// price that is one day old and years out of place.
+    /// A series covering far less than the holding period: a ticker on the wrong venue.
     pub sparse_history: bool,
 }
 
@@ -168,10 +166,7 @@ pub fn security_save(app: AppHandle, state: State<AppState>, input: SecurityInpu
     Ok(security)
 }
 
-/// Gives every instrument with no price source the one named, and fetches what they now owe.
-///
-/// Only the ones with none: a source the user chose for an instrument is their decision, and a
-/// bulk answer must not overwrite a particular one.
+/// Only instruments with no source: a per-instrument choice is never overwritten.
 #[tauri::command]
 pub fn securities_adopt_source(app: AppHandle, state: State<AppState>, source: String) -> UiResult<usize> {
     let adopted = {

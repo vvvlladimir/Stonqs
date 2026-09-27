@@ -19,14 +19,7 @@ import { sourceNeeds } from "./model";
 import { useSourceKeys } from "./useSourceKeys";
 import type { CustomSource, MarketSourceRow } from "../../../lib/types";
 
-/**
- * Where the app may fetch data from, asked once and changeable forever after in Settings.
- *
- * Nothing is on until this is answered (ADR-0076), so the rows show what was *picked* rather
- * than what is being asked: sealing the answer is what turns the picks into requests. A set
- * that cannot price a portfolio is not sealed at all — `Decide later` is the way out, and it
- * leaves the app saying so rather than quietly fetching nothing.
- */
+/** Asked once, changeable in Settings (ADR-0076). An unpricing set is not sealed; `Decide later` leaves the app saying so. */
 export function SourcesSetup({ onClose }: { onClose: () => void }) {
   const { t } = useLingui();
   const invalidate = useInvalidate();

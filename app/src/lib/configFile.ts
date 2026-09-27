@@ -1,10 +1,4 @@
-/**
- * Reading and writing a JSON file from the browser side of the app.
- *
- * Deliberately not a host command: a layout is frontend state the host stores as an opaque
- * blob, and a file picker that already works in every webview — desktop and mobile — does not
- * need a Rust counterpart. Bytes still never become a path (see `.claude/rules/ui-boundary.md`).
- */
+/** JSON files via the webview's own pickers; not a host command, and bytes never become a path. */
 
 /** Offers `text` as a download. The browser owns the dialog, so there is nothing to await. */
 export function downloadJson(name: string, text: string): void {

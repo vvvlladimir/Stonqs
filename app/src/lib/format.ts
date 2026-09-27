@@ -175,9 +175,7 @@ export function formatCompact(value: string, digits = 1, options: { signed?: boo
   return `${plus}${sign}${body} ${suffix}`;
 }
 
-/** One label style for a whole axis: the compact unit follows the largest tick and the
- *  decimals the gap between them, so two neighbouring gridlines never print the same text.
- *  `percent` is for axes holding a rate (0.05), which prints as 5 %. */
+/** One label style per axis, so neighbouring gridlines never print the same text; `percent` for rates. */
 export function axisFormat(ticks: number[], options: { percent?: boolean } = {}): (value: number) => string {
   const step = tickStep(ticks);
   if (options.percent) {
@@ -185,9 +183,7 @@ export function axisFormat(ticks: number[], options: { percent?: boolean } = {})
     return (value) => formatRate(value, digits);
   }
 
-  // One unit for the whole axis: `formatCompact` picks it per value, which would print
-  // "500 k" next to "1.0 M". Ticks are plot floats already, so dividing one is not
-  // money arithmetic.
+  // One unit for the whole axis; ticks are plot floats, not money.
   const peak = Math.max(...ticks.map(Math.abs), 0);
   const found = AXIS_UNITS.find(([size]) => peak >= size);
   const scale = found?.[0] ?? 1;
@@ -209,11 +205,7 @@ function decimalsFor(step: number): number {
   return step >= 1 ? 0 : Math.min(Math.ceil(-Math.log10(step)), 6);
 }
 
-/**
- * Formats a date and drops the marker some locales print after the year (Russian writes
- * "2024 г."). Editing the parts keeps this locale-agnostic: no language's wording is spelled
- * out here, and a locale that adds no marker passes through untouched.
- */
+/** Drops the year marker some locales add ("2024 г.") without naming any language. */
 function formatDate(at: Date, options: Intl.DateTimeFormatOptions): string {
   const parts = new Intl.DateTimeFormat(intlLocale(), options).formatToParts(at);
   return parts
@@ -304,10 +296,7 @@ const AGGREGATE_REGIONS: Record<string, MessageDescriptor> = {
   EU: msg`European Union`,
 };
 
-/**
- * Names a price-index region. The host sends only the code, so the name is written here where
- * the language is known — `Intl` has every country in every locale the app ships.
- */
+/** Region names from `Intl`; the host sends codes only. */
 export function formatRegion(code: string): string {
   const aggregate = AGGREGATE_REGIONS[code];
   if (aggregate) return i18n._(aggregate);

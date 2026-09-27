@@ -133,10 +133,7 @@ export function countBy(assignments: TaxonomyPreview["assignments"], how: string
   return assignments.filter((a) => (a.matched_by ?? "").startsWith(how)).length;
 }
 
-/**
- * The rows of the level on display: the subjects of a leaf node (`members` set), else the child
- * nodes. Excluded subjects leave the chart but stay editable in the members list.
- */
+/** A leaf's subjects (`members`), else the child nodes; excluded subjects leave the chart only. */
 export function levelRows(
   i18n: I18n,
   taxonomy: TaxonomyData | null,

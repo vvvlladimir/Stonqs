@@ -101,9 +101,7 @@ pub struct TaxonomyIncomeData {
     pub income: TaxonomyIncome,
 }
 
-/// Income of a period split by a taxonomy. Its own command rather than a field of
-/// [`income_summary`]: the tree is picked separately, and switching it must not refetch
-/// every other rollup on the screen.
+/// Its own command, so switching the tree refetches nothing else.
 #[tauri::command]
 pub fn income_taxonomy(
     state: State<AppState>,

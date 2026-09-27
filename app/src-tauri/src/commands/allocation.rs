@@ -220,9 +220,7 @@ pub fn taxonomy_import_commit(
     Ok(taxonomy)
 }
 
-/// Plans a tree from one attribute: a node per distinct value, every instrument carrying that
-/// value assigned whole. The tree it would extend decides what is left alone, so the preview a
-/// dialog shows and the commit that follows agree.
+/// The tree it would extend decides what is left alone, so preview and commit agree.
 #[tauri::command]
 pub fn taxonomy_group_preview(
     state: State<AppState>,

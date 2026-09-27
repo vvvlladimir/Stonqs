@@ -6,6 +6,7 @@ import { formatDay, formatMoney } from "../../../lib/format";
 import type { FireProjection } from "../../../lib/types";
 import { fireCfg, trackOf, type WidgetProps } from "./model";
 
+/** A figure over a track; which one (goal, limit, FIRE) is a setting, not a widget. */
 export function ProgressWidget(props: WidgetProps) {
   switch (trackOf(props.widget.cfg)) {
     case "limit":
@@ -17,11 +18,7 @@ export function ProgressWidget(props: WidgetProps) {
   }
 }
 
-/**
- * How far the portfolio is from covering a year of spending, and when this pace would get
- * there. Every figure but today's value is an assumption — the return is not this portfolio's
- * measured return and is never read from it.
- */
+/** Every figure but today's value is an assumption, never the measured return. */
 function FireWidget({ widget }: WidgetProps) {
   const { t, i18n } = useLingui();
   const assumptions = fireCfg(widget.cfg);
@@ -72,11 +69,7 @@ function FireNote({ data }: { data: FireProjection }) {
   );
 }
 
-/**
- * One goal as a track: where it is, and the single figure that answers "is this enough".
- * Not scoped — a goal carries the accounts it counts, so the tile's own source would mean
- * nothing here.
- */
+/** Not scoped: a goal carries its own accounts. */
 function GoalWidget({ widget, date }: WidgetProps) {
   const { t } = useLingui();
   const query = useGoals(date);

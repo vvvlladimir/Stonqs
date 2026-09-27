@@ -1,11 +1,7 @@
 import type { ScreenId } from "../nav";
 import { COMMAND_IDS, commandDef, type ChoiceId, type CommandId } from "./catalog";
 
-/**
- * What is answering right now: the commands mounted components registered, the choices they
- * published, and the stack of layers (a dialog, the assistant) that decides who hears `Escape`.
- * Plain data with a `subscribe`, so the keyboard, the palette and the menu bar read one state.
- */
+/** Mounted commands, published choices and the layer stack, as plain data with `subscribe`. */
 
 /** A favourite's index, a screen id — whatever the one command needs to know which one. */
 export type CommandArg = string | number | undefined;

@@ -8,10 +8,7 @@ import type { SecurityDraft, SymbolMapping } from "../../lib/types";
 import { AssetSearch } from "./AssetSearch";
 import { normalizeAlias } from "./labels";
 
-/**
- * One broker code and the instrument it will become. Edits save as they are typed,
- * so the dialog's button only closes it — there is nothing left to confirm.
- */
+/** Edits save as typed, so the dialog's button only closes it. */
 export function AssetRow({
   symbol,
   aliases,

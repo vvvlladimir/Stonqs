@@ -27,9 +27,7 @@ export function useAiProviders() {
   return useQuery({ queryKey: keys.aiProviders(), queryFn: api.aiProvidersList, staleTime: Infinity });
 }
 
-/** What one provider offers. Asked once per provider per run: a model list is a network call,
- * and the answer does not change while the app is open. Keyed by provider, so a chat switched to
- * another one asks that catalogue rather than reusing the first's. */
+/** Once per provider per run, keyed by provider. */
 export function useAiModels(provider: string | null, enabled: boolean) {
   return useQuery({
     queryKey: keys.aiModels(provider ?? undefined),

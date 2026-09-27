@@ -15,11 +15,7 @@ import { TargetSummary } from "./TargetSummary";
 import { TemplateBar } from "./TemplateBar";
 import { fieldLabel, missingFields, normalizeAlias, type PreviewRow } from "./labels";
 
-/**
- * Teaching the app to read one broker's file. It is the same table as the step before —
- * the file's own columns and rows — narrowed to one row per distinct value of the file and
- * made editable in place: a header picks the field it carries, a cell picks what its value means.
- */
+/** The file's own table, one row per distinct value, editable in place. */
 export function ParseStep({
   preview,
   mapping,

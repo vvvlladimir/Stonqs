@@ -60,10 +60,7 @@ export function DayMetric(ctx: MetricCtx) {
 /** Money fields of the period summary that make a tile on their own. */
 type SummaryField = keyof PeriodSummary;
 
-/**
- * A money figure from the period summary. Separate from [`FromValuation`]: that one reads a
- * balance on a date, this one reads a change between two.
- */
+/** A change between two dates, unlike [`FromValuation`]'s balance on one. */
 export function FromSummary({
   ctx,
   field,

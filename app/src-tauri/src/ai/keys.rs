@@ -1,8 +1,5 @@
-//! The device-wide provider keys from before profile passwords (ADR-0046): one OS keychain entry
-//! holding every provider's key. Since ADR-0048 a key lives in its profile's vault; this entry is
-//! only read by the profile a single-profile install became, until that profile gets a password
-//! and the keys move into its vault. Nothing new is ever written here. No command reads a key
-//! back: `secrets.rs` is the only caller.
+//! The pre-password device-wide keychain entry (ADR-0046), read only by the profile a single-profile
+//! install became (ADR-0048). Never written; `secrets.rs` is the only caller.
 
 use keyring::Entry;
 use std::collections::BTreeMap;
@@ -49,9 +46,7 @@ impl Backend for Keychain {
     }
 }
 
-/// Runs `f` over the keys, loading them first if this run has not yet. The lock is held across
-/// the keychain read on purpose: two threads asking at once must wait for one prompt, not raise
-/// two.
+/// The lock is held across the keychain read so two threads cause one prompt, not two.
 fn with_keys<T>(
     backend: &dyn Backend,
     f: impl FnOnce(&mut Keys) -> keyring::Result<T>,
@@ -72,9 +67,7 @@ fn load(backend: &dyn Backend) -> keyring::Result<Keys> {
     }
 }
 
-/// Before ADR-0046 each provider had an entry of its own, its id as the account. Those are moved
-/// into the one entry once — written there first, removed after, so a failure in between leaves
-/// a key in two places rather than in none.
+/// Moves pre-ADR-0046 per-provider entries into one: written first, removed after.
 fn migrate(backend: &dyn Backend) -> keyring::Result<Keys> {
     let mut keys = Keys::new();
     let ids = super::catalog::PROVIDERS

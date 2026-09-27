@@ -4,13 +4,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-/// How an attribute's value is read; the value is stored as text in every case.
-///
-/// There is deliberately no percent kind: it would have to decide between `0.07` and `7`
-/// for every reader, and nothing computes with attributes yet. A rate is a [`Number`]
-/// carrying `%` as its unit.
-///
-/// [`Number`]: AttributeKind::Number
+/// How a value is read; it is stored as text either way. No percent kind: a rate is a `Number` with unit `%`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AttributeKind {

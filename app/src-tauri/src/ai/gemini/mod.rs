@@ -1,13 +1,5 @@
-//! Google's Gemini API: `POST {base}/models/{model}:streamGenerateContent?alt=sse`.
-//! Knows nothing about Tauri — see the module-level note in `ai/mod.rs`.
-//!
-//! Three things here are Gemini's alone. A function call carries **no id**: calls are matched by
-//! name, so this adapter mints one (`name#index`) and reads the name back out of it when the
-//! result is replayed. A thinking model signs its steps, and a follow-up handing a signed call
-//! back **without** its `thoughtSignature` degrades or is refused — which is the whole reason
-//! `Block::ToolCall::signature` exists. And thinking is billed apart from the answer
-//! (`thoughtsTokenCount` is not inside `candidatesTokenCount`), so the two are added here to
-//! keep this app's one rule: reasoning is part of output.
+//! Gemini adapter. Function calls carry no id (minted as `name#index`), a signed call must be
+//! replayed with its `thoughtSignature`, and thinking is counted beside output, so it is added in.
 
 use super::sse::SseReader;
 use super::{
@@ -113,9 +105,7 @@ impl AiProvider for GeminiProvider {
         let search = request.web_search && !search_refused(&request.model);
         let mut response = match self.post(request, search)? {
             Attempt::Answered(response) => response,
-            // Grounding has a quota of its own, and on the free tier it can be zero for a model
-            // whose plain requests are allowed — so a 429 with search on is asked once more
-            // without it, and the model is not offered search again for the rest of the run.
+            // Grounding has its own, often zero, quota: retry once without search and drop it for the run.
             Attempt::Throttled(_) if search => {
                 refuse_search(&request.model);
                 match self.post(request, false)? {
@@ -130,10 +120,7 @@ impl AiProvider for GeminiProvider {
     }
 }
 
-/// Google answers 429 for two different things: a per-minute throttle, which passes, and a quota
-/// that will not come back today (`PerDay`) or was never granted to this key (`limit: 0`, a model
-/// the free tier does not include). "Try again shortly" is wrong for the second, so it goes out as
-/// the provider's own error, with Google's message saying which quota ran out.
+/// A daily or never-granted quota is the provider's error, not "try again shortly".
 fn throttled(body: &str, header: Option<u64>) -> AiError {
     let parsed: serde_json::Value = serde_json::from_str(body).unwrap_or_default();
     let message = parsed["error"]["message"].as_str().unwrap_or_default();
@@ -161,11 +148,7 @@ fn throttled(body: &str, header: Option<u64>) -> AiError {
     }
 }
 
-/// The stream, separated from the socket so it can be replayed from a recorded fixture.
-///
-/// Every chunk is a whole `GenerateContentResponse` holding whatever parts are ready: text in
-/// fragments, a function call in one piece. `usageMetadata` is a running total, so the last one
-/// wins rather than being added up.
+/// Separated from the socket for fixture replay. `usageMetadata` is a running total: the last wins.
 fn read_stream<R: std::io::BufRead>(
     reader: R,
     sink: &mut dyn FnMut(AiEvent),
@@ -320,9 +303,7 @@ fn turn(
     }
 }
 
-/// Gemini counts thinking *beside* the answer rather than inside it, so the two are added: this
-/// app's `Usage` says reasoning is part of output, and one provider must not mean something else
-/// by the same field (ADR-0041).
+/// Thinking is counted beside the answer, so it is added to output (ADR-0041).
 fn usage_of(usage: &Value) -> Option<Usage> {
     if !usage.is_object() {
         return None;
@@ -392,9 +373,7 @@ fn build_request(request: &AiRequest, search: bool) -> Value {
     body
 }
 
-/// Every field of a Gemini schema, and nothing else. This API takes a **subset of OpenAPI 3.0**
-/// rather than JSON Schema, and answers anything outside it with a 400 naming the field — so the
-/// list is an allowlist: a keyword nobody here has heard of is dropped rather than forwarded.
+/// Gemini takes a subset of OpenAPI 3.0 and rejects unknown fields, so this is an allowlist.
 const SCHEMA_FIELDS: &[&str] = &[
     "type",
     "format",
@@ -420,12 +399,7 @@ const SCHEMA_FIELDS: &[&str] = &[
 /// not less true for saying `string` where it said `string, uri`.
 const SCHEMA_FORMATS: &[&str] = &["date-time", "enum", "int32", "int64", "float", "double"];
 
-/// The catalogue's JSON Schema as Gemini will accept it.
-///
-/// Two differences do the damage. `additionalProperties: false` — which OpenAI's strict mode
-/// requires — is not a field here at all. And a nullable argument is written `type: [T, "null"]`
-/// in JSON Schema but `type: T, nullable: true` here, where a list where a string belongs is a
-/// parse error rather than a warning. Everything else is copied through untouched.
+/// JSON Schema → Gemini: no `additionalProperties`, and `[T, "null"]` becomes `T` + `nullable`.
 fn schema(value: &Value) -> Value {
     match value {
         Value::Array(items) => Value::Array(items.iter().map(schema).collect()),
@@ -511,9 +485,7 @@ fn effort_str(effort: Effort) -> &'static str {
     }
 }
 
-/// One neutral turn becomes one `contents` entry. A tool result is a `user` turn here — Gemini
-/// has no third role — and `functionResponse` names the function rather than a call id, which is
-/// why the id this adapter minted carries the name in it.
+/// A tool result is a `user` turn; `functionResponse` names the function, hence the minted id.
 fn content_of(role: Role, blocks: &[Block]) -> Option<Value> {
     let mut parts: Vec<Value> = Vec::new();
     let mut is_result = false;
@@ -542,9 +514,7 @@ fn content_of(role: Role, blocks: &[Block]) -> Option<Value> {
             }
             Block::ToolResult { call_id, content } => {
                 is_result = true;
-                // The result is an object here, not a string and not a list: what a tool
-                // answered is JSON, and anything that is not an object — a bare array, a number,
-                // a refusal in prose — gets one field of its own rather than being refused.
+                // A result must be an object; anything else is wrapped in one field.
                 let answer = serde_json::from_str::<Value>(content)
                     .ok()
                     .filter(Value::is_object)

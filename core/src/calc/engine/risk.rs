@@ -1,7 +1,4 @@
-//! Volatility, drawdown and the comparison against a benchmark.
-//!
-//! Risk runs on business days — the annualisation assumes trading days — while the series it
-//! reads covers every calendar day.
+//! Volatility, drawdown and benchmark comparison, on business days (√252 assumes trading days).
 
 use crate::calc::{
     BenchmarkComparison, GrowthSeries, Period, PeriodReturn, RiskMetrics, RiskReport, benchmark_return,
@@ -49,9 +46,7 @@ impl PortfolioAnalytics<'_> {
             &[(security.currency.clone(), self.base_currency().to_string())],
             to,
         )?;
-        // A benchmark younger than the period is compared over what the two have in common:
-        // three years of portfolio against one year of index would forge the excess. `from`
-        // therefore reports the window that was actually compared, not the one asked for.
+        // A younger benchmark is compared over the common window only, and `from` reports that window.
         let dates: Vec<NaiveDate> = from.iter_days().take_while(|date| *date <= to).collect();
         let from = benchmark_start(&security.id, &dates, &prices)?.ok_or(Error::MissingMarketData {
             kind: "price",

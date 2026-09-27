@@ -7,21 +7,14 @@ import type { TaxonomyData, TaxonomyNode } from "./types";
 export const UNCLASSIFIED_KEY = "UNCLASSIFIED";
 export const CASH_KEY = "CASH";
 
-/**
- * A bucket's display name. The core labels its two generated buckets with their key,
- * because naming them would mean choosing a language inside the calculation.
- */
+/** The core's generated buckets carry their key as label; the word is written here. */
 export function bucketLabel(i18n: I18n, bucket: { key: string; label: string }): string {
   if (bucket.key === UNCLASSIFIED_KEY) return i18n._(msg`not classified`);
   if (bucket.key === CASH_KEY) return i18n._(msg`cash`);
   return bucket.label;
 }
 
-/**
- * Category color: explicit slot, else root order (so an uncolored tree still
- * shows distinct neighbors). Lives in lib, not the allocation screen — the
- * color is a property of the tree, shared by every chart that renders it.
- */
+/** Explicit slot, else root order; a property of the tree, shared by every chart. */
 export function slotOf(taxonomy: TaxonomyData, node: TaxonomyNode): number {
   let current: TaxonomyNode | undefined = node;
   if (current.color) return current.color;

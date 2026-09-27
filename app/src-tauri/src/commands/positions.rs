@@ -114,10 +114,8 @@ pub fn positions_at(
     let accounts = store.list_accounts()?;
     let total = valuation.total_value_base;
 
-    // A dividend settles on the deposit account, so a depot-only scope drops every payment and
-    // a schedule read from it would call a quarterly payer "never paid". What an instrument has
-    // paid is a fact about the instrument, not about the lens, so the whole dividend block comes
-    // from the whole portfolio; value, result and weight beside it stay the scope's.
+    // Dividends settle on the deposit account, so the dividend block comes from the whole
+    // portfolio; value, result and weight stay the scope's.
     let unscoped;
     let payments = if scope.is_whole(&accounts) {
         &holdings
@@ -201,9 +199,7 @@ pub fn positions_at(
     })
 }
 
-/// Highest stored close for one instrument, in its own quote currency. Stored quotes are the
-/// only history there is, so an instrument whose quotes start in 2023 has a 2023 high and says
-/// so through `ath_date`. A read failure is an absent high, not a failed screen.
+/// Highest stored close in its own quote currency; a read failure is an absent high.
 fn quote_peak(
     store: &sq_core::storage::Store,
     security_id: &str,
@@ -307,9 +303,7 @@ pub fn position_returns(
         .collect())
 }
 
-/// One instrument's purchase value under both cost-basis methods. Which one the portfolio
-/// itself answers to is not sent: both columns are named after their method, so neither's
-/// meaning moves with a setting.
+/// Both methods, named; which the portfolio uses is not sent, so neither column's meaning moves.
 #[derive(Debug, Serialize)]
 pub struct PositionCostRow {
     pub security_id: String,

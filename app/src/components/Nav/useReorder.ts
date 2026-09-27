@@ -1,14 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 
 /**
- * Reordering inside the navigation, and pinning by dropping on Favorites.
- *
- * Window listeners, not HTML5 drag and drop (absent under a finger) and not pointer capture (the
- * list re-renders under the pointer) — the same reasons as `lib/pointerDrag`. That hook starts a
- * drag on any press; here a touch must be *held* first, or the sheet could never be scrolled.
- * The target is found by coordinates over marked rows: `data-nav-section`, `data-nav-fav`,
- * `data-nav-screen`, each carrying `data-id` and `data-key`, inside `data-nav-favorites` and
- * `data-nav-sub` lists.
+ * Reorder and pin by drag, over window listeners (no HTML5 DnD, no pointer capture). A touch must
+ * be held first so the sheet still scrolls. Targets are found by coordinates over `data-nav-*` rows.
  */
 export type DragKind = "fav" | "screen" | "section";
 

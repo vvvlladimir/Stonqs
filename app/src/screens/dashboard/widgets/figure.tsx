@@ -5,10 +5,7 @@ import { periodLabel } from "../../../lib/periods";
 import { formatDay } from "../../../lib/format";
 import { type MetricCtx, useRange } from "./model";
 
-/**
- * Shared layout for a metric value and its note. `foot` is what the metric itself has to say
- * under the number; the widget's own setting is what decides whether that is what gets shown.
- */
+/** `foot` is the metric's own note; the widget's setting decides whether it shows. */
 export function Figure({
   ctx,
   value,

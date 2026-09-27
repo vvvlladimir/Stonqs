@@ -14,9 +14,7 @@ pub struct CheckContext<'a> {
 
     pub today: Option<NaiveDate>,
 
-    /// Currency of the account this row lands on, when one was resolved. A row denominated in
-    /// something else is legal — a multi-currency account is a real thing — but it is also what
-    /// a mis-mapped currency column looks like, so it is said once per row.
+    /// The landing account's currency; a mismatch is legal but is said once per row.
     pub account_currency: Option<&'a str>,
 }
 
@@ -50,11 +48,7 @@ const SIGNED_THRESHOLD: f64 = 0.9;
 // Require enough rows and both signs before inferring a signed file.
 pub fn count_vote(vote: &mut SignVote, kind: Option<TransactionKind>, amount: Decimal) {
     let Some(kind) = kind else { return };
-    // A transfer's nominal direction is arbitrary — `TransferIn` is merely the reversible
-    // side of the pair — so it can neither confirm nor deny that the sign carries direction.
-    // It still flips by sign; it just does not vote. The mirror of Buy/Sell, which vote but
-    // never flip. Without this a file of currency conversions votes against itself: every
-    // second leg is negative by construction.
+    // A transfer's direction is arbitrary, so it flips by sign but never votes (`.claude/rules/import.md`).
     if kind.cash_sign() == 0 || kind.is_linked_side() || amount.is_zero() {
         return;
     }
@@ -109,9 +103,7 @@ fn about_equal(a: Decimal, b: Decimal) -> bool {
     (a - b).abs() <= tolerance
 }
 
-/// Counts one row's answer to "is the amount net of this row's charges". Only a row that has
-/// both a quantity × price to compare against and a charge to find can answer at all, and a
-/// row where the two readings coincide (no charge) says nothing.
+/// One row's vote on whether the amount is net of charges; only rows with both a price and a charge vote.
 pub fn count_basis_vote(
     vote: &mut BasisVote,
     charge_sign: i8,
@@ -133,9 +125,6 @@ pub fn count_basis_vote(
     }
 }
 
-/// The smallest number of rows that may decide the file's reading. Lower than the sign vote's:
-/// a file that prints a commission on every trade answers this in a handful of rows, while a
-/// sign convention is a claim about every cash row there is.
 const MIN_BASIS_VOTES: usize = 3;
 
 /// Infers whether the amount column already has the row's charges in it. Gross is the answer
@@ -179,9 +168,7 @@ pub enum Direction {
     Conflict,
 }
 
-/// Resolves a row direction from the number that carries it. For a cash operation that is
-/// the amount; a share movement carries no cash, so its direction is the quantity's — a
-/// split printed as "-1 share out, +8 shares in" is two directions of one wording.
+/// Direction from the number that carries it: the amount for cash, the quantity for shares.
 pub fn resolve_direction(kind: TransactionKind, value: Decimal, sign: AmountSign) -> Direction {
     if sign != AmountSign::Signed || value.is_zero() {
         return Direction::Keep;
@@ -201,10 +188,7 @@ pub fn resolve_direction(kind: TransactionKind, value: Decimal, sign: AmountSign
     }
 }
 
-/// How far `amount` may sit from quantity × price before it is worth saying so. A broker prints
-/// the unit price rounded, and that rounding multiplies by the quantity — which is why the
-/// allowance is mostly per unit rather than a flat percentage: a flat 1 % hides a hundred euros
-/// on a ten-thousand-euro trade, and a flat cent flags every thousand-unit crypto order.
+/// Allowance per unit, because the printed unit price is rounded and that rounding scales with quantity.
 const AMOUNT_TOLERANCE_PER_UNIT: Decimal = dec!(0.005);
 const AMOUNT_TOLERANCE_RATIO: Decimal = dec!(0.002);
 const AMOUNT_TOLERANCE_ABSOLUTE: Decimal = dec!(0.01);
@@ -307,9 +291,7 @@ pub fn check_row(number: usize, draft: &TransactionDraft, context: &CheckContext
         );
     }
 
-    // Shares crossing the boundary with no money named: the lot's cost basis becomes zero and
-    // the whole position reads as profit. The commonest cause is moving a portfolio between
-    // brokers, where the receiving statement states quantities and never what they cost.
+    // Shares crossing the boundary at zero cost make the whole position read as profit.
     if draft.kind.affects_quantity()
         && !draft.quantity.is_zero()
         && draft.price.is_zero()
@@ -374,25 +356,14 @@ const MAX_SPAN_YEARS: i32 = 50;
 
 const SINGLE_KIND_MIN_ROWS: usize = 20;
 
-/// Smallest price step read as a split rather than as a market move, and how close to a whole
-/// number the step has to be. A stock really can double between two trades, so this is a warning
-/// and never a refusal — it says "check this", not "this is wrong".
+/// A split is a warning, never a refusal: a stock really can double.
 const SPLIT_MIN_RATIO: f64 = 1.8;
 const SPLIT_MAX_RATIO: f64 = 20.0;
-/// A split's factor is *exact*; a market move that happens to land near a whole number is not.
-/// Two trades a year apart in an instrument that doubled give 2.03, and calling that a split
-/// once teaches the user to ignore the notice when it is real.
 const SPLIT_ROUNDNESS: f64 = 0.01;
-/// And the market has to have had no time to blur that factor. Over a quarter its contribution
-/// is small enough that an exact whole number means something; over a year it is the whole
-/// signal. The price series a provider sends is the reliable route to a split — it reports the
-/// event itself — so this stays the narrow case that route cannot cover.
+/// Beyond a quarter a whole factor is market, not a split.
 const SPLIT_MAX_DAYS: i64 = 90;
 
-/// Prices of one instrument stepping by a whole factor between two adjacent trades: the broker
-/// applied a split part-way through the statement. Quantities then refer to two different
-/// shares, and the stored quotes are adjusted throughout, so the average cost comes out wrong
-/// while the holding still adds up.
+/// Prices stepping by a whole factor between adjacent trades: a split applied mid-statement.
 fn check_split_steps(rows: &[ImportRow]) -> Vec<ImportProblem> {
     let mut by_symbol: BTreeMap<&str, Vec<(NaiveDate, Decimal)>> = BTreeMap::new();
     for draft in rows.iter().filter_map(|r| r.draft.as_ref()) {

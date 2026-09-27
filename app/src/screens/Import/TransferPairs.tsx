@@ -6,11 +6,7 @@ import { Badge, Buttons, ErrorText, List, ListRow, Money, Panel } from "../../co
 import { useInvalidate, useTransferSuggestions, affects } from "../../lib/queries";
 import type { TransferSuggestion } from "../../lib/types";
 
-/**
- * Moves that arrived as two halves from two exports. Offered after the write, never applied by
- * itself: two amounts agreeing is not proof that one payment is the other, and linking the wrong
- * pair erases a real deposit and a real withdrawal from every return figure at once.
- */
+/** Offered after the write, never applied by itself: a wrong link erases a real deposit and withdrawal. */
 export function TransferPairs({ enabled }: { enabled: boolean }) {
   const { t } = useLingui();
   const invalidate = useInvalidate();

@@ -7,11 +7,7 @@ import { BUILTIN_PRESETS, periodLabel, type PeriodId } from "../../lib/periods";
 import { PeriodEditor } from "./PeriodEditor";
 import type { PeriodRange } from "../../lib/types";
 
-/**
- * The one period axis of the app. Every period is resolved to dates by the core, so a screen
- * never computes a window itself; `ranges` is what this portfolio can actually show — the
- * shipped presets the user kept, plus the periods they added.
- */
+/** The one period axis; dates are always the core's. */
 export function PeriodControl({
   value,
   onChange,

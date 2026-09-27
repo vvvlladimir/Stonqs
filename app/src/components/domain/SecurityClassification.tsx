@@ -9,11 +9,7 @@ import { formatPercent, signOf } from "../../lib/format";
 import { slotFor } from "../../lib/plot";
 import type { SecurityRow, TaxonomyData } from "../../lib/types";
 
-/**
- * What kind of thing this instrument is, in one place: the trees it is split across and the
- * user's own attributes, both editable here. The figures beside it are the position's and
- * belong to the facts panel; these belong to the instrument and are the same in every screen.
- */
+/** The instrument's trees and attributes, editable here. */
 export function ClassificationPanel({
   securityId,
   security,

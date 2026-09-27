@@ -63,9 +63,8 @@ pub fn transaction_amount_base(t: &Transaction, base: &str, rates: &dyn RateLook
     Ok(t.amount * super::resolve_rate(t, base, rates)?)
 }
 
-/// One operation as the ledger lists it: the row, the names a reader knows its account and
-/// instrument by, and its money in the base currency. The Transactions screen, a plugin's
-/// `transactions` read and the assistant all read this one shape, so they cannot drift.
+/// One ledger row with its account and instrument names and base-currency money — the one shape
+/// the screen, plugins and the assistant all read.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct JournalRow {
     #[serde(flatten)]

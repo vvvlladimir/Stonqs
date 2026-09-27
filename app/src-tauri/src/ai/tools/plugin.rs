@@ -1,9 +1,5 @@
-//! A plugin's assistant tool (ADR-0085). Not a `Tool` in `CATALOGUE`: that table is compiled in,
-//! and these arrive with a package. What is the same is everything the model and the user see —
-//! a strict schema with `reason` added, a card before it runs, an answer fenced as data.
-//!
-//! The body is a stranger's WASM component, handed the reads its manifest declared as
-//! `plugins::reads` builds them — the one projection a widget of the same package is handed too.
+//! A plugin's assistant tool (ADR-0085): a WASM body handed the reads `plugins::reads` builds,
+//! with the same schema rules, card and fence as the shipped tools.
 
 use super::args::{period_property, period_summary, resolve_period};
 use super::{AiResult, Params, ToolContext, add_required, tool, with_reason};

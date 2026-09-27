@@ -7,9 +7,7 @@ use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::time::Duration;
 
-/// The IMF's consumer price index, all items, 2010 = 100 — 189 economies plus Kosovo and the
-/// West Bank and Gaza. It is the chain's second source rather than its first because it has no
-/// euro-area aggregate and publishes later, but it is the only one that reaches beyond Europe.
+/// IMF CPI, 2010 = 100: second in the chain (no euro aggregate, later), but reaches beyond Europe.
 pub struct ImfProvider {
     http_timeout: Duration,
 }

@@ -5,33 +5,18 @@ export { usePointerDrag, type DragGesture } from "../../lib/pointerDrag";
 import type { WidgetDef } from "./widgets";
 import type { Widget } from "../../lib/uiState";
 
-/**
- * The dashboard grid.
- *
- * A widget stores one width, always in twelfths, and the board scales it to whatever the
- * screen affords. Storing a per-breakpoint layout instead would mean three layouts to keep in
- * step and three to export; scaling one is arithmetic, and the only thing that can be wrong
- * with it is rounding.
- */
+/** One width in twelfths, scaled to the board — not a layout per breakpoint. */
 
 /** Columns the stored width is expressed in. Twelve divides by 2, 3, 4 and 6. */
 export const GRID_COLS = 12;
 
-/**
- * Height of one row, in pixels, mirroring `--w-row` in `styles/ui/widget.css`. Small on
- * purpose: with the 12px gap a row costs 32px of board, so a tile is sized to its content
- * rather than to the nearest tall step.
- */
+/** One row in px; mirrors `--w-row` in `styles/ui/widget.css`. */
 export const ROW_PX = 23;
 
 /** Tallest a widget may be dragged: past this it is a screen, not a tile. */
 export const MAX_ROWS = 40;
 
-/**
- * Columns the board actually has at a width: a desktop gets all twelve, a tablet six, a phone
- * two. Width, not platform, for the same reason `useIsWide` measures it — a window shrunk to
- * 380px should lay out like a phone.
- */
+/** Columns by board width, not platform. */
 const BREAKPOINTS: Array<[number, number]> = [
   [1000, 12],
   [700, 6],
@@ -41,11 +26,7 @@ export function columnsAt(width: number): number {
   return BREAKPOINTS.find(([at]) => width >= at)?.[1] ?? 2;
 }
 
-/**
- * The current column count, following the BOARD. Not the window: with the assistant panel open
- * the board is half the screen, and asking the window gave a 600px board twelve columns. The
- * stylesheet reads the same width through a container query, so the two never disagree.
- */
+/** Measured on the board, not the window (the AI panel may take half); CSS reads the same width. */
 export function useBoardColumns(board: React.RefObject<HTMLElement | null>): number {
   // The window is the first guess — it is never narrower than the board — and the observer
   // corrects it on the first frame, before anything is painted twice.
@@ -68,13 +49,7 @@ export function spanAt(w: number, cols: number): number {
   return clamp(Math.round((w * cols) / GRID_COLS), 1, cols);
 }
 
-/**
- * The smallest size this tile reads at: the catalog's, unless the board's owner named one.
- *
- * `cfg.min_w` is a width in twelfths like every other, and it is what decides whether the tile
- * takes a whole phone row (`shownSpan`) — so a list nobody wants shrunk and a chart that is
- * fine at a third of the board are the same setting, not a flag per widget.
- */
+/** The catalog's minimum unless `cfg.min_w` names one; it also decides phone-row takeover. */
 export function limitsOf(widget: Pick<Widget, "cfg">, def: WidgetDef): { w: number; h: number } {
   const own = Number(widget.cfg?.min_w);
   const w = Number.isInteger(own) && own >= 1 && own <= GRID_COLS ? own : def.min.w;
@@ -92,24 +67,13 @@ export function fitSize(min: { w: number; h: number }, w: number, h: number): { 
 /** What a resize changes: the size, plus the pinned start column and the empty rows above. */
 export type TileBox = Pick<Widget, "w" | "h" | "x" | "y">;
 
-/**
- * How wide a tile is actually drawn. The stored twelfths, except on a phone-width board: a
- * widget whose own minimum is a third of the board cannot live in half a phone column — every
- * chart declares `min.w >= 4`, and a plot 150px wide is a texture, not a reading. There it takes
- * the row, and what stays side by side is what was always small: the figures and the lists.
- *
- * The rule is read off that minimum (`limitsOf`), so no widget gains a "wide on mobile" flag.
- */
+/** On a phone-width board a tile whose minimum is ≥ a third takes the row. */
 export function shownSpan(box: TileBox, cols: number, minW: number): number {
   if (cols <= 2 && minW >= 4) return cols;
   return spanAt(box.w, cols);
 }
 
-/**
- * Where a widget sits on a board of `cols` columns. The flow still places it — `x` only says
- * which column it starts in (a start the flow has already passed wraps it to the next row), and
- * `y` rows of its own slot are left empty above it, which is how a bottom edge stays put.
- */
+/** `x` is a starting column the flow may wrap past; `y` empty rows are kept above. */
 export function placement(box: TileBox, cols: number, minW: number): React.CSSProperties {
   const span = shownSpan(box, cols, minW);
   const top = box.y ?? 0;
@@ -147,11 +111,7 @@ function slotOf(el: HTMLElement): DOMRect {
   return new DOMRect(box.left, box.top - above, box.width, box.height + above);
 }
 
-/**
- * Where a tile starts, in the board's columns, and the leftmost column its left edge may be
- * dragged to: the right edge of the nearest tile beside it in any row it spans. Past that the
- * flow would wrap it to the next row, under a pointer that asked for no such thing.
- */
+/** The start column and the leftmost column the left edge may be dragged to. */
 export function columnsOf(grid: HTMLElement, tile: HTMLElement): { start: number; free: number } {
   const pitch = cellSize(grid).width;
   const origin = grid.getBoundingClientRect().left;
@@ -171,12 +131,7 @@ export interface GrowDirection {
   y: -1 | 0 | 1;
 }
 
-/**
- * The box a drag of `dx`/`dy` pixels asks for. The edge under the pointer is the one that
- * moves and the opposite one stays: dragging the left edge re-pins the start column, dragging
- * the top one trades rows between the tile and the empty space above it — which runs out at
- * the top of the tile's slot, because the flow has no rows to give it above that.
- */
+/** The dragged edge moves, the opposite stays; the top edge trades rows with the space above. */
 export function draggedBox(
   grid: HTMLElement,
   min: { w: number; h: number },
@@ -237,13 +192,7 @@ function tileBoxes(grid: HTMLElement, skip: string): Array<{ id: string; box: DO
     .filter(({ id }) => id !== "" && id !== skip);
 }
 
-/**
- * The order the pointer is asking for: `moved` is lifted out and put back where the pointer
- * points. The landing place is read off the boxes the board has actually laid out — an
- * insertion point, not a swap with whatever tile is under the cursor. A swap oscillates the
- * moment the two tiles are different sizes, because the taller one lands back under the
- * pointer and asks to be swapped again.
- */
+/** An insertion point read off laid-out boxes, not a swap (which oscillates with unequal sizes). */
 export function dropOrder(grid: HTMLElement, ids: string[], moved: string, x: number, y: number): string[] {
   const rest = ids.filter((id) => id !== moved);
   const boxes = tileBoxes(grid, moved);
@@ -260,12 +209,7 @@ export function sameOrder(a: string[] | null, b: string[]): boolean {
   return a !== null && a.length === b.length && a.every((id, i) => id === b[i]);
 }
 
-/**
- * Animates each tile from where it was to where the new order puts it (FLIP): the grid places
- * tiles in one frame, so a CSS transition has nothing to interpolate. Positions are kept
- * relative to the board so that scrolling — which the drag does on its own at the edges — is
- * not mistaken for a tile that moved.
- */
+/** FLIP animation, positions relative to the board so edge scrolling is not a move. */
 export function useReflow(grid: React.RefObject<HTMLElement | null>, layout: string, animate: boolean) {
   const before = useRef(new Map<string, { x: number; y: number }>());
 
@@ -313,12 +257,7 @@ function scrollerOf(node: HTMLElement): HTMLElement {
   return document.scrollingElement as HTMLElement;
 }
 
-/**
- * Scrolls the board while the pointer is held against the top or bottom of its scroller, so a
- * tile can reach the far end of a long board. A pointer resting there still scrolls — hence a
- * frame loop rather than a nudge per pointer move — and `onScroll` lets the drag re-read where
- * it would now land.
- */
+/** A frame loop while the pointer rests at an edge; `onScroll` re-asks where the tile lands. */
 export function useEdgeScroll(grid: React.RefObject<HTMLElement | null>, onScroll: () => void) {
   const notify = useRef(onScroll);
   useLayoutEffect(() => {

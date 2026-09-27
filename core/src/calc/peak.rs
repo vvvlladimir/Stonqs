@@ -1,8 +1,4 @@
-//! All-time high and the distance below it.
-//!
-//! This one is measured on **value**, not on chained returns the way [`super::drawdowns`] is.
-//! The two answer different questions: a drawdown asks how the instruments did, an all-time
-//! high asks what the statement said on its best day — and a deposit does raise that.
+//! All-time high, on **value** rather than chained returns: a deposit does raise it.
 
 use super::ValueSeries;
 use chrono::NaiveDate;

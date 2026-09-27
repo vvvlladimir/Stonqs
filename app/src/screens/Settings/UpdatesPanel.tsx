@@ -4,11 +4,7 @@ import { useUiState } from "../../lib/uiState";
 import { useUpdates } from "../../lib/updates";
 import { Buttons, CheckField, Form, Panel } from "../../components/ui";
 
-/**
- * Which version is running and whether the app may look for a newer one. The offer itself is a
- * dialog, so this panel never shows release notes: pressing `Check for updates` opens the same
- * one the automatic check does.
- */
+/** The running version and the update switch; the offer itself is always the dialog. */
 export function UpdatesPanel() {
   const { t } = useLingui();
   const { ui, save } = useUiState();

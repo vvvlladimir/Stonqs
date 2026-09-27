@@ -406,9 +406,7 @@ pub fn parse_csv(content: &[u8], config: &ParseConfig) -> Result<ParsedCsv> {
     })
 }
 
-/// A broker export is not necessarily UTF-8 — German exports are routinely CP1252 or
-/// windows-1250 — and the user cannot be asked to re-save the file. BOM decides when
-/// present, otherwise valid UTF-8 wins and only then is the code page guessed.
+/// BOM first, then valid UTF-8, then a guessed code page.
 pub(super) fn decode(content: &[u8], problems: &mut Vec<ImportProblem>) -> String {
     let encoding = detect_encoding(content);
     let (text, _, had_errors) = encoding.decode(content);
@@ -556,10 +554,7 @@ fn date_column_order(headers: &[String]) -> Vec<usize> {
     order
 }
 
-/// The format covering the most values of the column, with that count and the column's
-/// total. A broker changes its export shape mid-history — Trade Republic prints both
-/// `2024-11-30` and `2025-01-16T16:13:36` in one file — so demanding one format for the
-/// whole column detects nothing at all.
+/// The format covering most values: one file can print two date shapes.
 fn format_for_column(rows: &[Vec<String>], index: usize) -> Option<(String, usize, usize)> {
     let values: Vec<&str> = rows
         .iter()
@@ -615,9 +610,7 @@ fn parse_date_exact(value: &str, format: &str) -> Option<NaiveDate> {
     }
 }
 
-/// A cell that stands for "nothing here": brokers print "-", "—" or "--" where a number is
-/// not applicable. Any real number in any locale carries a digit, so a cell without a single
-/// letter or digit is an absent value rather than a broken one.
+/// A cell with no letter or digit ("-", "—") is an absent value, not a broken one.
 pub fn is_placeholder(value: &str) -> bool {
     let value = value.trim();
     !value.is_empty() && !value.chars().any(char::is_alphanumeric)

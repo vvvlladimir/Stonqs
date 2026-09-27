@@ -1,6 +1,5 @@
-//! A trade is a position's life: it opens with a purchase, grows with later ones, and one
-//! disposal ends it. The numbers come from the lots a disposal consumed — see ADR-0027. Cut per
-//! lot instead, every purchase is a trade of its own (`TradeGrouping::Lot`, ADR-0081).
+//! A trade is a position's life, from its first purchase to the disposal that ends it
+//! (ADR-0027); `TradeGrouping::Lot` cuts one per lot (ADR-0081).
 
 use super::{CashFlow, Holdings, PortfolioValuation, RealizedGain, xirr};
 use crate::error::Result;
@@ -144,9 +143,7 @@ fn trades_of(
     }
 }
 
-/// One trade per disposal, in disposal order — or, per lot, one per lot it consumed. An outbound
-/// delivery ends a trade too: it realizes a result, and dropping it would lose everything the
-/// shares earned before leaving.
+/// One trade per disposal (or per consumed lot). An outbound delivery ends a trade too.
 pub fn closed_trades(realized: &[RealizedGain], by: TradeGrouping) -> Vec<Trade> {
     realized
         .iter()
@@ -154,9 +151,7 @@ pub fn closed_trades(realized: &[RealizedGain], by: TradeGrouping) -> Vec<Trade>
         .collect()
 }
 
-/// One trade per open position — or per lot still held — marked to market at the valuation date.
-/// Under average cost a position has a single merged lot, so both groupings give one trade that
-/// opens at the earliest purchase.
+/// Open trades marked to market; under average cost both groupings give one trade.
 pub fn open_trades(holdings: &Holdings, valuation: &PortfolioValuation, by: TradeGrouping) -> Vec<Trade> {
     valuation
         .positions
@@ -252,9 +247,8 @@ pub struct TradingVolume {
     pub trades: usize,
 }
 
-/// Traded volume in `[from, to]`. A genuine delivery is excluded on purpose: shares arriving from
-/// another broker cost no commission and are not a decision this portfolio made. A trade a scope
-/// turned into one is not that — the depot bought, and only the cash leg fell outside the lens.
+/// Traded volume in `[from, to]`. Genuine deliveries are excluded; a trade the scope turned into
+/// one still counts (ADR-0044).
 pub fn trading_volume(
     transactions: &[Transaction],
     base: &str,

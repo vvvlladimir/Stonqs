@@ -6,11 +6,7 @@ import { affects, useInvalidate } from "../../lib/queries";
 import { Field, FormDialog } from "../../components/ui";
 import type { AlertRow, DevAlertStep } from "../../lib/types";
 
-/**
- * Debug builds only: moves the price the way a market would, so the log, the navigation dot and
- * the OS notification can be watched without waiting for one. "Cross" writes today's close one
- * percent past the level; "Reset" takes the simulated closes back, which crosses again.
- */
+/** Debug only: moves a real quote across a level to exercise the log, the dot and notifications. */
 export function DevSimulator({ rows, onClose }: { rows: AlertRow[]; onClose: () => void }) {
   const { t } = useLingui();
   const invalidate = useInvalidate();

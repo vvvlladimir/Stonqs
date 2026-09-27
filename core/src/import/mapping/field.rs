@@ -1,8 +1,5 @@
-//! The fields a column can be mapped to, and how strongly a header claims one.
-//!
-//! Headers lie and values do not, so a claim is scored by tier — exact, whole word, bare
-//! substring — and a weak one can still be vetoed by what the column actually contains
-//! (`.claude/rules/import.md`). The alias dictionaries themselves live in `aliases`.
+//! Mappable fields and how strongly a header claims one: exact, whole word, then substring, with
+//! a weak claim vetoable by the column's values.
 
 use super::normalize::{header_words, joined_words, normalize_header};
 use super::shape::{HeaderMatch, MatchTier, ValueShape};
@@ -79,9 +76,7 @@ impl ImportField {
         let mut best: Option<HeaderMatch> = None;
         for (index, alias) in self.header_aliases().iter().enumerate() {
             let alias = normalize_header(alias);
-            // A word buried in a long header is a weak claim: "Price per Share in Account
-            // Currency" is not the account column. Demanding a third of the words keeps
-            // "Transaction Time (CET)" a date and drops that one.
+            // A word buried in a long header is a weak claim, so it must span a third of the words.
             let spanned = joined_words(&words, &alias);
             let tier = if compact == alias {
                 MatchTier::Exact

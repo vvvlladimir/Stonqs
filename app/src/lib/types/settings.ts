@@ -40,9 +40,7 @@ export interface AppSettings {
   sources_configured: boolean;
 }
 
-/** Which shape of API a server speaks. `OPENAI_CHAT` is what "OpenAI-compatible" means outside
- * OpenAI itself — `POST {base}/chat/completions`, spoken by every gateway, proxy and local
- * runner. `OPENAI_RESPONSES` is OpenAI's own newer shape; `ANTHROPIC` is `/v1/messages`. */
+/** `OPENAI_CHAT` is what "OpenAI-compatible" means outside OpenAI. */
 export type AiWire = "OPENAI_CHAT" | "OPENAI_RESPONSES" | "ANTHROPIC" | "GEMINI";
 
 export interface AiCustomProvider {

@@ -125,9 +125,7 @@ fn as_delivery(t: &Transaction) -> Transaction {
     };
     // The counterpart is absent, so retaining the link would confuse in-transit lots.
     out.link_id = None;
-    // What it was is not derivable from what it became: a delivery carries no commission, and
-    // this one does. `trading_volume` reads it; the cash-side rewrite deliberately sets nothing,
-    // because from a deposit account the trade happened somewhere else.
+    // Only the delivery rewrite records its origin; `trading_volume` reads it (ADR-0044).
     out.scoped_from = Some(t.kind);
     out
 }

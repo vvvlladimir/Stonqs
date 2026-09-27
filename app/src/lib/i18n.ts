@@ -51,19 +51,12 @@ export async function activateLocale(locale: Locale): Promise<void> {
   i18n.loadAndActivate({ locale, messages: await catalog(locale) });
 }
 
-/**
- * The locale `Intl` formatting follows. Reading it from the i18n runtime keeps one source of
- * truth: a number and the sentence around it can never disagree about the language.
- */
+/** One source of truth for the locale formatting follows. */
 export function currentLocale(): Locale {
   return (i18n.locale as Locale) || FALLBACK;
 }
 
-/**
- * Keeps the active locale in step with the saved preference and the OS language.
- * Activation is asynchronous, so the initial locale is activated in `main.tsx`
- * before the first render — this only handles later changes.
- */
+/** Follows later changes; the initial locale is activated in `main.tsx`. */
 export function useLanguage(): { preference: LanguagePreference; locale: Locale } {
   const settings = useSettings();
   const status = useStatus();

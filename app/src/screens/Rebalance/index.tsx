@@ -78,12 +78,7 @@ export function Rebalance() {
   const buys = trades.map(({ trade }) => trade).filter((trade) => !trade.quantity.startsWith("-"));
   const depot = accounts.data?.find((a) => a.kind === "SECURITIES");
 
-  /**
-   * The drift turned into a standing order: what the plan says to buy today becomes the split of
-   * every future contribution, so the same decision is made once instead of every month. Sales are
-   * dropped — a contribution pays money in — and the amount defaults to the new money being
-   * allocated, which is the figure the screen was just asked about.
-   */
+  /** Today's buys become the split of future contributions; the amount defaults to the new money. */
   const makePlan = () =>
     setPlanDraft(
       planFromTrades({

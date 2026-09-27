@@ -169,9 +169,7 @@ impl YahooProvider {
         }
     }
 
-    /// The venue behind a Yahoo symbol. The suffix decides whenever there is one — it is the
-    /// venue spelled into the symbol. Only the suffix-less US venues fall back to the exchange
-    /// name, because there one ticker is shared by Nasdaq, NYSE and Arca.
+    /// The suffix decides; only suffix-less US venues fall back to the exchange name.
     pub(crate) fn mic_of(symbol: &str, exchange: Option<&str>) -> Option<&'static str> {
         let symbol = symbol.trim().to_uppercase();
         let suffix = symbol.rfind('.').map(|dot| &symbol[dot..]);

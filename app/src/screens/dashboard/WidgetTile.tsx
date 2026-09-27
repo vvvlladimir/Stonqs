@@ -104,11 +104,7 @@ export function WidgetTile({
     onEnd: (commit) => onResize(commit ? grab.current.box : grab.current.from, true),
   });
 
-  /**
-   * Moving a tile is the same gesture as resizing one, for the same reason: HTML5 drag and drop
-   * does not exist under a finger. The header is the handle, so a press inside the widget's own
-   * body still belongs to the widget.
-   */
+  /** The same pointer gesture as resizing; the header is the handle. */
   const startMove = usePointerDrag({
     slop: SLOP,
     onStart: () => tile.current && onMoveStart(tile.current.getBoundingClientRect()),

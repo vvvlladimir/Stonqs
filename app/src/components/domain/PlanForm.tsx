@@ -6,14 +6,7 @@ import { PLAN_CADENCES } from "../../lib/kinds";
 import { amountOf, legShare } from "../../lib/plans";
 import type { AccountRow, PlanInput, SecurityRow } from "../../lib/types";
 
-/**
- * The editor of one contribution plan, shared by the Plans screen and by Rebalance, which
- * opens it prefilled from the trades it proposed.
- *
- * A plan with no instruments is a cash contribution and is a legitimate plan, so the form
- * never demands a security before it will save. The weights are shown resolved as percentages
- * while they are typed: "1 1 1" and "60 40" are both valid and both need reading back.
- */
+/** Shared by Plans and Rebalance. No instruments = a cash plan; weights are shown as resolved percentages. */
 export function PlanForm({
   draft,
   accounts,

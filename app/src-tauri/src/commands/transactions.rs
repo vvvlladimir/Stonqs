@@ -34,9 +34,7 @@ pub struct TransactionFilter {
     pub to: Option<String>,
 }
 
-/// Writes the filtered operations as the app's own transaction file. The export is of what the
-/// screen shows, so it takes the same filter the list does — and it names accounts and
-/// instruments rather than ids, so the file imports into another portfolio (ADR-0066).
+/// The canonical file of what the screen's filter shows, with names rather than ids (ADR-0066).
 #[tauri::command]
 pub fn transactions_export(state: State<AppState>, filter: TransactionFilter) -> UiResult<String> {
     let store = state.store()?;
@@ -49,10 +47,7 @@ pub fn transactions_export(state: State<AppState>, filter: TransactionFilter) ->
     )?)
 }
 
-/// Saves the export. `format` names a plugin's writer (`<plugin id>/<writer id>`, ADR-0080), which
-/// is handed the same document and returns the bytes to save; absent saves the document itself.
-///
-/// Off the main thread: a plugin's writer may run here, and it is allowed seconds.
+/// `format` names a plugin writer (ADR-0080); absent saves the document itself. Off the main thread.
 #[tauri::command]
 pub async fn transactions_export_save(
     app: AppHandle,
@@ -248,10 +243,7 @@ pub struct TransferSuggestion {
     pub account_in_name: String,
 }
 
-/// Moves between two of the user's own accounts that arrived as two unrelated rows — the usual
-/// shape of a portfolio carried from one broker to another, where each export knows only its own
-/// half. Read from the whole portfolio rather than the lens: a leg the picker is not looking at
-/// is still the other half of the move. Nothing is written; the pairs are offered.
+/// Candidate pairs from the whole portfolio, not the lens; nothing is written.
 #[tauri::command]
 pub fn transfer_suggestions(state: State<AppState>) -> UiResult<Vec<TransferSuggestion>> {
     let store = state.store()?;

@@ -3,10 +3,7 @@ import { AllocationBar } from "../../components/domain/AllocationBar";
 import { bucketLabel, slotOfNode } from "../../lib/taxonomy";
 import type { TaxonomyData, TaxonomyIncomeData } from "../../lib/types";
 
-/**
- * The tree's top level, each root carrying what everything below it paid. A payment follows
- * its payer's classification, so a split instrument splits its dividends the same way.
- */
+/** Top-level roots with everything paid beneath; a split payer splits its payments. */
 export function ByTaxonomy({
   data,
   taxonomy,

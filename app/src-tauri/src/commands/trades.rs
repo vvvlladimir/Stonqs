@@ -19,9 +19,7 @@ pub struct TradeRow {
     pub name: String,
 }
 
-/// The trade ledger of a window: what is still held, what was closed inside it, and what the
-/// trading itself moved. Open trades are as of `to`; a closed one belongs to the window its
-/// disposal fell in.
+/// Open trades as of `to`; a closed one belongs to the window its disposal fell in.
 #[derive(Debug, Serialize)]
 pub struct TradesData {
     pub from: String,

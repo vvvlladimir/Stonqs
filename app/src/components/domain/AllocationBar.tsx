@@ -2,12 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { slotFor, slotVar } from "../../lib/plot";
 import { Bar, Money, Percent, ShareBar, Swatch } from "../ui";
 
-/**
- * Level shares: a stacked bar plus per-row tracks.
- *
- * Not a pie/donut — close slices are hard to compare by angle and need labels anyway. Bar gives the
- * whole at a glance, per-row tracks let rows compare directly.
- */
+/** Level shares as a stacked bar plus per-row tracks — not a pie, since close slices compare badly by angle. */
 export interface BarItem {
   key: string;
   label: string;
@@ -26,11 +21,7 @@ interface Props {
   currency: string;
   /** Legend rows to list; the bar keeps every segment either way. */
   limit?: number;
-  /**
-   * The per-row track under each legend line. Off where the block is read at a glance rather
-   * than compared row by row — a dashboard tile: the stacked bar above already carries the
-   * shares, and a second track per row halves how many rows the tile can show.
-   */
+  /** Per-row tracks; off where the block is read at a glance (a dashboard tile). */
   tracks?: boolean;
   /** Row click: drill into a category, or open a security's card. */
   onPick?: (key: string) => void;

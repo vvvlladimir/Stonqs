@@ -1,9 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
-/**
- * A block that scrolls instead of growing: a long list inside a dialog. The height limit is
- * the CSS knob `--scroll-max`, so a screen states how much it gives, not how it scrolls.
- */
+/** Scrolls instead of growing, capped by `--scroll-max`. */
 export function Scrolly({
   max,
   x,

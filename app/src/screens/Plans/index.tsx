@@ -160,10 +160,7 @@ export function Plans() {
   );
 }
 
-/**
- * One plan as a card: what it pays, when it pays next, and — the part a row of tickers cannot
- * show — how the money is divided, as one track with its legend underneath.
- */
+/** What a plan pays, when next, and how it divides, as one track. */
 function PlanCard({
   row,
   cadence,

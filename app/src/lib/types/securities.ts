@@ -193,11 +193,7 @@ export type DividendFrequency = "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL" | "ANNUA
 /** Only splits for now: the one quantity-changing event that moves no money. */
 export type CorporateActionKind = "SPLIT";
 
-/**
- * A split as stored: `ratio_from`/`ratio_to` read "one old share becomes two" for a 2:1,
- * and `10 -> 1` for a 1:10 reverse split. Quotes arrive already adjusted, so this only
- * moves lots.
- */
+/** `1 -> 2` for a 2:1 split, `10 -> 1` for a reverse; moves lots only, quotes are pre-adjusted. */
 export interface CorporateAction {
   id: string;
   security_id: string;

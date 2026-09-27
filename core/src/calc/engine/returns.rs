@@ -1,7 +1,4 @@
-//! Time-weighted and money-weighted return, for the portfolio and for one position.
-//!
-//! TWR splits the window at every external cash flow, so it measures the decision rather than
-//! the timing of the deposits; XIRR answers the other question and is not comparable to it.
+//! TWR and XIRR, for the portfolio and one position. They answer different questions and are not comparable.
 
 use crate::calc::risk::metrics_from_returns;
 use crate::calc::{
@@ -205,9 +202,7 @@ pub fn position_twr_between(
     time_weighted_return(&points)
 }
 
-/// Business-day returns of one position over `(from, to]`, split at its own flows exactly as
-/// [`time_weighted_return`] splits them, so the chained returns are the position's TWR. A weekend
-/// flow is carried to the next business day, as [`ValueSeries::business_days`] does.
+/// Position returns split at its own flows as [`time_weighted_return`] does; weekend flows move to Monday.
 // Keep independent period, data-source, and option arguments explicit.
 #[allow(clippy::too_many_arguments)]
 fn position_daily_returns(
@@ -343,12 +338,8 @@ pub struct PositionRisk {
     pub max_drawdown_days: Option<i64>,
 }
 
-/// Computes all position returns with shared market data; contribution is `pnl_base` over the
-/// capital the *portfolio* had at work, so contributions add up to the portfolio's own return —
-/// see [`super::dietz_capital`]. Add up to it, not necessarily to it exactly: account interest
-/// belongs to no instrument, so a portfolio earning any leaves the column short by that much.
-/// `absolute_performance` divides by the position's own capital instead, which is why the two
-/// columns disagree and should.
+/// Contribution divides by the *portfolio's* capital so rows add up to its return (less account
+/// interest); `absolute_performance` divides by the position's own and differs by design.
 #[allow(clippy::too_many_arguments)]
 pub fn position_returns(
     transactions: &[Transaction],

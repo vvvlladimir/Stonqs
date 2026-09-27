@@ -1,8 +1,4 @@
-//! The catalogue of market-data sources this build ships, and the services assembled from it.
-//!
-//! A source is one row: its stored id, what a key means to it, whether it is on by default, and a
-//! constructor per role it can play. Adding one is a provider file plus a row here — nothing else
-//! names a source by string. See ADR-0050.
+//! The catalogue of shipped sources and the only builder of services from it (ADR-0050).
 
 use crate::fx::{EcbProvider, FrankfurterProvider, FxProvider, FxService, YahooFxProvider};
 use crate::inflation::{EurostatProvider, ImfProvider, IndexProvider, InflationService};
@@ -54,10 +50,7 @@ pub struct SourceInfo {
     /// The provider's own site. Switching a source on is the owner's business with whoever
     /// answers it, so the app says where its requests go rather than implying it is our service.
     pub site: &'static str,
-    /// What the source does when nothing was recorded about it. A source kept off still keeps its
-    /// row, so a security that names it is shown as a known, disabled source rather than an
-    /// unknown string. The host records a switch per source once the owner has chosen, so this
-    /// answers only for a build nobody has answered for yet.
+    /// Used only until the owner has chosen; a source switched off keeps its row.
     pub on_by_default: bool,
     /// Requests a day the free plan allows; `None` for a source without a published allowance.
     pub per_day: Option<u32>,
@@ -83,20 +76,14 @@ impl SourceInfo {
     }
 }
 
-/// Every source this build can talk to, in the order a chain would try them.
-///
-/// **No quote source is on by default.** Prices come from a service somebody else runs, and which
-/// of them to ask is the owner's decision, not a shipped one — see ADR-0076. The rate and
-/// price-index sources of public institutions, which publish for reuse, stay on.
+/// Every source, in chain order. No quote source is on by default (ADR-0076).
 pub const CATALOG: &[SourceInfo] = &[
     SourceInfo {
         id: YahooProvider::ID,
         site: "https://finance.yahoo.com",
         per_day: None,
         key: KeyUse::None,
-        // Off: it is first in this list and last in the ones we choose for anybody. Its data is a
-        // service somebody else runs for their own visitors, so a build of ours must not start
-        // asking it on behalf of a user who never named it.
+        // Off: a service somebody else runs must not be asked unless the user names it.
         on_by_default: false,
         quotes: Some(|_| Box::new(YahooProvider::new())),
         search: Some(|_| Box::new(YahooProvider::new())),
@@ -303,11 +290,7 @@ pub fn quote_ids(setup: &Setup) -> Vec<String> {
         .collect()
 }
 
-/// The source a new instrument is stamped with: the first quote source that is on.
-///
-/// There is deliberately no constant behind this. A shipped build names no provider, so an
-/// instrument created before the owner has switched one on carries no source and is priced by
-/// hand until they do.
+/// The first quote source that is on; `None` while none is, and the instrument is priced by hand.
 pub fn default_quotes(setup: &Setup) -> Option<&'static str> {
     active(setup).find(|s| s.quotes.is_some()).map(|s| s.id)
 }
@@ -345,9 +328,7 @@ pub fn fx_service_with(setup: &Setup) -> FxService {
     service
 }
 
-/// The order a region is asked in: the harmonised European index, then the worldwide one.
-/// Eurostat is first where it publishes at all — it carries the euro-area aggregate, which the
-/// IMF does not, and it publishes sooner.
+/// Eurostat first: euro-area aggregate, and it publishes sooner.
 const INDEX_ORDER: &[&str] = &[EurostatProvider::ID, ImfProvider::ID];
 
 /// Consumer-price sources with the defaults.

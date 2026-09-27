@@ -114,9 +114,7 @@ impl Store {
         self.touch_chat(id, "model", model)
     }
 
-    /// Switches this chat to another provider. Provider and model move together because a model
-    /// id belongs to the catalogue it came from: leaving one behind names a model the new
-    /// provider has never heard of, and the next request 404s.
+    /// Provider and model move together: a model id belongs to its provider's catalogue.
     pub fn ai_chat_set_provider(&self, id: &str, provider: &str, model: &str) -> Result<()> {
         let touched = self.conn.execute(
             "UPDATE ai_chats SET provider = ?2, model = ?3 WHERE id = ?1",

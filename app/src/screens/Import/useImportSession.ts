@@ -23,10 +23,7 @@ const BLANK_CONFIG: ParseConfig = {
   decimal_separator: null,
 };
 
-/**
- * One import from file to commit: what was read, how it is laid out, what the user overrode.
- * Every change of layout re-asks the core for the preview, so what is shown is what is written.
- */
+/** One import from file to commit; every layout change re-asks the core for the preview. */
 export function useImportSession() {
   const invalidate = useInvalidate();
   const [step, setStep] = useState(0);

@@ -1,9 +1,5 @@
-//! The agentic loop: ask the model, run the tools it asks for once the user allows them, hand
-//! the results back, ask again. Knows nothing about Tauri — it takes a `Store`, a `ScopeSelection`
-//! and three closures, never `AppState` or a `Channel`. `commands/ai/` wires those in.
-//!
-//! History is read and written through [`super::store`], so this file never spells out how a turn
-//! is encoded — it only decides what the turn *is*.
+//! The agentic loop: ask, run allowed tools, hand results back, ask again. Takes a `Store`, a
+//! scope and closures, never `AppState`; turns are encoded only in `store.rs`.
 
 use super::consent::{ConsentGate, Decision};
 use super::tools::{self, Access, ToolContext};
@@ -14,9 +10,7 @@ use chrono::NaiveDate;
 use sq_core::model::{AiEffort, AiToolMode};
 use sq_core::storage::Store;
 
-/// The static core of the system prompt. Everything the model needs to know about *this*
-/// portfolio arrives through tools rather than sitting in this string, so the prefix stays
-/// identical between requests and the provider's automatic cache can hold it.
+/// Static system prompt: portfolio facts come through tools, so this prefix stays cacheable.
 const SYSTEM_PROMPT: &str = "\
 You are the AI assistant built into Stonqs, a portfolio tracker.
 
@@ -71,13 +65,9 @@ pub struct Session<'a> {
     pub store: &'a Store,
     pub scope: &'a ScopeSelection,
     pub today: NaiveDate,
-    /// The source an instrument the model re-points is stamped with: the first quote source the
-    /// owner switched on, `None` while none is. Carried rather than looked up, because a turn
-    /// runs on its own thread and the switches live in the host's settings (ADR-0076).
+    /// Stamped on an instrument the model re-points; carried because the turn runs on its own thread (ADR-0076).
     pub quotes_source: Option<&'a str>,
-    /// The date the user has the screens set to, when it is not today. Stated, never applied:
-    /// the tools answer for today, so a model that does not say which date it means would
-    /// contradict the figures the user is looking at.
+    /// Stated, never applied: tools still answer for today.
     pub as_of: Option<NaiveDate>,
     /// The screen the user is on, as the frontend names it. Where they are, not what they asked
     /// about — a question typed on the import screen can still be about last year's dividends.
@@ -109,9 +99,7 @@ pub fn send(
 ) -> AiResult<()> {
     let mut messages = store_history(session)?;
 
-    // The first thing said is what the chat is about, so it becomes the title — free, and right
-    // often enough that spending a model call on a better one is not worth it. Renaming by hand
-    // still wins: only an untouched chat with no history yet is titled here.
+    // An untouched chat is titled from its first message; renaming by hand wins.
     if messages.is_empty() {
         let _ = session
             .store
@@ -176,9 +164,7 @@ pub fn send(
                     .store
                     .ai_usage_record(Some(session.chat_id), &chat.provider, &chat.model, turn.usage);
         }
-        // Repeated after the step on purpose: the event is a running total, not a delta, so
-        // sending it twice changes nothing and an adapter that reports no usage of its own
-        // still moves the panel's counter.
+        // A running total, so sending it again is harmless and moves the counter for silent adapters.
         sink(AiEvent::Usage { usage: spent });
 
         super::store::append(session.store, session.chat_id, Role::Model, &turn.blocks)?;
@@ -255,12 +241,7 @@ fn title_from(text: &str) -> String {
     format!("{}…", trimmed.trim_end_matches(['.', ',', ' ']))
 }
 
-/// What is true of this request rather than of the assistant: the date, the lens the user has the
-/// app set to, and where they are standing. Everything here moves, so it is kept out of the system
-/// prompt and rendered after it — see `AiRequest::context`.
-///
-/// It states the lens, it does not apply it: the tools are already scoped, and a model told the
-/// account names would start naming them in answers about the whole portfolio.
+/// The moving request context, rendered after the system prompt. States the lens without applying it.
 fn context_of(session: &Session) -> String {
     context_line(
         session.store,
@@ -271,9 +252,7 @@ fn context_of(session: &Session) -> String {
     )
 }
 
-/// Shared with the dashboard brief, which has no chat but the same need: state the lens rather
-/// than apply it — the readings are already scoped, and a model told the account names starts
-/// naming them in answers about the whole portfolio.
+/// Shared with the brief: state the lens, never the account names.
 pub(super) fn context_line(
     store: &Store,
     scope: &ScopeSelection,
@@ -392,9 +371,7 @@ impl Entry<'_> {
     }
 }
 
-/// Asks (when needed), runs, and turns whatever happened into the string the model reads back.
-/// A refusal and a failure are both *answers* — neither stops the turn, because the model can
-/// still say something useful without that one number.
+/// A refusal and a failure are both answers; neither stops the turn.
 fn run_one(
     session: &Session,
     granted: &mut Vec<String>,
@@ -418,18 +395,14 @@ fn run_one(
         changed: session.changed,
     };
 
-    // A write is confirmed every single time. Neither a `session` grant nor the chat's `AUTO`
-    // mode reaches it, and no future global setting will either: this is the one branch where
-    // that invariant lives, so it cannot be lost by adding a permission somewhere else.
+    // The one branch where "a write is confirmed every time" lives: no grant or mode reaches it.
     let needs_asking = match tool.access() {
         Access::Free => false,
         Access::Write => true,
         Access::Ask => mode(session) == AiToolMode::Ask && !granted.iter().any(|g| g == name),
     };
 
-    // Written by the model in the same call, so it cannot drift from what is being asked for.
-    // A model that skipped it leaves the card showing the values alone, which is the card the
-    // app had before — never a blank line pretending to be an explanation.
+    // A missing reason leaves the card with values alone, never a blank line.
     let reason = args
         .get(tools::REASON)
         .and_then(serde_json::Value::as_str)
@@ -445,9 +418,7 @@ fn run_one(
             Decision::Deny => {
                 return refused("the user did not allow access to this data");
             }
-            // Remembered before the call runs: if the tool then fails, the user still said yes.
-            // Both of these are read permissions, so a write answered with either still only
-            // means "this once" — the card offers them for reads alone.
+            // Remembered before the call runs; only read tools are offered this.
             Decision::Session if tool.access() == Access::Ask => {
                 if session.store.ai_grant_add(session.chat_id, name).is_ok() {
                     granted.push(name.to_string());

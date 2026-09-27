@@ -20,11 +20,7 @@ import {
   type PreviewRow,
 } from "./labels";
 
-/**
- * The file as it is written, with the decisions made on top of it. Reading and mapping are
- * the same table on purpose: a mapping is only ever judged against the rows it will change,
- * so the wizard never asks about a value away from the place that value came from.
- */
+/** Reading and mapping are one table: a mapping is judged against the rows it changes. */
 
 export interface FileTableEdit {
   onChange: (mapping: ImportMapping) => void;

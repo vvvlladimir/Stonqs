@@ -1,18 +1,7 @@
-//! The two documentation corpora, compiled in and handed over one file at a time.
-//!
-//! They are deliberately *not* part of the system prompt. A prompt block is paid for on the first
-//! message of every chat, whatever the question was about, and the provider's cache only spares
-//! the later turns of the same chat. So the model is given the index — the topic names live in the
-//! tool schemas, which are static and cache with the rest of the prefix — and fetches the one or
-//! two files a conversation actually touches. See ADR-0038.
-//!
-//! Both corpora are static text: nothing here depends on the user's portfolio, so a request that
-//! reads them still matches the cached prefix up to the point where it asked.
+//! The documentation corpora, compiled in and fetched one file at a time rather than put in the
+//! prompt (ADR-0038).
 
-/// Domain concepts, written for the model. Slug = file name = the `topic` argument.
-///
-/// `include_str!` rather than a runtime read: the corpus ships with the binary, so an edit is
-/// picked up by the next build and there is no directory to find at runtime, on any platform.
+/// Domain concepts for the model; slug = file name = the `topic` argument.
 const REFERENCE: &[(&str, &str)] = &[
     ("alerts", include_str!("../../../../docs/ai-reference/alerts.md")),
     (
@@ -101,10 +90,7 @@ const REFERENCE: &[(&str, &str)] = &[
     ),
 ];
 
-/// How one screen works. Keyed by the frontend's own screen id. Every shipped screen has an entry
-/// today, but a missing one is still an answer rather than a failure: the tool returns "no guide"
-/// and the prompt turns that into "I do not know how that part works", so a screen added before
-/// its guide is written never produces a plausible invention.
+/// One guide per screen id; a missing one answers "no guide" rather than inviting invention.
 const GUIDES: &[(&str, &str)] = &[
     ("plugin", include_str!("../../../../docs/user-guide/plugin.md")),
     (

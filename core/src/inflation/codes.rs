@@ -1,8 +1,4 @@
-//! Consumer-price index regions as each source names them.
-//!
-//! The app's own code for a region is ISO 3166-1 alpha-2, which is what a locale carries, plus
-//! the two aggregates Eurostat publishes (`EA`, `EU`). A source that speaks another vocabulary
-//! translates here and nowhere else.
+//! Index regions as each source names them. The app's code is ISO 3166-1 alpha-2 plus `EA`/`EU`.
 
 /// Eurostat writes Greece `EL` and the United Kingdom `UK`, against the standard it otherwise
 /// follows. Kosovo has no alpha-2 code at all and is `XK` by convention, which Eurostat shares.

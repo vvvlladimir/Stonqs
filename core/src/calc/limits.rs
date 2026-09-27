@@ -1,10 +1,5 @@
-//! What was paid into one account against the ceiling it is allowed — an ISA, a 401(k), an ИИС.
-//!
-//! A contribution is money that entered the *portfolio*: a deposit, and a transfer leg whose
-//! partner is not in the ledger. Moving money between two of the user's own accounts is not a
-//! contribution and never eats an allowance (ADR-0068). What left the account is netted off only
-//! when the limit says a withdrawal gives allowance back (ADR-0071). It is measured, never
-//! enforced: nothing here refuses anything.
+//! Contributions against an account's ceiling (ADR-0068): deposits and unpaired transfer legs;
+//! withdrawals net off only when the limit says so (ADR-0071). Measured, never enforced.
 
 use super::holdings::paired_links;
 use crate::error::Result;
@@ -40,10 +35,7 @@ pub struct LimitUsage {
     pub withdrawals_restore: bool,
 }
 
-/// Reads `limit` over the limit year that `as_of` falls in.
-///
-/// Amounts are converted into the limit's own currency at the rate of the day each one moved —
-/// an allowance is stated in one currency and spent in whatever the deposit arrived in.
+/// Converted into the limit's currency at each movement's own date.
 pub fn limit_usage(
     limit: &ContributionLimit,
     transactions: &[Transaction],
@@ -83,12 +75,8 @@ pub fn limit_usage(
     })
 }
 
-/// Money that entered the portfolio through one account in `[from, to]`; with `net`, less what
-/// left it the same way.
-///
-/// The paired-link reading is the ledger's, not this function's invention: a transfer with a
-/// partner in the same set moved money inside the portfolio, and counting it would make one
-/// move between two own accounts look like a fresh year's allowance spent.
+/// Money in through one account in `[from, to]` (with `net`, less what left); paired transfers
+/// are internal and never count.
 pub fn contributions_between(
     transactions: &[Transaction],
     account_id: &str,

@@ -50,9 +50,7 @@ export function Calendar({ cells, totals, full, height, selected, onPick, footer
   // Month heads come from Intl, so a language change renames them without a table here.
   const heads = MONTH_NUMBERS.map((m) => (full ? formatMonthShort(m) : formatMonthNarrow(m)));
 
-  // Every cell states its month and its year, and the stylesheet places it from them: the same
-  // markup then reads months-across in a wide box and months-down in a narrow one, where twelve
-  // columns would be twelve smudges. See `styles/ui/calendar.css`.
+  // Each cell carries its month and year; the stylesheet lays them out by box width.
   return (
     <div className={`calbox${height === "fill" ? " cal--fillbox" : ""}`}>
       <div

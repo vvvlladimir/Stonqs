@@ -13,20 +13,11 @@ export interface FigureProps {
   deltaTone?: Tone;
   /** One line under the number saying what it is. It is what gives way in a short box. */
   note?: ReactNode;
-  /**
-   * Sizes the number off the heading scale instead of off the box. Use on a screen, where the
-   * box is the page; in a widget tile the default is what makes resizing the tile mean
-   * something.
-   */
+  /** Size from the heading scale rather than the box; for screens, not tiles. */
   fixed?: boolean;
 }
 
-/**
- * One figure: a number, optionally a change beside it, optionally a line under it.
- *
- * The block fills the box it is given and sizes the number from that box (`styles/ui/figure.css`),
- * so the same component is a dashboard tile's body and a panel's headline figure.
- */
+/** A number with an optional change and note, sized from its box. */
 export function Figure({ value, tone, delta, deltaTone, note, fixed }: FigureProps) {
   return (
     <div className={`fig${fixed ? " fig--fixed" : ""}`}>

@@ -1,13 +1,5 @@
-//! Interactive Brokers Flex Query statements.
-//!
-//! A Flex Query is a report definition kept in the broker's web office; what arrives is XML with
-//! every value in an attribute. It is a different *reader*, not a different import: the sections
-//! are flattened into one table with our own column names and handed to `build_preview`, so the
-//! wizard, the overrides, the deduplication and the commit are the CSV ones
-//! (`.claude/rules/import.md`, ADR-0061).
-//!
-//! The mapping lives here rather than in `presets/brokers.json` because the columns are this
-//! module's own invention — there is nothing for a user to lay out differently.
+//! Interactive Brokers Flex Query XML, flattened into the canonical columns and a fixed mapping
+//! (ADR-0061).
 
 use super::mapping::{AmountSign, ImportField, ImportMapping};
 use super::parse::{ImportProblem, ParseConfig, ParsedCsv, ProblemCode, decode, parse_date_any};
@@ -17,9 +9,6 @@ use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use std::collections::BTreeMap;
 
-/// The flattened columns are the canonical format's own (ADR-0066), not this reader's invention:
-/// one table shape means one vocabulary in the wizard's raw view, and a statement exported back
-/// out is spelled the way it was read in.
 use super::canonical::{
     ACCOUNT, AMOUNT, CURRENCY, DATE, FEE, FX_RATE, ISIN, KIND, LINK_ID as LINK, NAME, NOTE, PRICE, QUANTITY,
     SYMBOL, TAX,
@@ -29,9 +18,7 @@ const COLUMNS: &[&str] = &[
     DATE, KIND, SYMBOL, ISIN, NAME, QUANTITY, PRICE, AMOUNT, FEE, TAX, CURRENCY, FX_RATE, ACCOUNT, LINK, NOTE,
 ];
 
-/// Wordings this reader invents for rows the model has no operation for. They are shipped on the
-/// skip list, so they stay visible and countable in the preview instead of being imported as
-/// something they are not — the user can still map them by hand.
+/// Wordings for rows the model has no operation for; shipped on the skip list so they stay visible.
 pub const CORPORATE_ACTION: &str = "Corporate action";
 pub const DERIVATIVE_TRADE: &str = "Derivative trade";
 pub const CANCELLED_TRADE: &str = "Cancelled trade";
@@ -324,9 +311,7 @@ impl<'a> Builder<'a> {
         rows.push(row);
     }
 
-    /// A forex trade is one wording on two rows: value moving inside the portfolio, told apart
-    /// only by its sign (`.claude/rules/import.md`). Both legs are linked here, so `calc` does
-    /// not read the pair as money crossing the portfolio boundary.
+    /// A forex trade's two legs are linked here, so `calc` does not read them as crossing the boundary.
     fn forex(&mut self, r: &Record, rows: &mut Vec<Vec<String>>, problems: &mut Vec<ImportProblem>) {
         let symbol = r.get("symbol");
         let quote = r.get("currency");

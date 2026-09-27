@@ -15,11 +15,7 @@ import type { CalculationRow, PeriodRange, SheetPeriod } from "../../lib/types";
 const DAY_LIMIT = 92;
 const WEEK_LIMIT = 400;
 
-/**
- * The calculation sheet: one row per chunk, and the identity `start + flows + result = end`
- * running down it. Its footer is the same figure the metric strip shows, on purpose — seeing
- * the rows chain to it is what the panel is for.
- */
+/** `start + flows + result = end` per chunk; the footer equals the metric strip on purpose. */
 export function CalculationSheet({ range, currency }: { range: PeriodRange; currency: string }) {
   const { t, i18n } = useLingui();
   const [period, setPeriod] = useState<SheetPeriod>("MONTH");

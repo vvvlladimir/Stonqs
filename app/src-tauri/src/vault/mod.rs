@@ -1,12 +1,5 @@
-//! A profile's secrets — the AI provider keys — sealed under its password. See ADR-0048.
-//!
-//! `vault.json` sits in the profile's folder. Its presence is what "the profile has a password"
-//! means. The password never opens the keys directly: Argon2id turns it into a key-encryption key
-//! that seals a random data key, and the data key seals the keys. Changing the password therefore
-//! re-seals 32 bytes, and "remember on this device" stores the data key, never the password.
-//!
-//! Plain files over an explicitly passed folder, so it is tested on a temporary one; which vault
-//! is open is `AppState`'s business.
+//! A profile's keys sealed under its password (ADR-0048). Argon2id derives a key-encryption key
+//! that seals a random data key; "remember on this device" stores the data key, never the password.
 
 use crate::error::{UiError, UiResult};
 use argon2::{Algorithm, Argon2, Params, Version};
@@ -30,9 +23,7 @@ const SERVICE: &str = "app.stonqs.ai";
 /// else — no composition rules, which only make passwords harder to remember.
 pub const MIN_PASSWORD: usize = 8;
 
-/// Argon2id cost for new vaults: 64 MiB, three passes, one lane — above OWASP's floor
-/// (19 MiB, two passes) and still well under a second on a phone. Stored per vault, so a later
-/// build can raise it without breaking the old files.
+/// 64 MiB, 3 passes, 1 lane — above OWASP's floor; stored per vault, so it can be raised later.
 const COST: Kdf = Kdf {
     // The tests derive dozens of keys in a debug build; the arithmetic is the same at any cost.
     m_kib: if cfg!(test) { 1024 } else { 64 * 1024 },

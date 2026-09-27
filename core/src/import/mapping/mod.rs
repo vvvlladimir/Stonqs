@@ -1,9 +1,5 @@
-//! The user-editable mapping from a file's columns and values to the model's fields.
-//!
-//! Import is semi-automatic: everything detected here stays overridable, and nothing is silently
-//! guessed for the user (`.claude/rules/import.md`). The dictionaries that drive detection are
-//! data and live apart from the logic that reads them — `aliases` for headers, `keywords` for
-//! operation wordings — because their order is load-bearing and their size is not interesting.
+//! The user-editable mapping from columns and values to model fields. Everything detected stays
+//! overridable (`.claude/rules/import.md`); the dictionaries' order is load-bearing.
 
 mod aliases;
 mod field;
@@ -59,9 +55,7 @@ pub struct ImportMapping {
 
     pub kind_aliases: BTreeMap<String, TransactionKind>,
 
-    /// Operation values the user decided to skip. A broker prints lines that are not
-    /// operations at all ("Monthly statement", "Name change"), and refusing to import the
-    /// file because of them is not an answer.
+    /// Wordings the user skips: lines that are not operations ("Monthly statement").
     #[serde(default)]
     pub ignored_kinds: BTreeSet<String>,
 
@@ -79,9 +73,7 @@ pub struct ImportMapping {
     #[serde(default)]
     pub amount_basis: Option<AmountBasis>,
 
-    /// What a row becomes when its wording is not the whole answer: a condition and the
-    /// operations it produces. Read before `kind_aliases`, which stays the common case
-    /// (ADR-0067).
+    /// Rules, read before `kind_aliases` (ADR-0067).
     #[serde(default)]
     pub rules: Vec<ImportRule>,
 
@@ -125,12 +117,8 @@ impl ImportMapping {
             }
         }
 
-        // The best *surviving* claim on a column also settles what the column is *not*: a
-        // lower-scoring field never takes a column another field names better ("Asset type" is
-        // a kind, so it is not a symbol), even when that other field is already mapped
-        // elsewhere. A field the values vetoed is not such a claim — "Transaction ID" is an
-        // external id when its values are unique and a pairing key when they repeat, and
-        // whichever it is must not block the other.
+        // The best surviving claim on a column also bars weaker fields from it; a value-vetoed
+        // field is not such a claim.
         let mut best_on_column = vec![0u32; headers.len()];
         for (score, _, index) in &candidates {
             best_on_column[*index] = best_on_column[*index].max(*score);
@@ -179,10 +167,7 @@ impl ImportMapping {
         .with_detected_kinds(kind_values.iter().copied())
     }
 
-    /// Reads the file's own wording for an operation and proposes a kind for every value
-    /// nobody has answered yet. A broker prints wordings no list can enumerate ("Sell 3 @
-    /// 139.74 USD"), so a saved layout has to keep learning from the file it is applied to.
-    /// Values already aliased or already skipped are left exactly as they are.
+    /// Proposes a kind for every wording nobody answered yet; aliased or skipped values stay as they are.
     pub fn with_detected_kinds<'a>(self, values: impl Iterator<Item = &'a str>) -> Self {
         self.with_detected_kinds_using(values, &KindWords::empty())
     }

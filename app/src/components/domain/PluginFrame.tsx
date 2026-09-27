@@ -35,10 +35,7 @@ interface Failure {
   detail: string;
 }
 
-/**
- * A plugin's page in a frame with no origin, fed the reads it declared and nothing else
- * (ADR-0083/0084). What surrounds it — a tile, a screen's header — is the caller's.
- */
+/** A plugin page in an origin-less frame, fed only its declared reads (ADR-0083/0084). */
 export function PluginFrame({
   page,
   date,
@@ -104,9 +101,7 @@ export function PluginFrame({
   // A page is rendered once, with everything it asked for.
   const complete = data !== undefined && (!page.storage || state.data !== undefined);
 
-  // New data is a new chance: a page that threw over the last values is tried again with these.
-  // One that throws over every value fails once per change, never in a loop. Adjusted while
-  // rendering rather than in an effect, so the stale failure is never drawn.
+  // A page that threw is retried with new data, once per change; adjusted during render, not in an effect.
   const [seen, setSeen] = useState(data);
   if (seen !== data) {
     setSeen(data);

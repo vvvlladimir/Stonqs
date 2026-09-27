@@ -21,10 +21,7 @@ export interface FormDialogProps {
   children: ReactNode;
 }
 
-/**
- * Modal + form. The submit button sits in the modal footer but belongs to the form through
- * `form=<id>`, so Enter in any field saves and the footer stays below the scrolling body.
- */
+/** The submit sits in the footer but belongs to the form through `form=<id>`, so Enter saves. */
 export function FormDialog({
   title,
   onClose,

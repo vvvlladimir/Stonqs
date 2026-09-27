@@ -35,9 +35,7 @@ impl SecurityEventKind {
     }
 }
 
-/// A dated fact about an instrument. It moves no money and no quantity: a reported dividend is
-/// not income until a transaction says so, and a reported split is not applied until the user
-/// records it as a [`CorporateAction`]. See ADR-0034.
+/// A dated fact that moves no money or quantity until a transaction or corporate action says so (ADR-0034).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SecurityEvent {
     pub id: String,

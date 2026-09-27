@@ -22,11 +22,7 @@ const BLANK: GoalInput = {
   accounts: [],
 };
 
-/**
- * Goals live beside the plans because they are the same conversation — what is being saved for.
- * They are not scoped: a goal names the accounts that count towards it, so the picker changes
- * nothing about it.
- */
+/** Not scoped: a goal names its own accounts. */
 export function GoalsPanel({ baseCurrency }: { baseCurrency: string }) {
   const { t } = useLingui();
   const date = useAsOf().date;

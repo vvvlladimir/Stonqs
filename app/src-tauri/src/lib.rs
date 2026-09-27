@@ -33,9 +33,7 @@ pub fn run() {
         // Notifications for fired alerts; the frontend asks for permission and writes the text.
         .plugin(tauri_plugin_notification::init());
 
-    // In-app updates, desktop only — a store updates the mobile builds. The frontend asks and
-    // decides; the plugin fetches, checks the signature against the key in tauri.conf.json,
-    // installs, and `process` restarts into the new version.
+    // Desktop only; the plugin verifies the signature against the key in tauri.conf.json.
     #[cfg(desktop)]
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())

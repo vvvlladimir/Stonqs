@@ -36,11 +36,7 @@ function toInput(draft: Transaction): TransactionInput {
 /** A row is writable when it moves something: shares for a purchase, money for a contribution. */
 const writable = (draft: TransactionInput) => amountOf(draft.quantity) !== 0 || amountOf(draft.amount) !== 0;
 
-/**
- * What a plan still owes, one panel per occurrence. Nothing is written until Record is pressed
- * on that occurrence: the rows are a proposal, and the numbers the broker actually filled can
- * be typed over them first (ADR-0033).
- */
+/** Nothing is written until Record; the broker's actual fills can be typed over first (ADR-0033). */
 export function DuePanel({ row, onClose }: { row: PlanRow; onClose: () => void }) {
   const { t } = useLingui();
   const invalidate = useInvalidate();

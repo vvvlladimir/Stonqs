@@ -1,6 +1,4 @@
-//! The period axis: the seven shipped presets plus whatever the user added, resolved to dates
-//! by the core. A screen picks an id off this list and hands the dates to a query — it never
-//! learns which of the two kinds it picked.
+//! The period axis: shipped presets plus user periods, resolved to dates by the core (ADR-0026).
 
 use crate::commands::parse_date;
 use crate::error::{UiError, UiResult};
@@ -76,9 +74,7 @@ pub fn periods_get(state: State<AppState>) -> UiResult<PeriodSettings> {
     })
 }
 
-/// Adds a period, or replaces the one with the same id. The spec is resolved once against
-/// today so an impossible window is refused at the point the user typed it, not silently
-/// dropped from the strip later.
+/// Resolved once against today, so an impossible window is refused where it was typed.
 #[tauri::command]
 pub fn period_save(state: State<AppState>, period: UserPeriod) -> UiResult<PeriodSettings> {
     let name = period.name.trim().to_string();
@@ -108,9 +104,7 @@ pub fn period_save(state: State<AppState>, period: UserPeriod) -> UiResult<Perio
     periods_get(state)
 }
 
-/// Removes what the user sees under this id. Their own period goes for good; a shipped preset
-/// is only written down as hidden, so `periods_restore` can bring it back — the same bargain
-/// as the shipped import layouts.
+/// A user period is deleted; a shipped preset is only hidden, so `periods_restore` brings it back.
 #[tauri::command]
 pub fn period_delete(state: State<AppState>, id: String) -> UiResult<PeriodSettings> {
     {
@@ -132,9 +126,7 @@ pub fn period_delete(state: State<AppState>, id: String) -> UiResult<PeriodSetti
     periods_get(state)
 }
 
-/// How many periods the strip would still offer once `id` is gone. Counted on the stored axis
-/// rather than on resolved ranges: what a given history can answer changes with the data, and
-/// an empty portfolio would otherwise let the user delete everything.
+/// Counted on the stored axis, so an empty portfolio cannot delete every period.
 fn remaining_after(settings: &AppSettings, id: &str) -> usize {
     let builtin = BUILTIN_PRESETS
         .iter()

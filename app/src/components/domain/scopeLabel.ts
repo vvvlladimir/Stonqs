@@ -3,10 +3,7 @@ import type { I18n } from "@lingui/core";
 
 import type { ScopeOption } from "../../lib/types";
 
-/**
- * The one place the scope's wording is written. The host sends names and a kind, so
- * "Securities · Depot + Cash" is composed here, in the active language.
- */
+/** The one place scope wording is composed, from the host's names and kind. */
 export function scopeLabel(i18n: I18n, option: ScopeOption): string {
   switch (option.kind) {
     case "PORTFOLIO":

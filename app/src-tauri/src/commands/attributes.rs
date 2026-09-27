@@ -24,9 +24,7 @@ pub struct AttributeDefInput {
     pub position: i64,
 }
 
-/// The kind is fixed once values exist behind it: changing it would either strand the values
-/// it can no longer read or delete them silently, so an existing attribute keeps the kind it
-/// was created with and only its name, unit and order are editable.
+/// The kind is fixed once the attribute exists (ADR-0031); name, unit and order stay editable.
 #[tauri::command]
 pub fn attribute_def_save(
     app: AppHandle,

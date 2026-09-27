@@ -3,12 +3,7 @@ import { useLingui } from "@lingui/react/macro";
 import { alertNotification } from "../../lib/alerts";
 import { api, notify, onDataChanged, onMarketProgress } from "../../lib/api";
 
-/**
- * Announces new crossings as OS notifications: once on start — the startup refresh may already be
- * over — after every refresh, and whenever the host says alerts changed (a saved rule, a simulated
- * quote). The host marks a crossing announced as it hands it over, so nothing repeats. Renders
- * nothing.
- */
+/** OS notifications for new crossings: on start, after each refresh and on `alerts` changes. Renders nothing. */
 export function AlertNotifier() {
   const { i18n } = useLingui();
 

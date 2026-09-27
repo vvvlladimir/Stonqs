@@ -1,6 +1,4 @@
-//! Saved CSV import mappings: the user's own, stored beside the database, and the broker
-//! layouts shipped with the app. Both are the same thing to the wizard — a layout with a
-//! name — so they arrive in one list, the user's first.
+//! Saved import layouts: the user's own and the shipped ones, one list, the user's first.
 
 use crate::error::{UiError, UiResult};
 use crate::state::AppState;
@@ -27,9 +25,7 @@ pub enum TemplateSource {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImportTemplate {
-    /// What names this layout everywhere but on screen: `user:`, `builtin:` or a plugin's own
-    /// `<plugin id>/<layout id>`. A name is what the user reads and two sources may print the
-    /// same one, so identity cannot be it (ADR-0070).
+    /// `user:`, `builtin:` or `<plugin>/<layout>`: two sources may print one name (ADR-0070).
     #[serde(default)]
     pub id: String,
     pub name: String,
@@ -54,9 +50,7 @@ impl ImportTemplate {
     }
 }
 
-/// The id a layout the user saved is known by. Derived from the name rather than stored: a saved
-/// layout has always been keyed by its name, and inventing ids for what is already on disk would
-/// be a migration for nothing.
+/// Derived from the name, as saved layouts always were keyed.
 fn user_id(name: &str) -> String {
     format!("user:{name}")
 }
@@ -124,9 +118,7 @@ fn store(db_path: &Path, templates: &[ImportTemplate]) -> UiResult<()> {
     std::fs::write(path_for(db_path), json).map_err(|e| UiError::internal(e.to_string()))
 }
 
-/// The user's layouts first, then the plugins', then the shipped ones. One name is listed once:
-/// the user's own wins over a plugin's, and a plugin's over a shipped one, because that is the
-/// order of who chose it.
+/// User's first, then plugins', then shipped; one name is listed once, the earlier source winning.
 pub fn listing(db_path: &Path, plugins: &crate::plugins::Plugins) -> Vec<ImportTemplate> {
     let mut out = load(db_path);
     out.sort_by(|a, b| a.name.cmp(&b.name));
@@ -195,9 +187,7 @@ pub fn save_template(
     Ok(listing(db_path, plugins))
 }
 
-/// Removes the layout with this id. The user's own copy goes for good; a shipped one is only
-/// written down as removed, so `import_presets_restore` can bring it back. A plugin's is refused:
-/// the plugin is what installed it, and removing half a package is not a state to leave behind.
+/// A user's layout is deleted, a shipped one hidden (restorable), a plugin's refused.
 pub fn delete_template(
     db_path: &Path,
     plugins: &crate::plugins::Plugins,
@@ -230,11 +220,7 @@ pub fn restore_presets(db_path: &Path, plugins: &crate::plugins::Plugins) -> UiR
     Ok(listing(db_path, plugins))
 }
 
-/// What a layout must prove before a package carrying it is installed: it recognises the sample
-/// the package ships, and that sample reads without leaving a question for the user. The shipped
-/// layouts answer the same two questions in `core/tests/fixtures/presets/`, plus a third — the
-/// operations they produce — which needs an expectation a stranger's package has no reason to
-/// carry in the app's own format.
+/// A plugin layout must recognise its sample and read it without a question.
 pub fn check_layout(id: &str, preset_json: &str, sample: &[u8], sample_name: &str) -> UiResult<()> {
     let preset: sq_core::import::BrokerPreset =
         serde_json::from_str(preset_json).map_err(|e| UiError::invalid(format!("layout {id}: {e}")))?;
@@ -275,9 +261,7 @@ pub fn check_layout(id: &str, preset_json: &str, sample: &[u8], sample_name: &st
     Ok(())
 }
 
-/// What an operation dictionary must prove before a package carrying it is installed: every word
-/// is one the app's own keywords leave to it, and its sample reads without a question **only**
-/// with it — a sample the app already reads by itself proves nothing about the words.
+/// Every word must be one the app leaves unanswered, and the sample must read only with it.
 pub fn check_dictionary(id: &str, words_json: &str, sample: &[u8]) -> UiResult<()> {
     let words: KindWords =
         serde_json::from_str(words_json).map_err(|e| UiError::invalid(format!("dictionary {id}: {e}")))?;

@@ -10,13 +10,7 @@ import { CustomPanel } from "./ai/CustomPanel";
 import { KeysPanel } from "./ai/KeysPanel";
 import { UsagePanel } from "./ai/UsagePanel";
 
-/**
- * BYOK only: the key is saved straight to the OS keychain and never comes back to this screen.
- *
- * There is no model to start on here: a new chat starts where the last chat's choice left off
- * (ADR-0069). What the user can add is ids to a provider's picker (`KeysPanel`), for a model the
- * shortlist leaves out.
- */
+/** BYOK: the key goes to the vault and never comes back here. New chats start where the last choice left off (ADR-0069). */
 export function AiPanel() {
   const { t } = useLingui();
   const invalidate = useInvalidate();

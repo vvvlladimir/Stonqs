@@ -1,14 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 
-/**
- * A press that becomes a drag, on `window` rather than on the pressed element.
- *
- * Pointer capture would be the obvious way to keep the moves coming, and it is what this used
- * to do — but moving a tile reorders the board, React moves the captured node with
- * `insertBefore`, and a browser reads that as the element leaving the document and drops the
- * capture. The gesture then died the first time the board reordered, which is exactly when a
- * big tile (a chart) was crossed. Window listeners have no such thing to lose.
- */
+/** A press that becomes a drag, on `window`: pointer capture is lost when React reorders the node. */
 export interface DragGesture {
   /** Pixels the pointer must travel before the press counts as a drag. Zero starts at once. */
   slop?: number;

@@ -1,18 +1,7 @@
 import { useEffect } from "react";
 import { api } from "./api";
 
-/**
- * Every link that leaves the app, opened by the operating system.
- *
- * A webview opens no window of its own on any platform this ships to: `target="_blank"` is
- * silently dropped, so an address written as a plain `<a>` does nothing at all when clicked. One
- * delegated listener answers for all of them — a link in a panel, a source's site, an address
- * inside an answer the assistant wrote — so no component has to remember, and a link added later
- * works by being a link.
- *
- * Only `http(s)` is handed over. An in-app anchor (`#`) and anything else a document may carry is
- * left to the browser it already is.
- */
+/** One delegated listener hands every `http(s)` link to the OS; webviews drop `target="_blank"`. */
 export function useExternalLinks(): void {
   useEffect(() => {
     const onClick = (e: MouseEvent) => {

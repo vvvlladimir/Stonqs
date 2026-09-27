@@ -6,12 +6,7 @@ import { toNumber } from "../../lib/format";
 import type { ImportPreviewData } from "../../lib/types";
 import { kindLabels, STATUS_LABELS, STATUS_TONES, type PreviewRow } from "./labels";
 
-/**
- * What will be written. Showing the first twenty rows proves nothing — a broker file is
- * a hundred identical buys and three oddities, and the oddities are the whole question.
- * So the default view is one row per distinct shape: every kind, every combination of
- * optional fields, every status, each represented once, in file order.
- */
+/** One row per distinct shape (kind, optional fields, status), in file order: the oddities are the question. */
 
 /** Fields that are worth an example of their own: they are the ones that go wrong. */
 function shapeOf(row: PreviewRow): string {

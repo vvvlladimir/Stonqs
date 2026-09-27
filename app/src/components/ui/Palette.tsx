@@ -52,10 +52,7 @@ function rank(items: PaletteItem[], query: string): PaletteItem[] {
   return out;
 }
 
-/**
- * A command palette in the WAI-ARIA combobox pattern: focus stays in the field, the arrows move
- * the highlighted option (`aria-activedescendant`), `Enter` runs it and `Escape` closes.
- */
+/** WAI-ARIA combobox: focus stays in the field, arrows move `aria-activedescendant`. */
 export function Palette({
   items,
   onClose,

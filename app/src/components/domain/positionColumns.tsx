@@ -18,12 +18,7 @@ import type {
 import { QuoteSpark } from "./QuoteSpark";
 import { SecurityLink } from "./SecurityCardProvider";
 
-/**
- * The groups the column picker lays its list out in, in that order. A group is what the
- * figure is read off — a quote, the holding, the instrument's record — because two columns
- * with almost the same name (a reported yield and a received one) are told apart by that
- * and by nothing else.
- */
+/** Column groups by what a figure is read off, which is what tells similar names apart. */
 export const GROUPS = [
   { id: "quotes", label: msg`Price` },
   { id: "levels", label: msg`Levels` },
@@ -384,12 +379,7 @@ const METHOD_OF: Record<CostBasisMethod, "fifo" | "average"> = {
   AVERAGE_COST: "average",
 };
 
-/**
- * Purchase figures are offered under a named method only: a column labelled neither one
- * would change meaning with a setting, and could then not be compared with the one beside it.
- * The method the portfolio is kept under is already in the position row, so only the *other*
- * one costs the second holdings pass — `needsCostQuery` is what decides that.
- */
+/** Purchase figures only under a named method, so a column never changes meaning with a setting. */
 function costColumns(method: "fifo" | "average", name: MessageDescriptor): Column[] {
   const own = (ctx: CellCtx) => ctx.own !== undefined && METHOD_OF[ctx.own] === method;
   const of = (ctx: CellCtx): CostBasisFigures | undefined => ctx.cost?.[method];
@@ -449,10 +439,7 @@ function costColumns(method: "fifo" | "average", name: MessageDescriptor): Colum
   ];
 }
 
-/**
- * A stored choice from before purchase figures named their method: it meant "whatever the
- * portfolio is kept under", so it resolves to that method's column rather than being dropped.
- */
+/** Pre-naming choices resolve to the portfolio's own method. */
 const LEGACY: Record<string, string> = { cost: "cost", unrealized: "unreal", realized: "real" };
 
 export function resolveColumnIds(ids: string[], method: CostBasisMethod | undefined): string[] {
@@ -466,11 +453,7 @@ export function resolveColumnIds(ids: string[], method: CostBasisMethod | undefi
   return out;
 }
 
-/**
- * Whether the shown columns need the cost-basis comparison: the portfolio's own method is
- * already in the position row, so only the other method — or a unit price, which no row
- * carries — is worth a second holdings pass.
- */
+/** Only the other method, or a unit price, needs the second holdings pass. */
 export function needsCostQuery(ids: string[], method: CostBasisMethod | undefined): boolean {
   const own = METHOD_OF[method ?? "FIFO"];
   return ids.some((id) => {
@@ -552,9 +535,7 @@ export function orderColumns<C extends { id: string }>(all: C[], ids: string[]):
   return ids.map((id) => byId.get(id)).filter((column): column is C => column !== undefined);
 }
 
-/** A period figure is absent for two different reasons and both read as one dash: the query
- * has not answered yet, or the return had no root. A plain helper, not a component — it holds
- * no hooks, and a component in this file would cost fast refresh. */
+/** Absent and rootless both read as a dash. A helper, not a component, to keep fast refresh. */
 export function periodCell(value: string | null | undefined): ReactNode {
   if (!value) return dash();
   return <Percent value={value} signed tone={false} />;

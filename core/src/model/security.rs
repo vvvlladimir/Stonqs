@@ -13,11 +13,7 @@ pub enum SecurityKind {
     Other,
 }
 
-/// A tradable instrument: stock, ETF, bond.
-///
-/// Two distinct symbols: [`Security::symbol`] (user-facing, "AAPL") vs
-/// [`Security::data_symbol`] (provider-facing, "aapl.us" on Stooq). Merging
-/// them would bake a specific provider into the model.
+/// `symbol` is the user's ticker, `data_symbol` the provider's.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Security {
     pub id: String,

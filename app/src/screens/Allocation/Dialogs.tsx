@@ -31,10 +31,7 @@ interface Options {
   onNodeDeleted: (id: string) => void;
 }
 
-/**
- * Every modal of the screen with its own state, in the shape of `useMenu`:
- * the screen opens one by name and renders `node` once.
- */
+/** Every modal of the screen, opened by name, rendered once as `node` (like `useMenu`). */
 export function useAllocationDialogs(opts: Options) {
   const card = useSecurityCard();
   const [assigning, setAssigning] = useState<string | null>(null);

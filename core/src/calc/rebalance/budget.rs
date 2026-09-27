@@ -1,8 +1,5 @@
-//! Spending what the proportional pass left over.
-//!
-//! One tradable step at a time, largest remaining shortfall first, and the least-overweight node
-//! once no shortfall remains. A node with nothing to buy is never touched — a met `Cash 10%`
-//! target keeps its share — and nothing is ever sold to make room.
+//! Spending the leftover one step at a time: largest shortfall first, then the least-overweight
+//! node. A node with nothing to buy is never touched, and nothing is sold.
 
 use super::moves::NodeBudget;
 use super::{RebalanceItem, RebalanceTrade};

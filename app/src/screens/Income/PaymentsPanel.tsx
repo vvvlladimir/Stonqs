@@ -22,11 +22,7 @@ interface GridRow {
   opens?: boolean;
 }
 
-/**
- * The payments grid: every dated line of the window against one axis. Income is split by kind
- * and by payer, and what the portfolio paid in and what its sales returned sit in the same
- * grid — the comparison is the point, so summing two separate reports would not do.
- */
+/** Income by kind and payer beside what was paid in and what sales returned, on one axis. */
 export function PaymentsPanel({
   query,
   period,

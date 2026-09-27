@@ -19,11 +19,7 @@ export interface ColumnGroup {
   label: string;
 }
 
-/**
- * Which columns a table shows **and in which order**. The shown ones are the list on top, in
- * the order they are shown, dragged by the handle; the rest sit under their group heading.
- * The caller stores the array as given — it is the display order, not a filter of a catalogue.
- */
+/** Which columns show and in what order; the stored array is the display order. */
 export function ColumnPicker({
   columns,
   groups,
@@ -115,13 +111,7 @@ function Choice({
   );
 }
 
-/**
- * The shown columns, reordered by dragging a handle. The row under the pointer is found by
- * hit-testing rather than by arithmetic on heights, so a wrapped label does not throw the
- * order off; the order is followed in local state and written once the drag ends, the way
- * the dashboard moves a tile. The handle is also a button, so the same move is one arrow key
- * away.
- */
+/** Dragged by a hit-tested handle, written once on drag end; the handle also takes arrow keys. */
 function Shown({
   columns,
   order,

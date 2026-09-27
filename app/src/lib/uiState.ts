@@ -60,27 +60,17 @@ export interface UiState {
   tour: TourPrefs;
 }
 
-/**
- * The tour is offered once. `done` is set whether it was taken or declined — an offer repeated
- * after "no" is the same as not having asked. Starting it again is a command, never automatic.
- */
+/** Offered once; `done` is set whether taken or declined. */
 export interface TourPrefs {
   done: boolean;
 }
 
-/**
- * A bare-key shortcut (`n`, `g p`, `?`) can be fired by a speech-input user saying a word, so it
- * must be possible to turn them off (WCAG 2.1.4). `mod` shortcuts are not affected.
- */
+/** Bare-key shortcuts can be turned off (WCAG 2.1.4). */
 export interface ShortcutPrefs {
   single_keys: boolean;
 }
 
-/**
- * The navigation's arrangement, stored as bare ids: which screens exist is `components/Nav`'s
- * business, and it drops an id it does not know and appends one missing here in shipped order,
- * so a screen added by a later build lands at the end of its section rather than nowhere.
- */
+/** Bare ids; `components/Nav` drops unknown ones and appends missing ones. */
 export interface NavPrefs {
   /** Pinned screens after Overview, in display order; on a phone the first three are the tabs. */
   favorites: string[];
@@ -92,11 +82,7 @@ export interface NavPrefs {
   open: string | null;
 }
 
-/**
- * The update check is a thing the app does to the user rather than for them, so it remembers
- * two answers: the version they said no to, and the day it last asked. A version declined once
- * is never offered again; a newer one is.
- */
+/** The version declined and the day last asked; a declined version is never offered again. */
 export interface UpdatePrefs {
   /** Off means the check never runs on its own; `Check for updates` still works. */
   auto: boolean;
@@ -112,11 +98,7 @@ export interface TableSort {
   dir: "asc" | "desc";
 }
 
-/**
- * A generated summary, kept because generating it cost the user money: it survives a restart,
- * it is never regenerated on its own, and it carries the window it describes so a tile whose
- * period was changed afterwards can say the text is about a different one.
- */
+/** Kept because it cost money: never regenerated on its own, and it carries its window. */
 export interface Brief {
   text: string;
   /** When it was generated, ISO. Compared against `lib/freshness` to mark it out of date. */
@@ -132,10 +114,7 @@ export const AI_PANEL_MAX = 900;
 
 const SHIPPED = (shipped as unknown as BoardFile).dashboard;
 
-/**
- * The dashboard every install starts on. It is data on purpose — authored by exporting a board
- * from the app and pasting the file back into `defaultDashboard.json`, never by editing code.
- */
+/** Authored by exporting a board into `defaultDashboard.json`, never in code. */
 export const DEFAULT_UI: UiState = {
   version: UI_VERSION,
   // The file is exactly what "Export" writes, so the board sits under `dashboard`; its ids are
@@ -257,21 +236,13 @@ function clampPanel(value: unknown): number {
 
 function isTheme(value: unknown): value is ThemePreference {
   if (typeof value !== "string") return false;
-  // A plugin theme is stored by name, and the plugin behind it may be gone by the time this is
-  // read — `useTheme` falls back to its base scheme rather than the preference being dropped,
-  // because uninstalling a theme for one session should not forget it was chosen.
+  // A gone plugin theme is kept: `useTheme` falls back to its base.
   return value === "system" || value === "light" || value === "dark" || isPluginTheme(value);
 }
 
-/**
- * A board written before widgets had a height. The old `span` counted quarters of the board,
- * so it triples into twelfths; the height it never had comes from the catalog, which is also
- * where an unknown type is caught.
- */
+/** Quarters → twelfths; the missing height comes from the catalog. */
 function migrateBoard(board: Dashboard, from: number): Dashboard {
-  // A board written while `newId` was a bare timestamp holds one id for every widget minted in
-  // the same millisecond, and an id is what tells two tiles apart: resizing one then resized
-  // them all. Repeats are re-minted on read, so such a board heals on the next load.
+  // Old boards may repeat ids minted in one millisecond; repeats are re-minted on read.
   const seen = new Set<string>();
   const widgets = board.widgets
     .map((w) => migrateWidget(w, from))
@@ -304,12 +275,7 @@ function migrateWidget(raw: unknown, from: number): Widget | null {
   };
 }
 
-/**
- * The three tiles that became one. A goal, a contribution limit and financial independence are
- * one shape — a figure over a track — so the subject moved into the widget's own settings; the
- * old type is what names it. Type-based rather than version-gated, so a board file exported by
- * an older build reads the same way a stored one does.
- */
+/** The three progress tiles merged into one, migrated by type so exported files read the same. */
 const MERGED_TRACKS: Record<string, string> = { goal: "goal", limit: "limit", fire: "fire" };
 
 /** The format a blob was written by; anything unmarked predates the versioning. */
@@ -317,11 +283,7 @@ function version(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 1;
 }
 
-/**
- * Sizes for a widget whose type the catalog no longer describes, or never did: the layout
- * module must stay readable without importing the dashboard screen, so this is the one place
- * the two duplicate each other, and it is only a fallback.
- */
+/** Fallback sizes for unknown types, duplicated here so layout need not import the dashboard. */
 const FALLBACK_SIZE: Record<string, { w: number; h: number }> = {
   metric: { w: 3, h: 3 },
   heading: { w: 12, h: 1 },
@@ -348,16 +310,7 @@ function isDashboard(value: unknown): value is Dashboard {
   );
 }
 
-/**
- * A write to the UI state, expressed as a change to whatever is stored *now*.
- *
- * The blob is one document with a dozen writers in it — the tour, the updater, the board, two
- * column pickers — and it is saved whole. A writer that builds its next state out of the copy
- * it rendered with therefore puts back every field another writer changed in the meantime,
- * which is how declining the tour was undone by the daily update check landing a moment later.
- * The patch runs against the freshest copy instead, so two writers touching different fields
- * cannot overwrite each other.
- */
+/** A write as a patch over the freshest stored copy, so writers of different fields never undo each other. */
 export type UiPatch = (current: UiState) => UiState;
 
 export function useUiState() {
@@ -380,10 +333,8 @@ export function useUiState() {
     },
   });
 
-  // The cache rather than this render's `settings.data`: an optimistic write by another writer
-  // one tick ago is already there, and that is the copy a patch has to be applied to. Nothing
-  // in it yet means the settings have not arrived, and a patch over the defaults would store
-  // them over whatever is really on disk, so the write is dropped instead.
+  // The cache, not this render's copy: it already holds other writers' optimistic writes. Empty
+  // means settings have not arrived, and the write is dropped rather than stored over the disk.
   const stored = () => queryClient.getQueryData(keys.settings()) as { ui?: unknown } | undefined;
 
   return {
@@ -399,22 +350,14 @@ export function useUiState() {
   };
 }
 
-/**
- * An ID unique within one JSON document — distinct per call, not per millisecond: a board is
- * duplicated and imported by mapping over its widgets in one go, and a bare timestamp hands
- * every one of them the same id, which is what tells two tiles apart.
- */
+/** Unique per call, not per millisecond: one mapping over a board mints many ids at once. */
 let minted = 0;
 export function newId(prefix: string): string {
   minted += 1;
   return `${prefix}-${Date.now().toString(36)}-${minted.toString(36)}`;
 }
 
-/**
- * A board as a file. Export and import travel through the same shape the host stores, so a
- * layout someone posts in a forum is the same text this app writes — and `parseUiState`'s
- * migration is what makes an older file still open.
- */
+/** A board as a file, in the stored shape, so `parseUiState`'s migrations open older files too. */
 export interface BoardFile {
   kind: "stonqs.dashboard";
   version: number;
@@ -426,10 +369,7 @@ export function boardToFile(board: Dashboard): string {
   return JSON.stringify(file, null, 2);
 }
 
-/**
- * Reads a board file, giving it a fresh id so importing one twice does not shadow the first.
- * Returns `null` rather than throwing: a wrong file is a message to the user, not a crash.
- */
+/** A fresh id so a second import does not shadow the first; `null` for a wrong file. */
 export function boardFromFile(text: string): Dashboard | null {
   let parsed: unknown;
   try {

@@ -19,11 +19,7 @@ import type { PeriodSpec, PeriodUnit, UserPeriod } from "../../lib/types";
 /** The open end of a fixed window, written out where its dates are listed. */
 const TODAY = msg`today`;
 
-/**
- * The period axis, edited in one place. A period the user adds is theirs to delete; a shipped
- * preset is only hidden, so "restore" can bring the seven back — the same bargain the shipped
- * import layouts make.
- */
+/** User periods are deleted, shipped presets only hidden (restorable). */
 export function PeriodEditor({ onClose }: { onClose: () => void }) {
   const { t, i18n } = useLingui();
   const settings = usePeriodSettings();
@@ -128,9 +124,7 @@ function PeriodForm({
   const { save } = usePeriodEdit();
   const { spec } = draft;
 
-  // A fixed window must not end before it starts; the host refuses one too, but saying so
-  // here is the difference between a hint and a failed round trip. An empty end is not a
-  // broken one — it means the window runs to today.
+  // An empty end means "to today", not a broken window.
   const ordered = spec.kind !== "FIXED" || spec.to === null || spec.from <= spec.to;
   const filled = spec.kind === "RELATIVE" ? spec.count > 0 : spec.from !== "";
   const ready = draft.name.trim() !== "" && ordered && filled;

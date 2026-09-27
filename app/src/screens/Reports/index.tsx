@@ -26,10 +26,7 @@ import { Gains } from "./Gains";
 import { exportsOf, tabs, type Tab } from "./model";
 import { useAsOf } from "../../lib/asOf";
 
-/**
- * The tax-and-accounting view of a period: what was realized, what was paid out and what
- * it cost. Every table is a CSV away from a tax return, so the export follows the tab.
- */
+/** Realized, paid out and cost over a period; the export follows the tab. */
 export function Reports() {
   const { t, i18n } = useLingui();
   const asOf = useAsOf().date;

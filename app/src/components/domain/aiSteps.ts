@@ -1,17 +1,9 @@
-/**
- * The panel's own shape for what the assistant did before answering, and the two ways it is
- * built: from the events of a running turn, and from the blocks of a stored one. Kept out of
- * `AiTools.tsx` so that file exports components alone.
- */
+/** Steps built from live events and from stored blocks, kept out of `AiTools.tsx` so it exports components only. */
 
 import type { AiBlock } from "../../lib/types";
 import type { LiveTool } from "../../lib/ai";
 
-/**
- * One thing the assistant did before answering: a reading, a web search, or its own summary of
- * how it got there. The panel turns both the live events and the stored blocks into these, so a
- * step does not change shape the moment it is persisted.
- */
+/** A reading, a web search or a reasoning summary; one shape live and stored. */
 export interface Step {
   key: string;
   kind: "tool" | "search" | "thinking";

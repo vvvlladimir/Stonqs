@@ -37,11 +37,7 @@ export function useTransactions(filter: TransactionFilter) {
   });
 }
 
-/**
- * Moves that arrived as two unrelated rows. Read on demand — the import screen asks after a
- * write — rather than on every ledger render: it is a whole-portfolio scan, and nothing on the
- * screen is wrong while the answer is missing.
- */
+/** On demand only: a whole-portfolio scan. */
 export function useTransferSuggestions(enabled: boolean) {
   return useQuery({
     queryKey: keys.transferSuggestions(),

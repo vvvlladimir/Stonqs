@@ -1,8 +1,5 @@
-//! A dashboard widget and a whole screen: one ES module each, served by the host as a page of its
-//! own inside a frame with no origin, fed only the reads its manifest declares (ADR-0083/0084).
-//!
-//! The host's part is the page, its policy and the data (`plugins::reads`, ADR-0088). When it goes
-//! into the frame is the frontend's (`lib/pluginBridge.ts`), because that is where the frame is.
+//! A widget or screen: one ES module served as its own origin-less page, fed only its declared
+//! reads (ADR-0083/0084/0088).
 
 use crate::error::{UiError, UiResult};
 use serde::{Deserialize, Serialize};
@@ -143,9 +140,7 @@ fn escape_script_end(module: &str) -> String {
 /// The page a widget or a screen is served as, and the policy it is served under. `nonce` is new per response,
 /// so the only scripts that run are the two written here.
 pub fn page(module: &str, nonce: &str) -> (String, String) {
-    // `</script` inside the module would end the element early, in any letter case — HTML reads
-    // tag names that way. It can only occur in a string, a regular expression or a comment, where
-    // `<\/` means the same thing.
+    // `</script` in any case would end the element; `<\/` means the same in a string or regex.
     let module = escape_script_end(module);
     let html = format!(
         // DNS prefetching is not a request the policy can refuse, and a looked-up name is a

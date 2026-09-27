@@ -70,11 +70,7 @@ export interface WidgetProps {
 
 const SCOPE_KINDS: ScopeKind[] = ["PORTFOLIO", "GROUP", "ACCOUNT", "ACCOUNT_WITH_CASH"];
 
-/**
- * The data source a widget reads from: its own, or — the usual case — the one the picker
- * holds, which is what `undefined` asks the host for. A board can therefore carry one tile per
- * account without the screen around it changing.
- */
+/** `undefined` follows the picker (ADR-0030). */
 export function sourceOf(widget: Widget): DataScope | undefined {
   const own = widget.cfg.source as Partial<DataScope> | undefined;
   if (!own || typeof own !== "object") return undefined;
@@ -83,10 +79,7 @@ export function sourceOf(widget: Widget): DataScope | undefined {
   return { kind, id: typeof own.id === "string" ? own.id : null };
 }
 
-/**
- * Which provider and model write a tile, when it names its own. A model belongs to the provider
- * it was picked from, so one without the other is only ever the provider: its newest model.
- */
+/** A model only ever with its provider; a provider alone means its newest model. */
 export function modelOf(widget: Widget): { provider: string | null; model: string | null } {
   const text = (key: string) => {
     const value = widget.cfg[key];
@@ -96,11 +89,7 @@ export function modelOf(widget: Widget): { provider: string | null; model: strin
   return { provider, model: provider ? text("model") : null };
 }
 
-/**
- * The figures a ratio may be built from: balances read on the date, and changes read over the
- * period. Both come from queries the dashboard already makes, so a ratio tile beside a metric
- * tile costs nothing extra.
- */
+/** Balances on the date and changes over the period, from queries the board already makes. */
 export const RATIO_TERMS: Record<
   string,
   { label: MessageDescriptor; periodic?: boolean; pick: (data: RatioData) => MoneyString | undefined }
@@ -188,15 +177,12 @@ export function fireCfg(cfg: Record<string, unknown>) {
 /** How many benchmark lines one chart holds before it stops reading as a comparison. */
 export const MAX_BENCHMARKS = 5;
 
-/**
- * The instruments a benchmark chart compares against, in the order drawn — the order is also the
- * colour. `benchmark` is the single id boards stored before a chart could hold several.
- */
 /** Whether a comparison chart also draws the cost of money. Off unless asked for. */
 export function inflationOf(cfg: Record<string, unknown>): boolean {
   return cfg.inflation === true;
 }
 
+/** Benchmarks in drawing (and colour) order; `benchmark` is the single id older boards stored. */
 export function benchmarksOf(cfg: Record<string, unknown>): string[] {
   const own = Array.isArray(cfg.benchmarks)
     ? cfg.benchmarks

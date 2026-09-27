@@ -5,15 +5,7 @@ import { storedSteps, type Step } from "../aiSteps";
 export type Part =
   { kind: "said"; key: string; role: string; text: string } | { kind: "steps"; key: string; steps: Step[] };
 
-/**
- * The stored turns flattened into that order. Readings are grouped across turns on purpose: a
- * provider that answers one tool call per turn would otherwise draw a dozen separate cards for
- * one question, which is the answer buried rather than explained.
- *
- * A turn holding only tool results is not a message of its own — the result belongs under the
- * call that asked for it, which is joined by `call_id` across the whole chat rather than by
- * position inside one turn.
- */
+/** Stored turns flattened, readings grouped across turns; results join their call by `call_id`. */
 export function conversation(messages: ChatMessage[]): Part[] {
   const results = resultsById(messages);
   const parts: Part[] = [];

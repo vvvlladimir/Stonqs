@@ -1,9 +1,4 @@
-//! Which providers this build can talk to, and how to build one. The single place that maps a
-//! stored provider id to an adapter — `session.rs` takes a `&dyn AiProvider` and never learns
-//! which one it got, the same way it never learns which model it is answering with.
-//!
-//! A provider id is a stored value (`ai_chats.provider`, the keychain account name), so it is
-//! never translated and never renamed: a chat written by an older build must still resolve.
+//! Maps a stored provider id to an adapter; ids are stored values, never renamed.
 
 use super::anthropic::AnthropicProvider;
 use super::compat::CompatProvider;
@@ -12,11 +7,7 @@ use super::openai::OpenAiProvider;
 use super::{AiError, AiProvider, AiResult};
 use serde::{Deserialize, Serialize};
 
-/// One entry per provider the app can reach without being configured. `default_model` is the
-/// **fallback** a chat starts on when the provider's own catalogue cannot be read (no key yet,
-/// no network): what a chat normally lands on is the smallest tier that catalogue offers today
-/// (`models::smallest`), so a build older than a model release does not pin every new chat to a
-/// retired id. The fallback is the small tier too, for the same reason.
+/// `default_model` is only the fallback when the provider's catalogue cannot be read (ADR-0069).
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct Provider {
     pub id: &'static str,
@@ -43,14 +34,8 @@ pub const PROVIDERS: &[Provider] = &[
 /// and the keychain account its key lives under.
 pub const CUSTOM: &str = "custom";
 
-/// Which shape of API a server speaks. Three exist in practice and nothing else is worth
-/// supporting: an endpoint that is neither is not "custom", it is a different integration.
-///
-/// `OpenAiChat` is the default because it is what "OpenAI-compatible" means everywhere outside
-/// OpenAI itself — OpenRouter, Groq, Together, DeepSeek, Mistral, vLLM, llama.cpp, LM Studio,
-/// Ollama and every LiteLLM proxy answer `POST {base}/chat/completions`. `OpenAiResponses` is
-/// OpenAI's own newer shape, which almost nobody else implements. `Anthropic` is `/v1/messages`
-/// and `Gemini` is `:streamGenerateContent`, both offered by the gateways that front those two.
+/// The API shape a custom server speaks. `OpenAiChat` is the default: it is what
+/// "OpenAI-compatible" means outside OpenAI (ADR-0042).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Wire {
     // Spelled out rather than derived: `SCREAMING_SNAKE_CASE` would write `OPEN_AI_CHAT`, and
@@ -66,17 +51,13 @@ pub enum Wire {
     Gemini,
 }
 
-/// A server the user points the app at: a gateway, a proxy, another vendor, or a model running
-/// on this machine. Stored in `settings.json`; the key is not — that lives in the keychain under
-/// `CUSTOM`, exactly like the built-in providers'.
+/// A user-configured server, stored in settings; its key lives in the vault under `CUSTOM`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct CustomProvider {
     /// What to call it in the picker. The user's own words, so it crosses IPC as a value.
     #[serde(default)]
     pub label: String,
-    /// Everything up to and including the version segment — `https://openrouter.ai/api/v1`,
-    /// `http://localhost:11434/v1`. The path of the call is appended, so a base with a trailing
-    /// slash and one without behave the same.
+    /// Up to the version segment (`http://localhost:11434/v1`); a trailing slash makes no difference.
     #[serde(default)]
     pub base_url: String,
     #[serde(default)]
@@ -100,9 +81,7 @@ impl CustomProvider {
     }
 }
 
-/// The model a chat gets when it moves to this provider. An id this build does not know keeps
-/// whatever model the caller already had: refusing here would strand a chat written by a build
-/// that knew one more provider than this one.
+/// An unknown id keeps the caller's model, so a chat from a newer build is not stranded.
 pub fn default_model(id: &str) -> Option<&'static str> {
     PROVIDERS.iter().find(|p| p.id == id).map(|p| p.default_model)
 }

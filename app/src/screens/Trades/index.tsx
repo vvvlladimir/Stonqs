@@ -12,12 +12,7 @@ import { useAsOf } from "../../lib/asOf";
 import { useUiState } from "../../lib/uiState";
 import type { TradeGrouping } from "../../lib/types";
 
-/**
- * A trade is a position's life — or, per lot, one purchase and the part of a sale that emptied
- * it; not an instrument and not a transaction. The period selects which trades were *closed*;
- * what is still held is shown as of its end, because an open trade has no date to fall inside a
- * window.
- */
+/** A trade is a position's life (or one lot's); the period selects closings, open trades are as of its end. */
 export function Trades() {
   const { t } = useLingui();
   const asOf = useAsOf().date;

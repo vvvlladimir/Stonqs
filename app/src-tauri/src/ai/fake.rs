@@ -1,6 +1,4 @@
-//! A provider that answers from a script instead of the network, so the agentic loop, the
-//! consent gate and the storage round-trip are all testable offline — the same role
-//! `StaticFxProvider` plays for `fx/` in the core.
+//! A scripted provider, so the loop, consent and storage are testable offline.
 
 use super::{AiEvent, AiProvider, AiRequest, AiResult, AiTurn, Block, StopReason, Usage};
 use std::cell::RefCell;

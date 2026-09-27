@@ -14,11 +14,7 @@ const BLANK = (date: string): CorporateActionInput => ({
   ratio_to: "2",
 });
 
-/**
- * Splits of one instrument: the list, and one more at the bottom. Quotes arrive already
- * adjusted by the provider, so a split entered here moves lots and nothing else — which is
- * exactly why it has to be entered at all: a quantity from a broker export never is.
- */
+/** Quotes arrive adjusted, so a split here moves lots only — which is why it must be entered. */
 export function Splits({ row, onClose }: { row: SecurityRow; onClose: () => void }) {
   const { t } = useLingui();
   const invalidate = useInvalidate();

@@ -1,10 +1,5 @@
-//! The open profile's password and provider keys, as `AppState` holds them. See ADR-0048.
-//!
-//! Three states: a profile without a password (a plain database; no key can be saved — except the
-//! device-wide keys the first profile had before passwords existed, which it still uses and can
-//! delete), a protected profile that is locked (its database is encrypted and not open at all),
-//! and a protected profile that is open (keys and the database key come from the vault in
-//! memory). See ADR-0048 and ADR-0049.
+//! The open profile's password and keys (ADR-0048/0049): no password (plain database), locked
+//! (not open at all), or unlocked (keys from the in-memory vault).
 
 use crate::ai::{catalog, keys as legacy};
 use crate::error::{UiError, UiResult};
@@ -143,9 +138,7 @@ impl AppState {
         Ok(())
     }
 
-    /// Deletes the open profile — only ever the open one, so deleting a profile takes being in
-    /// it: unlocked, and for a protected one its password typed again. The app moves to another
-    /// profile first and removes the folder after; the last profile is never deleted.
+    /// Only the open, unlocked profile, with its password typed again; the app moves elsewhere first.
     pub fn delete_open_profile(&self, password: Option<&str>) -> UiResult<()> {
         let id = self.profile_id()?;
         if self.is_locked() {
@@ -196,9 +189,7 @@ impl AppState {
         Ok(false)
     }
 
-    /// The key to send with a call. Missing is a failure everywhere but the custom provider, where
-    /// it is normal: a model served from this machine (Ollama, LM Studio, llama.cpp) authenticates
-    /// nothing, and refusing to call it would be demanding a key be invented.
+    /// A missing key is normal only for the custom provider: a local model authenticates nothing.
     pub fn key_for_call(&self, provider: &str) -> UiResult<String> {
         let found = if let Some(open) = self.vault()?.as_ref() {
             open.keys().get(provider).cloned()

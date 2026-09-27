@@ -3,15 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { AiCustomProvider, AiWire, AppSettings } from "../../../lib/types";
 import { Field, Form, Panel } from "../../../components/ui";
 
-/**
- * A server the user points the app at: a gateway (OpenRouter, LiteLLM, Vercel AI Gateway),
- * another vendor, or a model running on this machine (Ollama, LM Studio, llama.cpp).
- *
- * Three shapes of API cover all of them, and `OPENAI_CHAT` is the one to try first: outside
- * OpenAI itself, "OpenAI-compatible" always means `POST {base}/chat/completions`. The model is
- * typed here rather than picked because a server behind a base URL need not offer a catalogue at
- * all — whatever it does offer is added to the chat's picker underneath this one.
- */
+/** A gateway, another vendor or a local model. `OPENAI_CHAT` first; the model is typed, since a server need not list one. */
 export function CustomPanel({
   settings,
   onSave,

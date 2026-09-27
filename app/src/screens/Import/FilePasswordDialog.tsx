@@ -2,10 +2,7 @@ import { useState } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { Field, FormDialog, SecretInput } from "../../components/ui";
 
-/**
- * The password of a sealed file, asked when a plugin's reader recognised it and could not open it
- * without one. It goes back with the next load to that reader alone and is not kept anywhere.
- */
+/** Sent with the next load to the asking reader only, and not kept anywhere. */
 export function FilePasswordDialog({
   plugin,
   tried,

@@ -5,10 +5,7 @@ import { openProfile } from "../../lib/profiles";
 import { ErrorText, Gate, List, ListRow } from "../ui";
 import type { Profile, ProfileList } from "../../lib/types";
 
-/**
- * Who is using the app — asked at launch when there is more than one profile. The last one used
- * is already open, so picking it only lets the app through; picking another swaps and reloads.
- */
+/** Asked at launch when there are several profiles; the last one is already open. */
 export function ProfilePicker({ profiles, onPicked }: { profiles: ProfileList; onPicked: () => void }) {
   const { t } = useLingui();
   const pick = useMutation({

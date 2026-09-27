@@ -4,10 +4,7 @@ import { useLingui } from "@lingui/react/macro";
 import { useErrorText } from "./Async";
 import { CANCEL, SUBMIT, SUBMITTING } from "./formLabels";
 
-/**
- * Form primitives. Fields are full-width, 44px tall — the minimum touch target, not styling.
- * The wording of the buttons is `formLabels.ts`: a screen never writes "Saving…" itself.
- */
+/** Fields are 44px tall: the minimum touch target. Button wording lives in `formLabels.ts`. */
 
 /** `<option>` holds text only, so a select's label is a string, not a ReactNode. A disabled
  * option is shown but cannot be picked — the choice exists, something else is missing. */
@@ -82,10 +79,7 @@ export function CheckField({ label, checked, onChange, disabled, hint }: CheckFi
   );
 }
 
-/**
- * One repeated line inside a [`FieldSet`]: an instrument and its weight, a value and its unit.
- * Lives here rather than in a screen so every such editor is the same line.
- */
+/** One repeated line inside a [`FieldSet`]. */
 export function FieldRow({
   note,
   end,
@@ -177,10 +171,7 @@ export function PercentInput({
   );
 }
 
-/**
- * A password or an API key: hidden by default, with an eye to show what was typed — a key pasted
- * from somewhere is worth checking before it is sealed away for good.
- */
+/** Hidden by default, with an eye to check what was pasted. */
 export function SecretInput({
   value,
   onChange,

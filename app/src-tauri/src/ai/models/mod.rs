@@ -1,18 +1,5 @@
-//! What models a provider offers. The list is the provider's to know, not this codebase's: which
-//! models exist changes faster than the app ships, so the ids come from the provider's own
-//! catalogue and never from a table compiled in here.
-//!
-//! What *is* decided here is how many of them are offered. A provider's catalogue runs to dozens
-//! of entries — dated snapshots, transcription, embeddings, code variants — and a picker holding
-//! all of them is a wall to scroll rather than a choice. Three are kept per provider: the
-//! flagship, the middle one and the small one, newest of each, which is the shape every
-//! catalogue already has (`gpt-…-sol / -terra / -luna`, `opus / sonnet / haiku`, `pro / flash /
-//! flash-lite`).
-//!
-//! The shortlist is built from what the provider answered, not from a whitelist: a model released
-//! after this build is picked up as soon as it is the newest of its tier. A naming this file has
-//! never seen produces no tier at all, and the first three of the ranked catalogue are offered
-//! instead — never an empty picker.
+//! What models a provider offers, read from its own catalogue and cut to three: the newest of
+//! each tier. Unknown naming falls back to the first three of the ranked list.
 
 use super::catalog::{CUSTOM, CustomProvider, Wire};
 use super::{AiError, AiResult};
@@ -31,11 +18,7 @@ pub fn list(provider: &str, key: &str, custom: &CustomProvider) -> AiResult<Vec<
     }
 }
 
-/// The custom provider's list always begins with the model the user typed: a server behind a
-/// base URL need not offer a catalogue at all, and the one it offers may not be the one that
-/// address is actually serving. `GET {base}/models` is part of the same compatibility contract
-/// as the call itself, so what it answers is offered underneath — and a server that answers
-/// nothing simply leaves the picker holding the configured model, which is the truth.
+/// Starts with the model the user typed; `GET {base}/models` is offered underneath.
 fn configured(key: &str, custom: &CustomProvider) -> Vec<String> {
     let typed = custom.model.trim().to_string();
     let mut listed = vec![typed.clone()];
@@ -105,11 +88,7 @@ fn rank_gemini(id: &str) -> u8 {
     if id.starts_with("gemini-") { 0 } else { 1 }
 }
 
-/// Pro, Flash, Flash-Lite — the three tiers Google sells. `-lite` is checked by matching the
-/// whole suffix, because it also contains `flash`. A `-preview` counts: Google ships a new
-/// generation as a preview for months and retires the old stable id meanwhile, so skipping
-/// previews offered a model the API already refuses. Other suffixes (`-thinking`, `-tts`, `-image`)
-/// are a variant for a different job and are not offered here.
+/// Pro, Flash, Flash-Lite; previews count (Google retires stable ids first), other suffixes do not.
 fn tier_gemini(id: &str) -> Option<u8> {
     let rest = dated(id).unwrap_or(id).strip_prefix("gemini-")?;
     if !rest.starts_with(|c: char| c.is_ascii_digit()) {
@@ -147,9 +126,7 @@ fn fetch(request: ureq::RequestBuilder<ureq::typestate::WithoutBody>) -> AiResul
     serde_json::from_str(&text).map_err(|e| AiError::Provider(e.to_string()))
 }
 
-/// OpenAI and Anthropic answer `{ "data": [{ "id": … }] }`; Google answers
-/// `{ "models": [{ "name": "models/…" }] }`. One reader takes either, so a custom server is read
-/// by whichever of the two it happens to speak rather than by what it was configured as.
+/// Reads both `{data:[{id}]}` and `{models:[{name}]}`.
 fn ranked(body: &serde_json::Value, rank: fn(&str) -> u8) -> Vec<String> {
     let listed = body["data"].as_array().or_else(|| body["models"].as_array());
     let mut ids: Vec<String> = listed
@@ -188,9 +165,7 @@ pub fn smallest(provider: &str, listed: &[String]) -> Option<String> {
         .or_else(|| listed.first().cloned())
 }
 
-/// A remembered choice as the list stands today: the id itself while it is still offered,
-/// otherwise the newest model of the same tier — a release must not quietly move the user from
-/// the small model they chose to the flagship, or back.
+/// The same id while offered, else the newest of its tier: a release never moves the user's tier.
 pub fn remembered(provider: &str, chosen: &str, listed: &[String]) -> Option<String> {
     if listed.iter().any(|id| id == chosen) {
         return Some(chosen.to_string());
@@ -200,9 +175,7 @@ pub fn remembered(provider: &str, chosen: &str, listed: &[String]) -> Option<Str
     listed.iter().find(|id| tier(id) == Some(slot)).cloned()
 }
 
-/// The newest id of each tier, in tier order. `tier` returns `None` for everything that is not a
-/// plain chat model of a known family — a dated snapshot still counts, it simply loses to the
-/// undated id of the same version.
+/// Newest id per tier, in tier order; a dated snapshot loses to the undated id.
 fn shortlist(ids: Vec<String>, tier: fn(&str) -> Option<u8>) -> Vec<String> {
     let mut best: BTreeMap<u8, String> = BTreeMap::new();
     for id in &ids {
@@ -215,9 +188,7 @@ fn shortlist(ids: Vec<String>, tier: fn(&str) -> Option<u8>) -> Vec<String> {
         }
     }
     let mut picked: Vec<String> = best.into_values().collect();
-    // A catalogue that names its families some other way would leave the picker with one entry
-    // or none. The ranked list tops it up, newest first, so three are always offered as long as
-    // the provider answered with anything at all.
+    // Unknown naming would leave one entry or none; top up from the ranked list.
     if picked.len() < LIMIT {
         let mut rest: Vec<&String> = ids.iter().filter(|id| !picked.contains(id)).collect();
         // Newest first, then the plain id over a variant of it: a shorter name is the family
@@ -293,12 +264,8 @@ fn dated(id: &str) -> Option<&str> {
     dashed.then_some(stem)
 }
 
-/// Flagship, middle, small — the three OpenAI sells as one family, under two namings: the plain
-/// `gpt-5.4 / -mini / -nano`, and since GPT-5.6 a named tier per generation (`gpt-6-astra`,
-/// `gpt-5.6-sol / -terra / -luna`). Both land in the same three slots, so the newest generation
-/// wins a slot whichever way it spells it. Anything carrying another suffix (`-codex`, `-pro`,
-/// `-chat-latest`, `-search-api`) is a variant for a different job and is not offered here; the
-/// o-series is not a tier of this family either.
+/// Flagship, middle, small under either naming (`gpt-5.4 / -mini / -nano`, `-sol / -terra / -luna`);
+/// other suffixes and the o-series are not tiers.
 fn tier_openai(id: &str) -> Option<u8> {
     let rest = dated(id).unwrap_or(id).strip_prefix("gpt-")?;
     if !rest.starts_with(|c: char| c.is_ascii_digit()) {

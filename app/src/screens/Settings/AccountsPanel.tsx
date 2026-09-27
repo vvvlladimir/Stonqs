@@ -10,10 +10,7 @@ import { Banner, Check, Form, List, ListRow, Num, Panel, Pending, QueryError } f
 import type { AccountRow } from "../../lib/types";
 import { inputOf } from "./model";
 
-/**
- * Which accounts the reports are built from. The accounts themselves — opening,
- * renaming, closing — belong to the Accounts screen; this only draws the boundary.
- */
+/** Which accounts reports are built from; managing accounts is the Accounts screen. */
 export function AccountsPanel() {
   const { t } = useLingui();
   const nav = useNav();

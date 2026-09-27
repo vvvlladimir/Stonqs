@@ -1,10 +1,5 @@
-//! Disposals of shares the ledger never received.
-//!
-//! A sale larger than the position is a hole in the history, not a short position: the
-//! purchase or the incoming transfer is missing. [`build_holdings`](super::build_holdings)
-//! refuses such a ledger; the engine instead reports every hole and bridges it with an implied
-//! delivery at the disposal's own price, so one missing row costs one instrument's accuracy
-//! rather than every figure in the app (ADR-0089).
+//! Disposals of shares the ledger never received: holes, not short positions. The engine bridges
+//! each with an implied delivery at the disposal's price (ADR-0089).
 
 use super::holdings::{Event, ordered_events};
 use crate::error::Result;
@@ -74,9 +69,8 @@ pub fn quantity_gaps(transactions: &[Transaction], actions: &[CorporateAction]) 
     Ok(gaps)
 }
 
-/// The ledger with an implied inbound delivery in front of every gap: the missing quantity at
-/// the disposal's own price, so its result is nil rather than the whole proceeds, and the value
-/// enters as an external flow rather than as a return. Never stored and never listed.
+/// The ledger with an implied inbound delivery before each gap, at the disposal's price: nil
+/// result, value in as a flow. Never stored.
 pub(crate) fn bridge_gaps(
     transactions: Vec<Transaction>,
     actions: &[CorporateAction],

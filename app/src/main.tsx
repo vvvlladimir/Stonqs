@@ -23,9 +23,7 @@ const queryClient = new QueryClient({
 // Must run before first paint — tokens.css variables are keyed off [data-theme].
 applyTheme("system");
 
-// The saved preference arrives with the settings query; until then the OS language is the
-// best guess. Rendering waits for the catalog so no screen ever paints untranslated.
-// `pnpm record:tour` sets up a demo profile first and reloads; nothing renders until it is open.
+// The OS language until the settings arrive; rendering waits for the catalog. `record:tour` opens its profile first.
 const ready = import.meta.env.VITE_RECORD_TOUR
   ? import("./lib/ipcTour").then((m) => m.prepareTour())
   : Promise.resolve(true);

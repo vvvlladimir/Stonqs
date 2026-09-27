@@ -1,12 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-/**
- * The dock's portal target: where a screen puts controls of its own beside the app's lenses.
- *
- * The node is handed over by the element that renders it rather than looked up by id. A lookup
- * can only happen after the commit, which means a screen mounting alongside the dock renders
- * once into nothing — and the state that fixed it up was a render behind what it described.
- */
+/** The dock's portal target, handed over by the element itself; a lookup by id is a render late. */
 const DockContext = createContext<{
   slot: HTMLElement | null;
   hold: (node: HTMLElement | null) => void;

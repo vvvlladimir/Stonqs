@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 
-/**
- * A strip of categories above the one it shows. The strip scrolls sideways rather than
- * wrapping, so the same shape holds at 380px and on a desktop window.
- */
+/** A category strip that scrolls sideways rather than wrapping. */
 
 export interface TabItem<T extends string> {
   id: T;

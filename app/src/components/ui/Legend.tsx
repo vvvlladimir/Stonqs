@@ -6,10 +6,7 @@ export function Legend({ children }: { children: ReactNode }) {
   return <div className="legend">{children}</div>;
 }
 
-/**
- * One legend entry. `slot` takes the colour from the palette; `color` is for markers the
- * palette does not own — a shading step, a pattern.
- */
+/** `slot` for palette colours; `color` for markers the palette does not own. */
 export function LegendItem({
   slot,
   color,

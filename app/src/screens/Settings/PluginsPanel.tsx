@@ -129,9 +129,8 @@ function subtitle(plugin: Plugin, i18n: I18n): string {
     .join(" · ");
 }
 
-/** Why a plugin is not in use, said in the user's language from the host's code. */
-// `msg` rather than a `t` handed in: the extractor only sees a macro, and a `t` passed as an
-// argument is a plain function whose strings never reach the catalog.
+/** Why a plugin is not in use, from the host's code. */
+// `msg`, not a passed-in `t`: only a macro reaches the catalog.
 function reason(plugin: Plugin, i18n: I18n): string {
   switch (plugin.status) {
     case "ok":

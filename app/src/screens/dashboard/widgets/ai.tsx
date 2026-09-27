@@ -13,18 +13,7 @@ import { TOOL_LABELS } from "../../../components/domain/aiToolLabels";
 import type { AiEvent, UiError } from "../../../lib/types";
 import { lengthOf, modelOf, periodOf, refreshEvery, sourceOf, type WidgetProps } from "./model";
 
-/**
- * A written summary of the period, generated on a button and never on its own: a tile that
- * regenerated itself when the data moved would be spending the user's money quietly. When the
- * figures under it do change, the brief says it is out of date and waits (ADR-0039).
- *
- * The tile reads a fixed set — `BRIEF_READINGS`, named in the host — and lists it before the
- * first generation, so pressing the button is the permission rather than something claimed on
- * the user's behalf.
- *
- * A rewriting interval is offered and is off unless chosen: every rewrite is a paid request, so
- * the tile spends nothing until the user says how often it may (ADR-0040).
- */
+/** Generated on a button, never by itself; stale data is flagged, not regenerated (ADR-0039). The auto-rewrite is off unless chosen (ADR-0040). */
 export function BriefWidget({ widget, date, period }: WidgetProps) {
   const { t, i18n } = useLingui();
   const { ui, save } = useUiState();
@@ -40,9 +29,7 @@ export function BriefWidget({ widget, date, period }: WidgetProps) {
   const elsewhere =
     brief !== undefined && range !== undefined && (brief.from !== range.from || brief.to !== range.to);
 
-  // What the timer further down needs, refreshed after each render rather than read during one:
-  // the interval outlives the render that started it and must not hold a stale brief or a stale
-  // generate. `failed` stops an automatic rewrite that errored from retrying every hour.
+  // Refreshed after each render for the interval; `failed` stops an erroring auto-rewrite from retrying hourly.
   const latest = useRef<{ generate: () => Promise<void>; at?: string; busy: boolean } | null>(null);
   const failed = useRef(false);
 

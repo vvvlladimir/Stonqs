@@ -202,9 +202,7 @@ fn months_of(args: &Value) -> u32 {
         .unwrap_or(PROJECTION_MONTHS)
 }
 
-/// Plans, alerts and watchlists are **not** scoped (`.claude/rules/ui-boundary.md`): an intention
-/// about the portfolio, a level on an instrument and a list of instruments do not change when the
-/// account picker narrows, so these bodies read the portfolio rather than the lens.
+/// Not scoped: plans, alerts and watchlists read the portfolio, not the lens.
 pub(super) fn plans_goals(context: &ToolContext, _args: &Value) -> AiResult<Value> {
     let portfolio = &context.scope.portfolio;
     let analytics = context.scope.analytics(context.store).map_err(tool)?;
@@ -375,9 +373,7 @@ pub(super) fn plan_rates(
     context.store.rate_cache(&pairs, context.today).map_err(tool)
 }
 
-/// The body of `plan_commit`: the rows the plan proposes and the link that records the occurrence
-/// as done, written together. Half of it would leave the plan offering a month whose purchases
-/// are already in the ledger (ADR-0033).
+/// Rows and the execution link written together (ADR-0033).
 pub(super) fn plan_commit(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let plan = plan_by_name(context, &text(args, "plan"))?;
 
@@ -439,9 +435,7 @@ fn legs_text(args: &Value) -> String {
         .unwrap_or_default()
 }
 
-/// The body of `plan_due`: what the plan proposes, priced at the occurrence's own date. A
-/// missing price or rate is reported as a problem on that occurrence, not as a failed call —
-/// the other occurrences are still answerable (ADR-0033).
+/// Priced at each occurrence's date; a missing price is a problem on that occurrence, not a failed call.
 pub(super) fn plans_due(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let plans = match optional(args, "plan") {
         Some(name) => vec![plan_by_name(context, &name)?],

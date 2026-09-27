@@ -190,11 +190,7 @@ export const IMPORTABLE_TRANSACTION_KINDS: TransactionKind[] = [
   "SECURITY_TRANSFER_OUT",
 ];
 
-/**
- * How often a plan fires. The core stores a unit and a count; the strip offers the cadences
- * people actually name, so "every 3 months" reads as "Quarterly" without the core knowing
- * the word. A stored pair outside the strip keeps its own wording.
- */
+/** Cadences people name; a stored pair outside the strip keeps its own wording. */
 export const PLAN_CADENCES: Array<{ unit: PlanInterval; count: number; label: MessageDescriptor }> = [
   { unit: "WEEK", count: 1, label: msg`Weekly` },
   { unit: "WEEK", count: 2, label: msg`Every two weeks` },
@@ -213,9 +209,7 @@ export function planCadenceLabel(i18n: I18n, unit: PlanInterval, count: number):
     : plural(count, { one: "Every month", other: "Every # months" });
 }
 
-/** A provider's own name, written the way the company writes it — never translated, and never a
- * sentence the app authored, which is why it sits apart from every label table above. An id this
- * build has no name for is shown exactly as it is stored. */
+/** A provider's own brand name, never translated; unknown ids are shown as stored. */
 export function providerName(id: string, label?: string): string {
   // The user's own name for their server wins over anything written here.
   if (label?.trim()) return label.trim();

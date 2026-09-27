@@ -4,13 +4,7 @@ import { SparkleIcon } from "@phosphor-icons/react";
 import { useSettings } from "../../lib/queries";
 import { ariaKeys, keyHint } from "../../lib/commands";
 
-/**
- * Dock button that opens the panel; hidden entirely when the panel is disabled in Settings.
- *
- * Deliberately not in `AiChatPanel.tsx`: the panel is loaded only once it is opened, and one
- * module holding both would pull the whole conversation — markdown renderer included — into the
- * chunk that draws the dock.
- */
+/** Kept apart from `AiChatPanel` so the dock does not pull the lazy panel into its chunk. */
 export function AiToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { t } = useLingui();
   const settings = useSettings();

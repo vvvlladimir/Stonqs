@@ -1,10 +1,5 @@
-//! The calculation sheet: how the opening value, the flows and what was earned add up to the
-//! closing one, one row per calendar chunk.
-//!
-//! It introduces no new number. Every column is an existing figure narrowed to one chunk, and
-//! the return column *is* [`returns_by_period`] — a second implementation that disagreed with the
-//! TWR shown beside it by a hundredth of a percent would destroy the trust the sheet exists to
-//! build.
+//! The calculation sheet: opening + flows + earned = closing, one row per calendar chunk. Its
+//! return column is [`returns_by_period`] itself, never a second implementation.
 
 use super::{
     ChargeSummary, Holdings, Period, PeriodSummary, ValueSeries, costs_paid_over, period_summary,
@@ -18,10 +13,7 @@ use crate::money::Currency;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-/// One chunk of the period: what it opened with, what moved, and what it closed at.
-///
-/// The identity every row keeps is `end = start + flow + delta`, and `delta` is split into the
-/// three things that can produce it: the market, the income it paid, and what it cost.
+/// One chunk; `end = start + flow + delta`, with `delta` split into market, income and costs.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CalculationRow {
     pub from: chrono::NaiveDate,
@@ -70,10 +62,6 @@ pub struct CalculationSheet {
     pub twr: Decimal,
 }
 
-/// Builds the sheet from one daily series, splitting it on calendar boundaries.
-///
-/// `holdings` supplies the income already recorded, `transactions` the costs; both are the same
-/// ones every other figure on the performance screen is read from.
 pub fn calculation_sheet(
     series: &ValueSeries,
     holdings: &Holdings,

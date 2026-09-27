@@ -1,6 +1,4 @@
-//! What a watched instrument's own closes say, in its own quote currency: the last price, the
-//! day's and the period's move, the period's range, the high, what the provider reports it pays,
-//! and the nearest trigger level. No position and no exchange rate are involved. See ADR-0035.
+//! A watched instrument's own closes in its own quote currency; no position, no exchange rate (ADR-0035).
 
 use super::{AlertStatus, peak_of};
 use crate::market::PricePoint;

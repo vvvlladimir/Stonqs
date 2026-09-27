@@ -9,15 +9,7 @@ export interface AnchorState {
   missing: boolean;
 }
 
-/**
- * Follows the element a step points at, across the screen change that precedes it.
- *
- * A screen arrives lazily and its data a moment later, so the element is polled rather than
- * looked up once — and polling continues after it is found, because the box moves when the
- * window is scrolled or resized. An element that never arrives is not an error: the step is
- * skipped by whoever asked (`missing`), so a deleted widget or a dock control that a narrow
- * window does not draw cannot stall the tour.
- */
+/** Polls for the step's element across lazy screens and keeps following it; one that never appears is skipped. */
 const NONE: AnchorState = { rect: null, missing: false };
 
 export function useAnchor(name: string | undefined, stepId: string): AnchorState {

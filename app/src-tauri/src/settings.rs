@@ -23,10 +23,7 @@ pub struct PeriodSettings {
     pub hidden_presets: Vec<String>,
 }
 
-/// Bumped when a stored file has to be read differently than it was written.
-///
-/// 1: sources are chosen, never defaulted (ADR-0076). A file written before this carries the old
-/// catalogue's defaults in its silence, so `migrate` writes them down before they change meaning.
+/// 1: sources are chosen, never defaulted (ADR-0076).
 pub const SETTINGS_VERSION: u32 = 1;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,19 +56,13 @@ pub struct AppSettings {
     /// Whether the AI panel is offered at all. A provider key can exist while this is off.
     #[serde(default)]
     pub ai_enabled: bool,
-    /// Selected provider id (e.g. `"openai"`); keychain account name and command argument.
-    /// Also what the chat footer was last switched to: a new chat starts where the last choice
-    /// left off (ADR-0069).
+    /// Where a new chat starts; also the last provider switched to in a footer (ADR-0069).
     #[serde(default = "ai_provider_default")]
     pub ai_provider: String,
-    /// The model last picked in a chat, per provider (`provider -> model id`). Absent, a chat
-    /// starts on that provider's smallest tier. Read through `ai::models::remembered`, so an id
-    /// the provider has since retired gives way to the newest of its tier.
+    /// Last model per provider, read through `ai::models::remembered`.
     #[serde(default)]
     pub ai_models: std::collections::BTreeMap<String, String>,
-    /// Model ids the user typed in per provider (`provider -> ids`), offered in the chat's picker
-    /// after the provider's own shortlist: a model the shortlist leaves out, or one the
-    /// provider's catalogue does not list at all, is still reachable.
+    /// Ids the user added per provider, offered after the shortlist.
     #[serde(default)]
     pub ai_extra_models: std::collections::BTreeMap<String, Vec<String>>,
     /// The thinking effort last picked in a chat; where the next chat starts.
@@ -81,25 +72,17 @@ pub struct AppSettings {
     /// leaves the machine when this is on, so it is a setting rather than a default.
     #[serde(default = "ai_web_search_default")]
     pub ai_web_search: bool,
-    /// Whether the panel shows the model's summary of its own reasoning. Off by default, and
-    /// deliberately not by the same argument as web search: the summary costs output tokens and
-    /// some provider accounts are refused it outright, which would fail the whole request — a
-    /// feature nobody asked for must not be able to break a chat.
+    /// Off by default: it costs tokens and some accounts are refused it outright.
     #[serde(default)]
     pub ai_reasoning: bool,
-    /// The server the user points the app at themselves, when they do. Empty until configured,
-    /// and offered as a provider only then (`ai::catalog::CustomProvider::is_set`). Its key is
-    /// not here — that lives in the keychain, like every other provider's.
+    /// Offered as a provider only once configured; its key lives in the vault.
     #[serde(default)]
     pub ai_custom: crate::ai::catalog::CustomProvider,
     /// Market-data sources the user switched away from their default (`source id -> on`).
     /// Host state: the host decides what leaves the machine. Own command, `market_source_switch`.
     #[serde(default)]
     pub market_sources: std::collections::BTreeMap<String, bool>,
-    /// Whether the owner has answered the question of where data comes from. Until they have,
-    /// **every** source is off however the catalogue or this map reads: a build of ours does not
-    /// start asking somebody else's service on behalf of a user who never named it (ADR-0076).
-    /// Set once, by `market_sources_confirm`; `settings_save` never rolls it back.
+    /// Until set, every source is off (ADR-0076). Set by `market_sources_confirm`; `settings_save` never clears it.
     #[serde(default)]
     pub sources_configured: bool,
     /// Quote sources the user described (ADR-0054); their keys sit in the vault, not here.
@@ -172,10 +155,7 @@ pub fn path_for(db_path: &Path) -> PathBuf {
     db_path.with_file_name("settings.json")
 }
 
-/// Load settings; missing or invalid files use defaults.
-///
-/// A file that is there is an installation that already works: it is migrated, never reset. One
-/// that is not is a profile nobody has set up, which starts with nothing switched on.
+/// A file that exists is migrated, never reset; no file means nothing is switched on.
 pub fn load(db_path: &Path) -> AppSettings {
     match std::fs::read(path_for(db_path))
         .ok()
@@ -196,11 +176,7 @@ const ON_BEFORE_THE_SOURCES_WERE_CHOSEN: &[&str] = &[
     sq_core::market::KrakenProvider::ID,
 ];
 
-/// Brings a stored file up to `SETTINGS_VERSION`.
-///
-/// Version 0 is a file whose silence meant the old catalogue's defaults. Those defaults change
-/// with this build, so the state it *had* is written down and the owner is counted as having
-/// chosen it — somebody whose quotes arrive today must not find them stopped by an update.
+/// Version 0: the old defaults' silent state is written down, so an update does not stop anyone's quotes.
 fn migrate(settings: &mut AppSettings) {
     if settings.version >= SETTINGS_VERSION {
         return;
@@ -226,9 +202,7 @@ pub fn settings_get(state: State<AppState>) -> UiResult<AppSettings> {
     Ok(state.settings()?.clone())
 }
 
-/// Save settings without overwriting the active scope, the period axis, frontend UI state or the
-/// chat footer's last picks: each of those has its own command, and this one must not roll them
-/// back.
+/// Leaves scope, periods, UI state and the footer's picks alone: each has its own command.
 #[tauri::command]
 pub fn settings_save(state: State<AppState>, settings: AppSettings) -> UiResult<AppSettings> {
     let scope = state.scope()?.clone();

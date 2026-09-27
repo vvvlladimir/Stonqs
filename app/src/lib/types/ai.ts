@@ -7,12 +7,7 @@ export type AiToolMode = "ASK" | "AUTO";
 /** How hard the model is asked to think in this chat. */
 export type AiEffort = "LOW" | "MEDIUM" | "HIGH";
 
-/** One provider this build can talk to. `connected` is whether a turn would get as far as the
- * network — a saved key for a built-in provider, an address and a model for the custom one,
- * whose key is optional. Never anything about the key itself.
- *
- * `label` is empty for the built-in ones, whose names this side already knows, and carries the
- * user's own words for the custom one. */
+/** `connected`: a turn would reach the network. `label` is the custom provider's user name only. */
 export interface AiProvider {
   id: string;
   connected: boolean;
@@ -58,13 +53,7 @@ export type ToolParams = Record<string, string>;
 /** The three answers a consent card can give. `session` is remembered for this chat only. */
 export type ToolDecision = "once" | "session" | "always" | "deny";
 
-/**
- * What a request cost, as the provider counted it. Counts, not money: the app never prices them,
- * because a price list compiled into the binary is wrong by the provider's next release.
- *
- * `cached_tokens` is part of `input_tokens` and `reasoning_tokens` part of `output_tokens` —
- * a provider that counts neither reports zero for both.
- */
+/** Counts, never money. `cached` is inside `input`, `reasoning` inside `output`. */
 export interface AiUsage {
   input_tokens: number;
   cached_tokens: number;
@@ -83,10 +72,7 @@ export interface AiUsageTotal {
   last_at: string;
 }
 
-/**
- * Streamed over the `ai_send` channel — see `lib/ai.ts`. A failure carries a `UiError`, not a
- * sentence: the host ships the code and this side writes the words, as everywhere else.
- */
+/** A failure carries a `UiError`, never a sentence. */
 export type AiEvent =
   | { type: "text"; text: string }
   /** The turn is blocked until `aiToolDecide` answers this `request_id`. */

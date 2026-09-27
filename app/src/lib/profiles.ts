@@ -13,10 +13,6 @@ export function markChosen(): void {
   sessionStorage.setItem(CHOSEN, "1");
 }
 
-/**
- * Opens another profile. The window reloads rather than invalidating queries: every cached
- * answer, the UI state and the language all belong to the profile being left.
- */
 /** Shortest password the host accepts (`vault::MIN_PASSWORD`). */
 export const MIN_PASSWORD = 8;
 
@@ -26,6 +22,7 @@ export function restart(): void {
   window.location.reload();
 }
 
+/** Reloads rather than invalidating: every cached answer belongs to the profile being left. */
 export async function openProfile(id: string, open: string): Promise<void> {
   markChosen();
   if (id === open) return;

@@ -14,12 +14,7 @@ const REPOSITORY = "https://github.com/vvvlladimir/stonqs";
 /** Eight hundred rows are not a panel: they arrive when somebody asks to see them. */
 const Dependencies = lazy(() => import("./Dependencies"));
 
-/**
- * What the app is and what it does not promise, with the two ways into it above. The disclaimer
- * lives here rather than only in the README, because the README is not what anybody is looking at
- * while reading a return figure; the licence notices live here because MIT and BSD ask that they
- * travel with a compiled copy too.
- */
+/** What the app is and does not promise, plus the licence notices it must carry. */
 export function AboutPanel() {
   const { t } = useLingui();
   const updates = useUpdates();

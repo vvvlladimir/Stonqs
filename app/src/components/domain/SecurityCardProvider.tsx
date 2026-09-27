@@ -1,11 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { SecurityCard } from "./SecurityPopup";
 
-/**
- * One instrument card for the whole app: a ticker is printed on nearly every screen, and none of
- * them should have to own a modal to make it clickable. The provider holds the id, the card reads
- * everything else itself.
- */
+/** One instrument card for the whole app, opened by id. */
 const SecurityCardContext = createContext<{ open: (securityId: string) => void }>({ open: () => {} });
 
 export function SecurityCardProvider({ children }: { children: ReactNode }) {
@@ -22,11 +18,7 @@ export function useSecurityCard() {
   return useContext(SecurityCardContext);
 }
 
-/**
- * Wraps whatever prints an instrument — a ticker, a name, an ISIN — so one click opens its card.
- * Without an id there is nothing to open, and the text is rendered as it was: an import preview
- * names instruments that do not exist yet.
- */
+/** Makes an instrument's text open its card; without an id it renders as plain text. */
 export function SecurityLink({
   id,
   className,

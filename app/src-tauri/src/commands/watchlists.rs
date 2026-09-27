@@ -1,7 +1,4 @@
-//! Named lists of instruments and what each instrument's own quotes say. See ADR-0035.
-//!
-//! Not scoped: a watched instrument's price does not depend on the account picker. The figures
-//! of a position held in it are the positions screen's, joined by the frontend.
+//! Watchlists and what each instrument's own quotes say (ADR-0035). Not scoped.
 
 use crate::commands::parse_date;
 use crate::error::{UiError, UiResult};

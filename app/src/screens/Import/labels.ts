@@ -168,19 +168,10 @@ export function assignColumn(mapping: ImportMapping, column: string, field: Impo
   return { ...mapping, columns };
 }
 
-/**
- * What a file's operation value becomes. Beside the transaction kinds there is one more
- * answer, `SKIP`: a broker prints lines that are not operations at all, and the file must
- * not be held hostage by them.
- */
+/** `SKIP` for lines that are not operations. */
 export const SKIP = "SKIP";
 
-/**
- * The two-operation answers. One broker line is sometimes two operations — a reinvested
- * dividend is an income and a purchase, a wallet move is a leg out and a leg in — and the
- * wizard offers those two beside the single kinds rather than a rule editor. Anything more
- * elaborate is written in the layout itself.
- */
+/** The two shipped two-operation answers; anything else is written in the layout. */
 export const SPLITS = {
   "SPLIT:DIVIDEND+BUY": {
     label: msg`a dividend and a purchase`,
@@ -262,10 +253,7 @@ export function normalizeAlias(value: string): string {
 
 export type PreviewRow = ImportPreviewData["rows"][number];
 
-/**
- * The sentence for a parser notice. The core sends a code and the values behind it, so the
- * wording lives here; `message` is the English fallback for a code we have no sentence for.
- */
+/** Wording from the problem's code; `message` is the English fallback. */
 export function problemDetail(i18n: I18n, problem: ImportProblem): string {
   const p = problem.params;
   if (!p) return problem.message;

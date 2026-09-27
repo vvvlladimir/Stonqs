@@ -6,11 +6,7 @@ import { useLedgerGaps, useSecurities } from "../../lib/queries";
 import type { QuantityGap } from "../../lib/types";
 import { Banner } from "../ui";
 
-/**
- * Says that the ledger sells shares it never received. The figures are still drawn — the host
- * bridges each hole at the sale's own price (ADR-0089) — so without this line an estimate would
- * read as a measurement.
- */
+/** Holes are bridged at the sale's price (ADR-0089), so this says the figures are estimates. */
 export function LedgerGapsBanner() {
   const gaps = useLedgerGaps();
   const securities = useSecurities();

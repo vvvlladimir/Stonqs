@@ -23,9 +23,7 @@ pub struct LoadedFile {
     pub reader: Option<String>,
 }
 
-/// The file the wizard is working on. `content` is what every preview and the commit read, and
-/// for a file a plugin claimed it is **what the reader produced**, not what was on disk: the
-/// reader runs once, at load, and nothing calls it again (ADR-0086).
+/// For a plugin-read file, `content` is what the reader produced; it runs once, at load (ADR-0086).
 pub struct ImportFile {
     pub info: LoadedFile,
     pub content: Vec<u8>,
@@ -76,10 +74,8 @@ fn load(
     unlock: Option<&Unlock>,
 ) -> UiResult<ImportPreviewData> {
     let size = content.len();
-    // A plugin's reader gets the file after the two shipped formats that describe themselves and
-    // before the CSV reader, which accepts nearly anything and would never let one through. What
-    // it produces replaces the bytes: everything downstream reads the app's own transaction file,
-    // so the preview and the commit cannot see different things (ADR-0086).
+    // Plugin readers go after the two self-describing formats and before the CSV reader, which
+    // accepts almost anything (ADR-0086).
     let (content, reader, warnings, skipped) = if is_canonical(&content) || is_flex(&content) {
         (content, None, Vec::new(), Vec::new())
     } else {

@@ -1,9 +1,5 @@
 /* eslint-disable lingui/no-unlocalized-strings -- dev-only recorder: log lines */
-/**
- * The component half of the screenshot tour (`lib/ipcTour.ts`): once the demo profile is open
- * and seeded, it walks every screen and waits for each to go quiet, so `src/lib/ipcRecord.ts`
- * records one complete set of answers per screen.
- */
+/** The component half of the screenshot tour: walks every screen until each is quiet. */
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { SCREENS, quiet, tourFinished, tourStage } from "./ipcTour";

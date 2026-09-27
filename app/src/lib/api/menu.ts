@@ -63,12 +63,7 @@ function stateOf(entry: AppMenuItem | AppMenuSubmenu): string {
   return `${entry.enabled !== false}|${"checked" in entry ? entry.checked : ""}`;
 }
 
-/**
- * Sets the macOS menu bar. Every text is the frontend's, already translated; a picked item comes
- * back as its id. The first section is the application menu, titled by the OS. A spec of the same
- * shape as the last one only updates `enabled` / `checked` on the items it already has, so
- * opening a dialog or changing the period does not rebuild the whole bar. Calls are serialised.
- */
+/** Every text is already translated; a same-shaped spec only updates `enabled`/`checked`. Calls are serialised. */
 export function setAppMenu(sections: AppMenuSection[], onPick: (id: string) => void): Promise<void> {
   // A failed build must not wedge every later one behind it.
   queue = queue.catch(() => {}).then(() => applyMenu(sections, onPick));

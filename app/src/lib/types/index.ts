@@ -1,9 +1,4 @@
-/**
- * Hand-maintained snake_case wire types shared with the Rust host.
- *
- * One file per subject, re-exported here: `from "lib/types"` still names the whole wire
- * format, and a type is edited beside the ones it is written in terms of.
- */
+/** Hand-maintained snake_case wire types, one file per subject, all re-exported here. */
 export type * from "./accounts";
 export type * from "./ai";
 export type * from "./alerts";

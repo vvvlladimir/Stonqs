@@ -1,11 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-/**
- * The renderer itself, in a module of its own so `Markdown` can load it on demand: the parser
- * and its GitHub-flavour extensions are the heaviest dependency in the app, and nothing on the
- * first screen renders prose.
- */
+/** The heavy renderer in its own module, loaded on demand. */
 export default function MarkdownBody({ children }: { children: string }) {
   return (
     <ReactMarkdown

@@ -1,9 +1,4 @@
-//! Synthetic price history for the demo portfolio.
-//!
-//! Prices are drawn as a random walk around a shared market path, so a drawdown shows in every
-//! instrument at once and a benchmark comparison is not a straight line. The walk itself runs in
-//! `f64` — it is a statistic being generated, not money — and only the daily close it produces
-//! crosses into `Decimal`.
+//! Synthetic prices: a random walk around a shared market path, in `f64` until the daily close.
 
 use chrono::{Datelike, NaiveDate, Weekday};
 use rust_decimal::Decimal;
@@ -31,9 +26,7 @@ impl Rng {
         (self.next_u64() >> 11) as f64 / (1u64 << 53) as f64
     }
 
-    /// Roughly normal with a standard deviation of one: two uniforms summed have a deviation of
-    /// 0.408, so the sum is scaled back up — otherwise every `vol` below would be 40% of what it
-    /// claims and the demo would have no drawdowns worth drawing.
+    /// Two uniforms summed, scaled back to a standard deviation of one.
     fn noise(&mut self) -> f64 {
         (self.unit() + self.unit() - 1.0) * 2.449
     }

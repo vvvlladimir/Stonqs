@@ -1,8 +1,4 @@
-/**
- * The command layer (ADR-0072): one catalogue of what the app can do, one registry of who
- * answers it now, and the keyboard, palette and menu bar reading both. Import from
- * `lib/commands`, never from a file inside it.
- */
+/** The command layer (ADR-0072). Import from `lib/commands` only. */
 export {
   COMMAND_IDS,
   COMMANDS,

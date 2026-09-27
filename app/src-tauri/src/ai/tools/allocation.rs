@@ -330,9 +330,7 @@ fn weights_text(args: &Value) -> String {
         .unwrap_or_default()
 }
 
-/// The body of `target_save`. A weight is a share of its parent and the store validates each set
-/// of siblings, so a target that does not add up is refused here rather than silently reweighing
-/// the portfolio (`.claude/rules/taxonomy-and-rebalance.md`).
+/// Sibling sums are validated by the store, so a target that does not add up is refused.
 pub(super) fn rebalance_target_save(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let taxonomy = taxonomy_by_name(context, &text(args, "tree"))?;
     let name = text(args, "target");

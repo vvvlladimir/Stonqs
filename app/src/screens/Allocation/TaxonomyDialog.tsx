@@ -4,11 +4,7 @@ import { Field, FormDialog, Modal } from "../../components/ui";
 import { useAttributeDefs } from "../../lib/queries";
 import type { TaxonomyData } from "../../lib/types";
 
-/**
- * A new tree is a name and, if the user has an attribute to build it from, that attribute:
- * "Country" is created because a Country attribute is already filled in. Filling an existing
- * tree is the tab menu's business — there the tree is what may not be overwritten.
- */
+/** A name and optionally an attribute to build from; filling an existing tree is the tab menu's. */
 export function TaxonomyDialog({
   taxonomy,
   busy,

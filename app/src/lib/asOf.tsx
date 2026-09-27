@@ -3,11 +3,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 import { today } from "./api";
 import type { DateString } from "./types";
 
-/**
- * The date every reading screen is answered for — a lens over time, beside the scope's lens
- * over accounts. Session state on purpose: a date restored from disk would open the app in the
- * past without anybody asking for it, and every figure on screen would look broken.
- */
+/** The as-of lens. Session-only: a date restored from disk would open the app in the past. */
 interface AsOf {
   date: DateString;
   isToday: boolean;

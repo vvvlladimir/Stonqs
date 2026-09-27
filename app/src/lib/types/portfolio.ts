@@ -32,10 +32,7 @@ export interface SetupInput {
   securities_account_name: string | null;
 }
 
-/**
- * A sale or outgoing delivery taking more than the ledger held at that date: the purchase or
- * incoming transfer is missing. Figures around it are estimated (ADR-0089).
- */
+/** A disposal of more than was held; figures around it are estimated (ADR-0089). */
 export interface QuantityGap {
   transaction_id: string;
   date: DateString;

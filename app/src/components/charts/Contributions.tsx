@@ -10,14 +10,7 @@ export interface Contribution {
   value: number;
 }
 
-/**
- * Who made the result: contributions ranked, on one shared scale, with the total beneath.
- *
- * The cascade this used to draw put every bar at a different offset, which is the one thing a
- * reader does not need here — the question is who contributed how much, and a row is answered
- * by the length of its bar. Losses run to the left of the zero line, so a loss can never be
- * mistaken for a gain of the same size.
- */
+/** Contributions on one shared scale, losses left of zero. */
 export function Contributions({ items, total }: { items: Contribution[]; total?: number }) {
   const { t } = useLingui();
   if (items.length === 0)

@@ -24,11 +24,7 @@ impl PortfolioAnalytics<'_> {
         self.portfolio.inflation_region.as_deref()
     }
 
-    /// The period's returns with inflation taken out.
-    ///
-    /// `None` when the portfolio names no region: inflation is a lens the owner turns on, not a
-    /// component of value, so its absence is a setting rather than missing market data. A region
-    /// that *is* named but has no index stored yet is an error, like any other missing series.
+    /// `None` while no region is set (a setting, not missing data); a set region with no index is an error.
     pub fn real_performance(&self, from: NaiveDate, to: NaiveDate) -> Result<Option<RealPerformance>> {
         let Some(region) = self.inflation_region() else {
             return Ok(None);

@@ -1,18 +1,9 @@
 import type { ElementType, HTMLAttributes, ReactNode } from "react";
 
-/**
- * One row shape for every list in the product: a leading marker, a title with
- * its subtitle, and a right-hand value. Absent slots are simply not rendered,
- * so the row needs no per-shape column variants — only looks it can wear:
- * a line in a list, a box in a grid, or something you can tap.
- */
+/** One row shape for every list; absent slots are not rendered. */
 
 export interface ListProps {
-  /**
-   * How the rows sit together. `cards` stacks boxes with a gap, `grid` lays them out in columns,
-   * and `picks` is a set of choices: gapped, roomier, and every box the same height — the option
-   * that takes longer to explain must not look like the bigger answer.
-   */
+  /** `picks` boxes share one height, so the longer option does not look like the bigger answer. */
   variant?: "lines" | "cards" | "grid" | "picks";
   /** `ul` for a real list, `div` where the rows are buttons. */
   as?: "ul" | "div";
@@ -95,9 +86,7 @@ export function ListRow({
   if (foot !== undefined) classes.push("row--foot");
   if (className) classes.push(className);
 
-  // A tappable row is a button — unless it also carries actions, which are buttons of their own:
-  // a button inside a button is invalid markup, and its click reaches the row underneath. Such a
-  // row keeps the keyboard behaviour by hand rather than giving it up.
+  // A row with actions cannot be a button (buttons cannot nest), so it keeps keyboard behaviour by hand.
   const nested = onClick !== undefined && actions !== undefined;
   const Tag = (as ?? (onClick && !nested ? "button" : "div")) as ElementType;
   const side = value !== undefined || meta !== undefined;

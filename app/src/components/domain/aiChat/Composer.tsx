@@ -2,9 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { PaperPlaneRightIcon, StopIcon } from "@phosphor-icons/react";
 
-/** The input box and the one button beside it, which sends or stops depending on what the turn
- * is doing. The box grows with the text up to a few lines and then scrolls: a conversation is
- * the point of the panel, not the draft. */
+/** The input and one button that sends or stops; the box grows a few lines, then scrolls. */
 export function Composer({
   text,
   busy,

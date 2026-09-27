@@ -7,10 +7,7 @@ import { affects, useInvalidate } from "../../lib/queries";
 import { Buttons, Check, Empty, ErrorText, List, ListRow, Modal, SearchBox, Tag } from "../../components/ui";
 import type { SecurityMatch, SecurityRow, Watchlist } from "../../lib/types";
 
-/**
- * Puts instruments on one list. One list of matches: the directory's first, then what the provider
- * found that the directory does not hold yet. Enter searches the provider.
- */
+/** Directory matches first, then the provider's; Enter searches the provider. */
 export function AddDialog({
   list,
   securities,
@@ -35,9 +32,7 @@ export function AddDialog({
     if (needle) search.mutate(query.trim());
   };
 
-  /** Created first, then put on the list; saving it starts the fetch of its quotes. The currency
-   * and the venue come from the picked listing's own profile; a listing without a currency is
-   * refused, not guessed. */
+  /** Currency and venue come from the listing's profile; one without a currency is refused. */
   const add = useMutation({
     mutationFn: async (found: SecurityMatch) => {
       const profile = await api.securityProfile(found.source, found.symbol);

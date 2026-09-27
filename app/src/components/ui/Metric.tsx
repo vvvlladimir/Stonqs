@@ -69,11 +69,7 @@ export function Metric({ label, value, hint, tone = "neutral", tip }: MetricProp
   );
 }
 
-/**
- * Label-and-figure pairs: a definition list, not a shelf of tiles. Where a `Metric` gives one
- * number room, this gives five of them a column each — the widest label sets the left column and
- * every figure lines up on the right, which is what makes a set of statistics scannable.
- */
+/** Label-and-figure pairs as a definition list, figures aligned right. */
 export function Facts({ children }: { children: ReactNode }) {
   return <dl className="facts">{children}</dl>;
 }

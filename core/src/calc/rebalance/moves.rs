@@ -1,8 +1,5 @@
-//! Dividing one node's drift across the subjects filed under it.
-//!
-//! A security becomes a trade floored to its observed step; a cash subject becomes a deposit,
-//! because a balance is paid in rather than bought. A subject that cannot afford its first step
-//! is still kept as a candidate, so leftover cash has somewhere to go.
+//! One node's drift across its subjects: a security becomes a trade floored to its step, cash
+//! becomes a deposit. A subject too poor for one step stays a candidate for leftover cash.
 
 use super::{CashDeposit, Prices, RebalanceTrade};
 use crate::calc::Assignment;

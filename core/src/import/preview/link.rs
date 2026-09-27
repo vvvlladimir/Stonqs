@@ -7,10 +7,8 @@ use crate::model::TransactionKind;
 use chrono::NaiveDate;
 use std::collections::BTreeMap;
 
-/// Pairs the two legs of one internal move: a conversion, a stake or a wallet-to-wallet
-/// transfer is one wording printed on two rows, and only the sign tells the legs apart.
-/// `calc` reads an unlinked transfer as money crossing the portfolio boundary, so a pair
-/// that is really internal has to say so here. A leg left without a partner stays unlinked.
+/// Links the two legs of one internal wording; a leg left without a partner stays unlinked
+/// and is read as crossing the boundary.
 pub(super) fn internal_transfers(rows: &mut [ImportRow], mapping: &ImportMapping) {
     struct Leg {
         row: usize,

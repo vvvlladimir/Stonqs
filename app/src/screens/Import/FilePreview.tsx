@@ -10,10 +10,7 @@ import { readerPluginName } from "./labels";
 /** How many rows read like a sample of the file; the rest are one click away. */
 const SHOWN = 20;
 
-/**
- * The file as it is written, before anything is interpreted: it answers "did we even
- * read this right" — the delimiter, the header row, and which column is which.
- */
+/** The raw file before interpretation: delimiter, header row, columns. */
 export function FilePreview({
   preview,
   mapping,

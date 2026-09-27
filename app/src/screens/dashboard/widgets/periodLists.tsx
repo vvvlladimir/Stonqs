@@ -196,8 +196,3 @@ export function PerformersWidget({ widget, date, period }: WidgetProps) {
     </Async>
   );
 }
-
-/**
- * The contributions still to come, soonest first. Not scoped: a plan is an intention about the
- * portfolio, and narrowing the picker must not hide next month's savings.
- */

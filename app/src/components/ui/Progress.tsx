@@ -4,11 +4,7 @@ import { trackWidth } from "../../lib/plot";
 import { Figure, type Tone } from "./Figure";
 
 export interface ProgressProps {
-  /**
-   * The headline figure: how far along, or how much of it there is. Absent where the figure is
-   * already beside the block — a card whose value and target are its own row — and the track
-   * plus the facts under it are all that is left to draw.
-   */
+  /** Absent where the value and target are already the card's own row. */
   value?: ReactNode;
   tone?: Tone;
   delta?: ReactNode;
@@ -27,13 +23,7 @@ export interface ProgressProps {
   note?: ReactNode;
 }
 
-/**
- * A figure over a track: a savings goal, a contribution limit, a target reached, a plan's pace.
- *
- * These shipped as four different layouts saying the same thing — a tile, a goal card, a limit
- * card, a rebalance row. One shape means a fifth costs a declaration rather than a stylesheet,
- * and the narrow-box behaviour is inherited instead of re-invented.
- */
+/** A figure over a track — goals, limits, targets, a plan's pace — as one shape. */
 export function Progress({
   value,
   tone,

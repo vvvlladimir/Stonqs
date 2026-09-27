@@ -194,12 +194,8 @@ export function MarketRefresh() {
 }
 
 /**
- * Persistent refresh status chip with idle, loading, and error states.
- *
- * A fourth state sits ahead of those three: a set of sources that cannot price a portfolio is
- * an error of its own, and the loudest place to say so is the control that would otherwise
- * claim data is being kept up to date. Nothing is refreshed from there — pressing it opens the
- * question instead (ADR-0076), which is the only thing that would fix it.
+ * Refresh status: idle, loading, error — and ahead of those, a source set that cannot price the
+ * portfolio, where pressing opens the sources question (ADR-0076).
  */
 export function SyncChip() {
   const { t, i18n } = useLingui();

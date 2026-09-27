@@ -1,17 +1,6 @@
 /**
- * Dev-only tour for the website's screenshots, started by `pnpm record:tour`
- * (scripts/record-tour.mjs). It records from a fresh demo profile rather than whatever the dev
- * profile holds, so every recording shows the same portfolio:
- *
- *   fresh -> delete the previous "Screenshots" profile, create a new one and open it
- *   seed  -> fill it with the demo portfolio and wait for the refresh it starts
- *   visit -> open every screen in turn, recording what each asks (src/lib/ipcRecord.ts)
- *
- * Each stage ends in a reload, as switching profile does in the app, so the stage is kept in
- * sessionStorage. Absent from a release build: imported only behind `VITE_RECORD_TOUR`.
- *
- * The stages live here and the component that walks them in `ipcTourRecorder.tsx`: a module
- * exporting both a component and the functions beside it loses fast refresh for the whole app.
+ * Dev-only screenshot tour (`pnpm record:tour`): fresh demo profile → seed → visit every screen,
+ * each stage ending in a reload. Behind `VITE_RECORD_TOUR`; the walker is `ipcTourRecorder.tsx`.
  */
 import type { QueryClient } from "@tanstack/react-query";
 import { api } from "./api";

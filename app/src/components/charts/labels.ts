@@ -9,11 +9,7 @@ export function fullLabel(short: string, full?: string): string {
   return full && full !== short ? `${short} — ${full}` : short;
 }
 
-/**
- * One month of the return heatmap. The tip names the month the way the income calendar's does —
- * a reader hovering two heatmaps in the same board must not be shown a month name in one and a
- * pair of ISO dates in the other — and the month's own bounds are what the grid already says.
- */
+/** A heatmap month, tipped like the income calendar's months. */
 export function returnCell(period: PeriodReturn): CalendarCell {
   const [year, month] = period.from.split("-").map(Number);
   return {

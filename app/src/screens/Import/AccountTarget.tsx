@@ -6,12 +6,7 @@ import { Banner, Choice, List, ListRow } from "../../components/ui";
 import type { AccountKind, AccountRow, ImportMapping } from "../../lib/types";
 import { accountLabel } from "./labels";
 
-/**
- * Which account this export belongs to, asked as what the file *is* rather than as which of the
- * portfolio's accounts to pick. A broker statement and a bank statement are two different
- * things, and the cash leg of the first follows from the choice instead of being a second
- * question — so the step asks once and then only narrows.
- */
+/** Asked as what the file is (broker or bank statement); the cash leg follows from the choice. */
 export function AccountTarget({
   accounts,
   mapping,
@@ -23,10 +18,7 @@ export function AccountTarget({
 }) {
   const { t, i18n } = useLingui();
   const target = accounts.find((a) => a.id === mapping.account_id) ?? null;
-  // The card answers a question the mapping cannot always hold: with two accounts of that kind
-  // there is no account to record yet, and reading the choice off `account_id` alone would
-  // forget it the moment it was made. A recorded account still wins, so applying a layout —
-  // which sets one directly — moves the cards with it.
+  // Remembers the choice when two accounts of that kind leave no account to record; a recorded one wins.
   const [picked, setPicked] = useState<AccountKind | null>(null);
   const kind: AccountKind | null = target?.kind ?? picked;
 

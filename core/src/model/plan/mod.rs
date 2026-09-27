@@ -78,11 +78,7 @@ impl Schedule {
         Ok(())
     }
 
-    /// The `n`-th occurrence, counting the start as zero.
-    ///
-    /// Always measured from `start`, never by stepping off the previous occurrence: a plan
-    /// starting on the 31st must fire on 28 Feb and again on 31 Mar, which stepping would
-    /// ratchet down to the 28th of every later month.
+    /// Always measured from `start`, so a plan on the 31st does not ratchet down to the 28th.
     pub fn nth(&self, n: u32) -> Result<NaiveDate> {
         match self.unit {
             Interval::Week => {
@@ -146,10 +142,7 @@ pub struct PlanLeg {
     pub weight: Decimal,
 }
 
-/// A regular contribution: money on a schedule, optionally split into instruments.
-///
-/// A plan proposes transactions and never writes them — `calc::plans` builds drafts, the user
-/// commits them, and `plan_executions` records which occurrence produced which transaction.
+/// A regular contribution, optionally split into instruments. It proposes; the user commits (ADR-0033).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InvestmentPlan {
     pub id: String,

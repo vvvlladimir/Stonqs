@@ -7,10 +7,7 @@ import { affects, useInvalidate } from "../../lib/queries";
 import { Field, FormDialog, Money } from "../ui";
 import type { AlertInput, SecurityEventInput, SecurityRow } from "../../lib/types";
 
-/**
- * The editor of one trigger. `securities` names the instrument and its current price; `fixed`
- * keeps the rule on the instrument it was opened for instead of offering a choice.
- */
+/** One trigger's editor; `fixed` keeps it on the instrument it was opened for. */
 export function AlertDialog({
   draft,
   securities,
@@ -131,10 +128,7 @@ export function AlertDialog({
   );
 }
 
-/**
- * The user's note on a date. On a dividend or split the provider reported, only the text is
- * editable: its date is the provider's.
- */
+/** A note's editor; on a provider-reported event only the text is editable. */
 export function NoteDialog({
   draft,
   securities,

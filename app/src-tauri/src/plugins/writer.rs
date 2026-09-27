@@ -1,8 +1,4 @@
-//! Running a plugin's file writer (ADR-0080): a `stonqs.transactions` document in, the bytes of
-//! another format out. What the module may reach is `sandbox.rs`, shared with the reader.
-//!
-//! A writer sees what the host hands it and nothing else — no store, no portfolio, no path. The
-//! host writes the bytes it returns where the user chose.
+//! Running a plugin's file writer (ADR-0080): a canonical document in, bytes out; no store, no path.
 
 use super::sandbox;
 use crate::error::{UiError, UiResult};
@@ -27,10 +23,7 @@ pub fn write(module: &Path, canonical: &str) -> Result<Vec<u8>, String> {
     })?
 }
 
-/// What a writer must prove before the package carrying it is installed: its sample is the app's
-/// own transaction file, and writing it produces exactly the bytes the package says it does. The
-/// comparison is byte for byte — unlike a reader's, the output *is* bytes, and a file another
-/// program reads is judged by that program on every byte of it.
+/// The sample must be written exactly as expected, byte for byte: the output is bytes another program judges.
 pub fn check(id: &str, module: &Path, sample: &[u8], expected: &[u8]) -> UiResult<()> {
     sq_core::import::parse_canonical(sample)
         .map_err(|e| UiError::invalid(format!("writer {id}: its sample is not a transaction file: {e}")))?;

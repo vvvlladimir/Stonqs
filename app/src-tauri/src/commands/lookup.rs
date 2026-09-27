@@ -68,10 +68,7 @@ pub async fn import_resolve_symbol(
             }
         }
 
-        // The search places a code on no venue at all when the file names one this source does
-        // not index. The directory still can: it is keyed by ISIN, and every venue it returns is
-        // probed for candles before one is taken. Without an ISIN the bare ticker is asked
-        // instead — a broker's code with a suffix this source spells differently.
+        // No venue from the search: ask the directory by ISIN, else by the bare ticker.
         let venue = match queries.iter().find(|q| is_isin(q)) {
             Some(isin) => service.best_listing(isin, Some(&fallback))?,
             None => service.best_listing_by_symbol(&value, Some(&fallback))?,

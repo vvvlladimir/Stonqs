@@ -1,10 +1,5 @@
-//! A taxonomy built from an instrument attribute.
-//!
-//! The source is a column of our own data rather than a file, but the product is the same plan a
-//! CSV import produces ([`TaxonomyPreview`]) and it is written by the same [`commit_taxonomy`],
-//! so node reuse and target handling have one implementation. See ADR-0032.
-//!
-//! [`commit_taxonomy`]: super::taxonomy::commit_taxonomy
+//! A taxonomy built from an instrument attribute, written by the same `commit_taxonomy` as a CSV
+//! (ADR-0032).
 
 use super::taxonomy::{PreviewAssignment, PreviewNode, TaxonomyCsvConfig, TaxonomyPreview};
 use crate::error::{Error, Result};
@@ -13,15 +8,8 @@ use crate::storage::AttributeValues;
 use rust_decimal::Decimal;
 use std::collections::{BTreeMap, BTreeSet};
 
-/// Plans one node per distinct value of `def`, with every instrument carrying that value assigned
-/// to it whole.
-///
-/// `classified` holds the instruments the target tree already places somewhere; they are planned
-/// as skipped (`security_id: None`, `matched_by: "already_classified"`) rather than moved: the tree
-/// is what the maths reads, so a split typed by hand outranks a value read off a column.
-///
-/// Groups are ordered by size, largest first — the node order is what the charts colour by, and the
-/// big slice deserves the first slot.
+/// One node per distinct value, largest group first. Instruments the tree already classifies are
+/// planned as `already_classified`, not moved: a hand-typed split outranks a column.
 pub fn group_by_attribute(
     def: &SecurityAttributeDef,
     securities: &[Security],

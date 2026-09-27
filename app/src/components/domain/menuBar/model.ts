@@ -3,12 +3,7 @@ import { msg } from "@lingui/core/macro";
 import type { NativeMenuKind } from "../../../lib/api";
 import type { ChoiceId, CommandId } from "../../../lib/commands";
 
-/**
- * The macOS menu bar as data. An entry names a command, a choice, a native item or a list the
- * app arranges itself (the screens); `MenuBar` resolves it against the registry, so whether an
- * item is enabled, its accelerator and its label all come from where the command is defined.
- * Adding an item is a line here; adding a command is a row in `lib/commands/catalog.ts`.
- */
+/** The macOS menu bar as data, resolved against the command registry. */
 export type MenuSpec =
   | "separator"
   /** `keyless` for the second place a command is listed: one accelerator shown twice reads as two. */

@@ -7,24 +7,15 @@ use rust_decimal::Decimal;
 use std::str::FromStr;
 use std::time::Duration;
 
-/// Every geography Eurostat publishes the harmonised index for, in this app's own vocabulary.
-/// `EA` and `EU` are the aggregates; `US` is here because Eurostat computes a harmonised series
-/// for it, which is not the same thing as the American CPI the IMF carries.
+/// Eurostat's published geographies; its `US` is a harmonised series, not the American CPI.
 pub(crate) const PUBLISHED: &[&str] = &[
     "EA", "EU", "AL", "AT", "BE", "BG", "CH", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GB", "GE",
     "GR", "HR", "HU", "IE", "IS", "IT", "LT", "LU", "LV", "ME", "MK", "MT", "NL", "NO", "PL", "PT", "RO",
     "RS", "SE", "SI", "SK", "TR", "US", "XK",
 ];
 
-/// Eurostat's harmonised index of consumer prices, all items, 2015 = 100. Preferred over the IMF
-/// for the geographies it covers: it publishes a euro-area aggregate, which the IMF does not, and
-/// it publishes sooner — around the middle of the following month.
-///
-/// The dataset is the ECOICOP ver. 2 one (`prc_hicp_minr`, classification dimension `coicop18`).
-/// Its ver. 1 predecessor `prc_hicp_midx` still answers every request and still returns HTTP 200,
-/// but it stopped being updated at the end of 2025 — which is why the classification version is
-/// named in this comment: a retired Eurostat dataset goes stale silently rather than erroring,
-/// and nothing in a chain that only falls through on failure would ever notice.
+/// Eurostat HICP, all items, 2015 = 100 — preferred where it covers: euro-area aggregate, earlier.
+/// Dataset `prc_hicp_minr` (ECOICOP v2): its v1 predecessor still answers 200 but stopped updating in 2025.
 pub struct EurostatProvider {
     http_timeout: Duration,
 }
@@ -52,9 +43,7 @@ impl EurostatProvider {
         )
     }
 
-    /// Reads JSON-stat 2.0. Every dimension but time is pinned to one value by the query, so a
-    /// flat value key is a time index — which the response is asked to confirm rather than
-    /// assumed, because a silently widened dimension would misdate the whole series.
+    /// JSON-stat 2.0; the flat key is checked to be the time index rather than assumed.
     pub(crate) fn parse(region: &str, body: &str) -> Result<Vec<IndexPoint>> {
         let bad = |detail: String| Error::BadProviderData {
             provider: Self::ID,

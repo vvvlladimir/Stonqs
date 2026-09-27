@@ -1,9 +1,4 @@
-//! The names a person reads a row by.
-//!
-//! The core answers in ids, and an id means nothing on screen, so every row on this screen
-//! carries the ticker, the instrument's name and the account's label beside the figures. An id
-//! nothing answers to is shown as itself rather than as a blank — a row that vanishes is worse
-//! than a row with an ugly label.
+//! Readable names for rows the core answers in ids; an unknown id is shown as itself.
 
 use crate::error::UiResult;
 use sq_core::storage::Store;

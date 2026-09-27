@@ -3,10 +3,7 @@
 
 use serde_json::Value;
 
-/// Rounded to the currency's own scale before it is handed over. Full `Decimal` precision is
-/// what the *ledger* needs; a model given `40.71258117880362826842458338` will quote it back at
-/// that length, and an answer is not more true for being 26 digits long. Rounding here rather
-/// than asking the prompt nicely is what makes that impossible rather than unlikely.
+/// Rounded to the currency's scale: a model quotes back whatever length it is given.
 pub(super) fn money(value: rust_decimal::Decimal) -> Value {
     Value::String(value.round_dp(2).normalize().to_string())
 }

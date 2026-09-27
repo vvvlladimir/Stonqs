@@ -1,9 +1,4 @@
-//! Consumer-price index levels and the real returns derived from them.
-//!
-//! Mirrors `fx/`: one-method providers, a service that caches and chains them, and a lookup
-//! trait that keeps `calc` testable without a network. What differs is the grain — an index is
-//! published once a month, so a lookup steps rather than interpolates: a daily inflation rate
-//! is not a fact anybody published.
+//! Consumer-price index levels. Mirrors `fx/`, but a monthly index steps rather than interpolates (ADR-0060).
 
 mod codes;
 mod eurostat;
@@ -41,9 +36,7 @@ impl IndexPoint {
     }
 }
 
-/// Every region this build can fetch an index for, sorted — the union of what its sources
-/// publish. It carries codes only: which of them is worth offering, and under what name, is the
-/// frontend's business, where the language is known.
+/// Every region any source publishes, as codes; naming them is the frontend's business.
 pub fn regions() -> Vec<&'static str> {
     let mut all: Vec<&'static str> = eurostat::PUBLISHED
         .iter()

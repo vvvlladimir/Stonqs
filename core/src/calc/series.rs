@@ -215,9 +215,7 @@ pub fn value_series(
     Ok(series)
 }
 
-/// Modified Dietz denominator: the opening value plus every flow weighted by the share of
-/// the period it stayed invested. Callers differ only in where their flows come from — a
-/// value series carries them per day, a position derives them from its own transactions.
+/// Modified Dietz denominator: opening value plus each flow weighted by its time invested.
 pub(crate) fn dietz_capital<I>(start_value: Decimal, flows: I, from: NaiveDate, to: NaiveDate) -> Decimal
 where
     I: IntoIterator<Item = (NaiveDate, Decimal)>,
