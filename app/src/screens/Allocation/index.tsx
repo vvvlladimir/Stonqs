@@ -1,4 +1,3 @@
-import { bucketLabel } from "../../lib/taxonomy";
 import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
@@ -19,13 +18,12 @@ import {
   useTargets,
   useTaxonomies,
 } from "../../lib/queries";
-import { slotFor } from "../../lib/plot";
 import { BreakdownPanel } from "./BreakdownPanel";
 import { useAllocationDialogs } from "./Dialogs";
 import { AllocationMetrics, UnclassifiedBanner } from "./Header";
 import { MembersPanel } from "./MembersPanel";
 import { TaxonomyDock } from "./TaxonomyDock";
-import { UNCLASSIFIED, views, bucketAt, descend, levelShare, nodeSlot, type LevelRow } from "./model";
+import { UNCLASSIFIED, views, bucketAt, descend, levelRows } from "./model";
 import { useAsOf } from "../../lib/asOf";
 
 export function Allocation() {
@@ -63,29 +61,7 @@ export function Allocation() {
   const here = bucketAt(buckets, path);
   const unclassified = buckets.find((b) => b.key === UNCLASSIFIED);
   const atPositions = path.length > 0 && children.length === 0;
-  const rows: LevelRow[] = atPositions
-    ? // Excluded subjects are omitted from allocation charts but remain editable below.
-      (members.data ?? [])
-        .filter((member) => !member.excluded)
-        .map((member, i) => ({
-          kind: "position" as const,
-          subjectKind: member.kind,
-          key: member.subject_id,
-          label: member.symbol,
-          sub: member.name,
-          value: member.value_base,
-          // Core returns the weighted value; do not divide money in the UI.
-          weight: member.weight,
-          slot: slotFor(i),
-        }))
-    : children.map((bucket, i) => ({
-        kind: "node" as const,
-        key: bucket.key,
-        label: bucketLabel(i18n, bucket),
-        value: bucket.value_base,
-        weight: levelShare(bucket.weight, here),
-        slot: nodeSlot(taxonomy, bucket, i),
-      }));
+  const rows = levelRows(i18n, taxonomy, atPositions ? (members.data ?? []) : null, children, here);
 
   const select = (id: string) => {
     setTaxonomyId(id);

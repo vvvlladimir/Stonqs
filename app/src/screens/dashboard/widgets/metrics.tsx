@@ -3,18 +3,13 @@ import { Money, Num, Percent, Rate, Stat } from "../../../components/ui";
 import { formatDay } from "../../../lib/format";
 import {
   ContributionMetric,
-  CostRate,
-  DayMetric,
   DrawdownDays,
-  FromPerformance,
   FromRisk,
-  FromSummary,
   FromTrades,
-  FromValuation,
-  IncomeMetric,
   PeakMetric,
   TurnoverMetric,
-} from "./value";
+} from "./activity";
+import { CostRate, DayMetric, FromPerformance, FromSummary, FromValuation, IncomeMetric } from "./value";
 import type { MetricDef } from "./model";
 
 /** The metric catalog: every number a `metric` widget can show. */

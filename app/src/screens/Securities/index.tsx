@@ -2,7 +2,6 @@ import { plural } from "@lingui/core/macro";
 import { Command } from "../../lib/commands";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowsClockwiseIcon, DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
 import { api } from "../../lib/api";
@@ -12,7 +11,6 @@ import { ListingPicker } from "../../components/domain/ListingPicker";
 import { Page } from "../../components/Page";
 import { useRefreshStatus } from "../../components/domain/MarketRefresh";
 import {
-  Banner,
   ErrorText,
   Panel,
   Pending,
@@ -24,12 +22,15 @@ import {
   useSelection,
   type MenuItem,
 } from "../../components/ui";
-import type { AttributePreview, SecurityRow, SecurityInput } from "../../lib/types";
+import type { SecurityRow, SecurityInput } from "../../lib/types";
 import { AttributeImportDialog } from "./AttributeImportDialog";
 import { SecurityForm } from "./SecurityForm";
 import { Splits } from "./Splits";
 import { SecurityTable } from "./SecurityTable";
-import { cuts, EMPTY, currencyMismatch, inCut, type Cut } from "./model";
+import { Banners } from "./Banners";
+import { cuts, EMPTY, currencyMismatch, inCut, toInput, type Cut } from "./model";
+import { useAttributeFile } from "./useAttributeFile";
+import { useIdentify } from "./useIdentify";
 
 export function Securities({ focus }: { focus?: string | null }) {
   const { t, i18n } = useLingui();
@@ -44,12 +45,8 @@ export function Securities({ focus }: { focus?: string | null }) {
   // Navigation hints use the same visible search filter as typed input. The screen is keyed by
   // the hint (`App`), so arriving with a new one starts here rather than syncing in an effect.
   const [query, setQuery] = useState(focus ?? "");
-  // The file is kept beside its preview: the commit reads it again, so the plan shown and the
-  // plan written are built from the same bytes rather than from what the dialog holds.
-  const [attributeFile, setAttributeFile] = useState<{ path: string; preview: AttributePreview } | null>(
-    null,
-  );
-  const [fileError, setFileError] = useState<string | null>(null);
+  const attributes = useAttributeFile();
+  const { identify, identifyAll } = useIdentify();
   const menu = useMenu();
 
   // Build the selection hook before early returns.
@@ -98,79 +95,14 @@ export function Securities({ focus }: { focus?: string | null }) {
     },
   });
 
-  const importAttributes = useMutation({
-    mutationFn: (path: string) => api.attributesImportCommitPath(path),
-    onSuccess: () => {
-      setAttributeFile(null);
-      invalidate(...affects.securities);
-    },
-  });
-
-  const pickAttributeFile = async () => {
-    setFileError(null);
-    const path = await openFile({ multiple: false, filters: [{ name: "CSV", extensions: ["csv"] }] });
-    if (typeof path !== "string") return;
-    try {
-      setAttributeFile({ path, preview: await api.attributesImportPreviewPath(path) });
-    } catch (error) {
-      setFileError(error instanceof Error ? error.message : String(error));
-    }
-  };
-
-  const exportAttributes = async () => {
-    setFileError(null);
-    const path = await saveFile({
-      defaultPath: "instrument-attributes.csv",
-      filters: [{ name: "CSV", extensions: ["csv"] }],
-    });
-    if (!path) return;
-    try {
-      await api.attributesExportSave(path);
-    } catch (error) {
-      setFileError(error instanceof Error ? error.message : String(error));
-    }
-  };
-
-  /** Resolve imported ISIN placeholders to a provider symbol. */
-  const identify = useMutation({
-    mutationFn: api.securityIdentify,
-    onSuccess: () => invalidate(...affects.securities),
-  });
-
-  /** Resolve sequentially to avoid Yahoo rate limits. */
-  const identifyAll = async (rows: SecurityRow[]) => {
-    for (const row of rows) {
-      try {
-        await identify.mutateAsync(row.id);
-      } catch {
-        // One failed lookup must not stop the remaining rows.
-      }
-    }
-  };
-
   if (securities.isError) return <QueryError error={securities.error} />;
   if (securities.isPending) return <Pending />;
 
   const picking = rows.find((row) => row.id === listingsFor);
   const splitting = rows.find((row) => row.id === splitsFor);
 
-  const edit = (row: SecurityRow) =>
-    setDraft({
-      id: row.id,
-      symbol: row.symbol,
-      name: row.name,
-      currency: row.currency,
-      kind: row.kind,
-      isin: row.isin,
-      data_source: row.data_source,
-      data_symbol: row.data_symbol,
-      quantity_step: row.quantity_step,
-      wkn: row.wkn,
-      note: row.note,
-      attributes: row.attributes,
-      other_symbols: row.other_symbols,
-      latest_source: row.latest_source,
-    });
+  const edit = (row: SecurityRow) => setDraft(toInput(row));
+  const create = () => setDraft({ ...EMPTY, data_source: providers.data?.[0] ?? null });
 
   // Keep destructive actions last and visually separated.
   const itemsFor = (row: SecurityRow): MenuItem[] => [
@@ -225,8 +157,8 @@ export function Securities({ focus }: { focus?: string | null }) {
               menu.openFrom(
                 "securities",
                 [
-                  { label: t`Import attributes…`, onSelect: () => void pickAttributeFile() },
-                  { label: t`Export attributes`, onSelect: () => void exportAttributes() },
+                  { label: t`Import attributes…`, onSelect: () => void attributes.pick() },
+                  { label: t`Export attributes`, onSelect: () => void attributes.exportAll() },
                 ],
                 e.currentTarget,
               )
@@ -234,21 +166,11 @@ export function Securities({ focus }: { focus?: string | null }) {
           >
             <DotsThreeIcon />
           </button>
-          <button
-            className="btn"
-            onClick={() => setDraft({ ...EMPTY, data_source: providers.data?.[0] ?? null })}
-          >
+          <button className="btn" onClick={create}>
             <PlusIcon /> <Trans>Add instrument</Trans>
           </button>
-          <Command
-            id="new"
-            label={t`Add instrument`}
-            run={() => setDraft({ ...EMPTY, data_source: providers.data?.[0] ?? null })}
-          />
-          <Command
-            id="newInstrument"
-            run={() => setDraft({ ...EMPTY, data_source: providers.data?.[0] ?? null })}
-          />
+          <Command id="new" label={t`Add instrument`} run={create} />
+          <Command id="newInstrument" run={create} />
         </>
       }
       filters={
@@ -258,41 +180,14 @@ export function Securities({ focus }: { focus?: string | null }) {
         </>
       }
       banner={
-        broken.length + mismatched.length === 0 && fileError === null ? undefined : (
-          <>
-            {fileError !== null && (
-              <Banner tone="bad">
-                <Trans>Could not read or write the file: {fileError}</Trans>
-              </Banner>
-            )}
-            {broken.length > 0 && (
-              <Banner
-                action={
-                  <button
-                    className="btn btn--sm"
-                    disabled={identify.isPending}
-                    onClick={() => identifyAll(broken)}
-                  >
-                    {identify.isPending ? t`Identifying…` : t`Identify all (${broken.length})`}
-                  </button>
-                }
-              >
-                <Trans>
-                  <b>{broken.length}</b> instruments will get no quotes: their ticker field holds an ISIN —
-                  the code of the instrument, not of a listing. The provider will always answer 404.
-                </Trans>
-              </Banner>
-            )}
-            {mismatched.length > 0 && (
-              <Banner tone="info">
-                <Trans>
-                  <b>{mismatched.length}</b> instruments are quoted in a currency other than their own. The
-                  maths is still right — valuation converts the price at the day's rate — but it usually means
-                  the wrong venue is selected: "Venues" in the row shows the other exchanges.
-                </Trans>
-              </Banner>
-            )}
-          </>
+        broken.length + mismatched.length === 0 && attributes.error === null ? undefined : (
+          <Banners
+            broken={broken}
+            mismatched={mismatched}
+            fileError={attributes.error}
+            identifying={identify.isPending}
+            onIdentifyAll={() => identifyAll(broken)}
+          />
         )
       }
     >
@@ -331,12 +226,12 @@ export function Securities({ focus }: { focus?: string | null }) {
       <Panel table={isWide}>
         <SecurityTable rows={shown} selection={selection} menu={menu} itemsFor={itemsFor} />
       </Panel>
-      {attributeFile && (
+      {attributes.file && (
         <AttributeImportDialog
-          preview={attributeFile.preview}
-          busy={importAttributes.isPending}
-          onClose={() => setAttributeFile(null)}
-          onImport={() => importAttributes.mutate(attributeFile.path)}
+          preview={attributes.file.preview}
+          busy={attributes.importing}
+          onClose={attributes.close}
+          onImport={attributes.importFile}
         />
       )}
 

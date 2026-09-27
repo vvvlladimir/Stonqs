@@ -53,7 +53,7 @@ export interface LiveTool {
 }
 
 /**
- * The streaming part of a chat, kept out of `queries.ts`: a stream is not a query and does not
+ * The streaming part of a chat, kept out of `lib/queries/`: a stream is not a query and does not
  * belong in its cache, only its *result* does (the persisted turns, refetched once `done` fires).
  *
  * A failure is kept as the host's `UiError`, never as a sentence — the panel renders it through

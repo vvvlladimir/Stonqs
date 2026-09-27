@@ -30,7 +30,8 @@ import {
 import { BriefWidget } from "./ai";
 import { METRICS } from "./metrics";
 import { HeadingWidget, MetricWidget } from "./tiles";
-import { ProgressWidget, RatioWidget } from "./value";
+import { ProgressWidget } from "./progress";
+import { RatioWidget } from "./ratio";
 import { PLUGIN_WIDGET, RATIO_TERMS, TRACK_LABELS, pluginWidgetKey, ratioTerms, trackOf } from "./model";
 import { PluginWidget } from "./plugin";
 import { usePlugins } from "../../../lib/queries";
@@ -54,13 +55,10 @@ import {
   DatesWidget,
   EventsWidget,
   LimitsWidget,
-  PerformersWidget,
   PositionsWidget,
-  RiskWidget,
-  TargetValueWidget,
-  TradesWidget,
   WatchlistWidget,
 } from "./list";
+import { PerformersWidget, RiskWidget, TargetValueWidget, TradesWidget } from "./periodLists";
 import type { WidgetDef } from "./model";
 import type { Widget } from "../../../lib/uiState";
 

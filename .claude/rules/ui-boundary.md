@@ -132,7 +132,7 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
 - Alerts and instrument events are *not* scoped either: a level is about an instrument. The host
   never sends a notification — `alerts_take_notifications` checks the rules and hands over the
   unannounced crossings, marked in the same call, and `AlertNotifier` writes the text and calls
-  `notify` (`lib/api.ts`) on start, after each refresh and on every `alerts` change, because the
+  `notify` (`lib/api/events.ts`) on start, after each refresh and on every `alerts` change, because the
   startup refresh can end before a window listens. Unseen crossings put `tab-dot` on the Alerts nav
   item; opening the Log popup calls `alerts_mark_seen` and invalidates only `keys.alertsUnseen()`,
   so the lines in it keep their dot while it is open. The debug-only simulator

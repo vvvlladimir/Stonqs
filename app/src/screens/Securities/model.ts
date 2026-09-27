@@ -43,3 +43,23 @@ export function inCut(row: SecurityRow, cut: Cut): boolean {
 export function currencyMismatch(row: SecurityRow): boolean {
   return row.quote_currency !== null && row.quote_currency !== row.currency;
 }
+
+/** The form's draft for an existing row. */
+export function toInput(row: SecurityRow): SecurityInput {
+  return {
+    id: row.id,
+    symbol: row.symbol,
+    name: row.name,
+    currency: row.currency,
+    kind: row.kind,
+    isin: row.isin,
+    data_source: row.data_source,
+    data_symbol: row.data_symbol,
+    quantity_step: row.quantity_step,
+    wkn: row.wkn,
+    note: row.note,
+    attributes: row.attributes,
+    other_symbols: row.other_symbols,
+    latest_source: row.latest_source,
+  };
+}

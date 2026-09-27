@@ -3,6 +3,7 @@ import { msg } from "@lingui/core/macro";
 import { slotFor, SLOT_COUNT } from "../../lib/plot";
 import { bucketLabel, slotOf } from "../../lib/taxonomy";
 import type {
+  NodeMember,
   AllocationBucket,
   AllocationTarget,
   SubjectKind,
@@ -130,4 +131,39 @@ export function depthOf(preview: TaxonomyPreview): number {
 
 export function countBy(assignments: TaxonomyPreview["assignments"], how: string): number {
   return assignments.filter((a) => (a.matched_by ?? "").startsWith(how)).length;
+}
+
+/**
+ * The rows of the level on display: the subjects of a leaf node (`members` set), else the child
+ * nodes. Excluded subjects leave the chart but stay editable in the members list.
+ */
+export function levelRows(
+  i18n: I18n,
+  taxonomy: TaxonomyData | null,
+  members: NodeMember[] | null,
+  children: AllocationBucket[],
+  here: AllocationBucket | null,
+): LevelRow[] {
+  if (members)
+    return members
+      .filter((member) => !member.excluded)
+      .map((member, i) => ({
+        kind: "position" as const,
+        subjectKind: member.kind,
+        key: member.subject_id,
+        label: member.symbol,
+        sub: member.name,
+        value: member.value_base,
+        // Core returns the weighted value; do not divide money in the UI.
+        weight: member.weight,
+        slot: slotFor(i),
+      }));
+  return children.map((bucket, i) => ({
+    kind: "node" as const,
+    key: bucket.key,
+    label: bucketLabel(i18n, bucket),
+    value: bucket.value_base,
+    weight: levelShare(bucket.weight, here),
+    slot: nodeSlot(taxonomy, bucket, i),
+  }));
 }

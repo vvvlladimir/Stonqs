@@ -1,27 +1,15 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { PencilSimpleIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { PlusIcon } from "@phosphor-icons/react";
 import { Trans, useLingui } from "@lingui/react/macro";
 
 import { api } from "../../lib/api";
 import { useAsOf } from "../../lib/asOf";
-import { formatDay, formatPercent, toNumber } from "../../lib/format";
 import { affects, useInvalidate, useLimits } from "../../lib/queries";
-import {
-  Async,
-  CheckField,
-  Empty,
-  ErrorText,
-  Field,
-  FieldPair,
-  FormDialog,
-  List,
-  ListRow,
-  Money,
-  Panel,
-  Progress,
-} from "../../components/ui";
+import { Async, Empty, ErrorText, List, Panel } from "../../components/ui";
 import type { AccountRow, LimitInput, LimitUsage } from "../../lib/types";
+import { LimitCard } from "./LimitCard";
+import { LimitForm } from "./LimitForm";
 
 const BLANK: LimitInput = {
   id: null,
@@ -131,147 +119,5 @@ export function LimitsPanel({ accounts, base }: { accounts: AccountRow[]; base: 
         />
       )}
     </Panel>
-  );
-}
-
-function LimitCard({
-  usage,
-  account,
-  onEdit,
-  onDelete,
-}: {
-  usage: LimitUsage;
-  account: string;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const { t } = useLingui();
-  const over = (toNumber(usage.share) ?? 0) > 1;
-
-  return (
-    <ListRow
-      box
-      top
-      title={usage.name}
-      sub={account}
-      value={<Money value={usage.used} currency={usage.currency} />}
-      meta={
-        <Trans>
-          of <Money value={usage.allowance} currency={usage.currency} />
-        </Trans>
-      }
-      end={
-        <>
-          <button type="button" className="iconbtn iconbtn--sm" aria-label={t`Edit`} onClick={onEdit}>
-            <PencilSimpleIcon />
-          </button>
-          <button
-            type="button"
-            className="iconbtn iconbtn--sm iconbtn--danger"
-            aria-label={t`Delete`}
-            onClick={onDelete}
-          >
-            <TrashIcon />
-          </button>
-        </>
-      }
-      foot={
-        <Progress
-          size="sm"
-          share={usage.share}
-          barTone={over ? "neg" : undefined}
-          legend={{
-            left: (
-              <>
-                {formatPercent(usage.share)}
-                {" · "}
-                <Trans>
-                  <Money value={usage.remaining} currency={usage.currency} /> left
-                </Trans>
-              </>
-            ),
-            right: (
-              <span className="dim">
-                <Trans>
-                  year {formatDay(usage.from)} — {formatDay(usage.to)}
-                </Trans>
-              </span>
-            ),
-          }}
-        />
-      }
-    />
-  );
-}
-
-function LimitForm({
-  draft,
-  accounts,
-  onChange,
-  onSubmit,
-  onClose,
-  busy,
-  error,
-}: {
-  draft: LimitInput;
-  accounts: AccountRow[];
-  onChange: (draft: LimitInput) => void;
-  onSubmit: () => void;
-  onClose: () => void;
-  busy: boolean;
-  error: Error | null;
-}) {
-  const { t } = useLingui();
-
-  return (
-    <FormDialog
-      title={draft.id ? t`Edit the limit` : t`New limit`}
-      onClose={onClose}
-      onSubmit={onSubmit}
-      busy={busy}
-      error={error}
-      ready={draft.name.trim() !== "" && draft.amount.trim() !== "" && draft.account_id !== ""}
-    >
-      <Field label={t`Name`}>
-        <input value={draft.name} autoFocus onChange={(e) => onChange({ ...draft, name: e.target.value })} />
-      </Field>
-      <Field
-        label={t`Account`}
-        options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-        value={draft.account_id}
-        onChange={(account_id) => onChange({ ...draft, account_id })}
-      />
-      <FieldPair>
-        <Field label={t`Allowance`}>
-          <input
-            inputMode="decimal"
-            value={draft.amount}
-            onChange={(e) => onChange({ ...draft, amount: e.target.value })}
-          />
-        </Field>
-        <Field label={t`Currency`}>
-          <input
-            value={draft.currency}
-            onChange={(e) => onChange({ ...draft, currency: e.target.value.toUpperCase() })}
-          />
-        </Field>
-      </FieldPair>
-      <Field
-        label={t`The year opens on`}
-        hint={t`Month and day, as MM-DD. Not every allowance year is the calendar one.`}
-      >
-        <input
-          value={draft.year_starts_on}
-          placeholder="01-01"
-          onChange={(e) => onChange({ ...draft, year_starts_on: e.target.value })}
-        />
-      </Field>
-      <CheckField
-        label={t`Withdrawals give allowance back`}
-        hint={t`On for a flexible allowance. Off, money taken out still counts as paid in.`}
-        checked={draft.withdrawals_restore}
-        onChange={(withdrawals_restore) => onChange({ ...draft, withdrawals_restore })}
-      />
-    </FormDialog>
   );
 }

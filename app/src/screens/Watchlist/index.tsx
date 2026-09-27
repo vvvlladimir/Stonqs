@@ -6,24 +6,13 @@ import { useMutation } from "@tanstack/react-query";
 import { ColumnsIcon, PlusIcon } from "@phosphor-icons/react";
 import { api } from "../../lib/api";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
-import {
-  affects,
-  useInvalidate,
-  usePortfolio,
-  usePositionReturns,
-  usePositions,
-  usePositionsCostBasis,
-  useSecurities,
-  useWatchlistRows,
-  useWatchlists,
-} from "../../lib/queries";
-import { DEFAULT_UI, useUiState } from "../../lib/uiState";
+import { affects, useInvalidate, useWatchlistRows, useWatchlists } from "../../lib/queries";
+import { useUiState } from "../../lib/uiState";
 import { Page } from "../../components/Page";
 import { PeriodControl } from "../../components/domain/PeriodControl";
 import { useSecurityCard } from "../../components/domain/SecurityCardProvider";
 import {
   Async,
-  ColumnPicker,
   Empty,
   ErrorText,
   Panel,
@@ -37,17 +26,13 @@ import type { WatchlistInput, WatchRow } from "../../lib/types";
 import { AddDialog } from "./AddDialog";
 import { ListDialog } from "./ListDialog";
 import { WatchTable } from "./WatchTable";
-import { useWatchColumns } from "./columns";
-import {
-  GROUPS,
-  needsCostQuery,
-  orderColumns,
-  resolveColumnIds,
-} from "../../components/domain/positionColumns";
+import { orderColumns } from "../../components/domain/positionColumns";
+import { useWatchContext } from "./useWatchContext";
+import { WatchColumnPicker } from "./WatchColumnPicker";
 import { useAsOf } from "../../lib/asOf";
 
 export function Watchlist() {
-  const { t, i18n } = useLingui();
+  const { t } = useLingui();
   const date = useAsOf().date;
   const invalidate = useInvalidate();
   const menu = useMenu();
@@ -61,21 +46,15 @@ export function Watchlist() {
   const [picking, setPicking] = useState(false);
 
   const lists = useWatchlists();
-  const securities = useSecurities();
   const ranges = usePeriodRanges(date);
   const range = pickRange(ranges.data, period);
   const active = lists.data?.find((l) => l.id === chosen) ?? lists.data?.[0] ?? null;
   const rows = useWatchlistRows(active?.id ?? null, range);
-  // A held instrument also shows its position: the positions screen's own queries, shared.
-  const positions = usePositions(date);
-  const returns = usePositionReturns(range);
-  const portfolio = usePortfolio();
-  const allColumns = useWatchColumns();
-  const method = portfolio.data?.cost_basis_method;
-  // Same rule as the positions table: only a purchase figure under the *other* method is
-  // worth the host's second holdings pass.
-  const shownColumns = resolveColumnIds(ui.watch_columns, method);
-  const costs = usePositionsCostBasis(needsCostQuery(shownColumns, method) ? date : null);
+  const { currency, allColumns, shownColumns, securities, ctx } = useWatchContext(
+    date,
+    range,
+    ui.watch_columns,
+  );
 
   const save = useMutation({
     mutationFn: api.watchlistSave,
@@ -100,22 +79,7 @@ export function Watchlist() {
   if (lists.isError) return <QueryError error={lists.error} />;
   if (!lists.data) return <Pending />;
 
-  const currency = portfolio.data?.base_currency ?? "";
   const columns = orderColumns(allColumns, shownColumns);
-  const positionOf = new Map((positions.data?.rows ?? []).map((r) => [r.security_id, r]));
-  const returnOf = new Map((returns.data ?? []).map((r) => [r.security_id, r]));
-  const securityOf = new Map((securities.data ?? []).map((s) => [s.id, s]));
-  const costOf = new Map((costs.data?.rows ?? []).map((r) => [r.security_id, r]));
-  const ctx = (row: WatchRow) => ({
-    currency,
-    i18n,
-    from: range?.from,
-    position: positionOf.get(row.security_id),
-    period: returnOf.get(row.security_id),
-    security: securityOf.get(row.security_id),
-    cost: costOf.get(row.security_id),
-    own: method,
-  });
 
   const newList = () => setDraft({ name: "", security_ids: [] });
   const ids = active?.security_ids ?? [];
@@ -265,22 +229,15 @@ export function Watchlist() {
         />
       )}
 
-      {adding && active && securities.data && (
-        <AddDialog list={active} securities={securities.data} onClose={() => setAdding(false)} />
+      {adding && active && securities && (
+        <AddDialog list={active} securities={securities} onClose={() => setAdding(false)} />
       )}
 
       {picking && (
-        <ColumnPicker
-          columns={allColumns.map((c) => ({
-            id: c.id,
-            label: c.label(i18n, currency),
-            group: c.group,
-            tip: c.tip?.(i18n),
-          }))}
-          groups={GROUPS.map((g) => ({ id: g.id, label: i18n._(g.label) }))}
+        <WatchColumnPicker
+          columns={allColumns}
           selected={shownColumns}
-          onChange={(watch_columns) => saveUi((ui) => ({ ...ui, watch_columns }))}
-          onReset={() => saveUi((ui) => ({ ...ui, watch_columns: DEFAULT_UI.watch_columns }))}
+          currency={currency}
           onClose={() => setPicking(false)}
         />
       )}

@@ -6,7 +6,7 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 
 ## Data
 
-- `lib/queries.ts` is the data layer: every query key is spelled there once (`keys.*`) and every query is a hook (`usePositions`, `useIncome`, …). A screen does not call `useQuery` and never builds a key inline — a shared key is what makes two screens reuse one calculation. A hook with a nullable id or an absent period stays disabled itself, so callers carry no `enabled` and no `!`.
+- `lib/queries/` is the data layer: every query key is spelled once in `keys.ts`, what a write invalidates is `invalidation.ts`, and every query is a hook (`usePositions`, `useIncome`, …). A screen does not call `useQuery` and never builds a key inline — a shared key is what makes two screens reuse one calculation. A hook with a nullable id or an absent period stays disabled itself, so callers carry no `enabled` and no `!`.
   A reporting hook takes `source?: Source` last and puts it last in its key, so a call without one
   keys identically to before and `invalidate(keys.positions())` still covers every source.
 - Invalidation goes through `useInvalidate()` with a named group: `invalidate(...affects.accounts)`. The groups are keyed by the `scope` string the host puts on `data:changed` (`events.rs`), so a mutation's `onSuccess` and the host event invalidate the same list; `App` just forwards the event's kind. Never invalidate everything.
@@ -29,7 +29,7 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   cannot backdate what is entered. The panel sends that date to `ai_send` (`as_of`), where the host
   only *states* it: the tools still answer for today, and an alert created mid-turn must not be
   dated 2023.
-- A period is resolved by the core (`period_ranges`), never date arithmetic in the UI: `PeriodControl` picks an id, the screen hands the resulting `PeriodRange` to a query hook. `lib/periods.ts` owns only the labels of the shipped seven. See ADR-0018. A quote window (the 90-day sparkline) is not a period and does not go through it: `useQuoteWindow` in `lib/queries.ts` owns that arithmetic, so no screen subtracts days of its own.
+- A period is resolved by the core (`period_ranges`), never date arithmetic in the UI: `PeriodControl` picks an id, the screen hands the resulting `PeriodRange` to a query hook. `lib/periods.ts` owns only the labels of the shipped seven. See ADR-0018. A quote window (the 90-day sparkline) is not a period and does not go through it: `useQuoteWindow` in `lib/queries/` owns that arithmetic, so no screen subtracts days of its own.
 - The axis is open at one end (ADR-0026): the shipped `PeriodPreset`s plus the user's own `PeriodSpec`s (`AppSettings::periods`), one flat list keyed by an opaque `PeriodId`. A screen never branches on which kind it picked, and an id that no longer resolves falls back through `pickRange` rather than leaving the screen periodless. Removing a shipped preset only records it in `hidden_presets`; `period_delete` refuses to empty the strip.
 
 ## Where a piece of UI lives
@@ -38,6 +38,9 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 - `components/domain/` holds every reusable piece that names a domain type (`Instrument`, `KindTag`, `ScopePicker`, `PeriodControl`, `AllocationBar`, `ListingPicker`, `MarketRefresh`, `SecurityPopup`). What stays in `components/` itself is infrastructure only — `Page`, `ErrorBoundary`. Value rendering is not domain-aware — `Money` and friends live in `components/ui/`, over `lib/format` alone.
 - An archetype (`components/Page.tsx`) says which slots a screen may fill. A `registry` may carry `controls` only because a column of it is computed over a period rather than read off a date (the positions table showing TWR); its total still belongs in the summary line, never in `metrics`.
 - `screens/<Screen>/index.tsx` is composition only — queries, state, `Page` slots. A panel longer than ~80 lines moves to its own file; a screen file over ~250 lines gets split.
+  A screen's state machine goes into a `use<Thing>.ts` hook beside it (`Import/useImportSession`,
+  `dashboard/useBoardDrag`); a component that outgrows ~250 lines keeps its file as the entry and
+  moves its parts into a folder named after it (`domain/aiChat/`, `domain/securityCard/`).
 - One screen is one chunk: `App` holds every screen behind `lazy()` and one `Suspense`, so a new
   screen costs the first paint nothing. `Onboarding` is eager (it is what an empty database shows),
   and so is the dock — it draws while a screen is still arriving. The AI panel and the markdown
@@ -69,7 +72,7 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   delegated listener and not a link component nobody remembers to use.
 - The updater is the frontend's, not the host's (ADR-0063): `lib/updates.tsx` owns the check (once
   a calendar day, `UiState::updates`), `UpdateDialog` is the only place a version is offered, and
-  `api.ts` keeps the plugin's handle so nothing else holds an installer. An automatic check that
+  `lib/api/updates.ts` keeps the plugin's handle so nothing else holds an installer. An automatic check that
   fails is silent; one the user pressed answers. Desktop only — `useUpdates()` is null elsewhere.
 - The navigation is `components/Nav`: Favorites (Overview always first, never unpinned), sections
   folded to one open at a time, Settings and the two lenses at the foot. One element at every
@@ -231,7 +234,7 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   and no per-breakpoint layout to keep in step. A board leaves the app as a file through
   `boardToFile`/`boardFromFile`, which is also the format of `lib/defaultDashboard.json`: the
   shipped dashboard is authored by exporting one, never by editing code.
-- The widget catalog is `screens/dashboard/widgets/`: `model.ts` (types and shared helpers), one file per catalog group (`chart`, `list`, `value` + `metrics`, `tiles`), and `index.tsx` as the registry alone. A registry file declares no components and a group file exports nothing but components — that is what keeps fast refresh working.
+- The widget catalog is `screens/dashboard/widgets/`: `model.ts` (types and shared helpers), one file per catalog group (`chart`, `list` / `periodLists`, `tiles`, and the value widgets split as `value` / `activity` / `ratio` / `progress` over the shared `figure`, with `metrics` their catalog), and `index.tsx` as the registry alone. A registry file declares no components and a group file exports nothing but components — that is what keeps fast refresh working.
 
 ## i18n
 

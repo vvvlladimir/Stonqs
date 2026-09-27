@@ -2,23 +2,11 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { Command } from "../../lib/commands";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { CalendarDotsIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { api } from "../../lib/api";
 import { DriftBars } from "../../components/charts";
 import { Page } from "../../components/Page";
-import {
-  Async,
-  Choice,
-  Empty,
-  Metric,
-  Metrics,
-  Money,
-  Panel,
-  Pending,
-  QueryError,
-  Seg,
-} from "../../components/ui";
-import { formatMoney } from "../../lib/format";
+import { Async, Choice, Empty, Panel, Pending, QueryError, Seg } from "../../components/ui";
 import { planFromTrades } from "../../lib/plans";
 import { slotOfNode } from "../../lib/taxonomy";
 import {
@@ -35,13 +23,14 @@ import {
 import { PlanForm } from "../../components/domain/PlanForm";
 import type { PlanInput } from "../../lib/types";
 import { CashPanel } from "./CashPanel";
-import { PlanTable } from "./PlanTable";
+import { RebalanceMetrics } from "./RebalanceMetrics";
 import { TargetForm } from "./TargetForm";
-import { cashInPlan, formatPoints, largestDrift } from "./model";
+import { TradesPanel } from "./TradesPanel";
+import { cashInPlan } from "./model";
 import { useAsOf } from "../../lib/asOf";
 
 export function Rebalance() {
-  const { t, i18n } = useLingui();
+  const { t } = useLingui();
   const date = useAsOf().date;
   const invalidate = useInvalidate();
   const [targetId, setTargetId] = useState<string | null>(null);
@@ -85,7 +74,6 @@ export function Rebalance() {
   const taxonomy = taxonomies.data?.find((t) => t.id === target?.taxonomy_id);
   const items = plan.data?.items ?? [];
   const trades = items.flatMap((item) => item.trades.map((trade) => ({ trade, item })));
-  const worst = largestDrift(items);
   const cashRows = cashInPlan(items, taxonomy, dashboard.data?.cash, dashboard.data?.accounts, currency);
   const buys = trades.map(({ trade }) => trade).filter((trade) => !trade.quantity.startsWith("-"));
   const depot = accounts.data?.find((a) => a.kind === "SECURITIES");
@@ -153,47 +141,12 @@ export function Rebalance() {
         </>
       }
       metrics={
-        <Metrics>
-          <Metric
-            label={t`Portfolio`}
-            value={plan.data ? <Money value={plan.data.total_base} currency={currency} digits={0} /> : "…"}
-            hint={cash.trim() ? t`including the new money` : t`the targets are derived from it`}
-          />
-          <Metric
-            label={t`Largest drift`}
-            value={worst ? formatPoints(i18n, worst.points) : "—"}
-            tone={worst && worst.points > 0 ? "negative" : "neutral"}
-            hint={
-              worst
-                ? worst.points > 0
-                  ? t`${worst.item.label}, above target`
-                  : t`${worst.item.label}, below target`
-                : t`the plan has no targets`
-            }
-          />
-          <Metric
-            label={t`To buy`}
-            value={
-              plan.data ? <Money value={plan.data.cash_used_base} currency={currency} digits={0} /> : "…"
-            }
-            hint={
-              plan.data
-                ? t`to sell ${formatMoney(plan.data.sell_base, currency, { digits: 0 })}`
-                : t`and how much to sell`
-            }
-            tip={t`Buys and sells apart: a sale realizes a result and can be taxable.`}
-          />
-          <Metric
-            label={t`Trades`}
-            value={plan.data ? String(trades.length) : "…"}
-            hint={
-              plan.data
-                ? t`${formatMoney(plan.data.cash_left_base, currency, { digits: 0 })} left over`
-                : t`after rounding to the step`
-            }
-            tip={t`Quantities round down to the tradable step, so some cash stays cash.`}
-          />
-        </Metrics>
+        <RebalanceMetrics
+          plan={plan.data}
+          currency={currency}
+          withCash={cash.trim() !== ""}
+          tradeCount={trades.length}
+        />
       }
       banner={plan.isError ? <QueryError error={plan.error} /> : undefined}
     >
@@ -230,46 +183,16 @@ export function Rebalance() {
             </Async>
           </Panel>
 
-          <Panel
-            title={t`Trades`}
-            table
-            info={t`Quantities are rounded to each instrument's tradable step, such as whole shares.`}
-            tools={
-              buys.length > 0 && (
-                <button
-                  className="btn btn--sm"
-                  onClick={makePlan}
-                  disabled={!depot}
-                  title={depot ? undefined : t`A plan buys instruments, so it needs a securities account`}
-                >
-                  <CalendarDotsIcon /> <Trans>Make a plan</Trans>
-                </button>
-              )
-            }
-          >
-            <Async
-              query={plan}
-              isEmpty={() => trades.length === 0 && cashRows.length === 0}
-              empty={
-                <Empty title={t`Nothing to trade`}>
-                  <Trans>
-                    Every category sits within a step of its target, or the drift is smaller than one tradable
-                    unit.
-                  </Trans>
-                </Empty>
-              }
-            >
-              {() => (
-                <PlanTable
-                  trades={trades}
-                  cashRows={cashRows}
-                  currency={currency}
-                  taxonomy={taxonomy}
-                  securities={securities.data}
-                />
-              )}
-            </Async>
-          </Panel>
+          <TradesPanel
+            plan={plan}
+            trades={trades}
+            cashRows={cashRows}
+            currency={currency}
+            taxonomy={taxonomy}
+            securities={securities.data}
+            canPlan={buys.length > 0 ? Boolean(depot) : null}
+            onMakePlan={makePlan}
+          />
         </>
       )}
 

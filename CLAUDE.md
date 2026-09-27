@@ -90,7 +90,7 @@ app/      Tauri host: commands/ (thin), state.rs (Mutex<Store> + Portfolio of th
           error.rs (UiError), plugins/ (installed packages, one folder each: the
           registry in mod.rs, manifest.rs / verify.rs / install.rs for the package,
           sandbox.rs for every WASM component, reads.rs for what a plugin is handed —
-          ADR-0070). Frontend: lib/api.ts is the only file that
+          ADR-0070). Frontend: lib/api/ is the only code that
           imports @tauri-apps/api; lib/types/ is a barrel, still imported as
           "lib/types".
 import/   parse_file -> parse/ | ibflex/ (IB Flex XML, ADR-0061) -> mapping/

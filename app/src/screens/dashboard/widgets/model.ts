@@ -320,3 +320,9 @@ export function refreshEvery(cfg: Record<string, unknown>): number | null {
   const hours = typeof cfg.refresh === "string" ? REFRESH_HOURS[cfg.refresh] : undefined;
   return hours ? hours * 3600 * 1000 : null;
 }
+
+/** The range a tile's period resolves to on `date`; `undefined` while the axis loads. */
+export function useRange(date: DateString, period: PeriodId) {
+  const ranges = usePeriodRanges(date);
+  return pickRange(ranges.data, period);
+}

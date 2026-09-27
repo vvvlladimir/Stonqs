@@ -1,6 +1,5 @@
 import { useRef, useState, type CSSProperties } from "react";
-import { createPortal } from "react-dom";
-import { CaretRightIcon, ListIcon, PuzzlePieceIcon } from "@phosphor-icons/react";
+import { CaretRightIcon } from "@phosphor-icons/react";
 import { Trans, useLingui } from "@lingui/react/macro";
 
 import type { ScreenId } from "../../lib/nav";
@@ -11,6 +10,10 @@ import { ariaBinding, COMMANDS, useLayer } from "../../lib/commands";
 import { AsOfPicker } from "../domain/AsOfPicker";
 import { ScopePicker } from "../domain/ScopePicker";
 import { arrange, HOME, moveBefore, PLUGIN_SECTION, SCREENS, SETTINGS, TABS, type NavSection } from "./model";
+import { AlertsDot } from "./AlertsDot";
+import { DragGhost } from "./DragGhost";
+import { PluginSection } from "./PluginSection";
+import { TabBar } from "./TabBar";
 import { useReorder, type DragItem, type Drop } from "./useReorder";
 
 interface Props {
@@ -95,7 +98,6 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
   };
 
   const hasDot = (id: ScreenId) => id === "alerts" && alertsDot;
-  const dot = <i className="tab-dot" aria-label={t`new crossings to look at`} />;
   const markAt = (key: string) => (drag?.mark?.key === key ? drag.mark.side : undefined);
   const carried = (kind: DragItem["kind"], id: string) =>
     drag?.item.kind === kind && drag.item.id === id ? "" : undefined;
@@ -125,7 +127,7 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
       >
         <Icon weight={on ? "fill" : "regular"} />
         <span className="nav__lbl">{i18n._(s.title)}</span>
-        {hasDot(id) && dot}
+        {hasDot(id) && <AlertsDot />}
       </button>
     );
   };
@@ -148,7 +150,7 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
         onClick={() => toggle(sec.id)}
       >
         <span className="nav__lbl">{i18n._(sec.label)}</span>
-        {sec.screens.some(hasDot) && dot}
+        {sec.screens.some(hasDot) && <AlertsDot />}
         <CaretRightIcon className="nav__caret" />
       </button>,
       <div
@@ -172,62 +174,7 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
     ];
   };
 
-  /**
-   * Plugin screens: one section after the shipped ones, in the plugin list's order. Nothing here
-   * is dragged or pinned — the stored arrangement names only what the app defines (ADR-0084).
-   */
-  const plugins = () => {
-    if (pluginScreens.length === 0) return null;
-    const open = layout.open === PLUGIN_SECTION;
-    return [
-      <button
-        key="section:plugins"
-        type="button"
-        className="nav__row nav__head"
-        aria-expanded={open}
-        onClick={() => toggle(PLUGIN_SECTION)}
-      >
-        <span className="nav__lbl">
-          <Trans>Plugins</Trans>
-        </span>
-        <CaretRightIcon className="nav__caret" />
-      </button>,
-      <div
-        key="fold:plugins"
-        className="nav__fold"
-        data-open={open ? "" : undefined}
-        data-opening={opening === PLUGIN_SECTION ? "" : undefined}
-        ref={(el) => {
-          if (el) el.inert = !open;
-        }}
-      >
-        <div className="nav__clip">
-          <div className="nav__sub">
-            {pluginScreens.map((p, i) => {
-              const on = screen === "plugin" && focus === p.key;
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  className="nav__row nav__row--sub"
-                  aria-current={on ? "page" : undefined}
-                  style={{ "--i": i } as CSSProperties}
-                  onClick={() => pick("plugin", p.key)}
-                >
-                  <PuzzlePieceIcon weight={on ? "fill" : "regular"} />
-                  <span className="nav__lbl">{p.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>,
-    ];
-  };
-
   const tabs = [HOME, ...layout.favorites].slice(0, TABS);
-  const ghost = drag && SCREENS[drag.item.id as ScreenId];
-  const ghostSection = drag && layout.sections.find((s) => s.id === drag.item.id);
 
   return (
     <>
@@ -255,7 +202,14 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
               <Trans>Sections</Trans>
             </div>
             {layout.sections.flatMap(section)}
-            {plugins()}
+            <PluginSection
+              screens={pluginScreens}
+              active={screen === "plugin" ? focus : null}
+              open={layout.open === PLUGIN_SECTION}
+              opening={opening === PLUGIN_SECTION}
+              onToggle={() => toggle(PLUGIN_SECTION)}
+              onPick={(key) => pick("plugin", key)}
+            />
             <div
               className="nav__end"
               data-nav-end=""
@@ -276,59 +230,16 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
 
       <div className="nav__scrim" onClick={() => setSheet(false)} />
 
-      <nav className="tabbar" aria-label={t`Tabs`}>
-        {tabs.map((id) => {
-          const s = SCREENS[id];
-          const Icon = s.icon;
-          const on = id === screen;
-          return (
-            <button
-              key={id}
-              type="button"
-              className="tabbar__tab"
-              aria-current={on ? "page" : undefined}
-              onClick={() => pick(id)}
-            >
-              <Icon weight={on ? "fill" : "regular"} />
-              <span className="nav__lbl">{i18n._(s.title)}</span>
-              {hasDot(id) && dot}
-            </button>
-          );
-        })}
-        {/* A screen that is not a tab lights up Menu: you are somewhere inside it. */}
-        <button
-          type="button"
-          className="tabbar__tab"
-          data-on={tabs.includes(screen) ? undefined : ""}
-          aria-expanded={sheet}
-          onClick={() => setSheet((v) => !v)}
-        >
-          <ListIcon />
-          <span className="nav__lbl">
-            <Trans>Menu</Trans>
-          </span>
-          {alertsDot && !tabs.includes("alerts") && dot}
-        </button>
-      </nav>
+      <TabBar
+        tabs={tabs}
+        screen={screen}
+        sheet={sheet}
+        alertsDot={alertsDot}
+        onPick={pick}
+        onMenu={() => setSheet((v) => !v)}
+      />
 
-      {drag &&
-        createPortal(
-          <div
-            className="nav__ghost"
-            data-remove={drag.drop?.kind === "unfav" ? "" : undefined}
-            style={{ left: drag.x, top: drag.y, width: drag.width }}
-          >
-            {ghost ? (
-              <>
-                <ghost.icon />
-                <span className="nav__lbl">{i18n._(ghost.title)}</span>
-              </>
-            ) : (
-              ghostSection && <span className="nav__lbl">{i18n._(ghostSection.label)}</span>
-            )}
-          </div>,
-          document.body,
-        )}
+      {drag && <DragGhost drag={drag} sections={layout.sections} />}
     </>
   );
 }
