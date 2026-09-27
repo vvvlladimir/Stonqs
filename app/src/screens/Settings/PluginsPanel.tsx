@@ -146,5 +146,11 @@ function reason(plugin: Plugin, i18n: I18n): string {
       const { detail } = plugin;
       return i18n._(msg`Its plugin.json could not be read: ${detail}`);
     }
+    case "misplaced": {
+      const { id: folder, manifest_id } = plugin;
+      return i18n._(
+        msg`Its folder is named ${folder}, but its plugin.json says ${manifest_id}. Remove it and install it again.`,
+      );
+    }
   }
 }

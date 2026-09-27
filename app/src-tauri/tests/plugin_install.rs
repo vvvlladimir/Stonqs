@@ -104,6 +104,7 @@ fn the_example_reader_installs_and_reads_its_own_sample() {
     let claimed = plugins
         .read_file("statement.sta", &sample)
         .unwrap()
+        .read
         .expect("a reader claims the file");
     assert_eq!(claimed.0, "app.stonqs.mt940/mt940");
     assert_eq!(claimed.1.canonical, reading.canonical);
@@ -148,7 +149,7 @@ fn a_module_that_is_not_a_component_fails_rather_than_installs() {
 
     let refusal = sq_app_lib::plugins::reader::read(&module, b":20:X\n:61:x\n", "s.sta", None)
         .expect_err("a file that is not a component cannot read anything");
-    assert!(matches!(refusal, sq_app_lib::plugins::reader::Refusal::Failed(_)));
+    assert!(matches!(refusal, sq_app_lib::plugins::reader::Refusal::Broken(_)));
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -622,6 +623,34 @@ fn a_tool_whose_name_another_plugin_already_answers_to_installs_nothing() {
     );
     // Reinstalling the owner is not a clash with itself.
     plugins.install(&package("a.b", "c")).unwrap();
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// A module that breaks over a file never said the file was its own, so the import moves past it
+/// and says so — one broken package must not refuse every file the user opens.
+#[test]
+fn a_reader_that_breaks_is_passed_over_and_named() {
+    let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/mt940");
+    let dir = std::env::temp_dir().join(format!("stonqs-example-{}", uuid::Uuid::new_v4()));
+    let plugins = Plugins::new(&dir);
+    plugins.install(&example).unwrap();
+    // What a trap, a deadline or a corrupted file looks like from the host's side.
+    std::fs::write(
+        dir.join("plugins/app.stonqs.mt940/reader.wasm"),
+        b"no longer a module",
+    )
+    .unwrap();
+
+    let reading = plugins
+        .read_file("statement.sta", b":20:X\n")
+        .expect("a broken reader is not the import's failure");
+    assert!(
+        reading.read.is_none(),
+        "the file goes on to the app's own readers"
+    );
+    assert_eq!(reading.skipped.len(), 1);
+    assert_eq!(reading.skipped[0].plugin, "app.stonqs.mt940/mt940");
 
     std::fs::remove_dir_all(&dir).ok();
 }

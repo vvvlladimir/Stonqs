@@ -218,7 +218,9 @@ hands over a file that looks perfectly correct, so it is checked against an answ
 against a shrug.
 
 Returning `not-mine` is not a failure — the app moves on to the next reader and then to its own.
-Returning `malformed` is, and it says so with the reader's own reason. A warning does not stop
+Returning `malformed` is, and it says so with the reader's own reason. A module that traps, runs
+past its deadline or out of memory never said the file was its own, so it is passed over like
+`not-mine` — the wizard says which plugin failed — rather than blocking every file the user opens. A warning does not stop
 anything: it is shown beside the preview, in the reader's words.
 
 ## `ledger` — a file writer

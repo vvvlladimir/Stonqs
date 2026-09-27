@@ -32,10 +32,12 @@ export function FilePreview({
   const more = preview.rows.length > SHOWN;
   // The table below is what the reader produced, not what was on disk — which is worth saying,
   // because the columns in it are the app's own and not the ones the file had.
-  const readBy = preview.reader
-    ? (plugins.data?.plugins.find((p) => p.id === preview.reader?.split("/")[0])?.name ??
-      preview.reader.split("/")[0])
-    : null;
+  // A reader is named by its plugin's own name, or by its id once that plugin is gone.
+  const pluginName = (key: string) => {
+    const id = key.split("/")[0];
+    return plugins.data?.plugins.find((p) => p.id === id)?.name ?? id;
+  };
+  const readBy = preview.reader ? pluginName(preview.reader) : null;
 
   return (
     <Panel
@@ -63,6 +65,18 @@ export function FilePreview({
           <Trans>Read by the {readBy} plugin, which turned it into the app's own transaction file.</Trans>
         </Banner>
       )}
+      {preview.skipped_readers?.map((skipped) => {
+        const name = pluginName(skipped.plugin);
+        const detail = skipped.detail;
+        return (
+          <Banner key={skipped.plugin}>
+            <Trans>
+              The {name} plugin failed on this file and was skipped. Update or remove it if this keeps
+              happening. ({detail})
+            </Trans>
+          </Banner>
+        );
+      })}
       {preview.reader_warnings?.map((warning, index) => (
         // The reader's own words, in its own language: the app has no table to translate a
         // stranger's code from, so it is shown beside the sentence rather than instead of it.

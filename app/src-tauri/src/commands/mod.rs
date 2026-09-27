@@ -34,6 +34,19 @@ use crate::error::{UiError, UiResult};
 use chrono::NaiveDate;
 use sq_core::storage::Store;
 
+/// Runs `work` on a blocking thread. A synchronous command runs on the main thread in Tauri 2, so
+/// anything that can take seconds — the network, a plugin's module — goes through here instead of
+/// freezing the window.
+pub(crate) async fn off_thread<T, F>(work: F) -> UiResult<T>
+where
+    T: Send + 'static,
+    F: FnOnce() -> UiResult<T> + Send + 'static,
+{
+    tauri::async_runtime::spawn_blocking(work)
+        .await
+        .map_err(|e| UiError::internal(format!("the background task did not run: {e}")))?
+}
+
 /// Parse the single `YYYY-MM-DD` date format used across the wire boundary.
 pub(crate) fn parse_date(value: &str) -> UiResult<NaiveDate> {
     NaiveDate::parse_from_str(value, "%Y-%m-%d")

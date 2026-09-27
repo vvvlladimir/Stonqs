@@ -1,6 +1,7 @@
+use super::off_thread;
 use crate::error::{UiError, UiResult};
 use crate::events::emit_changed;
-use crate::plugins::reader::ReaderWarning;
+use crate::plugins::reader::{ReaderWarning, SkippedReader};
 use crate::state::AppState;
 use chrono::Local;
 use serde::Serialize;
@@ -9,7 +10,7 @@ use sq_core::import::{
     PriceMapping, RowOverride, is_canonical, is_flex, parse_file,
 };
 use sq_core::storage::Store;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LoadedFile {
@@ -28,6 +29,8 @@ pub struct ImportFile {
     pub info: LoadedFile,
     pub content: Vec<u8>,
     pub warnings: Vec<ReaderWarning>,
+    /// Readers that broke over this file and were passed over on the way to what read it.
+    pub skipped: Vec<SkippedReader>,
 }
 
 #[derive(Debug, Serialize)]
@@ -46,21 +49,36 @@ pub struct ImportPreviewData {
     /// own problems: these are a stranger's wording about a file the app never saw.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub reader_warnings: Vec<ReaderWarning>,
+    /// Plugin readers that broke over the file and were passed over, so the file went on to the
+    /// next reader — or to the app's own — instead of being refused.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub skipped_readers: Vec<SkippedReader>,
 }
 
+/// Off the main thread: a plugin's reader may run here, and it is allowed seconds.
 #[tauri::command]
-pub fn import_load(state: State<AppState>, name: String, content: Vec<u8>) -> UiResult<ImportPreviewData> {
+pub async fn import_load(app: AppHandle, name: String, content: Vec<u8>) -> UiResult<ImportPreviewData> {
+    off_thread(move || load(app.state::<AppState>(), name, content)).await
+}
+
+fn load(state: State<AppState>, name: String, content: Vec<u8>) -> UiResult<ImportPreviewData> {
     let size = content.len();
     // A plugin's reader gets the file after the two shipped formats that describe themselves and
     // before the CSV reader, which accepts nearly anything and would never let one through. What
     // it produces replaces the bytes: everything downstream reads the app's own transaction file,
     // so the preview and the commit cannot see different things (ADR-0073).
-    let (content, reader, warnings) = if is_canonical(&content) || is_flex(&content) {
-        (content, None, Vec::new())
+    let (content, reader, warnings, skipped) = if is_canonical(&content) || is_flex(&content) {
+        (content, None, Vec::new(), Vec::new())
     } else {
-        match state.plugins.read_file(&name, &content)? {
-            Some((id, reading)) => (reading.canonical.into_bytes(), Some(id), reading.warnings),
-            None => (content, None, Vec::new()),
+        let found = state.plugins.read_file(&name, &content)?;
+        match found.read {
+            Some((id, reading)) => (
+                reading.canonical.into_bytes(),
+                Some(id),
+                reading.warnings,
+                found.skipped,
+            ),
+            None => (content, None, Vec::new(), found.skipped),
         }
     };
 
@@ -78,13 +96,10 @@ pub fn import_load(state: State<AppState>, name: String, content: Vec<u8>) -> Ui
 
     *state.import_file()? = Some(ImportFile {
         // The name and the size are the file the user chose, not the document a reader made of it.
-        info: LoadedFile {
-            name,
-            size,
-            reader: reader.clone(),
-        },
+        info: LoadedFile { name, size, reader },
         content,
-        warnings: warnings.clone(),
+        warnings,
+        skipped,
     });
     let (config, mapping) = match &found {
         Some(template) => (template.config.clone(), Some(template.mapping.clone())),
@@ -93,15 +108,16 @@ pub fn import_load(state: State<AppState>, name: String, content: Vec<u8>) -> Ui
     let mut data = import_preview(state, config, mapping, Vec::new())?;
     // The id, not the name: a plugin's layout and a shipped one may print the same one.
     data.applied_template = found.map(|t| t.id);
-    data.reader = reader;
-    data.reader_warnings = warnings;
     Ok(data)
 }
 
 #[tauri::command]
-pub fn import_load_path(state: State<AppState>, path: String) -> UiResult<ImportPreviewData> {
-    let (name, content) = read_file(&path)?;
-    import_load(state, name, content)
+pub async fn import_load_path(app: AppHandle, path: String) -> UiResult<ImportPreviewData> {
+    off_thread(move || {
+        let (name, content) = read_file(&path)?;
+        load(app.state::<AppState>(), name, content)
+    })
+    .await
 }
 
 #[tauri::command]
@@ -149,6 +165,7 @@ pub fn import_preview(
         applied_template: None,
         reader: loaded.info.reader.clone(),
         reader_warnings: loaded.warnings.clone(),
+        skipped_readers: loaded.skipped.clone(),
     })
 }
 
@@ -199,6 +216,7 @@ pub fn import_prices_load(state: State<AppState>, name: String, content: Vec<u8>
         },
         content,
         warnings: Vec::new(),
+        skipped: Vec::new(),
     });
     import_prices_preview(state, ParseConfig::default(), None)
 }

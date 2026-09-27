@@ -570,3 +570,16 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     .unwrap();
     assert_eq!(keys(&json), ["key", "name", "plugin", "plugin_name", "reads"]);
 }
+
+/// A folder renamed by hand is listed under the folder's name, carrying the id its manifest gives,
+/// so the frontend can say both.
+#[test]
+fn a_misplaced_plugin_names_the_id_its_manifest_gives() {
+    use sq_app_lib::plugins::Status;
+    let json = serde_json::to_value(Status::Misplaced {
+        manifest_id: "app.stonqs.midnight".into(),
+    })
+    .unwrap();
+    assert_eq!(json["status"], "misplaced");
+    assert_eq!(json["manifest_id"], "app.stonqs.midnight");
+}

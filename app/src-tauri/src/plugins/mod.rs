@@ -186,6 +186,11 @@ pub enum Status {
     Broken {
         detail: String,
     },
+    /// The folder's name is not the id its manifest gives — moved or copied by hand. Every file
+    /// of a plugin is found through its id, so nothing of it is offered until it is reinstalled.
+    Misplaced {
+        manifest_id: String,
+    },
 }
 
 /// One installed plugin as the list shows it.
@@ -213,6 +218,28 @@ pub struct PluginInfo {
     pub tools: Vec<ToolDef>,
     #[serde(flatten)]
     pub status: Status,
+}
+
+impl PluginInfo {
+    /// A folder listed for what is wrong with it and offering nothing. `id` is the folder's own
+    /// name, so removing it removes that folder.
+    fn unusable(id: &str, name: String, status: Status) -> Self {
+        PluginInfo {
+            id: id.to_string(),
+            name,
+            version: String::new(),
+            themes: Vec::new(),
+            layouts: Vec::new(),
+            readers: Vec::new(),
+            taxonomies: Vec::new(),
+            dictionaries: Vec::new(),
+            writers: Vec::new(),
+            widgets: Vec::new(),
+            screens: Vec::new(),
+            tools: Vec::new(),
+            status,
+        }
+    }
 }
 
 /// One classification set on offer, addressed the way a command names it.
@@ -326,8 +353,20 @@ pub struct ThemeInfo {
     pub base: Base,
 }
 
+/// What the installed readers made of one file.
+#[derive(Debug, Default)]
+pub struct FileReading {
+    /// The reader that claimed it, and what it read; `None` leaves the file to the app's own.
+    pub read: Option<(String, reader::Reading)>,
+    /// Readers that broke over the file and were passed over.
+    pub skipped: Vec<reader::SkippedReader>,
+}
+
 pub struct Plugins {
     root: PathBuf,
+    /// Held by whatever rewrites the plugins folder. Install runs off the main thread, so two of
+    /// them — or an install and a remove — could otherwise interleave on one folder.
+    writing: std::sync::Mutex<()>,
 }
 
 fn io(e: std::io::Error) -> UiError {
@@ -336,7 +375,10 @@ fn io(e: std::io::Error) -> UiError {
 
 impl Plugins {
     pub fn new(root: impl Into<PathBuf>) -> Self {
-        Plugins { root: root.into() }
+        Plugins {
+            root: root.into(),
+            writing: std::sync::Mutex::new(()),
+        }
     }
 
     fn folder(&self) -> PathBuf {
@@ -356,14 +398,22 @@ impl Plugins {
         let mut out = Vec::new();
         for entry in std::fs::read_dir(&folder).map_err(io)? {
             let path = entry.map_err(io)?.path();
-            if !path.is_dir() {
-                continue;
-            }
             let id = path
                 .file_name()
                 .map(|n| n.to_string_lossy().into_owned())
                 .unwrap_or_default();
+            // A dot folder is an install in progress, or what an interrupted one left behind.
+            if !path.is_dir() || id.starts_with('.') {
+                continue;
+            }
             out.push(match read_manifest(&path) {
+                Ok(manifest) if manifest.id != id => PluginInfo::unusable(
+                    &id,
+                    manifest.name,
+                    Status::Misplaced {
+                        manifest_id: manifest.id,
+                    },
+                ),
                 Ok(manifest) => PluginInfo {
                     status: status_of(&manifest),
                     id: manifest.id,
@@ -379,21 +429,7 @@ impl Plugins {
                     screens: manifest.provides.screens,
                     tools: manifest.provides.tools,
                 },
-                Err(detail) => PluginInfo {
-                    id: id.clone(),
-                    name: id,
-                    version: String::new(),
-                    themes: Vec::new(),
-                    layouts: Vec::new(),
-                    readers: Vec::new(),
-                    taxonomies: Vec::new(),
-                    dictionaries: Vec::new(),
-                    writers: Vec::new(),
-                    widgets: Vec::new(),
-                    screens: Vec::new(),
-                    tools: Vec::new(),
-                    status: Status::Broken { detail },
-                },
+                Err(detail) => PluginInfo::unusable(&id, id.clone(), Status::Broken { detail }),
             });
         }
         out.sort_by_key(|plugin| plugin.name.to_lowercase());
@@ -464,13 +500,16 @@ impl Plugins {
     /// The first loadable reader that claims this file, and what it read.
     ///
     /// Narrowed by the file's ending before anything is run: nothing hands twenty megabytes to
-    /// every installed plugin in turn. `not-mine` moves on to the next; a reader that claimed the
-    /// file and then failed is an error rather than a fall-through, because the reader after it
-    /// would be reading a file somebody has already said is not theirs.
-    pub fn read_file(&self, name: &str, bytes: &[u8]) -> UiResult<Option<(String, reader::Reading)>> {
+    /// every installed plugin in turn. `not-mine` moves on to the next, and so does a module that
+    /// broke before answering — recorded in `skipped`, because one broken package must not refuse
+    /// every file the user opens. A reader that claimed the file and then said it is malformed is
+    /// an error rather than a fall-through: the reader after it would be reading a file somebody
+    /// has already said is theirs.
+    pub fn read_file(&self, name: &str, bytes: &[u8]) -> UiResult<FileReading> {
         let ending = name
             .rsplit_once('.')
             .map(|(_, end)| format!(".{}", end.to_lowercase()));
+        let mut skipped = Vec::new();
         for plugin in self.list()?.into_iter().filter(|p| p.status == Status::Ok) {
             let folder = self.folder_of(&plugin.id);
             for def in plugin.readers {
@@ -490,14 +529,20 @@ impl Plugins {
                         for warning in &mut reading.warnings {
                             warning.plugin = id.clone();
                         }
-                        return Ok(Some((id, reading)));
+                        return Ok(FileReading {
+                            read: Some((id, reading)),
+                            skipped,
+                        });
                     }
                     Err(reader::Refusal::NotMine) => continue,
+                    Err(reader::Refusal::Broken(detail)) => {
+                        skipped.push(reader::SkippedReader { plugin: id, detail })
+                    }
                     Err(refusal) => return Err(refusal.into_error(&id)),
                 }
             }
         }
-        Ok(None)
+        Ok(FileReading { read: None, skipped })
     }
 
     /// The export formats on offer, from plugins this build can load.
@@ -521,16 +566,8 @@ impl Plugins {
     pub fn write(&self, key: &str, canonical: &str) -> UiResult<Vec<u8>> {
         let (plugin, writer) = key
             .split_once('/')
-            .filter(|(plugin, _)| valid_id(plugin))
             .ok_or_else(|| UiError::not_found(format!("writer {key}")))?;
-        let folder = self.folder_of(plugin);
-        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
-        if status_of(&manifest) != Status::Ok {
-            return Err(UiError::invalid(format!(
-                "plugin {plugin} is built for plugin API {}",
-                manifest.api
-            )));
-        }
+        let (folder, manifest) = self.loaded(plugin)?;
         let def = manifest
             .provides
             .writers
@@ -630,8 +667,7 @@ impl Plugins {
     /// A page and the policy it must be served under, as the `stonqs-plugin` scheme answers
     /// `/<widget|screen>/<plugin id>/<id>`.
     pub fn page(&self, kind: PageKind, plugin: &str, id: &str) -> UiResult<(String, String)> {
-        let folder = self.loadable(plugin)?;
-        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        let (folder, manifest) = self.loaded(plugin)?;
         let file = match kind {
             PageKind::Widget => manifest
                 .provides
@@ -654,40 +690,34 @@ impl Plugins {
     /// Whether a loadable plugin declared a screen that keeps a document: the state commands
     /// answer nobody else, so a package cannot store what its manifest never admitted to.
     pub fn keeps_state(&self, plugin: &str) -> UiResult<bool> {
-        let folder = self.loadable(plugin)?;
-        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        let (_, manifest) = self.loaded(plugin)?;
         Ok(manifest.provides.screens.iter().any(|s| s.storage))
     }
 
-    /// The folder of a plugin this build can load, or why not.
-    fn loadable(&self, plugin: &str) -> UiResult<PathBuf> {
+    /// The folder and manifest of a plugin this build can load, or why not. The one lookup by id:
+    /// the id must be a dull one, the folder must hold the manifest of that id (a folder renamed by
+    /// hand answers to neither name), and the manifest must speak this build's API.
+    fn loaded(&self, plugin: &str) -> UiResult<(PathBuf, Manifest)> {
         if !valid_id(plugin) {
             return Err(UiError::not_found(format!("plugin {plugin}")));
         }
         let folder = self.folder_of(plugin);
         let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
+        if manifest.id != plugin {
+            return Err(UiError::not_found(format!("plugin {plugin}")));
+        }
         if status_of(&manifest) != Status::Ok {
             return Err(UiError::invalid(format!(
                 "plugin {plugin} is built for plugin API {}",
                 manifest.api
             )));
         }
-        Ok(folder)
+        Ok((folder, manifest))
     }
 
     /// A theme's stylesheet. Read on demand rather than at startup: only one is ever applied.
     pub fn theme_css(&self, plugin: &str, theme: &str) -> UiResult<String> {
-        if !valid_id(plugin) {
-            return Err(UiError::not_found(format!("plugin {plugin}")));
-        }
-        let folder = self.folder_of(plugin);
-        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
-        if status_of(&manifest) != Status::Ok {
-            return Err(UiError::invalid(format!(
-                "plugin {plugin} is built for plugin API {}",
-                manifest.api
-            )));
-        }
+        let (folder, manifest) = self.loaded(plugin)?;
         let def = manifest
             .provides
             .themes
@@ -716,17 +746,7 @@ impl Plugins {
     /// A set's CSV, read on demand. It is handed to the same preview every taxonomy file goes
     /// through, so a set from a plugin has no path of its own into the portfolio.
     pub fn taxonomy_csv(&self, plugin: &str, set: &str) -> UiResult<Vec<u8>> {
-        if !valid_id(plugin) {
-            return Err(UiError::not_found(format!("plugin {plugin}")));
-        }
-        let folder = self.folder_of(plugin);
-        let manifest = read_manifest(&folder).map_err(UiError::not_found)?;
-        if status_of(&manifest) != Status::Ok {
-            return Err(UiError::invalid(format!(
-                "plugin {plugin} is built for plugin API {}",
-                manifest.api
-            )));
-        }
+        let (folder, manifest) = self.loaded(plugin)?;
         let def = manifest
             .provides
             .taxonomies
@@ -739,6 +759,7 @@ impl Plugins {
     /// Installs the folder the user picked. Only the manifest and the files it names are copied:
     /// a package is what it declares, and whatever else sits beside it is not ours to carry in.
     pub fn install(&self, source: &Path) -> UiResult<PluginInfo> {
+        let _writing = self.writing.lock().unwrap_or_else(|e| e.into_inner());
         let manifest = read_manifest(source).map_err(UiError::invalid)?;
         if !valid_id(&manifest.id) {
             return Err(UiError::invalid(format!(
@@ -867,67 +888,35 @@ impl Plugins {
             crate::import_templates::check_dictionary(&def.id, &words, &sample)?;
         }
 
-        let target = self.folder_of(&manifest.id);
         // A reinstall replaces: the id is the identity, and two copies of one plugin is not a
-        // state the list could explain.
-        if target.exists() {
-            std::fs::remove_dir_all(&target).map_err(io)?;
+        // state the list could explain. The new copy is written beside the old one and swapped in
+        // by renaming, so a copy that fails half way leaves the installed version as it was.
+        let folder = self.folder();
+        clear_leftovers(&folder);
+        let staging = folder.join(format!(".staging-{}", uuid::Uuid::new_v4().simple()));
+        if let Err(e) = copy_package(source, &staging, &manifest.provides) {
+            let _ = std::fs::remove_dir_all(&staging);
+            return Err(e);
         }
-        std::fs::create_dir_all(&target).map_err(io)?;
-        std::fs::copy(source.join(MANIFEST), target.join(MANIFEST)).map_err(io)?;
-        let files = manifest
-            .provides
-            .themes
-            .iter()
-            .map(|theme| theme.file.clone())
-            .chain(
-                manifest
-                    .provides
-                    .layouts
-                    .iter()
-                    .flat_map(|layout| [layout.file.clone(), layout.sample.clone()]),
-            )
-            .chain(
-                manifest
-                    .provides
-                    .readers
-                    .iter()
-                    .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
-            )
-            .chain(
-                manifest
-                    .provides
-                    .writers
-                    .iter()
-                    .flat_map(|def| [def.file.clone(), def.sample.clone(), def.expected.clone()]),
-            )
-            .chain(manifest.provides.widgets.iter().map(|def| def.file.clone()))
-            .chain(manifest.provides.screens.iter().map(|def| def.file.clone()))
-            .chain(manifest.provides.tools.iter().flat_map(|def| {
-                [
-                    def.file.clone(),
-                    def.schema.clone(),
-                    def.sample.clone(),
-                    def.expected.clone(),
-                ]
-            }))
-            .chain(manifest.provides.taxonomies.iter().map(|def| def.file.clone()))
-            .chain(
-                manifest
-                    .provides
-                    .dictionaries
-                    .iter()
-                    .flat_map(|def| [def.file.clone(), def.sample.clone()]),
-            );
-        for file in files {
-            let from = safe_join(source, &file)?;
-            let to = safe_join(&target, &file)?;
-            if let Some(parent) = to.parent() {
-                std::fs::create_dir_all(parent).map_err(io)?;
+        let target = self.folder_of(&manifest.id);
+        let old = folder.join(format!(".old-{}", uuid::Uuid::new_v4().simple()));
+        let replacing = target.exists();
+        if replacing && let Err(e) = std::fs::rename(&target, &old) {
+            let _ = std::fs::remove_dir_all(&staging);
+            return Err(io(e));
+        }
+        if let Err(e) = std::fs::rename(&staging, &target) {
+            if replacing {
+                let _ = std::fs::rename(&old, &target);
             }
-            std::fs::copy(&from, &to)
-                .map_err(|e| UiError::invalid(format!("{file} is named by the manifest and missing: {e}")))?;
+            let _ = std::fs::remove_dir_all(&staging);
+            return Err(io(e));
         }
+        if replacing {
+            // Already out of the list's sight; one that cannot go now goes at the next install.
+            let _ = std::fs::remove_dir_all(&old);
+        }
+        sandbox::forget(&target);
         Ok(PluginInfo {
             status: status_of(&manifest),
             id: manifest.id,
@@ -981,6 +970,7 @@ impl Plugins {
 
     /// Removes a plugin and its folder. What it stored in the profile is not touched here.
     pub fn remove(&self, id: &str) -> UiResult<()> {
+        let _writing = self.writing.lock().unwrap_or_else(|e| e.into_inner());
         if !valid_id(id) {
             return Err(UiError::not_found(format!("plugin {id}")));
         }
@@ -988,7 +978,72 @@ impl Plugins {
         if !folder.exists() {
             return Err(UiError::not_found(format!("plugin {id}")));
         }
-        std::fs::remove_dir_all(folder).map_err(io)
+        std::fs::remove_dir_all(&folder).map_err(io)?;
+        sandbox::forget(&folder);
+        Ok(())
+    }
+}
+
+impl Provides {
+    /// Every file the content names, besides the manifest: what an install copies and nothing else.
+    fn files(&self) -> Vec<&str> {
+        let mut files: Vec<&str> = Vec::new();
+        files.extend(self.themes.iter().map(|d| d.file.as_str()));
+        for d in &self.layouts {
+            files.extend([d.file.as_str(), d.sample.as_str()]);
+        }
+        for d in &self.readers {
+            files.extend([d.file.as_str(), d.sample.as_str(), d.expected.as_str()]);
+        }
+        for d in &self.writers {
+            files.extend([d.file.as_str(), d.sample.as_str(), d.expected.as_str()]);
+        }
+        files.extend(self.widgets.iter().map(|d| d.file.as_str()));
+        files.extend(self.screens.iter().map(|d| d.file.as_str()));
+        for d in &self.tools {
+            files.extend([
+                d.file.as_str(),
+                d.schema.as_str(),
+                d.sample.as_str(),
+                d.expected.as_str(),
+            ]);
+        }
+        files.extend(self.taxonomies.iter().map(|d| d.file.as_str()));
+        for d in &self.dictionaries {
+            files.extend([d.file.as_str(), d.sample.as_str()]);
+        }
+        files
+    }
+}
+
+/// Copies the manifest and the files it names from `source` into a new folder `to`.
+fn copy_package(source: &Path, to: &Path, provides: &Provides) -> UiResult<()> {
+    std::fs::create_dir_all(to).map_err(io)?;
+    std::fs::copy(source.join(MANIFEST), to.join(MANIFEST)).map_err(io)?;
+    for file in provides.files() {
+        let from = safe_join(source, file)?;
+        let dest = safe_join(to, file)?;
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent).map_err(io)?;
+        }
+        std::fs::copy(&from, &dest)
+            .map_err(|e| UiError::invalid(format!("{file} is named by the manifest and missing: {e}")))?;
+    }
+    Ok(())
+}
+
+/// Removes what an interrupted install left: a half-written copy or an old one never deleted. Only
+/// ever called under `Plugins::writing`, so none of them belongs to an install still running.
+fn clear_leftovers(folder: &Path) {
+    let Ok(entries) = std::fs::read_dir(folder) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        if name.starts_with(".staging-") || name.starts_with(".old-") {
+            let _ = std::fs::remove_dir_all(entry.path());
+        }
     }
 }
 
@@ -1217,6 +1272,62 @@ mod tests {
             .unwrap_err();
         assert!(format!("{twice:?}").contains("two of its themes"), "{twice:?}");
         assert!(plugins.list().unwrap().is_empty(), "nothing was written");
+    }
+
+    #[test]
+    fn a_reinstall_that_cannot_be_copied_leaves_the_installed_version() {
+        let dir = temp();
+        let plugins = Plugins::new(&dir);
+        let source = package(&dir, "com.example.midnight", API);
+        plugins.install(&source).unwrap();
+
+        // A theme is not read by any check, so only the copy notices it is gone.
+        std::fs::remove_file(source.join("midnight.css")).unwrap();
+        assert!(plugins.install(&source).is_err());
+
+        assert_eq!(plugins.list().unwrap().len(), 1, "no half-written copy is listed");
+        assert_eq!(
+            plugins.theme_css("com.example.midnight", "midnight").unwrap(),
+            ":root { --bg: #000; }",
+            "the version installed before is still whole"
+        );
+        let stray = std::fs::read_dir(dir.join(FOLDER))
+            .unwrap()
+            .filter(|e| e.as_ref().unwrap().file_name().to_string_lossy().starts_with('.'))
+            .count();
+        assert_eq!(stray, 0, "the failed copy was cleaned up");
+    }
+
+    #[test]
+    fn a_folder_renamed_by_hand_is_listed_as_misplaced_and_offers_nothing() {
+        let dir = temp();
+        let plugins = Plugins::new(&dir);
+        plugins
+            .install(&package(&dir, "com.example.midnight", API))
+            .unwrap();
+        std::fs::rename(
+            dir.join(FOLDER).join("com.example.midnight"),
+            dir.join(FOLDER).join("renamed"),
+        )
+        .unwrap();
+
+        let listed = plugins.list().unwrap();
+        assert_eq!(listed[0].id, "renamed", "removing it removes that folder");
+        assert_eq!(
+            listed[0].status,
+            Status::Misplaced {
+                manifest_id: "com.example.midnight".into()
+            }
+        );
+        assert!(plugins.themes().unwrap().is_empty());
+        assert!(
+            plugins.theme_css("renamed", "midnight").is_err(),
+            "not under the folder's name"
+        );
+        assert!(plugins.theme_css("com.example.midnight", "midnight").is_err());
+
+        plugins.remove("renamed").unwrap();
+        assert!(plugins.list().unwrap().is_empty());
     }
 
     #[test]

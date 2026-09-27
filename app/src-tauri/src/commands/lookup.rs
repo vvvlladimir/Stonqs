@@ -1,20 +1,11 @@
-use crate::error::{UiError, UiResult};
+use super::off_thread;
+use crate::error::UiResult;
 use crate::state::AppState;
 use sq_core::import::SecurityDraft;
 use sq_core::market::SecurityMatch;
 use sq_core::model::is_isin;
 use sq_core::sources::quote_service_with;
 use tauri::State;
-
-async fn off_thread<T, F>(work: F) -> UiResult<T>
-where
-    T: Send + 'static,
-    F: FnOnce() -> UiResult<T> + Send + 'static,
-{
-    tauri::async_runtime::spawn_blocking(work)
-        .await
-        .map_err(|e| UiError::internal(format!("the lookup task did not run: {e}")))?
-}
 
 #[tauri::command]
 pub async fn security_search(state: State<'_, AppState>, query: String) -> UiResult<Vec<SecurityMatch>> {

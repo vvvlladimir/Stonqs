@@ -6,12 +6,13 @@
 //! to the frontend and in again through `taxonomy_import_preview`, which is the point: a set from
 //! a plugin has no path into the portfolio of its own.
 
+use super::off_thread;
 use crate::error::{UiError, UiResult};
 use crate::plugins::{PluginInfo, ScreenInfo, TaxonomySetInfo, ThemeInfo, ToolInfo, WidgetInfo, WriterInfo};
 use crate::state::AppState;
 use serde::Serialize;
 use std::path::PathBuf;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 #[derive(Debug, Serialize)]
 pub struct PluginList {
@@ -48,10 +49,11 @@ pub fn plugins_list(state: State<AppState>) -> UiResult<PluginList> {
 }
 
 /// Installs from a folder the user chose in the file picker. A path, not bytes: this is the one
-/// thing that is a directory rather than a file, and the picker hands its path over.
+/// thing that is a directory rather than a file, and the picker hands its path over. Off the main
+/// thread, because installing runs every module the package ships against its sample.
 #[tauri::command]
-pub fn plugin_install(state: State<AppState>, path: PathBuf) -> UiResult<PluginInfo> {
-    state.plugins.install(&path)
+pub async fn plugin_install(app: AppHandle, path: PathBuf) -> UiResult<PluginInfo> {
+    off_thread(move || app.state::<AppState>().plugins.install(&path)).await
 }
 
 #[tauri::command]
@@ -121,7 +123,6 @@ pub fn page(
     request: &tauri::http::Request<Vec<u8>>,
 ) -> tauri::http::Response<Vec<u8>> {
     use crate::plugins::PageKind;
-    use tauri::Manager;
     use tauri::http::{Response, StatusCode, header};
 
     let path = request

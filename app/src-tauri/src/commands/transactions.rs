@@ -1,4 +1,4 @@
-use crate::commands::parse_date;
+use crate::commands::{off_thread, parse_date};
 use crate::error::{UiError, UiResult};
 use crate::events::emit_changed;
 use crate::state::AppState;
@@ -11,7 +11,7 @@ use sq_core::calc::{
 use sq_core::import::canonical_to_file;
 use sq_core::prelude::*;
 use std::str::FromStr;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 #[derive(Debug, Serialize)]
 pub struct TransactionRow {
@@ -61,8 +61,19 @@ pub fn transactions_export(state: State<AppState>, filter: TransactionFilter) ->
 
 /// Saves the export. `format` names a plugin's writer (`<plugin id>/<writer id>`, ADR-0080), which
 /// is handed the same document and returns the bytes to save; absent saves the document itself.
+///
+/// Off the main thread: a plugin's writer may run here, and it is allowed seconds.
 #[tauri::command]
-pub fn transactions_export_save(
+pub async fn transactions_export_save(
+    app: AppHandle,
+    filter: TransactionFilter,
+    path: String,
+    format: Option<String>,
+) -> UiResult<()> {
+    off_thread(move || export_save(app.state::<AppState>(), filter, path, format)).await
+}
+
+fn export_save(
     state: State<AppState>,
     filter: TransactionFilter,
     path: String,

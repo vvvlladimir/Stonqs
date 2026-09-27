@@ -24,18 +24,28 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   profiles folder, so a theme survives switching profile (ADR-0070). Its commands take no store,
   which is why a locked profile still has its colours; what a plugin *stores* belongs to the
   profile, in that profile's vault under the plugin's id. The host copies the manifest and the
-  files it names and nothing else, and refuses a file name that leaves the package.
+  files it names and nothing else, and refuses a file name that leaves the package. It copies into
+  a `.staging-*` folder and swaps it in by renaming, so a failed reinstall leaves the old version;
+  a folder whose name is not its manifest's id is `Status::Misplaced` and offers nothing
+  (`Plugins::loaded` is the one lookup by id).
 - A plugin's **file reader** is the one piece of a stranger's *code* this host runs, and
   `plugins/sandbox.rs` is the whole of what it is granted (ADR-0073): a WASM component with no
   filesystem, no reachable address, a frozen clock and a seeded generator — linked at all only
   because a guest carrying a language runtime will not instantiate without them — under a memory
-  ceiling and an epoch deadline. It runs **once**, in `import_load`, and what it produced replaces
+  ceiling and an epoch deadline. The epoch is the engine's, shared by every store, so one ticker
+  thread moves it while anything runs and a deadline is a number of ticks — never a bump of its
+  own, which would end every other plugin's call too. A module is compiled once per version of its file (`sandbox::component`,
+  keyed by path, size and time, dropped by `sandbox::forget` on install and remove), and every
+  command that can run one — `import_load`, `transactions_export_save`, `plugin_install` — is
+  `async` and goes through `commands::off_thread`: a synchronous Tauri command runs on the main
+  thread, and a module is allowed seconds. It runs **once**, in `import_load`, and what it produced replaces
   the bytes in `AppState::import_file`, so every later preview and the commit read a
   `stonqs.transactions` document through `parse_canonical`. Preview and commit therefore cannot
   diverge, and `core` gains no dependency: the registry is `Plugins::read_file`, one layer above
   `import::parse_file`, asked after the two self-describing shipped formats and before the CSV
-  reader, which accepts nearly anything. `not-mine` moves on; a reader that claimed the file and
-  failed is `UiError::Reader` naming the plugin, never a fall-through. The row schema is **not**
+  reader, which accepts nearly anything. `not-mine` moves on, and so does a module that broke
+  (trap, deadline, memory — `Refusal::Broken`), named in `skipped_readers`; only the reader's own
+  `malformed` is `UiError::Reader`, never a fall-through (ADR-0086). The row schema is **not**
   restated in WIT — the document carries its own `format` and `version` (ADR-0066).
 - A plugin's **dashboard widget** (ADR-0083) is the one piece of a stranger's *JavaScript* the app
   runs. The host serves it from its own scheme (`stonqs-plugin`, `commands::plugins::page`)

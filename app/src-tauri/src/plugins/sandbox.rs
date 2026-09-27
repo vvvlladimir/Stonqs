@@ -8,10 +8,11 @@
 
 use crate::error::{UiError, UiResult};
 use rand::SeedableRng;
-use std::path::Path;
-use std::sync::OnceLock;
-use std::sync::mpsc::RecvTimeoutError;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Mutex, MutexGuard, OnceLock};
 use std::time::Duration;
+use std::time::SystemTime;
 use wasmtime::component::{Component, Linker, ResourceTable};
 use wasmtime::{Config, Engine, Store, StoreLimits, StoreLimitsBuilder};
 use wasmtime_wasi::clocks::{HostMonotonicClock, HostWallClock};
@@ -48,6 +49,55 @@ fn engine() -> UiResult<&'static Engine> {
         })
         .as_ref()
         .map_err(|e| UiError::internal(format!("the plugin runtime is unavailable: {e}")))
+}
+
+/// How many compiled modules are kept. Compiling is most of what a call costs — a tenth of a
+/// second for a small Rust guest, seconds for one carrying a language runtime — and a chat asks
+/// the same tool turn after turn, so the last few are kept rather than every one ever run.
+const KEPT: usize = 16;
+
+struct Compiled {
+    path: PathBuf,
+    /// Size and modification time: a module edited in place is compiled again.
+    stamp: (u64, Option<SystemTime>),
+    component: Component,
+}
+
+fn compiled() -> MutexGuard<'static, Vec<Compiled>> {
+    static COMPILED: Mutex<Vec<Compiled>> = Mutex::new(Vec::new());
+    // A panic while holding it left at worst a stale list, which the stamp check still guards.
+    COMPILED.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+/// The module at `path`, compiled once per version of the file.
+fn component(engine: &Engine, path: &Path) -> Result<Component, String> {
+    let meta = std::fs::metadata(path).map_err(|e| format!("not a readable plugin module: {e}"))?;
+    let stamp = (meta.len(), meta.modified().ok());
+    if let Some(hit) = compiled().iter().find(|c| c.path == path && c.stamp == stamp) {
+        return Ok(hit.component.clone());
+    }
+    // Compiled without the lock: another plugin's call must not wait for this one's compiler.
+    let component =
+        Component::from_file(engine, path).map_err(|e| format!("not a readable plugin module: {e}"))?;
+    #[cfg(test)]
+    tests::compiles().push(path.to_path_buf());
+    let mut cache = compiled();
+    cache.retain(|c| c.path != path);
+    cache.push(Compiled {
+        path: path.to_path_buf(),
+        stamp,
+        component: component.clone(),
+    });
+    if cache.len() > KEPT {
+        cache.remove(0);
+    }
+    Ok(component)
+}
+
+/// Drops every compiled module under `folder`. Installing and removing call it, so a package
+/// replaced by one whose file kept its size and time is never answered by the old code.
+pub fn forget(folder: &Path) {
+    compiled().retain(|c| !c.path.starts_with(folder));
 }
 
 pub struct Host {
@@ -97,8 +147,7 @@ pub fn run<T>(
     call: impl FnOnce(&mut Store<Host>, &Component, &Linker<Host>) -> Result<T, String>,
 ) -> Result<T, String> {
     let engine = engine().map_err(|e| format!("{e:?}"))?;
-    let component =
-        Component::from_file(engine, module).map_err(|e| format!("not a readable plugin module: {e}"))?;
+    let component = component(engine, module)?;
 
     let mut linker: Linker<Host> = Linker::new(engine);
     add_to_linker_sync(&mut linker).map_err(|e| e.to_string())?;
@@ -120,19 +169,169 @@ pub fn run<T>(
 
     let mut store = Store::new(engine, host);
     store.limiter(|host| &mut host.limits);
-    store.set_epoch_deadline(1);
+    let _running = Running::start(engine, &mut store, DEADLINE);
+    call(&mut store, &component, &linker)
+}
 
-    // One bump of the epoch is the deadline. The channel is how the thread learns the call
-    // finished: a disconnect is not a timeout, so the two are told apart explicitly.
-    let (finished, waiting) = std::sync::mpsc::channel::<()>();
-    let ticker = engine.clone();
-    std::thread::spawn(move || {
-        if matches!(waiting.recv_timeout(DEADLINE), Err(RecvTimeoutError::Timeout)) {
-            ticker.increment_epoch();
-        }
-    });
+/// How often the shared epoch moves while anything runs: the grain of every deadline.
+const TICK: Duration = Duration::from_millis(100);
 
-    let outcome = call(&mut store, &component, &linker);
-    drop(finished);
-    outcome
+/// Calls in flight. The ticker sleeps while this is zero, so an idle app — a phone in a pocket —
+/// does not wake ten times a second for nothing.
+static RUNNING: AtomicUsize = AtomicUsize::new(0);
+
+/// The one thread that moves the engine's epoch. The epoch is the *engine's*, shared by every
+/// store, so a deadline is a number of ticks from where the epoch stood when that call began —
+/// never a bump of its own, which would have ended every other plugin's call along with it.
+fn ticker(engine: &Engine) -> &'static std::thread::Thread {
+    static TICKER: OnceLock<std::thread::Thread> = OnceLock::new();
+    TICKER.get_or_init(|| {
+        let engine = engine.clone();
+        std::thread::Builder::new()
+            .name("plugin-epoch".into())
+            .spawn(move || {
+                loop {
+                    if RUNNING.load(Ordering::Acquire) == 0 {
+                        // An `unpark` that came first makes this return at once, so a call
+                        // starting between the load and the park is not missed.
+                        std::thread::park();
+                        continue;
+                    }
+                    std::thread::sleep(TICK);
+                    engine.increment_epoch();
+                }
+            })
+            .expect("the plugin epoch thread starts")
+            .thread()
+            .clone()
+    })
+}
+
+/// One call in flight: counted while it lives, and given its deadline in ticks.
+struct Running;
+
+impl Running {
+    fn start(engine: &Engine, store: &mut Store<Host>, deadline: Duration) -> Running {
+        let ticks = (deadline.as_millis() / TICK.as_millis()).max(1) as u64;
+        store.set_epoch_deadline(ticks);
+        RUNNING.fetch_add(1, Ordering::AcqRel);
+        ticker(engine).unpark();
+        Running
+    }
+}
+
+impl Drop for Running {
+    fn drop(&mut self) {
+        RUNNING.fetch_sub(1, Ordering::AcqRel);
+    }
+}
+
+#[cfg(test)]
+pub(super) mod tests {
+    use super::*;
+
+    /// Every compile this process made, by path — a test reads only its own paths, so tests
+    /// running side by side do not see each other's.
+    pub(super) fn compiles() -> MutexGuard<'static, Vec<PathBuf>> {
+        static COMPILES: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+        COMPILES.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    fn compiled_count(path: &Path) -> usize {
+        compiles().iter().filter(|p| *p == path).count()
+    }
+
+    fn start(path: &Path) {
+        run(path, |store, component, linker| {
+            linker
+                .instantiate(&mut *store, component)
+                .map(|_| ())
+                .map_err(|e| e.to_string())
+        })
+        .unwrap();
+    }
+
+    /// `(module (func (export "spin") (loop (br 0))))`, assembled by hand: a stranger's loop.
+    const SPIN: &[u8] = &[
+        0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, // magic, version
+        0x01, 0x04, 0x01, 0x60, 0x00, 0x00, // type: () -> ()
+        0x03, 0x02, 0x01, 0x00, // one function of that type
+        0x07, 0x08, 0x01, 0x04, b's', b'p', b'i', b'n', 0x00, 0x00, // export "spin"
+        0x0a, 0x09, 0x01, 0x07, 0x00, 0x03, 0x40, 0x0c, 0x00, 0x0b, 0x0b, // loop { br 0 }
+    ];
+
+    /// Spins until its deadline, returning how long that took.
+    fn spin(deadline: Duration) -> Duration {
+        let engine = engine().unwrap();
+        let module = wasmtime::Module::new(engine, SPIN).unwrap();
+        let host = Host {
+            table: ResourceTable::new(),
+            wasi: WasiCtxBuilder::new().build(),
+            limits: StoreLimitsBuilder::new().build(),
+        };
+        let mut store = Store::new(engine, host);
+        let started = std::time::Instant::now();
+        let _running = Running::start(engine, &mut store, deadline);
+        let instance = wasmtime::Instance::new(&mut store, &module, &[]).unwrap();
+        let spin = instance.get_typed_func::<(), ()>(&mut store, "spin").unwrap();
+        assert!(spin.call(&mut store, ()).is_err(), "a loop ends at its deadline");
+        started.elapsed()
+    }
+
+    /// The epoch is shared by every store, so a call that ran out of time must not take another
+    /// one with it — which is what bumping the epoch as the deadline itself used to do.
+    #[test]
+    fn one_call_running_out_of_time_leaves_another_running() {
+        let long = std::thread::spawn(|| spin(Duration::from_millis(2_000)));
+        std::thread::sleep(Duration::from_millis(50));
+        let short = spin(Duration::from_millis(300));
+        assert!(
+            short < Duration::from_millis(1_500),
+            "the short call ended: {short:?}"
+        );
+        let long = long.join().unwrap();
+        assert!(
+            long >= Duration::from_millis(1_800),
+            "the long call kept its own deadline: {long:?}"
+        );
+    }
+
+    #[test]
+    fn a_module_is_compiled_once_until_it_changes_or_is_forgotten() {
+        let example =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins/concentration/tool.wasm");
+        let folder = std::env::temp_dir().join(format!("stonqs-sandbox-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&folder).unwrap();
+        let module = folder.join("tool.wasm");
+        std::fs::copy(&example, &module).unwrap();
+
+        start(&module);
+        start(&module);
+        assert_eq!(
+            compiled_count(&module),
+            1,
+            "the second call reuses the first compile"
+        );
+
+        forget(&folder);
+        start(&module);
+        assert_eq!(compiled_count(&module), 2, "a forgotten folder is compiled again");
+
+        // Rewritten in place with a later time: another version of the file.
+        let later = SystemTime::now() + std::time::Duration::from_secs(60);
+        std::fs::File::options()
+            .write(true)
+            .open(&module)
+            .unwrap()
+            .set_modified(later)
+            .unwrap();
+        start(&module);
+        assert_eq!(
+            compiled_count(&module),
+            3,
+            "an edited module is not answered by the old one"
+        );
+
+        std::fs::remove_dir_all(&folder).ok();
+    }
 }

@@ -305,3 +305,15 @@ fn a_reader_reaches_the_wizard_as_an_id_and_its_own_warnings() {
     assert_eq!(keys(&json), ["code", "message", "plugin", "row"]);
     assert_eq!(json["row"], 3);
 }
+
+/// A reader passed over is named by its key with the runtime's own detail; the sentence around it
+/// is the frontend's.
+#[test]
+fn a_skipped_reader_reaches_the_wizard_as_a_key_and_a_detail() {
+    let json = serde_json::to_value(sq_app_lib::plugins::reader::SkippedReader {
+        plugin: "app.stonqs.mt940/mt940".into(),
+        detail: "the module stopped: wasm trap".into(),
+    })
+    .unwrap();
+    assert_eq!(keys(&json), ["detail", "plugin"]);
+}

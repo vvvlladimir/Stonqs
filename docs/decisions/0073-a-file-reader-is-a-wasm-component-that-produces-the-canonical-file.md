@@ -1,6 +1,6 @@
 # 73: A file reader is a WASM component that produces the canonical file
 
-- Status: Accepted
+- Status: Accepted; failure of a module at import narrowed by ADR-0086
 
 ## Context
 

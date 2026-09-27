@@ -140,8 +140,10 @@ format, decimal separator, skipped rows — have nothing left to do and do not a
 way they do not for the app's own file.
 
 A reader gets no access to the internet, to the disk or to the clock, so it cannot send the
-statement it is reading anywhere. A reader that fails says which plugin failed; a file no installed
-reader recognises is simply read as a text file, as before.
+statement it is reading anywhere. A reader that finds the file is its kind but cannot read it stops the
+import and says which plugin failed. A reader that crashes is skipped instead: the import step shows
+a warning naming that plugin, and the file goes on to the next reader or is read as a text file. A
+file no installed reader recognises is simply read as a text file, as before.
 
 ## Interactive Brokers
 

@@ -47,10 +47,21 @@ pub enum Refusal {
     NotMine,
     /// Sealed, and the password was absent or wrong.
     NeedsPassword,
-    /// Recognised and unreadable, or the module itself failed — trapped, timed out, ran out of
-    /// memory, or was not a component at all. One case from the user's side: this plugin cannot
-    /// read this file.
-    Failed(String),
+    /// Recognised and unreadable: the reader said so, in its own words.
+    Malformed(String),
+    /// The module itself failed — trapped, timed out, ran out of memory, or was not a component at
+    /// all. It never got as far as saying the file was its own, so the host moves past it rather
+    /// than letting one broken package refuse every file.
+    Broken(String),
+}
+
+/// A reader that broke over a file and was passed over, so the wizard can say which and why. The
+/// detail is the runtime's English, a developer's line: the sentence around it is the frontend's.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct SkippedReader {
+    /// `<plugin id>/<reader id>`.
+    pub plugin: String,
+    pub detail: String,
 }
 
 impl Refusal {
@@ -60,7 +71,7 @@ impl Refusal {
             Refusal::NeedsPassword => UiError::FileProtected {
                 message: format!("the file is protected and reader {plugin} needs its password"),
             },
-            Refusal::Failed(why) => UiError::Reader {
+            Refusal::Malformed(why) | Refusal::Broken(why) => UiError::Reader {
                 plugin: plugin.to_string(),
                 message: why,
             },
@@ -72,8 +83,8 @@ impl Refusal {
 ///
 /// `module` is a path inside the plugin's own folder, already checked by `safe_join`. Everything
 /// that can go wrong on this side — a file that is not a component, a trap, the deadline, the
-/// memory ceiling — comes back as `Refusal::Failed`: from where the import stands they are one
-/// thing, which is that this plugin cannot read this file.
+/// memory ceiling — comes back as `Refusal::Broken`; only the reader's own `malformed` is
+/// `Refusal::Malformed`.
 pub fn read(
     module: &Path,
     bytes: &[u8],
@@ -91,7 +102,7 @@ pub fn read(
             .call_read(&mut *store, bytes, &hints)
             .map_err(|e| format!("the module stopped: {e}"))
     })
-    .map_err(Refusal::Failed)?;
+    .map_err(Refusal::Broken)?;
 
     match outcome {
         Ok(reading) => Ok(Reading {
@@ -109,7 +120,7 @@ pub fn read(
         }),
         Err(ReadError::NotMine) => Err(Refusal::NotMine),
         Err(ReadError::NeedsPassword) => Err(Refusal::NeedsPassword),
-        Err(ReadError::Malformed(why)) => Err(Refusal::Failed(why)),
+        Err(ReadError::Malformed(why)) => Err(Refusal::Malformed(why)),
     }
 }
 

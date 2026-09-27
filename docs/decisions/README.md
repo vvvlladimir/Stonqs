@@ -55,7 +55,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [19](0019-csv-detection-by-language-and-values.md) | CSV import detection is per language and arbitrated by values | Accepted |
 | [32](0032-a-taxonomy-is-seeded-from-an-attribute-not-derived-from-it.md) | A taxonomy is seeded from an attribute, never derived from it | Accepted |
 | [61](0061-a-flex-statement-is-a-second-reader-not-a-second-import.md) | A Flex statement is a second reader, not a second import | Accepted |
-| [73](0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md) | A file reader is a WASM component that produces the canonical file | Accepted |
+| [73](0073-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md) | A file reader is a WASM component that produces the canonical file | Accepted; a module failing at import narrowed by [86](0086-a-reader-that-breaks-is-passed-over.md) |
 
 ## What the numbers mean
 
@@ -108,6 +108,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [83](0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md) | A plugin widget is a page with no origin, fed by the host | Accepted |
 | [84](0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md) | A plugin screen, and the one document a plugin keeps | Accepted |
 | [85](0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md) | A plugin's assistant tool is a component that answers from its declared reads | Accepted |
+| [86](0086-a-reader-that-breaks-is-passed-over.md) | A reader that breaks is passed over, and one that refuses stops the import | Accepted |
 
 ## Profiles, keys and encryption
 

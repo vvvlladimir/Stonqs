@@ -4876,6 +4876,10 @@ msgstr "It reads the figures behind the screen you are on, and asks before it do
 msgid "It remembers the column layout and every alias. The next export from the same broker parses without questions."
 msgstr "It remembers the column layout and every alias. The next export from the same broker parses without questions."
 
+#: src/screens/Settings/PluginsPanel.tsx
+msgid "Its folder is named {folder}, but its plugin.json says {manifest_id}. Remove it and install it again."
+msgstr "Its folder is named {folder}, but its plugin.json says {manifest_id}. Remove it and install it again."
+
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
 msgstr "Its key goes in the section above, under the name you gave it. A server on this machine usually needs none — leave it unset."
@@ -8752,6 +8756,10 @@ msgstr "The {0} format could not be written: {1}"
 #: src/components/ui/Async.tsx
 msgid "The {0} reader could not read this file: {1}"
 msgstr "The {0} reader could not read this file: {1}"
+
+#: src/screens/Import/FilePreview.tsx
+msgid "The {name} plugin failed on this file and was skipped. Update or remove it if this keeps happening. ({detail})"
+msgstr "The {name} plugin failed on this file and was skipped. Update or remove it if this keeps happening. ({detail})"
 
 #: src/screens/Import/labels.ts
 msgid "the account is not mapped"

@@ -10,7 +10,11 @@ export interface PluginTheme {
 
 /** Why a plugin is, or is not, in use. A code from the host; the wording is written here. */
 export type PluginStatus =
-  { status: "ok" } | { status: "api"; wants: number; speaks: number } | { status: "broken"; detail: string };
+  | { status: "ok" }
+  | { status: "api"; wants: number; speaks: number }
+  | { status: "broken"; detail: string }
+  /** The folder's name is not the manifest's id: moved or copied by hand, and offering nothing. */
+  | { status: "misplaced"; manifest_id: string };
 
 /** A broker layout a plugin brings, with the sample it proved itself against at install. */
 export interface PluginLayout {

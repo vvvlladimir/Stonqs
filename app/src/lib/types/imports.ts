@@ -301,6 +301,15 @@ export interface ImportPreviewData extends ImportPreview {
   reader?: string;
   /** What that reader had to say. Its own words: the app has no table to translate them from. */
   reader_warnings?: ReaderWarning[];
+  /** Plugin readers that broke over the file and were passed over. */
+  skipped_readers?: SkippedReader[];
+}
+
+/** A plugin reader that broke over a file; `detail` is the runtime's English, shown as is. */
+export interface SkippedReader {
+  /** `<plugin id>/<reader id>`. */
+  plugin: string;
+  detail: string;
 }
 
 /** A file reader's own warning about the file it read. */
