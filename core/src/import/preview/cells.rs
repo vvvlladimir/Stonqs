@@ -85,7 +85,22 @@ impl Cells<'_> {
             None => Decimal::ZERO,
             Some(value) if is_placeholder(value) => Decimal::ZERO,
             Some(value) => match parse_decimal(value, self.decimal_separator) {
-                Some(d) => d,
+                Some(d) if crate::money::in_range(d) => d,
+                // Stored as it stands, this figure would overflow the first multiplication that
+                // touches it and take the whole screen down with it.
+                Some(d) => {
+                    problems.push(
+                        ImportProblem::cell(
+                            ProblemCode::NumberOutOfRange,
+                            self.number,
+                            self.column(field),
+                            format!("the number {d} is too large to be an amount, a quantity or a price"),
+                        )
+                        .with("value", d)
+                        .with("limit", crate::money::MAX_MAGNITUDE),
+                    );
+                    Decimal::ZERO
+                }
                 None => {
                     problems.push(ImportProblem::cell(
                         ProblemCode::NotANumber,

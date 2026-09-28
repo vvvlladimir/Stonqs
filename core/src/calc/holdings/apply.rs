@@ -18,17 +18,45 @@ pub(super) fn corporate_action(h: &mut Holdings, action: &CorporateAction) -> Re
     if factor.is_zero() {
         return Err(Error::Invalid(format!("split {} has zero factor", action.id)));
     }
+    // A factor like 7/3 has no finite decimal, so the position, each lot and each account
+    // rounded on their own stop adding up. The position's own product is the one figure of the
+    // three that is the same under either cost-basis method, so the parts are fitted back onto
+    // it and a disposal of the whole position finds exactly that much in the lots.
+    position.quantity = crate::money::fit_quantity(position.quantity * factor);
     for lot in &mut position.lots {
-        lot.quantity *= factor;
+        lot.quantity = crate::money::fit_quantity(lot.quantity * factor);
         lot.cost_per_unit /= factor;
         lot.cost_per_unit_base /= factor;
     }
-    position.quantity *= factor;
-    // Account quantities change by the same factor; ownership does not move.
-    for quantity in position.accounts.values_mut() {
-        *quantity *= factor;
+    let drift = position.quantity - position.lots.iter().map(|l| l.quantity).sum::<Decimal>();
+    if let Some(lot) = largest_by(position.lots.iter_mut(), |l| l.quantity) {
+        lot.quantity += drift;
     }
+    scale_accounts(position, factor);
     Ok(())
+}
+
+/// Account quantities change by the same factor; ownership does not move.
+fn scale_accounts(position: &mut Position, factor: Decimal) {
+    for quantity in position.accounts.values_mut() {
+        *quantity = crate::money::fit_quantity(*quantity * factor);
+    }
+    let drift = position.quantity - position.accounts.values().sum::<Decimal>();
+    if let Some(quantity) = largest_by(position.accounts.values_mut(), |q| **q) {
+        *quantity += drift;
+    }
+}
+
+/// The part that carries the rounding difference: the largest one, where it is the least of the
+/// number and can never turn a holding negative.
+fn largest_by<T>(parts: impl Iterator<Item = T>, quantity: impl Fn(&T) -> Decimal) -> Option<T> {
+    parts.reduce(|a, b| {
+        if quantity(&b).abs() > quantity(&a).abs() {
+            b
+        } else {
+            a
+        }
+    })
 }
 
 impl HoldingsBuilder<'_> {

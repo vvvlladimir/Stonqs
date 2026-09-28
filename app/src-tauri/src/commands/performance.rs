@@ -17,8 +17,10 @@ pub struct PerformanceData {
     pub from: String,
     pub to: String,
     pub base_currency: String,
-    #[serde(with = "rust_decimal::serde::str")]
-    pub twr: Decimal,
+    /// `None` when the period holds no sub-period with capital to earn on — the whole screen
+    /// used to fail with it, and a return is one figure on it (ADR-0090).
+    #[serde(with = "rust_decimal::serde::str_option")]
+    pub twr: Option<Decimal>,
     /// The same return as a yearly rate; `None` for a period shorter than a day.
     #[serde(with = "rust_decimal::serde::str_option")]
     pub twr_annualized: Option<Decimal>,
@@ -66,7 +68,13 @@ pub fn performance_summary(
     let costs = analytics
         .costs(range.from, range.to)
         .map_err(|e| named(&store, e))?;
-    let twr = analytics.twr(range.from, range.to)?;
+    // A return that cannot be stated leaves its own cell empty, exactly as XIRR does below: the
+    // costs, the series and every other figure on the screen are still answers.
+    let twr = match analytics.twr(range.from, range.to) {
+        Ok(v) => Some(v),
+        Err(sq_core::Error::Math(_)) => None,
+        Err(e) => return Err(UiError::from(e)),
+    };
     let volume = analytics.trading_volume(range.from, range.to)?;
 
     Ok(PerformanceData {
@@ -74,7 +82,7 @@ pub fn performance_summary(
         to: range.to.to_string(),
         base_currency: analytics.base_currency().to_string(),
         twr,
-        twr_annualized: sq_core::calc::annualize(twr, range.from, range.to),
+        twr_annualized: twr.and_then(|r| sq_core::calc::annualize(r, range.from, range.to)),
         xirr: match analytics.xirr(range.to) {
             Ok(v) => Some(v),
             Err(sq_core::Error::Math(_)) => None,

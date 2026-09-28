@@ -245,14 +245,16 @@ fn position_daily_returns(
         }
         let value = position_value(builder.holdings(), security_id, base, day, prices, rates)?;
         let start = previous + carried;
+        // A day whose factor does not fit — value against a capital of dust — is a day with no
+        // return to state, exactly like a day the position was not held.
         let factor = if value.is_zero() && carried.is_sign_negative() && !previous.is_zero() {
             // Sold off: what came out over what was there, as `time_weighted_return` reads it.
-            Some(-carried / previous)
+            (-carried).checked_div(previous)
         } else if start.is_zero() {
             // Not held on either side of the day: no return to speak of.
             None
         } else {
-            Some(value / start)
+            value.checked_div(start)
         };
         // `f64` because a return is a statistic here, the input of a standard deviation.
         if let Some(r) = factor.and_then(|f| (f - Decimal::ONE).to_f64()) {
@@ -431,13 +433,16 @@ pub fn position_returns(
                 options,
             ))?,
             pnl_base,
-            absolute_performance: (own_capital > Decimal::ZERO).then(|| pnl_base / own_capital),
+            // A result against a capital of dust is a ratio no number holds; the cell is empty
+            // rather than the screen gone.
+            absolute_performance: (own_capital > Decimal::ZERO)
+                .then(|| pnl_base.checked_div(own_capital))
+                .flatten(),
             fees_base: cost.fees_base,
             taxes_base: cost.taxes_base,
-            contribution: if capital <= Decimal::ZERO {
-                Decimal::ZERO
-            } else {
-                pnl_base / capital
+            contribution: match capital > Decimal::ZERO {
+                true => pnl_base.checked_div(capital).unwrap_or(Decimal::ZERO),
+                false => Decimal::ZERO,
             },
             risk,
         });

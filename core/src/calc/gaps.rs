@@ -34,7 +34,9 @@ pub fn quantity_gaps(transactions: &[Transaction], actions: &[CorporateAction]) 
         match event {
             Event::Action(action) => {
                 if let Some(q) = held.get_mut(action.security_id.as_str()) {
-                    *q *= action.quantity_factor()?;
+                    // Rounded exactly as the holdings builder rounds it, or a disposal of the
+                    // whole position is a gap to one of the two and not to the other.
+                    *q = crate::money::fit_quantity(*q * action.quantity_factor()?);
                 }
             }
             Event::Tx(t) => {

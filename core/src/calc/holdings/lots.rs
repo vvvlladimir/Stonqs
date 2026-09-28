@@ -80,7 +80,11 @@ pub(super) fn take_lots(h: &mut Holdings, t: &Transaction) -> Result<Vec<Lot>> {
     let mut remaining = t.quantity;
     let mut taken = Vec::new();
     while remaining > Decimal::ZERO {
-        let lot = position.lots.first_mut().expect("quantity checked above");
+        // The check above is against the position, and a split's rounding can still leave the
+        // lots a fraction short of it. What is left over then is dust, never a short sale.
+        let Some(lot) = position.lots.first_mut() else {
+            break;
+        };
         let take = remaining.min(lot.quantity);
         taken.push(Lot {
             acquired_at: lot.acquired_at,

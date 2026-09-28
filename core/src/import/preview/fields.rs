@@ -289,11 +289,24 @@ pub(super) fn amounts(cells: &Cells, problems: &mut Vec<ImportProblem>) -> Amoun
     let taxes = cells.decimal(ImportField::Tax, problems);
     let fx_rate = cells
         .get(ImportField::FxRate)
-        .and_then(|v| crate::import::parse::parse_decimal(v, cells.decimal_separator));
+        .and_then(|v| crate::import::parse::parse_decimal(v, cells.decimal_separator))
+        .filter(|r| crate::money::in_range(*r));
 
     let amount = match cells.get(ImportField::Amount) {
         Some(_) => cells.decimal(ImportField::Amount, problems),
-        None => quantity * price,
+        // Both factors are already within range, so only their product can still overflow.
+        None => quantity.checked_mul(price).unwrap_or_else(|| {
+            problems.push(
+                ImportProblem::row(
+                    ProblemCode::NumberOutOfRange,
+                    cells.number,
+                    format!("quantity × price ({quantity} × {price}) is too large to be an amount"),
+                )
+                .with("quantity", quantity)
+                .with("price", price),
+            );
+            Decimal::ZERO
+        }),
     };
 
     Amounts {

@@ -26,6 +26,10 @@ pub enum ProblemCode {
 
     NotANumber,
 
+    /// A figure too large to store and calculate with: `money::MAX_MAGNITUDE` is the ceiling,
+    /// and the headroom above it belongs to intermediate arithmetic.
+    NumberOutOfRange,
+
     BadDate,
 
     MissingValue,

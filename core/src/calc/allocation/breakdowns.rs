@@ -102,7 +102,7 @@ pub fn allocation_by_account(
                 let factor = action.quantity_factor()?;
                 for ((_, security_id), quantity) in quantities.iter_mut() {
                     if *security_id == action.security_id {
-                        *quantity *= factor;
+                        *quantity = crate::money::fit_quantity(*quantity * factor);
                     }
                 }
             }

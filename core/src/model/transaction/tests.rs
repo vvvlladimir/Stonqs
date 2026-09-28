@@ -43,3 +43,37 @@ fn every_kind_parses_back_from_its_name() {
     }
     assert!(TransactionKind::parse("BUYY").is_err());
 }
+
+/// `Decimal` panics on overflow rather than saturating, so a figure large enough to overflow
+/// the first product taken of it must never reach the ledger: once stored, every screen that
+/// values the portfolio meets it again.
+#[test]
+fn a_figure_too_large_to_calculate_with_is_refused() {
+    let base = Transaction::cash(
+        "acc",
+        TransactionKind::Deposit,
+        "2024-01-02".parse().unwrap(),
+        dec!(100),
+        "USD",
+    );
+
+    assert!(base.validate().is_ok());
+    assert!(
+        Transaction {
+            amount: Decimal::MAX,
+            ..base.clone()
+        }
+        .validate()
+        .is_err()
+    );
+    // A quantity of a billion tokens is ordinary in crypto and stays allowed.
+    assert!(
+        Transaction {
+            quantity: dec!(1000000000),
+            price: dec!(0.00001),
+            ..base
+        }
+        .validate()
+        .is_ok()
+    );
+}

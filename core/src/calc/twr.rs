@@ -16,13 +16,16 @@ pub struct TwrPoint {
     pub external_flow: Decimal,
 }
 
-/// `r_i = V_i / (V_{i-1} + F_i) - 1`, chained; the first point's flow is ignored.
+/// `r_i = V_i / (V_{i-1} + F_i) - 1`, chained; the first point's flow is ignored. A sub-period
+/// with no positive capital to start from is skipped rather than chained, which is also what
+/// keeps the result above −100% (ADR-0090).
 pub fn time_weighted_return(points: &[TwrPoint]) -> Result<Decimal> {
     if points.len() < 2 {
         return Err(Error::Math("TWR needs at least two points".into()));
     }
 
     let mut cumulative = Decimal::ONE;
+    let mut chained = 0usize;
     for window in points.windows(2) {
         let (prev, cur) = (&window[0], &window[1]);
         let start_capital = prev.end_value + cur.external_flow;
@@ -30,28 +33,52 @@ pub fn time_weighted_return(points: &[TwrPoint]) -> Result<Decimal> {
         // A flow that empties the holding is measured against the value before it; otherwise a
         // sale would read as −100%.
         if cur.end_value.is_zero() && cur.external_flow.is_sign_negative() {
-            if prev.end_value.is_zero() {
+            if prev.end_value <= Decimal::ZERO {
                 continue;
             }
-            cumulative *= -cur.external_flow / prev.end_value;
+            cumulative = chain(cumulative, -cur.external_flow, prev.end_value, cur.date)?;
+            chained += 1;
             continue;
         }
 
-        if start_capital.is_zero() {
-            // Empty-to-empty contributes a neutral factor; value appearing from zero is invalid.
-            if cur.end_value.is_zero() {
-                continue;
-            }
-            return Err(Error::Math(format!(
-                "sub-period ending {} starts from zero capital but ends at {}",
-                cur.date, cur.end_value
-            )));
+        // Only capital the portfolio actually had can earn a return, and a portfolio that owes
+        // more than it holds is a ledger missing its deposits, not a loss of more than
+        // everything. Either way the sub-period is skipped and the chain resumes at the next one
+        // with both ends meaning something (ADR-0090).
+        if start_capital <= Decimal::ZERO || cur.end_value.is_sign_negative() {
+            continue;
         }
 
-        cumulative *= cur.end_value / start_capital;
+        cumulative = chain(cumulative, cur.end_value, start_capital, cur.date)?;
+        chained += 1;
     }
 
+    // Every sub-period was skipped while the window did hold something: a return of 0 would read
+    // as "it went nowhere", and what happened is that no capital this ledger accounts for was
+    // ever at work. A window in which the portfolio was simply empty keeps its flat 0.
+    let held_something = points
+        .iter()
+        .any(|point| !point.end_value.is_zero() || !point.external_flow.is_zero());
+    if chained == 0 && held_something {
+        return Err(Error::Math(
+            "no sub-period of the window starts with capital to earn on".into(),
+        ));
+    }
     Ok(cumulative - Decimal::ONE)
+}
+
+/// One sub-period's factor, chained. A capital of dust against a value of billions is a growth
+/// factor no number holds: it is a return that cannot be stated, which is an error and never a
+/// panic in the middle of a screen.
+fn chain(cumulative: Decimal, value: Decimal, capital: Decimal, date: NaiveDate) -> Result<Decimal> {
+    value
+        .checked_div(capital)
+        .and_then(|factor| cumulative.checked_mul(factor))
+        .ok_or_else(|| {
+            Error::Math(format!(
+                "sub-period ending {date} grows {capital} into {value}, which does not fit"
+            ))
+        })
 }
 
 /// Calendar days, not trading days: a period is a stretch of the calendar.
@@ -176,13 +203,34 @@ mod tests {
         assert_eq!(time_weighted_return(&points).unwrap(), dec!(0.1));
     }
 
+    /// Value appearing with no flow to explain it is a hole in the ledger — a broker export of
+    /// trades alone, with the deposits that paid for them in another file. Nothing was chained,
+    /// so the return is not stated: a 0 % would read as "it went nowhere" (ADR-0090).
     #[test]
-    fn value_out_of_nowhere_is_an_error() {
+    fn value_out_of_nowhere_leaves_the_return_unstated() {
         let points = vec![
             p(d(2024, 1, 1), Decimal::ZERO, Decimal::ZERO),
             p(d(2024, 12, 31), dec!(500), Decimal::ZERO),
         ];
         assert!(matches!(time_weighted_return(&points), Err(Error::Math(_))));
+    }
+
+    /// Purchases with no deposit behind them leave the cash account below zero, so a sub-period
+    /// can start — or end — with the portfolio owing more than it holds. Chained, that turns the
+    /// factor negative and the whole return drops below −100%, which no long-only portfolio can
+    /// do: those sub-periods are skipped, and 400 growing to 500 afterwards is the +25% that
+    /// remains.
+    #[test]
+    fn negative_capital_never_drags_the_return_below_minus_one() {
+        let points = vec![
+            p(d(2024, 1, 1), dec!(100), Decimal::ZERO),
+            p(d(2024, 3, 31), dec!(-100), Decimal::ZERO),
+            p(d(2024, 6, 30), dec!(400), Decimal::ZERO),
+            p(d(2024, 12, 31), dec!(500), Decimal::ZERO),
+        ];
+        let twr = time_weighted_return(&points).unwrap();
+        assert_eq!(twr, dec!(0.25));
+        assert!(twr > dec!(-1));
     }
 
     /// Two years at +21% total: `1.21^(365/730) - 1`. The period is 730 days, so the

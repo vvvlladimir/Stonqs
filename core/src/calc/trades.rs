@@ -113,7 +113,15 @@ fn shares(lots: &[Lot], total: Decimal) -> Vec<Decimal> {
     if quantity.is_zero() {
         return vec![Decimal::ZERO; lots.len()];
     }
-    let mut out: Vec<Decimal> = lots.iter().map(|l| total * l.quantity / quantity).collect();
+    // The product first, for the rounding; a quantity large enough to overflow it takes the
+    // quotient instead of ending the screen.
+    let mut out: Vec<Decimal> = lots
+        .iter()
+        .map(|l| match total.checked_mul(l.quantity) {
+            Some(value) => value / quantity,
+            None => total / quantity * l.quantity,
+        })
+        .collect();
     if let Some((last, rest)) = out.split_last_mut() {
         *last = total - rest.iter().sum::<Decimal>();
     }

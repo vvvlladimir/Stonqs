@@ -447,9 +447,12 @@ fn vote_on_basis(
     mapping: &ImportMapping,
     decimal_separator: char,
 ) -> (AmountBasis, Option<ImportProblem>) {
+    // The vote reads raw cells, ahead of the row's own range check, so it abstains on a figure
+    // the row will refuse rather than multiplying it.
     let number = |raw: &BTreeMap<String, String>, field| {
         cells::cell_of(raw, mapping, field)
             .and_then(|v| parse_decimal(v, decimal_separator))
+            .filter(|d| crate::money::in_range(*d))
             .unwrap_or(Decimal::ZERO)
     };
     let mut vote = BasisVote::default();
@@ -489,6 +492,7 @@ fn vote_on_signs(
         let kind = cells::cell_of(raw, mapping, ImportField::Kind).and_then(|v| mapping.kind_of(v));
         let amount = cells::cell_of(raw, mapping, ImportField::Amount)
             .and_then(|v| parse_decimal(v, decimal_separator))
+            .filter(|d| crate::money::in_range(*d))
             .unwrap_or(Decimal::ZERO);
         checks::count_vote(&mut vote, kind, amount);
     }

@@ -2,6 +2,7 @@
 
 use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
+use rust_decimal_macros::dec;
 
 /// ISO 4217 code; normalised by [`normalize_currency`].
 pub type Currency = String;
@@ -110,6 +111,33 @@ pub fn round_quantity(v: Decimal) -> Decimal {
     v.round_dp_with_strategy(8, RoundingStrategy::MidpointAwayFromZero)
 }
 
+/// Largest magnitude a ledger figure (amount, quantity, price, charge) may carry. `Decimal`
+/// itself holds 7.9e28, but two such numbers multiplied overflow and `Decimal`'s operators
+/// panic rather than saturate, so the headroom above this is left to intermediate arithmetic.
+pub const MAX_MAGNITUDE: Decimal = dec!(1_000_000_000_000_000);
+
+/// Whether a figure is small enough to be stored and multiplied without overflowing.
+pub fn in_range(v: Decimal) -> bool {
+    v.abs() <= MAX_MAGNITUDE
+}
+
+/// Decimals a split leaves a quantity with. `Decimal` carries 28 significant digits, and both
+/// problems a split brings come from spending all of them: a sum of full-precision parts rounds,
+/// so the lots and the accounts of a position stop adding up to it, and a factor applied and then
+/// undone (7/3 then 3/7) never lands back on the number it started from. A scale of 18 is finer
+/// than any instrument is traded in — it is the smallest unit of ether — and rounds back onto
+/// itself.
+const QUANTITY_SCALE: u32 = 18;
+
+/// Rounds a split-adjusted quantity to [`QUANTITY_SCALE`], or to whatever a large quantity leaves
+/// room for: the digits before the point and the digits after it share the same 28.
+pub fn fit_quantity(v: Decimal) -> Decimal {
+    // `trunc` keeps the scale it was given, so the zeros it left behind are not digits.
+    let integer_part = v.trunc().normalize().mantissa().unsigned_abs();
+    let integer_digits = integer_part.checked_ilog10().map_or(0, |log| log + 1);
+    v.round_dp(QUANTITY_SCALE.min(28_u32.saturating_sub(integer_digits)))
+}
+
 /// Division by zero is routine in return calculations (empty portfolio, zero
 /// base) — `None` lets callers handle it explicitly instead of panicking.
 pub fn checked_div(a: Decimal, b: Decimal) -> Option<Decimal> {
@@ -119,7 +147,6 @@ pub fn checked_div(a: Decimal, b: Decimal) -> Option<Decimal> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_decimal_macros::dec;
 
     #[test]
     fn an_ordinary_currency_passes_through_unchanged() {

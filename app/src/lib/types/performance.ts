@@ -30,7 +30,8 @@ export interface PerformanceData {
   from: DateString;
   to: DateString;
   base_currency: string;
-  twr: MoneyString;
+  /** `null` when no sub-period of the window had capital to earn on. */
+  twr: MoneyString | null;
   /** `twr` as a yearly rate; `null` for a period shorter than a day. */
   twr_annualized: MoneyString | null;
   xirr: MoneyString | null;

@@ -359,3 +359,113 @@ date,type,symbol,quantity,unit_price,currency,amount
 fn sq_core_date(y: i32, m: u32, d: u32) -> chrono::NaiveDate {
     chrono::NaiveDate::from_ymd_opt(y, m, d).unwrap()
 }
+
+/// `Decimal` holds 7.9e28 and its operators panic instead of saturating, so a cell near that
+/// ceiling used to take down the preview on the first `quantity × price`. The figure is refused
+/// where it is read, and every later multiplication is then over numbers that fit.
+#[test]
+fn a_number_too_large_to_calculate_with_refuses_its_row_instead_of_panicking() {
+    const CSV: &str = "\
+date,type,symbol,isin,quantity,unit_price,amount,currency,fee
+2024-01-02,BUY,AAPL,US0378331005,79228162514264337593543950335,79228162514264337593543950335,1,USD,0
+";
+    let (store, account) = store_with_account();
+    let service = ImportService::new(&store);
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+
+    let preview = service
+        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+
+    assert_eq!(preview.rows[0].status, RowStatus::Invalid);
+    assert!(
+        preview.rows[0]
+            .problems
+            .iter()
+            .any(|p| p.code == ProblemCode::NumberOutOfRange && p.severity == Severity::Error),
+        "an unusable figure is an error on its row: {:?}",
+        preview.rows[0].problems
+    );
+
+    // Nothing reaches the ledger, so no later screen can meet it either.
+    let options = ImportOptions {
+        new_security_source: Some("yahoo".into()),
+        ..ImportOptions::default()
+    };
+    let result = service.commit(&preview, &options).unwrap();
+    assert_eq!(result.imported, 0);
+}
+
+/// A ticker is renamed (FB became META) and the broker's export prints the old one on the old
+/// rows and the new one on the new ones. The ISIN says it is one instrument throughout, and the
+/// preview reads it that way — so the commit has to as well, or it creates two instruments, the
+/// next preview joins the old rows to the *other* one, and re-importing the same file writes
+/// them a second time.
+#[test]
+fn one_isin_under_two_tickers_is_one_instrument_and_re_importing_is_a_no_op() {
+    const CSV: &str = "\
+date,type,symbol,isin,quantity,unit_price,amount,currency
+2022-01-03,BUY,FB,US30303M1027,10,300,3000,USD
+2023-01-03,BUY,META,US30303M1027,5,120,600,USD
+2023-06-01,DIVIDEND,META,US30303M1027,,,10,USD
+";
+    let (store, account) = store_with_account();
+    let service = ImportService::new(&store);
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+    let options = ImportOptions {
+        new_security_source: Some("yahoo".into()),
+        ..ImportOptions::default()
+    };
+    let import = || {
+        let preview = service
+            .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+            .unwrap();
+        service.commit(&preview, &options).unwrap()
+    };
+
+    assert_eq!(import().imported, 3);
+    let securities = store.list_securities().unwrap();
+    assert_eq!(securities.len(), 1, "one ISIN is one instrument: {securities:?}");
+
+    assert_eq!(import().imported, 0, "the same file twice writes nothing twice");
+    assert_eq!(store.list_securities().unwrap().len(), 1);
+}
+
+/// One row of the same export is missing the ticker its neighbours carry — a cell the broker
+/// left empty. Its ISIN names the instrument the other rows created, so it is written against
+/// that instrument; written without one, it reached the ledger as something the next preview
+/// could not find, and the same file imported twice.
+#[test]
+fn a_row_with_an_isin_and_no_ticker_joins_the_instrument_its_neighbours_made() {
+    const CSV: &str = "\
+date,type,symbol,isin,quantity,unit_price,amount,currency
+2024-01-03,BUY,XDWT,IE00BM67HT60,2,84.50,169.00,EUR
+2024-02-03,BUY,,IE00BM67HT60,1,86.00,86.00,EUR
+";
+    let (store, account) = store_with_account();
+    let service = ImportService::new(&store);
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+    let options = ImportOptions {
+        new_security_source: Some("yahoo".into()),
+        ..ImportOptions::default()
+    };
+    let import = || {
+        let preview = service
+            .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+            .unwrap();
+        service.commit(&preview, &options).unwrap()
+    };
+
+    assert_eq!(import().imported, 2);
+    let securities = store.list_securities().unwrap();
+    assert_eq!(securities.len(), 1);
+    let held = build_holdings(
+        &store.transactions_for_accounts(&pair(&account), None).unwrap(),
+        "EUR",
+        &store,
+    )
+    .unwrap();
+    assert_eq!(held.positions[&securities[0].id].quantity, dec!(3));
+
+    assert_eq!(import().imported, 0, "the same file twice writes nothing twice");
+}

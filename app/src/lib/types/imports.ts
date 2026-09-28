@@ -112,6 +112,7 @@ export type ProblemCode =
   | "MALFORMED_ROW"
   | "MISSING_COLUMN"
   | "NOT_A_NUMBER"
+  | "NUMBER_OUT_OF_RANGE"
   | "BAD_DATE"
   | "MISSING_VALUE"
   | "UNKNOWN_KIND"

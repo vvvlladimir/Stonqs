@@ -115,12 +115,18 @@ pub fn count_basis_vote(
     amount: Decimal,
     charges: Decimal,
 ) {
-    let traded = quantity * price;
+    // Both factors are in range and their product still may not be: a vote is a heuristic and
+    // abstains rather than overflowing (`.claude/rules/import.md` — checks only ever warn).
+    let Some(traded) = quantity.checked_mul(price) else {
+        return;
+    };
     if charge_sign == 0 || traded.is_zero() || charges.is_zero() || amount.is_zero() {
         return;
     }
     let amount = amount.abs();
-    let net = traded + Decimal::from(charge_sign) * charges;
+    let Some(net) = traded.checked_add(Decimal::from(charge_sign) * charges) else {
+        return;
+    };
     if about_equal(amount, traded) {
         vote.gross += 1;
     } else if about_equal(amount, net) {

@@ -500,3 +500,63 @@ fn position_risk_reads_a_sale_as_money_out_not_a_crash() {
     let expected = (0.1f64 - 50.0 / 1100.0).abs() / 2f64.sqrt() * 252f64.sqrt();
     assert!((risk.volatility - expected).abs() < 1e-9);
 }
+
+/// A broker's export is trades, not a bank account. Ten shares bought at 100 with no deposit
+/// behind them leave the portfolio at −1000 cash and +1000 shares: 0 EUR, and by the next day
+/// −1000 + 1050 = 50. There was never any capital of this ledger's own at work, so no sub-period
+/// can be chained and the return is not stated — reporting 0 % would say the portfolio stood
+/// still. Every other figure over the same window is still an answer (ADR-0090).
+#[test]
+fn a_ledger_of_trades_with_no_deposits_has_no_return_to_state() {
+    let txs = vec![Transaction::buy(
+        ACC,
+        AAPL,
+        d(2024, 1, 1),
+        dec!(10),
+        dec!(100),
+        "EUR",
+    )];
+    let prices =
+        FakePrices::new("EUR")
+            .with(AAPL, d(2024, 1, 1), dec!(100))
+            .with(AAPL, d(2024, 1, 2), dec!(105));
+    let rates = FakeRates::new();
+
+    let twr = twr_between(&txs, "EUR", d(2024, 1, 1), d(2024, 1, 2), &prices, &rates);
+    assert!(matches!(twr, Err(sq_core::Error::Math(_))), "{twr:?}");
+
+    let series = value_series(
+        &txs,
+        "EUR",
+        DateRange::new(d(2024, 1, 1), d(2024, 1, 2)),
+        &prices,
+        &rates,
+        HoldingsOptions::default(),
+    )
+    .unwrap();
+    assert_eq!(series.total_value_base, vec![dec!(0), dec!(50)]);
+}
+
+/// The same portfolio once a deposit covers it. 1000 in, 10 shares at 100, so the window opens
+/// at 1000 with 1000 of capital; at 105 a share it is 1050, and the return is the 5 % the shares
+/// made — the sub-period before the deposit, which had nothing to earn on, is left out of the
+/// chain rather than breaking it.
+#[test]
+fn the_chain_resumes_at_the_first_sub_period_with_capital() {
+    let txs = vec![
+        Transaction::buy(ACC, AAPL, d(2024, 1, 1), dec!(10), dec!(100), "EUR"),
+        Transaction::cash(ACC, TransactionKind::Deposit, d(2024, 1, 2), dec!(1000), "EUR"),
+    ];
+    let prices = FakePrices::new("EUR")
+        .with(AAPL, d(2024, 1, 1), dec!(100))
+        .with(AAPL, d(2024, 1, 2), dec!(100))
+        .with(AAPL, d(2024, 1, 3), dec!(105));
+    let rates = FakeRates::new();
+
+    let twr = twr_between(&txs, "EUR", d(2024, 1, 1), d(2024, 1, 3), &prices, &rates).unwrap();
+    assert_eq!(twr.round_dp(6), dec!(0.05));
+    assert!(
+        twr > dec!(-1),
+        "a long-only portfolio never loses more than everything"
+    );
+}

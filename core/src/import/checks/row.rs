@@ -51,7 +51,9 @@ fn amount_vs_quantity_price(
     {
         return None;
     }
-    let expected = draft.quantity * draft.price;
+    // In range individually, out of range multiplied: the row is already refused for its size,
+    // so this check has nothing left to say about it.
+    let expected = draft.quantity.checked_mul(draft.price)?;
     if (draft.amount - expected).abs() <= amount_tolerance(draft.quantity, expected) {
         return None;
     }

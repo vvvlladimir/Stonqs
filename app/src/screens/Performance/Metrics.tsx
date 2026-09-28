@@ -27,13 +27,15 @@ export function PerformanceMetrics({ data, benchmarkId, benchmarkLabel, comparis
     <MetricStrip>
       <Metric
         label={t`TWR (portfolio return)`}
-        value={data ? <Percent value={data.twr} signed tone={false} /> : "…"}
-        tone={data ? signOf(data.twr) : "neutral"}
+        value={data ? data.twr !== null ? <Percent value={data.twr} signed tone={false} /> : "—" : "…"}
+        tone={data?.twr ? signOf(data.twr) : "neutral"}
         hint={
           data?.twr_annualized ? (
             <>
               <Percent value={data.twr_annualized} signed tone={false} /> {t`a year`}
             </>
+          ) : data && data.twr === null ? (
+            t`No period with capital to earn on — the deposits behind these trades are missing`
           ) : (
             t`free of deposits`
           )

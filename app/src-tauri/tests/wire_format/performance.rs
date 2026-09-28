@@ -109,7 +109,7 @@ fn performance_payload_carries_the_curve_and_the_period_returns() {
         from: "2024-06-03".into(),
         to: "2024-06-05".into(),
         base_currency: "EUR".into(),
-        twr: dec!(-0.01),
+        twr: Some(dec!(-0.01)),
         twr_annualized: Some(dec!(-0.7770)),
         xirr: None,
         summary: PeriodSummary {

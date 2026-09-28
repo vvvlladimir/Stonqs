@@ -50,7 +50,8 @@ export interface BridgePerformance {
   from: DateString;
   to: DateString;
   base_currency: string;
-  twr: MoneyString;
+  /** `null` when no sub-period of the window had capital to earn on. */
+  twr: MoneyString | null;
   twr_annualized: MoneyString | null;
   xirr: MoneyString | null;
   start_value: MoneyString;

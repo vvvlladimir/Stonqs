@@ -142,7 +142,15 @@ impl<'a> ImportService<'a> {
     pub fn commit(&self, preview: &ImportPreview, options: &ImportOptions) -> Result<ImportResult> {
         let mut result = ImportResult::default();
 
-        let mut created: HashMap<String, String> = HashMap::new();
+        // What an instrument is known by while the file is written: its ISIN, else its ticker.
+        // Seeded with what the store already holds, so a row joins the same instrument the
+        // preview joined it to (ADR-0005).
+        let mut created: HashMap<String, String> = self
+            .store
+            .list_securities()?
+            .into_iter()
+            .filter_map(|s| Some((isin_key(s.isin.as_deref())?, s.id)))
+            .collect();
         let tx = self.store.conn().unchecked_transaction()?;
 
         // The store may have changed since the preview, so identity is checked again inside the
@@ -171,24 +179,32 @@ impl<'a> ImportService<'a> {
             };
 
             let mut draft = draft.clone();
-            if draft.security_id.is_none()
-                && let Some(symbol) = &draft.symbol
-            {
-                let key = normalize_alias(symbol);
-                let id = match created.get(&key) {
-                    Some(id) => id.clone(),
-                    None => {
-                        let Some(id) =
-                            self.security_for(preview, row.number, &draft, symbol, options, &mut result)?
-                        else {
-                            result.skipped += 1;
-                            continue;
-                        };
-                        created.insert(key, id.clone());
-                        id
-                    }
+            if draft.security_id.is_none() {
+                // The ISIN answers first, exactly as the preview reads it: a ticker renamed
+                // mid-file (FB then META) is one instrument, and a row carrying only an ISIN —
+                // the one cell a broker never leaves out — names the instrument its neighbours
+                // created. Keyed by symbol alone, both used to reach the ledger as something
+                // else than the next preview reads there, so the same file imported twice.
+                let key = instrument_key(&draft);
+                let id = match key.as_ref().and_then(|key| created.get(key)).cloned() {
+                    Some(id) => Some(id),
+                    None => match &draft.symbol {
+                        Some(symbol) => {
+                            let Some(id) =
+                                self.security_for(preview, row.number, &draft, symbol, options, &mut result)?
+                            else {
+                                result.skipped += 1;
+                                continue;
+                            };
+                            Some(id)
+                        }
+                        None => None,
+                    },
                 };
-                draft.security_id = Some(id);
+                if let (Some(key), Some(id)) = (key, id.clone()) {
+                    created.insert(key, id);
+                }
+                draft.security_id = id;
             }
 
             // A restatement writes over a row that is in the store already, so its content
@@ -340,6 +356,25 @@ fn importable(status: RowStatus, options: &ImportOptions) -> bool {
 
 /// A new instrument for a symbol the Instruments step left unresolved. An ISIN gets no quote
 /// source, since it is never a provider symbol, and the row says so.
+/// What a row's instrument is known by while the file is being written: its ISIN when it has one,
+/// its ticker otherwise. The two are kept apart so a ticker can never read as an ISIN.
+fn instrument_key(draft: &TransactionDraft) -> Option<String> {
+    isin_key(draft.isin.as_deref()).or_else(|| {
+        draft
+            .symbol
+            .as_deref()
+            .map(normalize_alias)
+            .filter(|s| !s.is_empty())
+            .map(|symbol| format!("sym:{symbol}"))
+    })
+}
+
+fn isin_key(isin: Option<&str>) -> Option<String> {
+    isin.map(normalize_alias)
+        .filter(|i| !i.is_empty())
+        .map(|isin| format!("isin:{isin}"))
+}
+
 fn unresolved_plan(
     number: usize,
     draft: &TransactionDraft,

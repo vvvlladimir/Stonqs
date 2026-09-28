@@ -101,6 +101,19 @@ impl Transaction {
         if self.price.is_sign_negative() || self.amount.is_sign_negative() {
             return Err(Error::Invalid("price/amount must not be negative".into()));
         }
+        // The last gate before the ledger, whatever wrote the row (the wizard, a plugin's
+        // reader, an assistant tool, the form): a figure this large overflows the first product
+        // taken of it, and by then it is stored and every screen panics on it.
+        if [self.quantity, self.price, self.amount, self.fees, self.taxes]
+            .into_iter()
+            .chain(self.fx_rate_to_base)
+            .any(|v| !crate::money::in_range(v))
+        {
+            return Err(Error::Invalid(format!(
+                "amounts must stay within ±{}",
+                crate::money::MAX_MAGNITUDE
+            )));
+        }
         if self.kind.affects_quantity() {
             if self.security_id.is_none() {
                 return Err(Error::Invalid(format!("{:?} requires a security", self.kind)));

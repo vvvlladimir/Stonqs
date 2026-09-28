@@ -486,6 +486,12 @@ msgstr "{0} в приложении и {1} в интерфейсе, у кажд�
 msgid "{0} in total"
 msgstr "{0} всего"
 
+#. placeholder {0}: p.value
+#. placeholder {1}: p.limit
+#: src/screens/Import/labels.ts
+msgid "{0} is larger than the {1} this app calculates with — check the decimal separator and the column mapping."
+msgstr "{0} больше предела {1}, с которым работает приложение, — проверьте десятичный разделитель и сопоставление колонок."
+
 #. placeholder {0}: formatMoney(plan.cash_left_base, currency, { digits: 0 })
 #: src/screens/Rebalance/RebalanceMetrics.tsx
 msgid "{0} left over"
@@ -1067,6 +1073,10 @@ msgstr "Строка-разделитель: делит дашборд на см
 #: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "A figure over a track: a savings goal, a contribution limit, or financial independence."
 msgstr "Показатель над полосой прогресса: накопительная цель, лимит взносов или финансовая независимость."
+
+#: src/screens/Import/labels.ts
+msgid "a figure too large to calculate with"
+msgstr "слишком большое число для расчётов"
 
 #: src/lib/tour/steps.ts
 msgid "A file from a broker, read through a wizard. Nothing is written until the last step, and a file imported twice adds nothing the second time."
@@ -6030,6 +6040,10 @@ msgstr "За период нет выплат, которые можно кла�
 #: src/screens/Income/Events.tsx
 msgid "No payments."
 msgstr "Выплат нет."
+
+#: src/screens/Performance/Metrics.tsx
+msgid "No period with capital to earn on — the deposits behind these trades are missing"
+msgstr "Нет периода с капиталом, на который можно заработать, — не хватает пополнений, стоящих за этими сделками"
 
 #: src/screens/Plans/index.tsx
 msgid "No plans yet"

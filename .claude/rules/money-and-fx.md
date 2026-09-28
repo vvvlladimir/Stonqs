@@ -33,8 +33,20 @@
   day `ordered_events` applies acquisitions first — storage order is by random id.
 - `Position::accounts` values sum to `quantity`. A disposal from an account that never held the shares goes negative there rather than being smeared over other accounts — that's a data inconsistency, and hiding it forges the answer to "where is it".
 - Quotes are stored already split-adjusted; `corporate_actions` adjust lots, not quotes.
+- A split's factor is usually not a finite decimal (3:7 is ×7/3), and `Decimal` spends all 28
+  digits on it, so a sum of full-precision parts rounds. The **position's** own product is the one
+  figure that is the same under either cost-basis method: it is rounded by `money::fit_quantity`
+  (18 decimals, finer than any instrument trades), and the lots and the accounts are fitted onto it
+  with the difference on the largest part. The parts therefore still sum to the whole, and a
+  disposal of the whole position finds exactly that much in the lots instead of panicking.
+  Everything that replays a split rounds identically — `calc::holdings`, `calc::quantity_gaps` and
+  the allocation breakdown — or one of them calls a sale of everything a gap the others do not see.
 - `quote_coverage` records what was asked; `quotes` records what came back. Extend coverage even when a provider returns nothing.
 - Anything iterating over days builds `Holdings` once via `HoldingsBuilder`, not `holdings_at` per day.
+  What those days read is the cache `PortfolioAnalytics::market_data` preloaded, not the store, so
+  its currency set is every currency a transaction names — `fee_currency` and `tax_currency`
+  included, or a commission billed in a third currency is `MissingMarketData` in `series`, `risk`
+  and `position_returns` while the rate sits in the database.
 - `ValueSeries` covers every calendar day; risk metrics run on `business_days()` (√252 annualisation assumes trading days). Drawdown uses chained returns, not portfolio value.
 - Which sources exist is `sources::CATALOG`, nothing else: a provider's id is its `ID` constant, services are built by `sources::quote_service()` / `fx_service()`, and a call site that needs "the" FX or index source names `sources::DEFAULT_FX` / `DEFAULT_INDEX`, never a string literal. A 429 is `Error::RateLimited` (transient), a 401/403 `Error::Unauthorized` (never retried) — see ADR-0050.
 - **No quote source is shipped as the default one** (ADR-0076). There is no `DEFAULT_QUOTES`: which source a new instrument is stamped with is `sources::default_quotes(&Setup)` — the first quote source that is *on*, `None` while none is, and then the instrument is priced by hand. Yahoo heads `CATALOG`, and `quote_ids` hands that order to the picker, but being first is a position in a list, never a recommendation. Nothing at all is asked while `AppSettings::sources_configured` is false: `AppState::market_setup` writes every switch to `false`, so one line gates every reader of a `Setup`, and `jobs::start` refuses rather than reporting a failure per instrument. `SourceInfo::site` is where a source's requests go, shown beside its switch.

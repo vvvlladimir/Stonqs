@@ -16,6 +16,12 @@ ago; see the as-of date topic.
 Beside them: what was earned over the period in money, the capital invested, the fee and tax rate,
 turnover, and the period's high.
 
+**TWR can read `—`, and that is about the ledger, not the period.** It measures only the stretches
+in which the portfolio had capital at work; after a first import of a broker's trades, with the
+deposits that paid for them still missing, there is no such stretch and no return to state. Every
+other figure on the screen is still an answer. Adding the deposits, or importing the account they
+came from, brings the return back.
+
 **`Earned over the period` and the change beneath it are not the same figure.** The change is what
 a statement shows — end value minus what the portfolio was worth when the window opened — and
 money paid in during the window is part of it. `Earned` is that change with every deposit and

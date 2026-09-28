@@ -486,6 +486,12 @@ msgstr "{0} in the app and {1} in the interface, each under its own licence."
 msgid "{0} in total"
 msgstr "{0} in total"
 
+#. placeholder {0}: p.value
+#. placeholder {1}: p.limit
+#: src/screens/Import/labels.ts
+msgid "{0} is larger than the {1} this app calculates with — check the decimal separator and the column mapping."
+msgstr "{0} is larger than the {1} this app calculates with — check the decimal separator and the column mapping."
+
 #. placeholder {0}: formatMoney(plan.cash_left_base, currency, { digits: 0 })
 #: src/screens/Rebalance/RebalanceMetrics.tsx
 msgid "{0} left over"
@@ -1067,6 +1073,10 @@ msgstr "A divider line: it splits the dashboard into meaningful parts."
 #: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "A figure over a track: a savings goal, a contribution limit, or financial independence."
 msgstr "A figure over a track: a savings goal, a contribution limit, or financial independence."
+
+#: src/screens/Import/labels.ts
+msgid "a figure too large to calculate with"
+msgstr "a figure too large to calculate with"
 
 #: src/lib/tour/steps.ts
 msgid "A file from a broker, read through a wizard. Nothing is written until the last step, and a file imported twice adds nothing the second time."
@@ -6035,6 +6045,10 @@ msgstr "No payments to classify in this period."
 #: src/screens/Income/Events.tsx
 msgid "No payments."
 msgstr "No payments."
+
+#: src/screens/Performance/Metrics.tsx
+msgid "No period with capital to earn on — the deposits behind these trades are missing"
+msgstr "No period with capital to earn on — the deposits behind these trades are missing"
 
 #: src/screens/Plans/index.tsx
 msgid "No plans yet"

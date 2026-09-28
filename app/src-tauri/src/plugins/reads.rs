@@ -100,9 +100,14 @@ fn performance(store: &Store, scope: &ScopeSelection, range: DateRange) -> UiRes
     let analytics = scope.analytics(store)?;
     let series = analytics.series(range)?;
     let summary = sq_core::calc::period_summary(&series);
-    let twr = analytics.twr(range.from, range.to)?;
-    // As `performance_summary` reads it: flows with no sign change have no rate at all, while a
+    // As `performance_summary` reads them: a window whose capital the ledger never accounts for
+    // has no portfolio return, and flows with no sign change have no rate at all, while a
     // missing price is still an error rather than a quiet null.
+    let twr = match analytics.twr(range.from, range.to) {
+        Ok(rate) => Some(rate),
+        Err(sq_core::Error::Math(_)) => None,
+        Err(e) => return Err(e.into()),
+    };
     let xirr = match analytics.xirr(range.to) {
         Ok(rate) => Some(rate.to_string()),
         Err(sq_core::Error::Math(_)) => None,
@@ -112,8 +117,10 @@ fn performance(store: &Store, scope: &ScopeSelection, range: DateRange) -> UiRes
         "from": range.from.to_string(),
         "to": range.to.to_string(),
         "base_currency": analytics.base_currency(),
-        "twr": twr.to_string(),
-        "twr_annualized": sq_core::calc::annualize(twr, range.from, range.to).map(|r| r.to_string()),
+        "twr": twr.map(|r| r.to_string()),
+        "twr_annualized": twr
+            .and_then(|r| sq_core::calc::annualize(r, range.from, range.to))
+            .map(|r| r.to_string()),
         "xirr": xirr,
         "start_value": summary.start_value_base.to_string(),
         "end_value": summary.end_value_base.to_string(),

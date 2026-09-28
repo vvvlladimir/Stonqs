@@ -202,15 +202,24 @@ pub(in crate::ai) fn performance_over(context: &ToolContext, range: DateRange) -
     let series = analytics.series(range).map_err(tool)?;
     let summary = sq_core::calc::period_summary(&series);
     let costs = analytics.costs(range.from, range.to).map_err(tool)?;
-    let twr = analytics.twr(range.from, range.to).map_err(tool)?;
+    // A window whose capital the ledger never accounts for — a broker file of trades with the
+    // deposits behind them missing — has no portfolio return; absent, not zero (ADR-0090).
+    let twr = match analytics.twr(range.from, range.to) {
+        Ok(v) => Some(v),
+        Err(sq_core::Error::Math(_)) => None,
+        Err(e) => return Err(tool(e)),
+    };
 
     Ok(json!({
         "from": range.from.to_string(),
         "to": range.to.to_string(),
         "base_currency": analytics.base_currency(),
-        "twr_percent": percent(twr),
+        "twr_percent": match twr {
+            Some(v) => percent(v),
+            None => Value::Null,
+        },
         // A window shorter than a day has no annual rate to state; absent, not zero.
-        "twr_annualized_percent": match sq_core::calc::annualize(twr, range.from, range.to) {
+        "twr_annualized_percent": match twr.and_then(|v| sq_core::calc::annualize(v, range.from, range.to)) {
             Some(rate) => percent(rate),
             None => Value::Null,
         },

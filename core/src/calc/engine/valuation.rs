@@ -115,7 +115,19 @@ impl PortfolioAnalytics<'_> {
         let prices = self.store.price_cache(&security_ids, upto)?;
 
         let base = self.base_currency().to_string();
-        let mut currencies: BTreeSet<String> = transactions.iter().map(|t| t.currency.clone()).collect();
+        // A charge billed in another currency is its own cash leg (ADR-0064), so its rate is as
+        // needed as the transaction's own — and only this cache is read once the series runs.
+        let mut currencies: BTreeSet<String> = transactions
+            .iter()
+            .flat_map(|t| {
+                [
+                    Some(t.currency.clone()),
+                    t.fee_currency.clone(),
+                    t.tax_currency.clone(),
+                ]
+            })
+            .flatten()
+            .collect();
         for id in &security_ids {
             currencies.insert(self.store.get_security(id)?.currency);
         }

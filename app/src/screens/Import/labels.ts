@@ -118,6 +118,7 @@ export const PROBLEM_LABELS: Record<ProblemCode, MessageDescriptor> = {
   MALFORMED_ROW: msg`the row could not be parsed`,
   MISSING_COLUMN: msg`a column is not assigned`,
   NOT_A_NUMBER: msg`not a number`,
+  NUMBER_OUT_OF_RANGE: msg`a figure too large to calculate with`,
   BAD_DATE: msg`the date could not be parsed`,
   MISSING_VALUE: msg`a required value is missing`,
   UNKNOWN_KIND: msg`the transaction kind is not mapped`,
@@ -277,6 +278,10 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
     case "FX_RATE_ON_BASE_CURRENCY":
       return i18n._(
         msg`An FX rate is given while the transaction currency ${p.base} equals the base currency, so it is not applied. This column usually holds the source currency's rate.`,
+      );
+    case "NUMBER_OUT_OF_RANGE":
+      return i18n._(
+        msg`${p.value} is larger than the ${p.limit} this app calculates with — check the decimal separator and the column mapping.`,
       );
     case "SUSPICIOUS_CURRENCY":
       return i18n._(msg`${p.currency} does not look like a currency code.`);

@@ -212,6 +212,47 @@ fn trade_on_split_date_is_not_adjusted() {
     assert_eq!(h.positions[AAPL].cost_basis_base, dec!(1250));
 }
 
+/// A 3:7 split has no finite decimal: 7/3 = 2.333… forever. The position, each lot and each
+/// account are three separate products of it, and rounded on their own they stop agreeing —
+/// which used to end in a panic when the whole position was sold, because the check is against
+/// the position and the shares come out of the lots.
+/// Two lots of 1, so 1 × 7/3 = 2.333…, and the position 2 × 7/3 = 4.666…; selling 4.666…
+/// takes 2.333… out of each lot and closes the position.
+#[test]
+fn a_split_by_a_repeating_factor_keeps_the_parts_adding_up_to_the_whole() {
+    let txs = vec![
+        Transaction::buy(ACC, AAPL, d(2024, 1, 10), dec!(1), dec!(10), "USD"),
+        Transaction::buy(ACC, AAPL, d(2024, 1, 11), dec!(1), dec!(10), "USD"),
+    ];
+    let splits = vec![CorporateAction::split(AAPL, d(2024, 2, 1), dec!(3), dec!(7))];
+    let options = HoldingsOptions::default().with_corporate_actions(&splits);
+
+    let h = build_holdings_with(&txs, "USD", &FakeRates::new(), options).unwrap();
+    let p = &h.positions[AAPL];
+    let quantity = p.quantity;
+
+    assert_eq!(p.lots.iter().map(|l| l.quantity).sum::<Decimal>(), quantity);
+    assert_eq!(p.accounts.values().sum::<Decimal>(), quantity);
+
+    let mut txs = txs;
+    txs.push(Transaction::sell(
+        ACC,
+        AAPL,
+        d(2024, 3, 1),
+        quantity,
+        dec!(5),
+        "USD",
+    ));
+    let h = build_holdings_with(
+        &txs,
+        "USD",
+        &FakeRates::new(),
+        HoldingsOptions::default().with_corporate_actions(&splits),
+    )
+    .unwrap();
+    assert!(h.positions[AAPL].is_closed(), "selling all of it closes it");
+}
+
 /// A 10:1 reverse split uses the same mechanism in reverse:
 /// buy 100 × 5 = 500 USD; consolidate → 10 × 50 USD, still 500.
 #[test]
