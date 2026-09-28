@@ -53,11 +53,26 @@ function ipcRecorder(): Plugin {
 }
 
 export default defineConfig({
-  // Unit tests cover the pure modules only — what `lib/` computes before anything is rendered.
-  // Anything needing a DOM or a host belongs in an end-to-end run, not here.
+  // Two kinds of test, kept apart by their file name rather than by a folder. `pure` is what
+  // `lib/` computes before anything is rendered and stays in node — no DOM to slow it down and
+  // nothing to mount. `dom` mounts a screen in jsdom against a host that is mocked at the IPC
+  // door (`@tauri-apps/api/mocks`), so `lib/api` and every query run for real.
   test: {
-    include: ["src/**/*.test.ts"],
-    environment: "node",
+    projects: [
+      {
+        extends: true,
+        test: { name: "pure", include: ["src/**/*.test.ts"], environment: "node" },
+      },
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          include: ["src/**/*.dom.test.tsx"],
+          environment: "jsdom",
+          setupFiles: ["./src/test/setup.ts"],
+        },
+      },
+    ],
   },
   // The macro plugin rewrites `<Trans>`/`t` at build time, so no message catalog is
   // looked up at runtime; `lingui()` compiles the imported `.po` catalogs.

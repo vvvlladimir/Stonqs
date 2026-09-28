@@ -79,7 +79,8 @@ export default tseslint.config(
     // A test's name is written for whoever reads the failure, and nothing here reaches a
     // window: the one place in `src` where an English string is not a missing translation.
     // `max-lines-per-function` goes with it — a `describe` is a list, not a function body.
-    files: ["**/*.test.ts"],
+    // `src/test/` is the harness the DOM tests mount through: same rule, same reason.
+    files: ["**/*.test.ts", "**/*.test.tsx", "src/test/**"],
     rules: {
       "lingui/no-unlocalized-strings": "off",
       "max-lines-per-function": "off",

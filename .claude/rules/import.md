@@ -189,6 +189,14 @@ somebody else. Five layers, each answering a question the one below it cannot:
 - `app/src/screens/Import/model.ts` is what the wizard computes before it draws anything — the row
   filters, the one-example-per-shape list, and the count on the commit button — kept pure so
   `model.test.ts` can check the figure the user is asked to trust.
+- `app/src/screens/Import/wizard.dom.test.tsx` is the wizard itself, all four steps over a real
+  export: pick the file, say what it is, look at the instruments, write it. The host is mocked at
+  the IPC door and answers out of `app/e2e/fixtures/import-wizard.json`, which
+  `app/src-tauri/tests/wizard_fixture.rs` **generates from the core** and then guards — so the
+  screen is driven by what the host would really send, and a renamed field fails the Rust test
+  rather than passing the frontend one. Regenerate with `UPDATE_FIXTURES=1 cargo test -p sq-app
+  --test wizard_fixture`, read the diff, run again without it.
 
-A new reader, a new check or a new layout joins the layer that already asks its question. What has
-no layer yet is the wizard end to end: there is no test that drives the six steps with a file.
+A new reader, a new check or a new layout joins the layer that already asks its question. What is
+still missing is an end-to-end run: nothing here builds the host or opens a window, so the file
+dialog, the plugin readers and the write to a real database are covered by nobody.

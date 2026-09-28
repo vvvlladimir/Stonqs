@@ -252,8 +252,26 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
 
 ## Tests
 
-`pnpm test` is vitest over `src/**/*.test.ts`, in the **node** environment: the pure modules only —
-what a screen computes before anything is rendered (`format`, `uiState`'s migrations, `grid`,
-`resolveColumnIds`). A test sits beside what it tests. Nothing here mounts a component or reaches
-`lib/api`: a test needing a DOM or a host is an end-to-end test, and this app has none yet. Test
-names are developer English and the i18n rule is off for those files alone.
+`pnpm test` is vitest, and it is **two projects told apart by the file name**, not by a folder:
+
+- `pure` — `src/**/*.test.ts` in the **node** environment: what a screen computes before anything
+  is rendered (`format`, `uiState`'s migrations, `grid`, `resolveColumnIds`, `Import/model`). No
+  DOM, nothing mounted, nothing reaching `lib/api`.
+- `dom` — `src/**/*.dom.test.tsx` in **jsdom**, mounting a screen through `src/test/host.tsx`. The
+  host is mocked at the IPC door (`mockIPC`, `@tauri-apps/api/mocks`), never by stubbing `lib/api`
+  or a query hook: `call`, the keys, the invalidation and the screen's own state machine all run
+  as they do in the app, and what the test can assert is the wire. A command nobody wrote an
+  answer for **fails by name**, so a screen that starts asking for something new says so instead
+  of rendering an empty table. `src/test/setup.ts` supplies only what jsdom lacks
+  (`matchMedia`, `ResizeObserver`, `scrollIntoView`).
+
+A `dom` test is the expensive kind and earns its place by covering a *sequence* a user goes
+through — `screens/Import/wizard.dom.test.tsx` is the one there is. What it is answered with is
+generated from the core (`app/src-tauri/tests/wizard_fixture.rs` →
+`app/e2e/fixtures/import-wizard.json`), so it fails when the wire changes rather than agreeing
+with a shape the app stopped sending. Assert what the user is asked and what the user is told,
+never a component's own state; queries are `findBy*`/`userEvent`, so no `act` is written by hand.
+
+A test sits beside what it tests. Test names are developer English, and the i18n rule is off for
+those files and for `src/test/` alone. This is still not an end-to-end run: nothing here builds
+the Rust host or opens a window.
