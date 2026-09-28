@@ -34,6 +34,7 @@ libsqlite3-sys = { version = "0.35", features = ["bundled-sqlcipher-vendored-ope
 
 # Integration tests are separate crates and cannot see regular dependencies.
 [dev-dependencies]
+proptest.workspace = true
 rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
 chrono.workspace = true

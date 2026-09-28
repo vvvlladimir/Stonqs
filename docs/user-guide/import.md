@@ -44,6 +44,11 @@ Rows carry a status. An error blocks that row alone, never the file; a warning �
 direction, a suspicious amount — is shown and imported. The wizard refuses to continue only when a
 required column has not been pointed at.
 
+One warning is worth reading whenever it appears: a row whose cell **runs over further lines of
+the file**. A quotation mark left open in an export takes everything after it as one value, so the
+lines that follow stop being rows of their own. The row is still imported, but the count on the
+last step will be lower than the file looks — check that row in the file itself before writing.
+
 **Prices are fetched after the write, as far back as the file goes.** The instruments the import
 created and the currencies it introduced are fetched from the date of their earliest operation in
 the file, not from a fixed window, so an export covering ten years does not leave its older half

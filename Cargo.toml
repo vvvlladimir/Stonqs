@@ -3,7 +3,13 @@ resolver = "3"
 members = ["core", "cli", "app/src-tauri"]
 # The example plugins' guests build for wasm32-wasip2, and a workspace resolves one set of
 # features for one target. Each is built by its own `build.sh`, not by `cargo build`.
-exclude = ["examples/plugins/mt940/src", "examples/plugins/ledger/src", "examples/plugins/concentration/src"]
+# `fuzz` is excluded for its own reason: cargo-fuzz builds with `-Z` flags that need nightly.
+exclude = [
+    "examples/plugins/mt940/src",
+    "examples/plugins/ledger/src",
+    "examples/plugins/concentration/src",
+    "fuzz",
+]
 
 # Dependency versions live in the workspace so core and cli always build
 # against the same crates.
@@ -46,6 +52,9 @@ ureq = "3"
 # Interactive Brokers Flex Query statements are XML with the data in attributes; hand-scanning
 # them would still have to decode entities, so the reader is a dependency rather than a loop.
 quick-xml = { version = "0.42", default-features = false }
+# Test-only: the import reads files nobody in this project wrote, so its properties are checked
+# over generated ones as well as over fixtures (`core/tests/phase3_import/properties.rs`).
+proptest = "1"
 
 # Application host. It lives only in app/src-tauri; neither core nor cli sees it.
 tauri = { version = "2", features = [] }

@@ -112,7 +112,30 @@ fn read_records(text: &str, delimiter: char, problems: &mut Vec<ImportProblem>) 
         }
     }
     records.retain(|r| !r.iter().all(|c| c.is_empty()));
+    report_swallowed_lines(&records, problems);
     records
+}
+
+/// A quote nobody closed is not an error to the reader: it takes everything after it, newlines
+/// included, as one cell, and the rows it ate are gone with nothing said. A cell spanning lines
+/// is legitimate — a note field — so this is a warning naming the row, not a refusal.
+fn report_swallowed_lines(records: &[Vec<String>], problems: &mut Vec<ImportProblem>) {
+    for (i, row) in records.iter().enumerate() {
+        let lines: usize = row.iter().map(|c| c.matches('\n').count()).sum();
+        if lines > 0 {
+            problems.push(
+                ImportProblem::row(
+                    ProblemCode::MalformedRow,
+                    i + 1,
+                    format!(
+                        "a cell of this row runs over {lines} more line(s) of the file — if a quote \
+                         was left open, those lines were read as part of this one"
+                    ),
+                )
+                .warn(),
+            );
+        }
+    }
 }
 
 /// Cuts the preamble above the header and the total line below the data. Zero means "detect":

@@ -23,6 +23,9 @@ cargo clippy --workspace --all-targets
 cargo fmt --check                                  # rustfmt.toml sets max_width = 110
 scripts/check-rs-size.sh                           # .rs files over 500 code lines (tests excluded)
 
+cargo test -p sq-core --test phase3_import          # the whole import suite
+cargo test --release -p sq-core --test phase3_import -- --ignored   # its timing ceilings
+cd fuzz && cargo +nightly fuzz run parse_any -- -max_total_time=60  # needs cargo-fuzz, nightly
 cargo test -p sq-core --test calc_examples          # one integration file
 cargo test -p sq-core --test calc_examples -- twr   # one test by name substring
 cargo test -p sq-core --lib calc::xirr              # unit tests of one module

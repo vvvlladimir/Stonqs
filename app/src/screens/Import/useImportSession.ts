@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
 import { api, ApiError } from "../../lib/api";
@@ -114,10 +114,24 @@ function useLayout() {
   const accounts = useAccounts();
   const templates = useImportTemplates();
 
+  // Each change of the layout asks for a preview of its own, and two answers may come back in
+  // the order the host finished them rather than the order they were asked in. The table would
+  // then show a reading of a layout the user has already moved on from, so an answer older than
+  // the question in hand is dropped.
+  const asked = useRef(0);
   const refresh = useMutation({
-    mutationFn: (next: { config: ParseConfig; mapping: ImportMapping | null; overrides: RowOverride[] }) =>
-      api.importPreview(next.config, next.mapping, next.overrides),
-    onSuccess: (data) => setPreview(data),
+    mutationFn: async (next: {
+      config: ParseConfig;
+      mapping: ImportMapping | null;
+      overrides: RowOverride[];
+    }) => {
+      const ticket = ++asked.current;
+      const data = await api.importPreview(next.config, next.mapping, next.overrides);
+      return { ticket, data };
+    },
+    onSuccess: ({ ticket, data }) => {
+      if (ticket === asked.current) setPreview(data);
+    },
   });
 
   /** A freshly loaded file, or none. */

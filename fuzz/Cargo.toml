@@ -1,0 +1,47 @@
+[package]
+name = "sq-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "AGPL-3.0-only"
+
+# Deliberately outside the workspace: `cargo fuzz` builds with `-Z` flags that need nightly, and
+# the product stays on the toolchain pinned in rust-toolchain.toml.
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+sq-core = { path = "../core" }
+
+[[bin]]
+name = "parse_any"
+path = "fuzz_targets/parse_any.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parse_canonical"
+path = "fuzz_targets/parse_canonical.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parse_flex"
+path = "fuzz_targets/parse_flex.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "preview"
+path = "fuzz_targets/preview.rs"
+test = false
+doc = false
+bench = false
+
+[profile.release]
+debug = 1

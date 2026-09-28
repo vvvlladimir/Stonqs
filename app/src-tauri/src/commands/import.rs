@@ -114,7 +114,7 @@ fn load(
         Some(template) => (template.config.clone(), Some(template.mapping.clone())),
         None => (ParseConfig::default(), None),
     };
-    let mut data = import_preview(state, config, mapping, Vec::new())?;
+    let mut data = preview(state, config, mapping, Vec::new())?;
     // The id, not the name: a plugin's layout and a shipped one may print the same one.
     data.applied_template = found.map(|t| t.id);
     Ok(data)
@@ -159,8 +159,19 @@ pub fn import_clear(state: State<AppState>) -> UiResult<()> {
     Ok(())
 }
 
+/// Off the main thread like the load: a preview is asked again on every change of the layout,
+/// and a file of tens of thousands of rows is a wait the window must stay alive through.
 #[tauri::command]
-pub fn import_preview(
+pub async fn import_preview(
+    app: AppHandle,
+    config: ParseConfig,
+    mapping: Option<ImportMapping>,
+    overrides: Vec<RowOverride>,
+) -> UiResult<ImportPreviewData> {
+    off_thread(move || preview(app.state::<AppState>(), config, mapping, overrides)).await
+}
+
+fn preview(
     state: State<AppState>,
     config: ParseConfig,
     mapping: Option<ImportMapping>,
@@ -190,9 +201,24 @@ fn service<'a>(store: &'a Store, state: &State<AppState>) -> UiResult<ImportServ
         .as_of(Local::now().date_naive()))
 }
 
+/// Off the main thread too: the commit previews the file again before writing it.
 #[tauri::command]
-pub fn import_commit(
+pub async fn import_commit(
     app: AppHandle,
+    config: ParseConfig,
+    mapping: Option<ImportMapping>,
+    overrides: Vec<RowOverride>,
+    options: ImportOptions,
+) -> UiResult<ImportResult> {
+    off_thread(move || {
+        let state = app.state::<AppState>();
+        commit(&app, state, config, mapping, overrides, options)
+    })
+    .await
+}
+
+fn commit(
+    app: &AppHandle,
     state: State<AppState>,
     config: ParseConfig,
     mapping: Option<ImportMapping>,
@@ -211,8 +237,8 @@ pub fn import_commit(
         service.commit(&preview, &options)?
     };
 
-    crate::jobs::fetch_missing(&app, &state);
-    emit_changed(&app, "transactions")?;
+    crate::jobs::fetch_missing(app, &state);
+    emit_changed(app, "transactions")?;
     Ok(result)
 }
 

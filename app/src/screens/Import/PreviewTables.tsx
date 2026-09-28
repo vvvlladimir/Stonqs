@@ -5,44 +5,13 @@ import { Badge, Buttons, DataTable, Panel, Scrolly } from "../../components/ui";
 import { toNumber } from "../../lib/format";
 import type { ImportPreviewData } from "../../lib/types";
 import { kindLabels, STATUS_LABELS, STATUS_TONES, type PreviewRow } from "./labels";
-
-/** One row per distinct shape (kind, optional fields, status), in file order: the oddities are the question. */
-
-/** Fields that are worth an example of their own: they are the ones that go wrong. */
-function shapeOf(row: PreviewRow): string {
-  const d = row.draft;
-  if (!d) return `—|${row.status}`;
-  const has = [
-    d.symbol || d.isin ? "sec" : "",
-    Number(d.quantity) !== 0 ? "qty" : "",
-    Number(d.price) !== 0 ? "price" : "",
-    Number(d.amount) < 0 ? "neg" : "",
-    Number(d.fees) !== 0 ? "fee" : "",
-    Number(d.taxes) !== 0 ? "tax" : "",
-    d.fx_rate_to_base ? "fx" : "",
-    d.link_id ? "link" : "",
-    d.note ? "note" : "",
-  ]
-    .filter(Boolean)
-    .join("+");
-  return `${d.kind}|${d.currency}|${has}|${row.status}`;
-}
-
-function distinct(rows: PreviewRow[]): PreviewRow[] {
-  const seen = new Set<string>();
-  return rows.filter((row) => {
-    const shape = shapeOf(row);
-    if (seen.has(shape)) return false;
-    seen.add(shape);
-    return true;
-  });
-}
+import { distinctRows } from "./model";
 
 export function ParsedPanel({ preview }: { preview: ImportPreviewData }) {
   const { t } = useLingui();
   const [all, setAll] = useState(false);
 
-  const unique = useMemo(() => distinct(preview.rows), [preview.rows]);
+  const unique = useMemo(() => distinctRows(preview.rows), [preview.rows]);
   const rows = all ? preview.rows : unique;
 
   return (

@@ -1,0 +1,67 @@
+name: Fuzz
+
+# The import reads bytes nobody in this project wrote. Property tests cover the shapes we thought
+# of; this covers the ones we did not. On a schedule rather than on a pull request: ninety seconds
+# of fuzzing is a smoke test, and failing a pull request over which inputs a random session
+# happened to reach would teach everyone to ignore it.
+
+on:
+  schedule:
+    - cron: "0 4 * * 2"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - fuzz/**
+      - .github/workflows/fuzz.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [parse_any, parse_canonical, parse_flex, preview]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Linux system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev
+
+      # cargo-fuzz builds with `-Z` flags, so this job is the one place a nightly toolchain is
+      # used. The product's own pin is untouched.
+      - name: Nightly toolchain
+        run: rustup toolchain install nightly --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: fuzz
+          workspaces: fuzz
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+
+      - name: Fuzz ${{ matrix.target }}
+        working-directory: fuzz
+        run: |
+          cargo +nightly fuzz run ${{ matrix.target }} \
+            -- -max_total_time=120 -max_len=65536 -rss_limit_mb=2048
+
+      # A crash is the whole point of the job, and it is worthless without the input that caused
+      # it: it goes into `core/tests/fixtures/crashes/` and into `robustness.rs` with the fix.
+      - name: Keep what crashed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-${{ matrix.target }}-artifacts
+          path: fuzz/artifacts/
+          if-no-files-found: ignore

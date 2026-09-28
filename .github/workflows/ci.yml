@@ -85,6 +85,30 @@ jobs:
       - name: Test
         run: cargo test --workspace --locked
 
+  import:
+    # The import is the step a new user either gets through or leaves at, and the part of it that
+    # cannot be checked in a debug build is how long it takes. One runner, release, and only the
+    # tests that are `#[ignore]`d for exactly this reason.
+    name: import (release timings)
+    if: github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Placeholder frontend output
+        shell: bash
+        run: mkdir -p app/dist
+
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-release
+
+      - name: Import timings
+        run: cargo test --release -p sq-core --locked --test phase3_import -- --ignored --nocapture
+
   frontend:
     name: frontend
     if: github.event.pull_request.draft != true
@@ -111,6 +135,10 @@ jobs:
       - run: pnpm lint
       - run: pnpm lint:css
       - run: pnpm format:check
+
+      # Vitest over the pure modules. Fast enough to sit before the build, and what it guards —
+      # the import wizard's own reading of a preview among it — is what a broken build hides.
+      - run: pnpm test
 
       # tsc --noEmit then vite build.
       - run: pnpm build

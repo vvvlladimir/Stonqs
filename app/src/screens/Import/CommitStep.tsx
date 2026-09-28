@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Badge, Banner, CheckField, Field, Form, List, ListRow, Panel } from "../../components/ui";
 import { useQuoteProviders } from "../../lib/queries";
 import type { ImportOptions, ImportPreviewData, ImportResult, RowOverride } from "../../lib/types";
+import { rowsToWrite } from "./model";
 import { ProblemList } from "./ProblemList";
 import { RowTable } from "./RowTable";
 import { TransferPairs } from "./TransferPairs";
@@ -59,12 +60,7 @@ export function CommitStep({
 }) {
   const { t } = useLingui();
   const s = preview.summary;
-  const willWrite =
-    s.ready +
-    s.updated +
-    (options.create_missing_securities ? s.unknown_securities : 0) +
-    (options.import_duplicates ? s.duplicates : 0) +
-    (options.import_similar ? s.similar : 0);
+  const willWrite = rowsToWrite(s, options);
 
   const warnings = useMemo(
     () => preview.rows.flatMap((r) => r.problems).filter((p) => p.severity === "WARNING"),

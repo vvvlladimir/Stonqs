@@ -9,9 +9,13 @@ mod conformance;
 mod dictionary;
 mod external;
 mod ibflex;
+mod perf;
+mod properties;
+mod robustness;
 mod rules;
 mod shapes;
 mod signs;
+mod synthetic;
 mod traps;
 
 use rust_decimal_macros::dec;

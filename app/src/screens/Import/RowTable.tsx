@@ -6,11 +6,10 @@ import { toNumber } from "../../lib/format";
 import type { ImportField, ImportPreviewData, RowOverride, RowStatus } from "../../lib/types";
 import { RowFix } from "./RowFix";
 import { kindLabels, STATUS_LABELS, STATUS_TONES, type PreviewRow } from "./labels";
+import { filterRows, type RowFilter } from "./model";
 
 /** How many rows the review table renders before it stops being a review. */
 const SHOWN = 200;
-
-type Filter = RowStatus | "ALL" | "WARNING" | "FIXED";
 
 /** Every row of the file, filtered by what the user is looking for and fixable in place. */
 export function RowTable({
@@ -24,7 +23,7 @@ export function RowTable({
 }) {
   const { t } = useLingui();
   // Notices and hand edits are cross-cutting filters, not two more row statuses.
-  const [filter, setFilter] = useState<Filter>("ALL");
+  const [filter, setFilter] = useState<RowFilter>("ALL");
   const [fixing, setFixing] = useState<PreviewRow | null>(null);
 
   const fileColumns = Object.entries(preview.mapping.columns) as Array<[ImportField, string]>;
@@ -75,13 +74,6 @@ export function RowTable({
   );
 }
 
-function filterRows(rows: PreviewRow[], filter: Filter, fixed: Set<number>): PreviewRow[] {
-  if (filter === "ALL") return rows;
-  if (filter === "WARNING") return rows.filter((r) => r.problems.some((p) => p.severity === "WARNING"));
-  if (filter === "FIXED") return rows.filter((r) => fixed.has(r.number));
-  return rows.filter((r) => r.status === filter);
-}
-
 /** One chip per filter, each with how many rows it would show; an empty one cannot be picked. */
 function StatusChips({
   summary,
@@ -90,8 +82,8 @@ function StatusChips({
   edited,
 }: {
   summary: ImportPreviewData["summary"];
-  filter: Filter;
-  onFilter: (filter: Filter) => void;
+  filter: RowFilter;
+  onFilter: (filter: RowFilter) => void;
   edited: number;
 }) {
   const { i18n } = useLingui();

@@ -163,3 +163,32 @@
   twelve. Re-running the same file is a no-op — a name already defined is reused rather than
   duplicated.
 - Taxonomy CSV is read by meaning, not template: level columns found by header name (`Levels 2`, `Уровень 2`, `Category`), a security row identified by having a ticker/ISIN, the security's own name one level deeper than its category. The first level (tree's name, repeated every row) is detected and dropped. Securities are matched by ISIN first (ISIN = instrument, ticker = listing — a foreign file may print a different one). `commit_taxonomy(into)` extends the tree it's invoked on; a node already present under the same name/place is reused (case-insensitive match), so re-importing doesn't double the tree, and a security's split is overwritten by the newer file.
+## How it is tested
+
+The import is where a new user either stays or leaves, and everything it reads was written by
+somebody else. Five layers, each answering a question the one below it cannot:
+
+- `core/tests/phase3_import/` is one binary. `basics`/`shapes`/`signs`/`basis`/`rules`/`traps` are
+  the worked examples; the four added for the file nobody wrote by hand are:
+  - `robustness.rs` — the hostile corpus: wrong encoding, a quote nobody closed, a ragged row, a
+    date in a shape nobody declared, a PDF picked by mistake. The rule is never "it works" but
+    **it answers**: an error, or a problem on a row. A panic is a failure, and so is a row that
+    disappears with nothing said.
+  - `properties.rs` — proptest over generated files. Reading one file twice gives one preview,
+    the order of the rows does not change the ledger, importing twice writes once, a canonical
+    export imports back to the same ledger, and the summary is what the commit writes. Two cases
+    take arbitrary bytes and arbitrary text and only ask that nothing comes apart.
+  - `synthetic.rs` — every shipped layout over a file written from its own declaration: its
+    columns, its delimiter, its date format, its wordings. It proves a layout self-consistent and
+    no more — that the 28 layouts without a fixture at least read a file laid out as they say.
+    `conformance.rs` is still the only thing that proves one matches what a broker prints.
+  - `perf.rs` — `#[ignore]`d ceilings over 50 000 rows, plus the ratio between 2 000 and 20 000
+    rows, so a pass that becomes a pass per row is caught here. Release only; CI has its own job.
+- `fuzz/` (outside the workspace, nightly) is libFuzzer over `parse_file`, `parse_canonical`,
+  `parse_flex` and the preview. A crash is committed as a case in `robustness.rs` — see its README.
+- `app/src/screens/Import/model.ts` is what the wizard computes before it draws anything — the row
+  filters, the one-example-per-shape list, and the count on the commit button — kept pure so
+  `model.test.ts` can check the figure the user is asked to trust.
+
+A new reader, a new check or a new layout joins the layer that already asks its question. What has
+no layer yet is the wizard end to end: there is no test that drives the six steps with a file.
