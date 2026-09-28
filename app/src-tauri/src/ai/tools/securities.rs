@@ -341,7 +341,7 @@ pub(super) fn securities_events(context: &ToolContext, args: &Value) -> AiResult
 }
 
 /// The body of `security_save` for a new instrument. The host fetches its quotes behind the
-/// change notification, the same way the form does (`.claude/rules/money-and-fx.md`).
+/// change notification, the same way the form does (`.claude/rules/market-data.md`).
 pub(super) fn security_create(context: &ToolContext, args: &Value) -> AiResult<Value> {
     let symbol = text(args, "symbol").trim().to_uppercase();
     let name = text(args, "name").trim().to_string();

@@ -1,178 +1,82 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**Stonqs** — investment-portfolio tracker. Cargo workspace (Rust 2024, resolver 3), strictly one-way layering.
 
-## What this is
+- `core/` — `sq-core`, library only: model, SQLite storage, quote/FX providers, calc. Never prints or logs; touches the filesystem only via a passed path.
+- `cli/` — `sq-cli` (`sqcli`), throwaway harness for the core. No `clap`, no deps beyond core.
+- `app/` — product. `app/src-tauri` = `sq-app` (Tauri host, the only crate that knows Tauri); `app/src` = Vite + React + TS.
 
-Cargo workspace (Rust 2024, resolver 3) for **Stonqs**, an investment-portfolio tracker.
-Layering is strictly one-way (see Architecture).
-
-- `core/` — `sq-core`, a **library only**: model, SQLite storage, quote/FX providers, performance math. It never prints, never logs, and touches the filesystem only via an explicitly passed path.
-- `cli/` — `sq-cli` (binary `sqcli`), a throwaway harness for exercising the core by hand. Not a product. Deliberately has no `clap` and no dependencies beyond the core.
-- `app/` — the product UI. `app/src-tauri` is `sq-app`, the Tauri host (Rust); `app/src` is the frontend (Vite + React + TypeScript). This is the only crate that knows Tauri exists.
-
-Target platforms are macOS/Windows/Linux **and** iOS/iPadOS/Android from the same code. Only desktop is built for now, deliberately. Everything is nonetheless written mobile-first — see `.claude/rules/ui-boundary.md`. The browser is explicitly not a target: `libsqlite3-sys` and `ureq` do not exist on `wasm32-unknown-unknown`.
+Targets: desktop + iOS/Android from one codebase; only desktop is built, but everything is mobile-first. Browser is not a target (`libsqlite3-sys`, `ureq` don't build for wasm32).
 
 ## Commands
 
 ```bash
 cargo build --workspace
-cargo test --workspace                             # unit + integration, no network
-cargo test -p sq-core --lib -- --ignored    # live ECB request (fx/ecb.rs)
+cargo test --workspace                          # no network
+cargo test -p sq-core --lib -- --ignored        # live ECB
 cargo clippy --workspace --all-targets
-cargo fmt --check                                  # rustfmt.toml sets max_width = 110
-scripts/check-rs-size.sh                           # .rs files over 500 code lines (tests excluded)
+cargo fmt --check                               # max_width = 110
+scripts/check-rs-size.sh                        # .rs size guard
+cargo test -p sq-core --test calc_examples -- twr    # one file / name filter
+cargo test -p sq-core --lib calc::xirr               # one module's unit tests
+cargo test -p sq-core --test phase3_import           # import suite (+ --release -- --ignored: timing)
+cd fuzz && cargo +nightly fuzz run parse_any -- -max_total_time=60
+cargo check -p sq-app                           # host only
+cargo run -p sq-cli -- demo | series | risk | benchmark | rebalance | allocation [..] | import [file] [--resolve] [--commit]
+cargo run -p sq-cli -- lookup <ISIN> | listings <ISIN> EUR | quotes AAPL <from> <to> | rates USD EUR <from> <to>   # network
 
-cargo test -p sq-core --test phase3_import          # the whole import suite
-cargo test --release -p sq-core --test phase3_import -- --ignored   # its timing ceilings
-cd fuzz && cargo +nightly fuzz run parse_any -- -max_total_time=60  # needs cargo-fuzz, nightly
-cargo test -p sq-core --test calc_examples          # one integration file
-cargo test -p sq-core --test calc_examples -- twr   # one test by name substring
-cargo test -p sq-core --lib calc::xirr              # unit tests of one module
-cargo test -p sq-core --doc                         # lib.rs doctest (end-to-end example)
-
-cargo run -p sq-cli -- demo                            # in-memory end-to-end scenario
-cargo run -p sq-cli -- series | risk | benchmark | rebalance
-cargo run -p sq-cli -- allocation [taxonomy|currency|account|security]
-cargo run -p sq-cli -- import [file] [--resolve] [--commit]  # CSV preview / write
-cargo run -p sq-cli -- lookup IE00B5BMR087             # ISIN -> ticker (network)
-cargo run -p sq-cli -- listings IE00B4L5Y983 EUR       # ISIN -> venues (network)
-cargo run -p sq-cli -- import prices [file] [symbol] [--commit]
-cargo run -p sq-cli -- quotes AAPL 2024-06-03 2024-06-10   # needs network
-cargo run -p sq-cli -- rates USD EUR 2024-06-03 2024-06-08 # needs network
+cd app && pnpm install
+pnpm tauri dev | pnpm dev:app (separate app.stonqs.dev data) | pnpm tauri build
+pnpm build                                      # tsc --noEmit && vite build
+pnpm test [--project pure|dom]                  # vitest
+pnpm lint | pnpm lint:css | pnpm format
+pnpm i18n:extract                               # must report no missing translations
+UPDATE_FIXTURES=1 cargo test -p sq-app --test wizard_fixture   # regen e2e/fixtures/import-wizard.json
+pnpm record:tour | pnpm notices | bash scripts/make-icons.sh | bash scripts/dev-signing-cert.sh
 ```
 
-```bash
-cd app
-pnpm install
-pnpm tauri dev           # desktop app against the release data dir (app.stonqs)
-pnpm dev:app             # same, but identifier app.stonqs.dev -> its own profiles/DB
-pnpm tauri build         # bundled desktop app
-pnpm build               # frontend only: tsc --noEmit && vite build
-pnpm test                # vitest: `pure` (src/**/*.test.ts, node) + `dom` (src/**/*.dom.test.tsx,
-                         # jsdom, host mocked at the IPC door). `--project pure` runs one of them
-UPDATE_FIXTURES=1 cargo test -p sq-app --test wizard_fixture   # regenerate e2e/fixtures/import-wizard.json
-pnpm record:tour         # fresh demo profile, every screen, IPC -> e2e/fixtures/ipc.json
-                         # (read by the stonqs-site repository's `pnpm screenshots`)
-pnpm i18n:extract        # refresh src/locales/{en,ru}/messages.po from the code
-pnpm i18n:compile        # compile catalogs (the Vite plugin does this during a build)
-pnpm notices             # regenerate THIRD-PARTY-NOTICES.md + src/generated/notices.json
-                         # (`pnpm notices:check` is what the audit workflow runs)
-bash scripts/make-icons.sh    # regenerate every icon from app-icon.svg
-bash scripts/dev-signing-cert.sh  # once per Mac: stable dev signature, so keychain "Always Allow" sticks
-```
+Dependency versions live in `[workspace.dependencies]`; members use `.workspace = true`.
 
-`cargo check -p sq-app` type-checks the host without touching the frontend.
-Dependency versions live in `[workspace.dependencies]`; member crates use `.workspace = true`.
+## Architecture (`core/src`)
 
-## Architecture
-
-Dependencies point strictly one way: `model` knows nothing; `storage` knows `model`; `calc` knows `model` plus two small traits, and knows nothing about SQLite or the network.
+`model` knows nothing; `storage` knows `model`; `calc` knows `model` + `PriceLookup`/`RateLookup` only (no SQLite, no network).
 
 ```
-model/    domain types (Account, AccountGroup, Security, SecurityAttributeDef, Transaction,
-          Position+Lot, Portfolio, CorporateAction, Taxonomy, CostBasisMethod, InvestmentPlan,
-          SecurityAlert, SecurityEvent, Watchlist)
-storage/  Store owns one rusqlite Connection; per-entity repository files.
-          Implements PriceLookup (quotes.rs) and RateLookup (fx_rates.rs).
-market/   QuoteProvider (yahoo/ live, stooq.rs kept as a second example),
-          SecuritySearch (instrument directory), ListingDirectory (openfigi.rs +
-          mic.rs), MarketDataService = provider registry + cache + resolve().
-fx/       mirrors market/: FxProvider, ecb.rs, StaticFxProvider (offline/tests), FxService.
-inflation/ mirrors fx/ again for consumer-price indices (eurostat.rs, imf.rs, codes.rs) — an
-          index is monthly, so its lookup steps rather than interpolates (ADR-0060).
-sources/   the catalogue of shipped sources (SourceInfo rows, one constructor per role) and
-          the only builder of MarketDataService/FxService from a `Setup` (keys, switches,
-          custom sources — ADR-0050/0053). Quotes and FX are chains with a fallback guard
-          (market/guard.rs, ADR-0051/0052); market/custom/ is the user-described feed (ADR-0054).
-calc/     holdings/ -> valuation.rs -> series.rs -> risk/ / benchmark.rs
-          -> allocation/ / rebalance/, capital_gains.rs, dividends.rs,
-          income.rs, charges.rs, journal.rs, periods/, plans.rs, alerts.rs, watchlist.rs;
-          twr.rs / xirr.rs;
-          engine/ glues everything as PortfolioAnalytics, its impl split by subject.
-app/      Tauri host: commands/ (thin), state.rs (Mutex<Store> + Portfolio of the open
-          profile), profiles.rs (one folder per profile), vault/ + secrets.rs
-          (password-sealed provider keys, the lock), dbfile.rs (plain <-> encrypted
-          database file, ADR-0049),
-          error.rs (UiError), plugins/ (installed packages, one folder each: the
-          registry in mod.rs, manifest.rs / verify.rs / install.rs for the package,
-          sandbox.rs for every WASM component, reads.rs for what a plugin is handed —
-          ADR-0070). Frontend: lib/api/ is the only code that
-          imports @tauri-apps/api; lib/types/ is a barrel, still imported as
-          "lib/types".
-import/   parse_file -> parse/ | ibflex/ (IB Flex XML, ADR-0061) -> mapping/
-          -> preview/ -> service.rs (only place that touches Store).
-          taxonomy/ handles taxonomy CSV. checks/ is the
-          plausibility layer. presets.rs ships broker layouts from
-          presets/brokers.json.
+model/     domain types
+storage/   Store (one rusqlite Connection), repo per entity; implements PriceLookup/RateLookup
+market/    QuoteProvider (yahoo/…), SecuritySearch, ListingDirectory (openfigi+mic), MarketDataService
+fx/        FxProvider (ecb…), FxService — mirrors market/
+inflation/ CPI indices, monthly, step lookup (ADR-0060)
+sources/   catalogue of shipped sources; only builder of the services from a `Setup`
+calc/      holdings/ -> valuation -> series -> risk/benchmark/allocation/rebalance/…; engine/ = PortfolioAnalytics
+import/    parse_file -> parse/ | ibflex/ -> mapping/ -> preview/ -> service.rs (only Store user)
 ```
 
-The calculation order is always transactions → `Holdings` → `PortfolioValuation` → metrics. `Holdings` is deterministic and price-free; only valuation pulls market data.
+Host (`app/src-tauri/src`): `commands/` (thin), `state.rs`, `profiles.rs`, `vault/`+`secrets.rs`, `dbfile.rs`, `error.rs` (UiError), `plugins/`, `ai/`, `jobs/`. Frontend: `lib/api/` is the only importer of `@tauri-apps/api`.
 
-`PriceLookup` / `RateLookup` are the seam that keeps `calc` testable (`core/tests/support/mod.rs`). Add new calc code against these traits, not against `Store`.
+- Order is always transactions → `Holdings` (deterministic, price-free) → `PortfolioValuation` → metrics.
+- New calc code goes against `PriceLookup`/`RateLookup` (test support: `core/tests/support/mod.rs`), not `Store`.
+- Providers are one-method (`fetch`). Everything synchronous — no async/tokio.
 
-Providers stay one-method (`fetch`; `fetch_history` is a default overridden only when that one response also carries dividends and splits). Everything is synchronous — no async, no tokio (single-user desktop app).
-
-## Invariants
-
-Detailed, per-area rules live in `.claude/rules/` and are loaded only when relevant — keep this file itself short:
-
-- `.claude/rules/money-and-fx.md` — Decimal vs f64, storage encoding, price/currency pairing, FX rates, quote/fx caching.
-- `.claude/rules/taxonomy-and-rebalance.md` — allocation subjects, exclusions, target weights, rebalance math.
-- `.claude/rules/import.md` — which reader a file gets, CSV parsing, amount-sign detection, row severity, taxonomy import.
-- `.claude/rules/ui-boundary.md` — sq-app ↔ sq-core boundary, wire format, scoping.
-- `.claude/rules/ai-assistant.md` — the assistant in `app/src-tauri/src/ai/`: layering, tool catalogue, consent, the dashboard brief.
-- `.claude/rules/frontend.md` — layers inside `app/src`: queries, components, primitives, dashboard, i18n.
-- `.claude/rules/migrations.md` — migration history and rules.
-- `.claude/rules/assistant-docs.md` — `docs/user-guide/` and `docs/ai-reference/`: which corpus, when a screen change obliges a guide change, how to write one, how to register it.
-
-When editing code in one of these areas, read the matching rule file first. Changing what a screen
-*does*, or what a figure *means*, also obliges the matching file under `docs/user-guide/` or
-`docs/ai-reference/` in the same change — that corpus is what the AI assistant answers from, so a
-stale one makes it confidently wrong rather than merely vague (`.claude/rules/assistant-docs.md`).
+Area rules live in `.claude/rules/*.md` and load automatically by path. Changing what a screen does or what a figure means also requires updating `docs/user-guide/` or `docs/ai-reference/` in the same change (see `assistant-docs.md`).
 
 ## Conventions
 
-- User-visible text lives in the frontend only, in English, behind a Lingui macro; Russian is a
-  catalog (`app/src/locales/ru`). Rust sends codes and values, never sentences — see ADR-0023 and
-  `.claude/rules/ui-boundary.md`. Strings that remain in `core`, `app/src-tauri` and `cli` are
-  English developer text.
-- Doc comments and code comments are written in English. Comment only what the code does not already say: a non-obvious decision, an invariant that would break silently, or a gotcha a future reader would hit. Skip comments that restate the line below them. Keep comments to 1–2 lines; move longer explanations to the relevant `.claude/rules/*.md` file or an ADR.
-- Every calculation test starts with the arithmetic worked out longhand in a comment, then the same computation in code — see `core/tests/calc_examples/`. Keep that shape.
-- Tests needing network are `#[ignore = "requires network"]`.
-- Unit tests live next to the code (`mod tests`); once they outweigh ~100 lines the module becomes
-  `<name>/mod.rs` + `<name>/tests.rs` (`#[cfg(test)] mod tests;`). Cross-layer tests live in `core/tests/`. A test
-  binary that outgrows one file becomes `core/tests/<name>/main.rs` plus a module per subject —
-  one binary, so link time does not grow with the number of themes. `support` is shared, so a
-  folder reaches it with `#[path = "../support/mod.rs"]`.
-- A module that outgrows one file becomes a folder with `mod.rs`, and the public API stays byte for
-  byte what it was: callers keep importing `import::mapping`, not `import::mapping::aliases`.
-- Size is guarded, so a split does not grow back; blank lines and comments never count. A Rust
-  function over 100 lines fails clippy (`too_many_lines`, `clippy.toml`) unless it carries
-  `#[expect(clippy::too_many_lines, reason = "...")]`; a `.rs` file over 500 code lines, tests
-  excluded, is a CI warning and over 800 an error (`scripts/check-rs-size.sh`). ESLint caps a file
-  at 300 lines, a function at 80 and a component (`.tsx`) at 150; a genuine exception is an inline
-  `eslint-disable-next-line` with its reason, and an unneeded one fails the lint. Split rather than
-  raise a limit — a component into sub-components or a `use<Thing>` hook, a table's columns into
-  their own hook, pure logic into the screen's `model.ts`.
-- `sq_core::prelude` exists for callers touching many modules; export new commonly used types there.
+- User-visible text only in the frontend, English, behind a Lingui macro (ru = catalog). Rust sends codes + values, never sentences (ADR-0023). Rust strings are English developer text.
+- Comments in English, 1–2 lines, only what the code doesn't say (non-obvious decision, silent invariant, gotcha). Longer → rules file or ADR.
+- Calc tests: arithmetic worked longhand in a comment first, then the code (`core/tests/calc_examples/`).
+- Network tests: `#[ignore = "requires network"]`.
+- Unit tests beside code; over ~100 lines → `<name>/mod.rs` + `<name>/tests.rs`. Cross-layer tests in `core/tests/`; a growing binary → `core/tests/<name>/main.rs` + modules, reaching support via `#[path = "../support/mod.rs"]`.
+- Splitting a module into a folder keeps the public API byte-identical.
+- Size limits (blank/comment lines don't count): Rust fn > 100 lines fails clippy unless `#[expect(clippy::too_many_lines, reason = "...")]`; `.rs` > 500 code lines warns, > 800 errors. ESLint: file 300, function 80, `.tsx` component 150; exceptions are inline `eslint-disable-next-line` with reason. Split rather than raise a limit (sub-components, `use<Thing>` hook, columns hook, `model.ts`).
+- Export commonly used types in `sq_core::prelude`.
 
-## Architecture Decision Records
+## ADRs
 
-Store ADRs in `docs/decisions/` as Markdown files. Use a sortable numeric prefix
-and a short kebab-case title, for example `0013-provider-cache-policy.md`.
-
-Create an ADR when a decision affects architecture, module boundaries, persistence,
-external integrations, concurrency, wire formats, or a long-lived invariant; record
-the context, the chosen option, alternatives considered, and consequences. Do not
-create an ADR for routine implementation details, local refactors, bug fixes, or
-temporary experiments. Use a nearby code comment for a small local invariant and a
-`.claude/rules/*.md` file for a reusable operational rule.
-
-Use this structure:
+`docs/decisions/NNNN-kebab-title.md`. Write one for decisions on architecture, module boundaries, persistence, external integrations, concurrency, wire formats or long-lived invariants — not for refactors, bug fixes or local details (use a comment or a rules file). Format:
 
 ```markdown
-# NN: Decision title
+# NN: Title
 
 - Status: Proposed | Accepted | Superseded
 
@@ -182,6 +86,4 @@ Use this structure:
 ## Consequences
 ```
 
-Keep one decision per file. Never silently rewrite an accepted decision: if the
-decision changes, add a new ADR and mark the old one `Superseded by ADR-NNN`.
-Reference the ADR from code only when the local comment needs its rationale.
+One decision per file. Never rewrite an accepted ADR — add a new one and mark the old `Superseded by ADR-NNN`.

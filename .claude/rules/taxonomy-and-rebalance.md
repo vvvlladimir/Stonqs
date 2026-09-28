@@ -1,18 +1,26 @@
+---
+paths:
+  - "core/src/calc/allocation/**"
+  - "core/src/calc/rebalance/**"
+  - "core/src/calc/breakdown.rs"
+  - "core/src/import/taxonomy/**"
+  - "core/src/model/taxonomy*"
+  - "core/src/storage/taxonomies.rs"
+  - "core/src/storage/targets.rs"
+  - "app/src-tauri/src/commands/allocation.rs"
+  - "app/src-tauri/src/ai/tools/allocation.rs"
+  - "app/src-tauri/src/ai/tools/taxonomy.rs"
+  - "app/src/screens/Allocation/**"
+  - "app/src/screens/Rebalance/**"
+---
+
 # Taxonomy, allocation, rebalance
 
-- A taxonomy splits the portfolio through `TaxonomySubject`s; cash is one of them (key = `cash:<account_id>:<CUR>`, `model::cash_subject_key`), a position is another (key = `security_id`). `allocation_by_taxonomy` divides by the sum of *included* subjects. Unit is account **and** currency — one deposit account holding EUR and USD is two subjects.
-- Storage keeps two tables (`security_classifications`, `cash_classifications`); calc and the wire see one flat `Assignment { subject_id, node_id, weight }` — the maths never branches on "security or account".
-- A tree can be **seeded from an instrument attribute** (`import::group_by_attribute`, ADR-0032): one node per distinct value of a `TEXT` attribute, every instrument carrying it assigned whole. The plan is a `TaxonomyPreview` and is written by `commit_taxonomy`, so node reuse is the CSV import's. What the tree already classifies is planned but not assigned (`matched_by: "already_classified"`) — a hand-typed split outranks a column; a missing value makes no node, and a number or a date is refused, not bucketed. The "New classification" dialog offers the same thing as `Fill from attribute` (one command: `taxonomy_group_commit` with `into: null` creates the tree and fills it). `TaxonomyKind` is no longer asked for — it is a label the seeded trees carry, so `TaxonomyInput::kind` is optional: absent keeps what a tree has and makes a new one `Custom`.
-- A tree can arrive as a **plugin**, and it is deliberately the dullest kind of content there is:
-  `TaxonomyDef { id, name, file }` naming a taxonomy CSV, handed back out by `plugin_taxonomy_csv`
-  and fed into `taxonomy_import_preview` / `taxonomy_import_commit` — the commands every taxonomy
-  file already goes through, so a set has no path into the portfolio of its own. It ships no
-  expectation, unlike a reader (ADR-0086): the file *is* the data, so one would be a copy. The
-  install check (`plugins::verify::taxonomy`) asks only that it reads as a tree and leaves nothing
-  invalid, against an **empty** securities list — a set is judged for being a tree, never for
-  fitting this portfolio.
-- `rebalance` divides a node's drift across all its subjects, cash included. Output differs by kind: a security gets a `RebalanceTrade`, a cash subject gets a `CashDeposit` (no price/quantity/step — a balance is paid in, not bought).
-- Disabling a subject is per-taxonomy and freezes rather than deletes (`taxonomy_exclusions(taxonomy_id, subject_id)`). An excluded subject leaves the denominator/chart/percentages entirely — it is not moved to the unclassified bucket (`allocation::UNCLASSIFIED_KEY`). It still appears via `allocation_members` (`excluded: true`, `weight: 0`, sorted last) so it can be shown dimmed and re-enabled. Its classification stays in the DB untouched.
-- `TargetWeight::weight` is a share of its **parent**, not of the whole portfolio (matches how the user thinks). Absolute share = product along the path (`AllocationTarget::absolute_weights`), always derived, never stored. Only the deepest weighted nodes (`leaf_node_ids`) divide money — a weighted parent gets its own row/drift but no trades and no share of `off_target_base`. Sibling-sum validation (`validate_tree`, called from `Store::save_target`) is per set of siblings.
-- Rebalancing options change what's computed, not what's displayed: `cash_to_invest` is added to the total **before** targets are derived. `allow_sell = false` leaves overweights alone and splits new money across underweights **proportional to their size** (shortfalls almost always exceed the cash).
-- `cash_used_base` spends the new money down to the step: after the proportional pass, `calc::rebalance::spend_leftover` adds one tradable step at a time — largest remaining shortfall first, least-overweight node once no shortfall remains. Never touches a node with nothing to buy (a met `Cash 10%` target keeps its share) and never sells; a remainder smaller than the cheapest tradable unit stays in `cash_left_base`.
+- Subjects (`TaxonomySubject`): a position (key = `security_id`) or cash (key = `cash:<account_id>:<CUR>`, `model::cash_subject_key`) — account **and** currency. `allocation_by_taxonomy` divides by the sum of *included* subjects.
+- Storage: `security_classifications` + `cash_classifications`; calc and wire see one `Assignment { subject_id, node_id, weight }`. Maths never branches on security vs cash.
+- Seeding from an attribute (`import::group_by_attribute`, ADR-0032): one node per distinct `TEXT` value, assigned whole; plan is a `TaxonomyPreview` written by `commit_taxonomy`. Already classified → planned, not assigned (`matched_by: "already_classified"`); missing value → no node; number/date refused. `taxonomy_group_commit` with `into: null` creates the tree. `TaxonomyInput::kind` optional (absent keeps / new = `Custom`).
+- Plugin taxonomies: `TaxonomyDef { id, name, file }` (a CSV) fed through `taxonomy_import_preview`/`_commit` via `plugin_taxonomy_csv`; no expectation shipped; `plugins::verify::taxonomy` checks it reads as a tree against an **empty** securities list.
+- Exclusion is per taxonomy and freezes (`taxonomy_exclusions`, `subject_id` has no FK since cash isn't a row): an excluded subject leaves denominator/chart/percentages entirely (not moved to `allocation::UNCLASSIFIED_KEY`), still listed by `allocation_members` (`excluded: true`, `weight: 0`, last). Classification untouched.
+- `TargetWeight::weight` is a share of its **parent**; absolute = product along the path (`AllocationTarget::absolute_weights`), never stored. Only `leaf_node_ids` divide money; a weighted parent gets a row/drift, no trades, no share of `off_target_base`. `validate_tree` (from `Store::save_target`) checks each sibling set.
+- `rebalance` spreads a node's drift over all its subjects: security → `RebalanceTrade`; cash → `CashDeposit` (no price/quantity/step).
+- `cash_to_invest` is added to the total **before** targets. `allow_sell = false`: overweights untouched, new money split across underweights proportional to shortfall. `calc::rebalance::spend_leftover` then adds one step at a time (largest shortfall first, then least overweight), never touches a node with nothing to buy, never sells; remainder below the cheapest unit stays in `cash_left_base`.

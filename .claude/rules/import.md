@@ -1,202 +1,60 @@
+---
+paths:
+  - "core/src/import/**"
+  - "core/presets/**"
+  - "core/tests/phase3_import/**"
+  - "core/tests/fixtures/presets/**"
+  - "core/tests/attribute_csv.rs"
+  - "core/src/calc/transfers.rs"
+  - "fuzz/**"
+  - "app/src-tauri/src/commands/import.rs"
+  - "app/src-tauri/src/import_templates.rs"
+  - "app/src-tauri/tests/wizard_fixture.rs"
+  - "app/src/screens/Import/**"
+---
+
 # Broker file import
 
-- The app has a transaction file of its own (`import::canonical`, ADR-0066): `format` /
-  `version` / rows in the model's own vocabulary, read by a **third reader** that flattens them
-  into the same `ParsedCsv` with a fixed mapping — so a canonical file goes through the one
-  wizard, the one identity check and the one commit, with nothing left to ask. Its column names
-  are the canonical header aliases, so the same thing written as a CSV needs no reader at all.
-  Nothing in it names an internal id: an account is its name (and `fields::account` resolves a
-  name the portfolio already carries), an instrument its ticker and ISIN. `canonical_to_file`
-  writes it; `transactions_export` is that with the screen's filter. Operations only — a taxonomy
-  or a plan is not in it.
-- A broker file is not always a CSV: `import::parse_file` picks the reader off the bytes, and an
-  Interactive Brokers Flex statement (XML, ADR-0061) goes to `import::ibflex`, which flattens its
-  sections into the same `ParsedCsv` and carries its own fixed `ImportMapping` — laid out in the
-  **canonical format's own column names** (`import::canonical`, public for exactly this), so
-  there is nothing for a `brokers.json` preset to lay out and no second spelling of one table. Everything
-  after the reader is shared. Four things it resolves and nothing downstream could: an `ORDER` row
-  supersedes the `EXECUTION` rows of the same purchase (asking for both prints it twice); a forex
-  trade (`assetCategory="CASH"`) becomes two linked `TransferIn` legs so it is not read as leaving
-  the portfolio; dates are normalised to ISO, since the query's date format is a choice in the web
-  office the file never reports; and `amount_sign` is pinned to `Signed` rather than voted on. A
-  contract with a multiplier other than 1, a cancelled trade and a corporate action get wordings the
-  reader invents and ships in `ignored_kinds` — a split would double against already-adjusted
-  quotes, and the model has no multiplier — so they stay counted and visible instead of wrong.
-- Which account a file lands on is asked as **what the file is**, not as which account to pick:
-  `Import/AccountTarget.tsx` offers a broker statement or a bank/wallet one, derives the cash leg
-  from the choice (`Account::settlement_account_id`), and only then narrows to a specific account
-  when the portfolio holds more than one of that kind. `ImportMapping::account_id` is unchanged —
-  the wizard asks differently, the wire does not.
-- A row's identity has a **second, looser reading**: `dedupe::loose_fingerprint` drops the amount
-  and keeps account, day, kind, instrument and quantity, which is what a row edited by hand after
-  it was imported still matches. Such a row is `RowStatus::Similar` and is **not** written unless
-  `ImportOptions::import_similar` says so. Only a share movement has one — two cash rows differing
-  in amount are two payments, and folding them would hide a real second dividend.
-- An override of a field the file has **no column for** is carried beside the row
-  (`cells::RowInput::added`, ahead of a rule's `emitted`), so a delivery stating only a quantity
-  can be given the price it was worth. An override of a mapped field still rewrites the cell, so
-  the sign and basis votes see it.
-- The ISIN matches before the ticker (`preview::fields::instrument`), and a stored instrument whose
-  ISIN **conflicts** with the row's is a `TickerIsinConflict` **error**, not a silent join: the
-  symbol column is unique in the database, so the row waits for a ticker of its own rather than
-  pouring one company's trades into another's position. `ImportService::commit` repeats the check
-  against the store.
-- `checks.rs` gained three heuristics and they are all warnings, as everything there is:
-  `DeliveryWithoutCost` (a quantity crossing the boundary at a price of zero — the shape of a
-  portfolio moved between brokers, and the most expensive thing a file can do to the numbers),
-  `AccountCurrencyMismatch` (money landing where another currency is kept; asked of the
-  **settlement** account and only of a row that moves money), and `PossibleSplit` (one
-  instrument's prices stepping by a whole factor between two trades **within 90 days**, the
-  factor exact to 1%). Both gates are the point: a split's factor is exact and instantaneous,
-  while two trades a year apart in an instrument that doubled give 2.03 — which is the market.
-  The reliable route to a split is the provider's own event (`events=div|split` rides the quote
-  request, ADR-0034), so this covers only what that route cannot. The
-  amount-vs-quantity×price allowance is per **unit** rather than flat, because a printed unit
-  price is rounded and that rounding multiplies by the quantity.
-- A disposal is checked against the **stored ledger plus the rows about to be written**
-  (`preview::holdings`, `calc::quantity_gaps`): one taking more than is held is
-  `SaleExceedsHoldings`, a warning naming the file's unread rows of the same instrument
-  (`unread`, `unread_kinds`) as the likely cause (ADR-0089). Identity is counted, not a set: two
-  rows of one content with two broker ids are two operations, and each stored row answers for one
-  row of the file.
-- Two legs of one move that arrived from **two different exports** are never joined by the import:
-  `calc::transfer_candidates` offers the pairs after the write (`transfer_suggestions`) and
-  `transfer_link` joins one the user confirmed. Matching amounts is not proof, and linking the
-  wrong pair erases a real deposit and a real withdrawal from every return figure at once.
-- A **reader** can arrive as a plugin too (ADR-0086), and it is the level that has no privileges:
-  it produces a `stonqs.transactions` document and everything after that is the one wizard, the one
-  identity check and the one commit. It is run by the host, once, at load — `import::parse_file`
-  itself never learns a plugin exists. The manifest declares the endings it is offered plus a
-  `sample` **and** an `expected`: a layout that misreads a column leaves a question in the wizard,
-  while a reader that misreads one hands over a document that looks perfectly correct, so it is
-  checked against an answer rather than against a shrug, and a package failing that installs
-  nothing.
-- A layout can arrive as a **plugin** (ADR-0070), and then it is identity that keeps it apart from
-  the shipped ones: every layout in the wizard's list carries an `id` (`user:<name>`,
-  `builtin:<name>`, or a plugin's `<plugin id>/<layout id>`), and the commands take that, never the
-  name — two sources may print one name, and deleting by name would let a stranger's package
-  decide which layout goes. One name is listed once, the user's own winning over a plugin's and a
-  plugin's over a shipped one. A plugin's layout is **not** deletable from the wizard; the plugin
-  is. Installing one runs `import_templates::check_layout` against the sample the package is
-  obliged to carry — recognised, every wording mapped, no invalid row — and a package failing it
-  installs nothing at all.
-- Operation wordings can arrive as a **plugin** dictionary (`provides.dictionaries`,
-  `KindWords`), still per language and never per broker. It is asked **after** the shipped
-  keywords, so it fills a gap and never re-answers a wording the app reads — a package cannot turn
-  a buy into a sale, and a word the shipped table reads as another kind is refused at install
-  (`KindWords::shadowed`). So is a word under three letters (two ideographs, `KindWords::too_short`):
-  matched by containment, it would answer nearly every wording nobody else did, and `kind_of`
-  skips one all the same. The words reach `build_preview` through `ImportContext::kind_words`
-  (`ImportService::with_kind_dictionary`), never through the mapping the host sends, so removing
-  the plugin removes them. Its sample must be one the app **cannot** read alone
-  (`import_templates::check_dictionary`).
-- A shipped layout is only as good as the file it was tried against: `core/tests/fixtures/presets/`
-  holds one folder per layout — the redacted export, what it must be recognised as, and the
-  operations it must produce, written in the canonical format so the expectation needs no second
-  vocabulary. `core/tests/phase3_import/conformance.rs` is the harness, `UPDATE_FIXTURES=1`
-  regenerates an expectation and then fails on purpose so the diff is read. Two more checks run
-  without any fixture: every shipped layout must answer to its own header row (two layouts fitting
-  one file equally well recognise **nothing**, which is how the two Finpension entries turned out
-  to be one), and the layouts with no fixture yet are a list in the harness — the debt is named,
-  never counted.
-- `build_preview` is pure (takes securities + fingerprints as slices); only `ImportService` touches `Store` (same rule for `commit_taxonomy`). Re-importing the same file must be a no-op — `import::fingerprint` guarantees it.
-- Detection is per *language*, never per broker: a rule keyed to one broker's file helps only that broker's customers. Header aliases (`mapping::aliases`) and operation wording (`mapping::keywords`) are dictionaries and live apart from the matching that reads them (`mapping::shape`, `mapping::normalize`); both are ordered canonical-first because the index breaks ties, and sell keywords precede buy ones (`Verkoop` contains `Koop`).
-- Headers lie, values do not. `ImportMapping::detect_with_values` ranks a header match exact > whole word > substring, drops a claim on a column another field names better ("Asset type" is a kind, so it is not a symbol), and lets `ValueShape` veto a weak match — a currency or ISIN column is required to look like one, a date is not, because its format may simply be unknown to us. A column that is empty in every row is not a mapping.
-- A file is not necessarily UTF-8 and the user cannot be told to re-save it: `parse.rs` decodes via BOM, then UTF-8, then `chardetng`. Per-file settings (`skip_top_rows`, `skip_bottom_rows`, `date_format`, `decimal_separator`) are detected when left at zero/`None`, and the detected value is returned in `ParsedCsv::config` so the UI shows and can override it.
-- One file can hold two shapes of the same thing — Trade Republic prints `2024-11-30` and `2025-01-16T16:13:36`, `-10,84` and `-24.999996`. Detection takes the majority; a disagreeing cell is parsed by any known format (warning, not error), and `parse_decimal` decides the separator from the cell, using the file's only for an ambiguous `1,234`. A cell with no letter or digit (`-`, `—`) is an absent number, not a broken one.
-- Broker layouts ship with the app as data: `core/presets/brokers.json` (`import::presets`), one entry per broker, `include_str!`-ed and merged with `default_kind_aliases()` on use, so the file lists only what is peculiar to that broker. The host lists the user's own layouts first and the shipped ones after (`app/src-tauri/src/import_templates.rs`); a shipped preset is removed by writing its name down (`import_presets_hidden.json`), never by editing what ships, and `import_presets_restore` brings them all back. A user layout saved under a shipped name shadows it; deleting that copy uncovers the original.
-- A layout is applied to the *next* export, not the one it was made from, so `build_preview` tops up `kind_aliases` from the keyword dictionary for every value the layout does not answer (Saxo writes the operation as `Sell 3 @ 139.74 USD` — no list enumerates that). Values already aliased or already skipped are left alone, and the topped-up mapping is what the preview hands back.
-- Direction comes from the number that carries it: the amount for a cash operation, the **quantity** for a share movement, which has no cash to sign (`Reverse Split` is `+1` and `-10` of one wording). `resolve_direction` therefore compares against `cash_sign()` or, when that is zero, `quantity_sign()`.
-- The amount column is gross or net of the row's own charges, and the file says which by being
-  consistent: `checks::count_basis_vote` compares `quantity × price` with the amount and with the
-  amount plus/minus the charges (`TransactionKind::charge_sign`), three decisive rows decide it,
-  and a disagreement is a warning rather than a refusal. `Net` is put back into the model's own
-  shape by `preview::fields::restore_gross` — the stored `amount` is always before charges — and
-  only for the charges in the row's own currency, since a foreign one was never in that total.
-  `ImportMapping::amount_basis` overrides the vote, exactly like `amount_sign`.
-- A file that names its rows is recognised by that name: `ImportField::ExternalId` has
-  `ValueShape::Unique` and shares its aliases with `LinkId`, whose `ValueShape::Link` demands the
-  opposite — the values decide which of the two a column is, so a vetoed field yields the column
-  instead of blocking it (`detect_with_values`). Same id and same fingerprint is a `Duplicate`;
-  same id and different values is `RowStatus::Updated`, which **replaces** the stored row on
-  commit and is counted apart from what was imported (ADR-0065).
-- A file is recognised as a layout before anything is detected from it: `presets::best_match`
-  scores every shipped preset and user template (`import_load`), a preset's rule being its own
-  `match` block or, absent one, the columns it maps — a layout naming "Wertpapierbezeichnung"
-  already describes its broker. Everything a rule declares must hold, and a tie is **no** answer:
-  two layouts fitting equally well means neither was recognised. The applied name comes back as
-  `applied_template`, and "— detect —" in the wizard puts the core's own reading back.
-- What a row *becomes* can be a rule rather than a wording (`mapping::rules`, ADR-0067):
-  conditions over **mapped fields** (`equals`, `contains`, `sign`, `present`, `empty`, joined by
-  AND, first match wins) and a list of operations to emit, each setting fields to a constant or
-  to `{field}` of the same row. No arithmetic and no regex — the net-amount case is
-  `amount_basis`, and captures belong to column extraction, not here. An empty `emit` drops the
-  row like the skip list does. The parts share the file row's `number` and carry `part`, so
-  identity, problems and the commit are unchanged; a broker's id gains `#n` per part and a
-  `link`ed rule gives its parts one derived link id. A rule decides direction, so `directed`
-  does not flip it. The wizard offers two splits (`SPLITS` in `Import/labels.ts`) beside the
-  kinds; anything else is written in the layout.
-- Import is semi-automatic: everything auto-detected (`ParsedCsv::config`, `ImportPreview::mapping`) must stay overridable — parse settings, column mapping, kind/symbol aliases, per-cell `RowOverride`, `ImportMapping::amount_sign`. Never silently guess for the user.
-- A broker file carries direction in two channels: the type column says *what* happened, the sign of the amount says *which way*. One type value can span both directions (e.g. a card charge and its refund), so `checks::decide_amount_sign` correlates `sign(amount)` with `TransactionKind::cash_sign` across the whole file and calls it `Signed` only when ≥90% of cash-moving rows agree **and** both signs occur; a disagreeing row flips to `TransactionKind::reversed`. Buy/Sell vote but never flip — their direction is also carried by quantity and by having a security.
-- The two legs of one internal wording are linked by `build_preview` (same date, same source wording, opposite direction, link id derived from those three so the preview stays reproducible). A leg left without a partner is a one-sided transfer, which `calc` reads as money crossing the portfolio boundary — see ADR-0020.
-- A `link_id` is a claim two rows make together, so it is only believed when two rows make it. A
-  file's own `LinkId` column has `ValueShape::Link` and is refused — even on an exact header match,
-  unlike every other shape — unless some value in it repeats: brokers print a per-row identifier
-  under the same words (`Reference`, `Transaction ID`), and one id per row marks every transfer
-  internal. `calc::holdings::paired_links` applies the same rule over the stored set, the way
-  `scoped_transactions` always has, because that is the only place both legs are certainly visible —
-  a leg whose partner is nowhere is money crossing the boundary, and counting it as internal erases
-  every deposit and withdrawal from TWR, XIRR and the capital each rate divides by.
-- Value that moves *inside* the portfolio — a currency exchange, a crypto conversion, a stake, a wallet-to-wallet move — is one wording on two rows (`Balance Conversion`, `USDT -> EUR`), and only the sign tells the legs apart. The keyword maps it to `TransferIn`, the reversible side, and `resolve_direction` turns the negative leg into `TransferOut`. Such a row therefore **flips but never votes** in `checks::count_vote` — the mirror of Buy/Sell, which vote but never flip. Counting it would be counting a direction we invented: half the legs of a crypto file are negative by construction, and the file would judge itself unsigned and credit both legs.
-- A value the user marks "do not import" lands in `ImportMapping::ignored_kinds` and its rows get `RowStatus::Ignored` — counted in `summary.ignored`, out of `unknown_kinds()`, never written. A broker prints lines that are not operations (`Name Change`, `Monthly statement`); refusing the file over them is not an answer, and neither is importing them as something else. The choice is exclusive with a kind alias and stays visible in `preview.kinds` (`ignored: true`) so it can be taken back.
-- Row problems carry a `Severity` and a `ProblemCode`. Only `Error` makes a row `Invalid` — a direction-corrected row is `summary.warnings`, not `summary.invalid`. `checks::check_row`/`check_file` are heuristics and only ever emit warnings; a false positive must not block an import.
-- Instrument attributes have a CSV of their own (`import::attributes`): one row per instrument,
-  one column per attribute, `attributes_to_csv` writing what `build_attribute_preview` reads back.
-  The preview is pure like every other (securities and attribute defs as slices; only
-  `commit_attributes` touches `Store`), and it joins instruments through
-  `taxonomy::match_security` rather than a second matcher — ISIN before ticker, stated once. A
-  column that already exists **keeps its kind** (ADR-0031), so a cell failing `AttributeKind::normalize`
-  is an `Error` on that cell alone and the row's other values are still written; a column nobody
-  defined is inferred from its own values (every cell a number → `Number`, every cell an ISO date →
-  `Date`, else `Text`). A **blank cell is absent, not a clear**: the commit merges into what the
-  instrument already carries, because a file naming three attributes must not wipe the other
-  twelve. Re-running the same file is a no-op — a name already defined is reused rather than
-  duplicated.
-- Taxonomy CSV is read by meaning, not template: level columns found by header name (`Levels 2`, `Уровень 2`, `Category`), a security row identified by having a ticker/ISIN, the security's own name one level deeper than its category. The first level (tree's name, repeated every row) is detected and dropped. Securities are matched by ISIN first (ISIN = instrument, ticker = listing — a foreign file may print a different one). `commit_taxonomy(into)` extends the tree it's invoked on; a node already present under the same name/place is reused (case-insensitive match), so re-importing doesn't double the tree, and a security's split is overwritten by the newer file.
-## How it is tested
+## Readers
+- `import::parse_file` picks the reader from the bytes: canonical (`import::canonical`, ADR-0066), IB Flex XML (`import::ibflex`, ADR-0061), plugin readers (host-side, see `plugins.md`), then CSV. All flatten into `ParsedCsv`; everything after is shared.
+- Canonical: `format`/`version`/rows in model vocabulary; column names = canonical header aliases (so a CSV with them needs no reader). No internal ids — accounts by name, instruments by ticker+ISIN. `canonical_to_file` writes; `transactions_export` = that + the screen filter. Operations only.
+- IB Flex: fixed `ImportMapping` in canonical column names. `ORDER` supersedes its `EXECUTION` rows; forex (`assetCategory="CASH"`) → two linked `TransferIn` legs; dates → ISO; `amount_sign` pinned `Signed`. Multiplier ≠ 1, cancelled trades, corporate actions → reader-invented wordings in `ignored_kinds`.
+- Encoding: BOM → UTF-8 → `chardetng`. `skip_top_rows`, `skip_bottom_rows`, `date_format`, `decimal_separator` detected when zero/`None` and returned in `ParsedCsv::config`. Mixed formats in one file: majority wins, stragglers parsed by any known format (warning). `parse_decimal` decides separator per cell (file's only for ambiguous `1,234`). A cell with no letter/digit (`-`, `—`) is absent.
 
-The import is where a new user either stays or leaves, and everything it reads was written by
-somebody else. Five layers, each answering a question the one below it cannot:
+## Mapping and detection
+- Detection per *language*, never per broker. Dictionaries `mapping::aliases` (headers) and `mapping::keywords` (wordings) are separate from matching (`mapping::shape`, `mapping::normalize`); canonical-first order breaks ties; sell before buy (`Verkoop` ⊃ `Koop`).
+- `ImportMapping::detect_with_values`: exact > whole word > substring; drops a claim a better field makes; `ValueShape` vetoes weak matches (currency/ISIN must look like one; dates not). All-empty column = no mapping.
+- `ExternalId` (`ValueShape::Unique`) and `LinkId` (`ValueShape::Link`) share aliases; values decide. `LinkId` is refused even on exact header match unless some value repeats.
+- Layout recognition first: `presets::best_match` scores presets + user templates (a preset's `match` block, else its mapped columns); everything must hold; a tie = no answer. Returned as `applied_template`.
+- Presets: `core/presets/brokers.json`, `include_str!`-ed, merged with `default_kind_aliases()`; list only broker peculiarities. User layouts first; hiding a shipped one writes `import_presets_hidden.json` (`import_presets_restore`); same-name user layout shadows.
+- `build_preview` tops up `kind_aliases` from keywords for unanswered values (already aliased/skipped left alone) and returns the topped-up mapping.
+- Rules (`mapping::rules`, ADR-0067): conditions over mapped fields (`equals`, `contains`, `sign`, `present`, `empty`; AND; first match), emit ops with constants or `{field}`. No arithmetic/regex. Empty `emit` drops. Parts share `number`, carry `part`; external id gains `#n`; `link`ed rule → one derived link id. A rule fixes direction. Wizard offers `SPLITS` (`Import/labels.ts`).
+- Everything detected stays overridable (config, mapping, aliases, `RowOverride`, `amount_sign`, `amount_basis`). Never silently guess.
+- Override of an unmapped field rides in `cells::RowInput::added` (before a rule's `emitted`); of a mapped field rewrites the cell (so votes see it).
+- `ignored_kinds` → `RowStatus::Ignored`, counted in `summary.ignored`, exclusive with a kind alias, visible in `preview.kinds` (`ignored: true`).
 
-- `core/tests/phase3_import/` is one binary. `basics`/`shapes`/`signs`/`basis`/`rules`/`traps` are
-  the worked examples; the four added for the file nobody wrote by hand are:
-  - `robustness.rs` — the hostile corpus: wrong encoding, a quote nobody closed, a ragged row, a
-    date in a shape nobody declared, a PDF picked by mistake. The rule is never "it works" but
-    **it answers**: an error, or a problem on a row. A panic is a failure, and so is a row that
-    disappears with nothing said.
-  - `properties.rs` — proptest over generated files. Reading one file twice gives one preview,
-    the order of the rows does not change the ledger, importing twice writes once, a canonical
-    export imports back to the same ledger, and the summary is what the commit writes. Two cases
-    take arbitrary bytes and arbitrary text and only ask that nothing comes apart.
-  - `synthetic.rs` — every shipped layout over a file written from its own declaration: its
-    columns, its delimiter, its date format, its wordings. It proves a layout self-consistent and
-    no more — that the 28 layouts without a fixture at least read a file laid out as they say.
-    `conformance.rs` is still the only thing that proves one matches what a broker prints.
-  - `perf.rs` — `#[ignore]`d ceilings over 50 000 rows, plus the ratio between 2 000 and 20 000
-    rows, so a pass that becomes a pass per row is caught here. Release only; CI has its own job.
-- `fuzz/` (outside the workspace, nightly) is libFuzzer over `parse_file`, `parse_canonical`,
-  `parse_flex` and the preview. A crash is committed as a case in `robustness.rs` — see its README.
-- `app/src/screens/Import/model.ts` is what the wizard computes before it draws anything — the row
-  filters, the one-example-per-shape list, and the count on the commit button — kept pure so
-  `model.test.ts` can check the figure the user is asked to trust.
-- `app/src/screens/Import/wizard.dom.test.tsx` is the wizard itself, all four steps over a real
-  export: pick the file, say what it is, look at the instruments, write it. The host is mocked at
-  the IPC door and answers out of `app/e2e/fixtures/import-wizard.json`, which
-  `app/src-tauri/tests/wizard_fixture.rs` **generates from the core** and then guards — so the
-  screen is driven by what the host would really send, and a renamed field fails the Rust test
-  rather than passing the frontend one. Regenerate with `UPDATE_FIXTURES=1 cargo test -p sq-app
-  --test wizard_fixture`, read the diff, run again without it.
+## Direction, sign, basis
+- Direction from the carrying number: amount for cash ops, **quantity** for share movements (`resolve_direction`: `cash_sign()` or, if zero, `quantity_sign()`).
+- `checks::decide_amount_sign`: `Signed` only if ≥90% of cash rows agree **and** both signs occur; disagreeing rows flip to `TransactionKind::reversed`. Buy/Sell vote, never flip. Internal-value wordings map to `TransferIn`; negative leg → `TransferOut`; they flip but **never vote** (`checks::count_vote`).
+- Gross vs net: `checks::count_basis_vote` (3 decisive rows; disagreement = warning). `Net` restored by `preview::fields::restore_gross` for same-currency charges only. Stored `amount` is always before charges.
+- Same-file internal legs linked by `build_preview` (same date, wording, opposite direction; derived link id). Unpaired leg = boundary crossing (ADR-0020). `calc::holdings::paired_links` re-checks over stored rows.
+- Legs from two exports are never auto-joined: `calc::transfer_candidates` → `transfer_suggestions`, user confirms `transfer_link`.
 
-A new reader, a new check or a new layout joins the layer that already asks its question. What is
-still missing is an end-to-end run: nothing here builds the host or opens a window, so the file
-dialog, the plugin readers and the write to a real database are covered by nobody.
+## Identity and checks
+- `build_preview` is pure (securities + fingerprints as slices); only `ImportService` touches `Store` (same for `commit_taxonomy`). Re-import = no-op (`import::fingerprint`).
+- Same external id + same fingerprint = `Duplicate`; different values = `RowStatus::Updated`, replaces on commit, counted apart (ADR-0065).
+- `dedupe::loose_fingerprint` (no amount; share movements only) → `RowStatus::Similar`, written only with `ImportOptions::import_similar`.
+- ISIN before ticker (`preview::fields::instrument`); conflicting ISIN on a stored ticker = `TickerIsinConflict` **error**, re-checked in `ImportService::commit`.
+- Only `Severity::Error` makes a row `Invalid`. `checks::check_row`/`check_file` emit warnings only: `DeliveryWithoutCost`, `AccountCurrencyMismatch` (settlement account, money-moving rows), `PossibleSplit` (within 90 days, factor exact to 1%). Amount-vs-qty×price tolerance is per unit.
+- Disposal checked against stored ledger + file rows (`preview::holdings`, `calc::quantity_gaps`): `SaleExceedsHoldings` warning naming `unread`/`unread_kinds` (ADR-0089). Identity counted as a multiset.
+- Account target is asked as what the file is (`Import/AccountTarget.tsx`: broker vs bank statement; cash leg from `Account::settlement_account_id`). Wire (`ImportMapping::account_id`) unchanged.
+
+## Side CSVs
+- Attributes (`import::attributes`): row per instrument, column per attribute; pure `build_attribute_preview`, `commit_attributes`; matched via `taxonomy::match_security`. Existing column keeps its kind (bad cell = error on that cell only); new column's kind inferred. Blank = absent (merge). Idempotent.
+- Taxonomy CSV: read by meaning — level columns by header, security row = has ticker/ISIN, first level (tree name) dropped, ISIN before ticker. `commit_taxonomy(into)` reuses nodes (case-insensitive); newer file overwrites a security's split.
+
+## Tests
+- `core/tests/phase3_import/` (one binary): worked examples plus `robustness.rs` (hostile input must *answer* — error or row problem, never panic or silent loss), `properties.rs` (proptest: determinism, order independence, idempotence, canonical round trip), `synthetic.rs` (each preset over a file from its own declaration), `perf.rs` (ignored, release).
+- `conformance.rs` + `core/tests/fixtures/presets/<layout>/` (redacted export, expected recognition, expected ops in canonical format). `UPDATE_FIXTURES=1` regenerates then fails on purpose. Every preset must match its own header; fixture-less presets are a named list.
+- `fuzz/`: libFuzzer over `parse_file`, `parse_canonical`, `parse_flex`, preview; crashes become cases in `robustness.rs`.
+- Frontend: `screens/Import/model.ts` (+`model.test.ts`); `wizard.dom.test.tsx` driven by `app/e2e/fixtures/import-wizard.json` generated by `app/src-tauri/tests/wizard_fixture.rs`.

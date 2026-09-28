@@ -1,131 +1,41 @@
+---
+paths:
+  - "core/migrations/**"
+  - "core/src/storage/**"
+---
+
 # Migrations
 
-The library is SQLCipher (`bundled-sqlcipher`); a plain file opens as with SQLite, an encrypted
-one only through `Store::open_encrypted` (ADR-0049). A migration is plain SQL either way.
+- SQLCipher (`bundled-sqlcipher`); plain files open as SQLite, encrypted ones only via `Store::open_encrypted` (ADR-0049). Migrations are plain SQL.
+- `storage/migrate.rs::MIGRATIONS: &[(version, name, include_str!(..))]`, applied in order, one transaction each. `PRAGMA foreign_keys = ON` on every connection.
+- **Never edit an applied migration** — add `core/migrations/000N_*.sql` + a tuple, and add its line below.
+- DB version above this build's latest → `Error::NewerDatabase`, nothing opened.
+- Before the first migration of an upgrade: `migrate::back_up` copies to `<name>.bak-v<from>` (WAL checkpoint first; encrypted copied as-is; failure = `Error::Backup`, aborts). Not for a fresh DB or in-memory (`None` path). Keep the 3 newest (ADR-0062).
 
-`storage/migrate.rs` holds `MIGRATIONS: &[(version, name, include_str!(...))]`, applied in order, each in its own transaction. `PRAGMA foreign_keys = ON` is set on every connection. **An applied migration is never edited** — add `000N_*.sql` and a new tuple.
+## History (newest first; details in the ADR)
 
-A version **above** the last one this build knows is `Error::NewerDatabase` and nothing is opened:
-a rollback after an update, or two machines sharing one profile folder, would otherwise have the
-older build writing rows without the columns and invariants the newer one added. The UI says
-"update the app", the way a canonical file of a newer version already does.
-
-Before the first migration of an **upgrade**, the file is copied beside itself as
-`<name>.bak-v<from>` (`migrate::back_up`, ADR-0062): a WAL checkpoint first, so the copy is not
-missing committed pages; an encrypted database copies as the encrypted bytes it already is; a
-failed copy is `Error::Backup` and **aborts the upgrade**. A database with nothing applied yet is
-not copied, and only the three newest copies are kept. An in-memory database passes `None` for the
-path and is never copied.
-
-Latest is `0031_plugin_state.sql`: `plugin_state (plugin, state, updated_at)`, one opaque JSON
-document per plugin that declared `storage`, replaced whole by `plugin_state_save` and read by
-nobody in the app. In the database rather than beside it so an encrypted profile encrypts it;
-removing the plugin leaves the row (ADR-0084).
-
-Before that, `0030_latest_source.sql`: `security_symbols.latest`, `0` for every existing row, and a
-partial unique index so at most one row per instrument carries it — the other source asked for the
-days the own one has not published yet (ADR-0079).
-
-Before that, `0029_limit_withdrawals.sql`: `contribution_limits.withdrawals_restore`, `0` for every
-existing limit — a withdrawal gives allowance back only when the user says so (ADR-0071).
-
-Before that, `0028_goals_and_limits.sql`: `goals` (+ `goal_accounts`, cascading — no rows means the
-whole portfolio, so a goal is never re-pointed by an account being deleted) and
-`contribution_limits`, whose `year_starts_on` is `MM-DD` because an allowance year is not always
-the calendar one. `expected_return` is stored as a fraction and is the user's assumption, never a
-measured return. Nothing here is enforced: the tables are read, never consulted before a write
-(ADR-0068).
-
-Before that, `0027_external_id.sql`: `transactions.external_id`, nullable and indexed — the broker's
-own name for an operation. Identity is asked of it before the content fingerprint (ADR-0005), so
-the same id with different values is a restatement that **replaces** the stored row rather than
-joining it (ADR-0065). A row typed by hand carries none.
-
-Before that, `0026_charge_currencies.sql`: `transactions.fee_currency` and `transactions.tax_currency`,
-both nullable, `NULL` meaning "the transaction's own currency" — which is what every existing row
-is, so nothing already stored changes value. A charge equal to the transaction's currency is
-written as `NULL` and folded back to it on read, so one row never carries two spellings of one
-currency (ADR-0064).
-
-Before that, `0025_price_index.sql`: `price_index (region, month, value, source)` — one consumer-price
-level per region and month, the month stored as its first day so lexicographic order stays
-chronological, and `source` recorded because index bases differ between publishers (2015=100 vs
-2010=100), so a ratio is only meaningful inside one series. `index_coverage` mirrors
-`quote_coverage` with one row per region — a region's series comes from exactly one source at a
-time. `portfolios.inflation_region` is `NULL` for every existing portfolio, which is the state
-"inflation is not reported at all" (ADR-0060).
-
-Before that, `0024_source_usage.sql`: `source_usage (source, day, requests)` — requests spent per
-source and UTC day, counted by `market::Budgets` before each call so a keyed source's daily
-allowance survives a restart (ADR-0055).
-
-Before that, `0023_market_sources.sql`: `fx_rates.source` (existing rows `ecb`) and
-`security_symbols (security_id, source, symbol)`, cascading — an instrument's ticker at sources
-*other* than its own `data_source`; the own source keeps reading `data_symbol`/`symbol`
-(`Store::symbol_at`). A fallback writes with `INSERT OR IGNORE` (`fill_quotes`,
-`save_fx_rates_from(.., false)`) so it never rewrites the primary's rows; a listing change clears
-the table with the quotes. See ADR-0051/0052.
-
-Before that, `0022_ai_usage.sql`: `ai_usage (id, chat_id, provider, model, input_tokens,
-cached_tokens, output_tokens, reasoning_tokens, created_at)` — one row per **request**, because a
-request is what the provider bills and one answer that calls tools is several. `chat_id` is
-nullable with `ON DELETE SET NULL`, not cascading: the dashboard brief has no chat at all, and
-deleting a conversation must not un-spend what it spent. A figure a provider does not report is
-stored as 0. See ADR-0041.
-
-Before that, `0021_ai_chat_effort.sql`: `ai_chats.effort` (`LOW | MEDIUM | HIGH`, existing rows
-`MEDIUM`), beside `tool_mode` and for the same reason — switched from inside the conversation,
-not an app setting. `ai_chats.model` gains a second job in the same change: it was a record of
-what a chat was *started* with and is now also what it is *answered* with, so a model picked
-mid-chat sticks. See ADR-0037.
-
-Before that, `0020_ai_chat_tool_mode.sql`: `ai_chats.tool_mode` (`ASK | AUTO`, existing rows `ASK`).
-`AUTO` runs read tools without asking *in that one chat* — it sits on the chat, not in settings,
-the way a permission mode belongs to a Claude Code session: a chat opened permissively must not
-make the next one permissive. Anything unrecognised reads back as `ASK`. See ADR-0037.
-
-Before that, `0019_ai_grants.sql`: `ai_grants (chat_id, tool, created_at)`, cascading. It holds the
-**session** scope only — "allow once" is by definition not remembered, so a `scope` column would
-describe a value the table never has, and a global grant does not exist. There is deliberately no
-`ai_tool_calls` table: a call and its result are already two blocks of the turns they belong to.
-See ADR-0037.
-
-Before that, `0018_ai_assistant.sql`: `ai_chats (id, title, provider, model, created_at, updated_at)`
-and `ai_messages (id, chat_id, role, content, created_at)`, cascading, read in rowid order — two
-turns of one exchange can share a timestamp but never a rowid. `content` is the host's JSON of
-neutral `Block`s and is opaque to the core; `role` is `user | model`. No key is stored here, ever.
-See ADR-0037.
-
-Before that, `0017_watchlists.sql`: `watchlists (id, name)`, read in rowid order, and
-`watchlist_items (watchlist_id, security_id, position)`, both cascading — deleting an instrument
-takes it off every list. A save replaces a list's items. See ADR-0035.
-
-Before that, `0016_alert_direction.sql`: `security_alerts.direction` (`UP | DOWN | BOTH`, existing rows
-`BOTH`). The bookmark still follows every change of side; only crossings in that direction are
-logged. See ADR-0034.
-
-Earlier, `0015_alert_crossings.sql`: price alerts become one `PRICE` level crossed either way
-(old `PRICE_ABOVE`/`PRICE_BELOW` rows are converted), `acknowledged_for`/`notified_for` are dropped,
-and the rule gains its check bookmark (`side`, `checked_through`). `alert_crossings` is the log —
-level and close copied at the time, `seen` for the navigation dot, `notified` for the OS
-notification. See ADR-0034.
-
-Before that, `0014_security_alerts.sql`: `security_alerts` and `security_events`. `security_events` holds the user's notes (`source IS NULL`) and
-the dividends and splits a provider reported, upserted on a partial unique index over
-`(security_id, kind, date) WHERE source IS NOT NULL`. `event_coverage` mirrors `quote_coverage`, kept
-apart so quotes fetched before it existed backfill their events once. See ADR-0034.
-
-Then `0013_investment_plans.sql`: `investment_plans` (schedule, amount, account, flat costs)
-plus `plan_legs` (any number of instruments with weights; none means a cash contribution plan) and
-`plan_executions(plan_id, occurrence_date, transaction_id)`. `transactions` gains no column: "when
-was this plan last executed" is derived from the link table, so deleting the transaction offers the
-occurrence again by itself. See ADR-0033.
-
-And `0012_security_attributes.sql`: `securities.note` and `securities.wkn` plus the user's own attributes — `security_attribute_defs` (name, kind, unit, order) and `security_attributes` (value as `TEXT`, keyed by attribute id so a rename keeps the values). Kinds are `TEXT | NUMBER | DATE` and a kind never changes once the attribute exists; see ADR-0031.
-
-Earlier still, in order:
-- `0011_cash_and_exclusions.sql` — `cash_classifications` (so an account balance classifies like a security) and `taxonomy_exclusions` (per-tree off switch; see `taxonomy-and-rebalance.md` for why cash needs its own table and why `subject_id` carries no foreign key).
-- `0010_default_taxonomies.sql` — data, not schema: three ready trees (Asset class / Region / Sector) with fixed ids; their names are user data, seeded in English and renamed by the user, never translated by the UI, editable/deletable; runs once.
-- `0009_taxonomy_node_color.sql` — `taxonomy_nodes.color`: a palette slot (1–8), not a HEX; `NULL` means derive from node order.
-- `0008_security_mic.sql` — `securities.mic` (ISO 10383 code of the chosen listing); venue name is derived via `market::mic`, never stored.
-- `0007_deposit_accounts.sql` — deposit/securities account split, account groups; converts old `BROKERAGE` accounts by creating a `cash-<id>` deposit account and moving cash ops onto it.
+- 0031 `plugin_state (plugin, state, updated_at)` — one opaque JSON doc per plugin with `storage`; in the DB so it's encrypted; survives plugin removal (ADR-0084).
+- 0030 `security_symbols.latest` + partial unique index, ≤1 per instrument (ADR-0079).
+- 0029 `contribution_limits.withdrawals_restore`, default 0 (ADR-0071).
+- 0028 `goals` + `goal_accounts` (cascade; none = whole portfolio), `contribution_limits` (`year_starts_on` = `MM-DD`); `expected_return` is a fraction, user's assumption; nothing enforced (ADR-0068).
+- 0027 `transactions.external_id`, nullable, indexed; identity checked before fingerprint; same id + different values replaces (ADR-0065).
+- 0026 `transactions.fee_currency`/`tax_currency`, `NULL` = transaction currency; equal currency written as `NULL` (ADR-0064).
+- 0025 `price_index (region, month, value, source)`, month = first day; `index_coverage` one row per region; `portfolios.inflation_region` NULL = not reported (ADR-0060).
+- 0024 `source_usage (source, day, requests)` for `market::Budgets` (ADR-0055).
+- 0023 `fx_rates.source` (old rows `ecb`); `security_symbols (security_id, source, symbol)` cascading — tickers at *other* sources; own source reads `data_symbol`/`symbol` (`Store::symbol_at`); fallbacks `INSERT OR IGNORE` (ADR-0051/0052).
+- 0022 `ai_usage` — one row per request; `chat_id` nullable `ON DELETE SET NULL`; unreported figures = 0 (ADR-0041).
+- 0021 `ai_chats.effort` (`LOW|MEDIUM|HIGH`, default `MEDIUM`); `ai_chats.model` is also what the chat is answered with (ADR-0037).
+- 0020 `ai_chats.tool_mode` (`ASK|AUTO`, default/unknown `ASK`) (ADR-0037).
+- 0019 `ai_grants (chat_id, tool, created_at)` cascading — session scope only; no `ai_tool_calls` table (ADR-0037).
+- 0018 `ai_chats`, `ai_messages` (cascade, rowid order; `content` = host JSON of `Block`s, opaque to core; `role` `user|model`). Never a key (ADR-0037).
+- 0017 `watchlists`, `watchlist_items (watchlist_id, security_id, position)` cascading; save replaces items (ADR-0035).
+- 0016 `security_alerts.direction` (`UP|DOWN|BOTH`, default `BOTH`) (ADR-0034).
+- 0015 price alerts → one `PRICE` level; drop `acknowledged_for`/`notified_for`; add `side`, `checked_through`; `alert_crossings` log with `seen`/`notified` (ADR-0034).
+- 0014 `security_alerts`, `security_events` (notes: `source IS NULL`; provider events upserted on partial unique `(security_id, kind, date) WHERE source IS NOT NULL`), `event_coverage` (ADR-0034).
+- 0013 `investment_plans`, `plan_legs` (none = cash plan), `plan_executions(plan_id, occurrence_date, transaction_id)`; "last executed" derived from links (ADR-0033).
+- 0012 `securities.note`/`wkn`, `security_attribute_defs`, `security_attributes` (value `TEXT`, keyed by attribute id); kinds `TEXT|NUMBER|DATE`, immutable (ADR-0031).
+- 0011 `cash_classifications`, `taxonomy_exclusions` (see `taxonomy-and-rebalance.md`).
+- 0010 data: three default trees (Asset class / Region / Sector), fixed ids, English names = user data, never translated.
+- 0009 `taxonomy_nodes.color` = palette slot 1–8, `NULL` = by order.
+- 0008 `securities.mic` (ISO 10383); venue name derived via `market::mic`.
+- 0007 deposit/securities split, account groups; old `BROKERAGE` → `cash-<id>` deposit account gets the cash ops.
