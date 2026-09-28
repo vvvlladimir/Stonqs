@@ -6,14 +6,15 @@ name: Stonqs
 # What is excluded is test code and the developer harness, and the trade is deliberate: a real
 # defect in these paths will no longer be reported. Everything a user runs is still scanned.
 #
-# This cannot cover `#[cfg(test)] mod tests`, which sits in the same file as the code it tests —
-# path filters work on files. Alerts from those (the vault's tests hold key literals by necessity)
-# are dismissed by hand as "Used in tests".
+# Path filters work on files, so a unit test is only excluded once it lives in its own `tests.rs`
+# (`#[cfg(test)] mod tests;`) — the vault's tests hold key literals by necessity. An inline
+# `mod tests { … }` is still scanned; move it out rather than dismissing its alerts by hand.
 paths-ignore:
   # Not a product: a throwaway harness for exercising the core by hand, whose entire job is to
   # print portfolio figures to stdout. Every `println!` of a number reads as cleartext logging.
   - cli/**
   - core/tests/**
   - app/src-tauri/tests/**
+  - '**/tests.rs'
   # Generated: Lingui compiles the catalogs from the source.
   - app/src/locales/**

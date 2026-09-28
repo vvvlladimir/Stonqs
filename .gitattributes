@@ -1,0 +1,3 @@
+# LF on every checkout, Windows included. A plugin's sample and expectation are compared byte for
+# byte (ADR-0080/0086), so a CRLF conversion turns a correct package into one that fails install.
+* text=auto eol=lf
