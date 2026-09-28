@@ -1,7 +1,12 @@
+import type { I18n } from "@lingui/core";
+import { today } from "../../lib/api";
 import { toneClass } from "../../lib/format";
+import { transactionLabel } from "../../lib/kinds";
 import type { BadgeTone } from "../../components/ui";
 import type {
+  AccountRow,
   MonthlyNet,
+  TransactionInput,
   TransactionKind,
   TransactionRow,
   TransactionsData,
@@ -71,4 +76,73 @@ export function groupByYear(data: TransactionsData, rows: TransactionRow[]): Yea
     group.rows.push(row);
   }
   return years;
+}
+
+/** A new operation: a purchase on the first securities account, since a cash account holds none. */
+export function blankTransaction(accounts: AccountRow[]): TransactionInput {
+  const firstDepot = accounts.find((a) => a.kind === "SECURITIES");
+  return {
+    id: null,
+    account_id: firstDepot?.id ?? accounts[0]?.id ?? "",
+    security_id: null,
+    kind: "BUY",
+    date: today(),
+    quantity: null,
+    price: null,
+    amount: null,
+    fees: null,
+    taxes: null,
+    currency: firstDepot?.currency ?? accounts[0]?.currency ?? "EUR",
+    fee_currency: null,
+    tax_currency: null,
+    fx_rate_to_base: null,
+    note: null,
+  };
+}
+
+export function draftOf(row: TransactionRow): TransactionInput {
+  return {
+    id: row.id,
+    account_id: row.account_id,
+    security_id: row.security_id,
+    kind: row.kind,
+    date: row.date,
+    quantity: row.quantity,
+    price: row.price,
+    amount: row.amount,
+    fees: row.fees,
+    taxes: row.taxes,
+    currency: row.currency,
+    fee_currency: row.fee_currency,
+    tax_currency: row.tax_currency,
+    fx_rate_to_base: row.fx_rate_to_base,
+    note: row.note,
+  };
+}
+
+/** The search box: ticker, note, operation or account, case-insensitive. */
+export function matching(i18n: I18n, query: string) {
+  const needle = query.trim().toLowerCase();
+  return (row: TransactionRow) =>
+    !needle ||
+    (row.symbol ?? "").toLowerCase().includes(needle) ||
+    (row.note ?? "").toLowerCase().includes(needle) ||
+    transactionLabel(i18n, row.kind).toLowerCase().includes(needle) ||
+    row.account_name.toLowerCase().includes(needle);
+}
+
+/** Newest first. */
+export function yearsOf(rows: TransactionRow[]): string[] {
+  return [...new Set(rows.map((row) => row.date.slice(0, 4)))].sort((a, b) => Number(b) - Number(a));
+}
+
+/** Each instrument the journal names, once. */
+export function securitiesIn(rows: TransactionRow[]): Array<{ id: string; symbol: string }> {
+  const list: Array<{ id: string; symbol: string }> = [];
+  for (const row of rows) {
+    if (row.security_id && !list.some((s) => s.id === row.security_id)) {
+      list.push({ id: row.security_id, symbol: row.symbol ?? row.security_id });
+    }
+  }
+  return list;
 }

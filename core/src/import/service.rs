@@ -2,7 +2,7 @@ use super::dedupe::{fingerprint, fingerprint_of, loose_fingerprint_of};
 use super::ibflex;
 use super::mapping::{ImportMapping, KindWords, normalize_alias};
 use super::parse::{ImportProblem, ParseConfig, ProblemCode, parse_csv};
-use super::preview::{ImportContext, ImportPreview, RowOverride, RowStatus, build_preview};
+use super::preview::{ImportContext, ImportPreview, RowOverride, RowStatus, TransactionDraft, build_preview};
 use super::prices::{PriceImport, PriceMapping, build_price_import};
 use super::securities::SecurityDraft;
 use crate::error::Result;
@@ -158,17 +158,7 @@ impl<'a> ImportService<'a> {
         );
 
         for row in &preview.rows {
-            let importable = match row.status {
-                RowStatus::Ready => true,
-                // A restatement is a correction of a row that is already there, so it is not
-                // what the duplicate switch was answered about.
-                RowStatus::Updated => true,
-                RowStatus::Duplicate => options.import_duplicates,
-                RowStatus::Similar => options.import_similar,
-                RowStatus::UnknownSecurity => options.create_missing_securities,
-                RowStatus::Ignored | RowStatus::Invalid => false,
-            };
-            if !importable {
+            if !importable(row.status, options) {
                 if row.status == RowStatus::Similar {
                     result.similar += 1;
                 }
@@ -188,73 +178,14 @@ impl<'a> ImportService<'a> {
                 let id = match created.get(&key) {
                     Some(id) => id.clone(),
                     None => {
-                        let plan = match preview.mapping.new_security_for(symbol) {
-                            Some(found) => found.clone(),
-                            None => {
-                                let mut plan = SecurityDraft::unresolved(
-                                    symbol,
-                                    draft.security_name.as_deref(),
-                                    &draft.currency,
-                                );
-                                plan.isin = plan.isin.or_else(|| draft.isin.clone());
-                                plan.kind = options.new_security_kind;
-
-                                if !is_isin(symbol) {
-                                    plan.data_source = options.new_security_source.clone();
-                                } else {
-                                    result.problems.push(
-                                        ImportProblem::row(
-                                            ProblemCode::SecurityWithoutSource,
-                                            row.number,
-                                            format!(
-                                                "instrument {symbol} was created without a quote source: \
-                                             this is an ISIN, not a ticker — identify it on the \
-                                             \"Instruments\" step"
-                                            ),
-                                        )
-                                        .warn(),
-                                    );
-                                }
-                                plan
-                            }
-                        };
-
-                        let existing = self
-                            .store
-                            .find_security_by_symbol(&plan.symbol)?
-                            .or(self.store.find_security_by_symbol(symbol)?);
-                        // Same ticker, different ISIN: a different company, so the row waits
-                        // for a ticker of its own.
-                        if let (Some(found), Some(wanted)) = (&existing, &plan.isin)
-                            && found
-                                .isin
-                                .as_deref()
-                                .is_some_and(|stored| normalize_alias(stored) != normalize_alias(wanted))
-                        {
+                        let Some(id) =
+                            self.security_for(preview, row.number, &draft, symbol, options, &mut result)?
+                        else {
                             result.skipped += 1;
-                            result.problems.push(ImportProblem::row(
-                                ProblemCode::TickerIsinConflict,
-                                row.number,
-                                format!(
-                                    "ticker {} is already in the database under ISIN {}, and this \
-                                     row says {wanted} — give the new instrument a ticker of its own",
-                                    found.symbol,
-                                    found.isin.as_deref().unwrap_or("-")
-                                ),
-                            ));
                             continue;
-                        }
-                        let security = match existing {
-                            Some(s) => s,
-                            None => {
-                                let s = plan.to_security();
-                                self.store.save_security(&s)?;
-                                result.created_securities.push(s.symbol.clone());
-                                s
-                            }
                         };
-                        created.insert(key, security.id.clone());
-                        security.id
+                        created.insert(key, id.clone());
+                        id
                     }
                 };
                 draft.security_id = Some(id);
@@ -295,6 +226,55 @@ impl<'a> ImportService<'a> {
 
         tx.commit()?;
         Ok(result)
+    }
+
+    /// The stored instrument a row's symbol names, or a new one written for it. `None` when the
+    /// ticker is taken by another ISIN: a different company, so the row waits for a ticker of its own.
+    fn security_for(
+        &self,
+        preview: &ImportPreview,
+        number: usize,
+        draft: &TransactionDraft,
+        symbol: &str,
+        options: &ImportOptions,
+        result: &mut ImportResult,
+    ) -> Result<Option<String>> {
+        let plan = match preview.mapping.new_security_for(symbol) {
+            Some(found) => found.clone(),
+            None => unresolved_plan(number, draft, symbol, options, &mut result.problems),
+        };
+        let existing = self
+            .store
+            .find_security_by_symbol(&plan.symbol)?
+            .or(self.store.find_security_by_symbol(symbol)?);
+        if let (Some(found), Some(wanted)) = (&existing, &plan.isin)
+            && found
+                .isin
+                .as_deref()
+                .is_some_and(|stored| normalize_alias(stored) != normalize_alias(wanted))
+        {
+            result.problems.push(ImportProblem::row(
+                ProblemCode::TickerIsinConflict,
+                number,
+                format!(
+                    "ticker {} is already in the database under ISIN {}, and this \
+                     row says {wanted} — give the new instrument a ticker of its own",
+                    found.symbol,
+                    found.isin.as_deref().unwrap_or("-")
+                ),
+            ));
+            return Ok(None);
+        }
+        let security = match existing {
+            Some(s) => s,
+            None => {
+                let s = plan.to_security();
+                self.store.save_security(&s)?;
+                result.created_securities.push(s.symbol.clone());
+                s
+            }
+        };
+        Ok(Some(security.id))
     }
 
     pub fn preview_prices(
@@ -342,4 +322,48 @@ impl<'a> ImportService<'a> {
         }
         Ok((counted, loose))
     }
+}
+
+/// Whether a row of this status is written under these options.
+fn importable(status: RowStatus, options: &ImportOptions) -> bool {
+    match status {
+        RowStatus::Ready => true,
+        // A restatement is a correction of a row that is already there, so it is not what the
+        // duplicate switch was answered about.
+        RowStatus::Updated => true,
+        RowStatus::Duplicate => options.import_duplicates,
+        RowStatus::Similar => options.import_similar,
+        RowStatus::UnknownSecurity => options.create_missing_securities,
+        RowStatus::Ignored | RowStatus::Invalid => false,
+    }
+}
+
+/// A new instrument for a symbol the Instruments step left unresolved. An ISIN gets no quote
+/// source, since it is never a provider symbol, and the row says so.
+fn unresolved_plan(
+    number: usize,
+    draft: &TransactionDraft,
+    symbol: &str,
+    options: &ImportOptions,
+    problems: &mut Vec<ImportProblem>,
+) -> SecurityDraft {
+    let mut plan = SecurityDraft::unresolved(symbol, draft.security_name.as_deref(), &draft.currency);
+    plan.isin = plan.isin.or_else(|| draft.isin.clone());
+    plan.kind = options.new_security_kind;
+    if !is_isin(symbol) {
+        plan.data_source = options.new_security_source.clone();
+    } else {
+        problems.push(
+            ImportProblem::row(
+                ProblemCode::SecurityWithoutSource,
+                number,
+                format!(
+                    "instrument {symbol} was created without a quote source: this is an ISIN, \
+                     not a ticker — identify it on the \"Instruments\" step"
+                ),
+            )
+            .warn(),
+        );
+    }
+    plan
 }

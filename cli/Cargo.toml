@@ -17,3 +17,6 @@ sq-core = { path = "../core" }
 rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
 chrono.workspace = true
+
+[lints]
+workspace = true

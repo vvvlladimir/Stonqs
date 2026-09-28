@@ -266,7 +266,7 @@ msgstr "{0, plural, one {# плательщик} few {# плательщика} 
 #. placeholder {0}: data.total.events
 #. placeholder {0}: month.events
 #: src/screens/dashboard/widgets/value.tsx
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 #: src/screens/Income/MonthPanel.tsx
 #: src/screens/Reports/Dividends.tsx
 msgid "{0, plural, one {# payment} other {# payments}}"
@@ -373,7 +373,7 @@ msgstr "{0} — копия"
 msgid "{0} — no key saved"
 msgstr "{0} — ключ не сохранён"
 
-#. placeholder {0}: benchmarkLabel ?? ""
+#. placeholder {0}: label ?? ""
 #. placeholder {1}: formatDay(since)
 #: src/screens/Performance/Metrics.tsx
 msgid "{0} — since {1}"
@@ -520,7 +520,7 @@ msgstr "{0} из {1} · нетто {2}"
 #~ msgstr "{0} из {1} компонентов. Полные тексты лицензий — в сохранённом файле уведомлений."
 
 #. placeholder {0}: shown.length
-#. placeholder {1}: securities.data.length
+#. placeholder {1}: rows.length
 #: src/screens/Securities/index.tsx
 msgid "{0} of {1} instruments"
 msgstr "{0} из {1} инструментов"
@@ -538,7 +538,7 @@ msgstr "удержано {0} налога"
 
 #. placeholder {0}: formatPercent(ratio(data.total.taxes_base, data.total.gross_base))
 #. placeholder {0}: formatPercent(ratio(month.taxes_base, month.gross_base))
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 #: src/screens/Income/MonthPanel.tsx
 msgid "{0} of the accrued amount"
 msgstr "{0} от начисленного"
@@ -593,7 +593,7 @@ msgid "{0} versus {window}"
 msgstr "{0} к {window}"
 
 #. placeholder {0}: formatMoney(data.change_base, currency, { signed: true, compact: true })
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 msgid "{0} versus the previous window"
 msgstr "{0} к прошлому окну"
 
@@ -628,7 +628,7 @@ msgstr "{0}, ниже цели"
 #. placeholder {0}: formatMonth(month.year, month.month)
 #. placeholder {1}: formatMoney(month.net_base, currency)
 #. placeholder {2}: month.events
-#: src/screens/dashboard/widgets/chart.tsx
+#: src/screens/dashboard/widgets/income.tsx
 #: src/screens/Income/model.ts
 msgid "{0}: {1} · {2, plural, one {# payment} other {# payments}}"
 msgstr "{0}: {1} · {2, plural, one {# выплата} few {# выплаты} many {# выплат} other {# выплат}}"
@@ -663,7 +663,7 @@ msgstr "Выбрано {count}"
 msgid "{day} has arrived."
 msgstr "Наступила дата {day}."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 #: src/screens/dashboard/widgets/activity.tsx
 #: src/screens/dashboard/widgets/periodLists.tsx
 msgid "{days, plural, one {# day} other {# days}}"
@@ -970,7 +970,7 @@ msgstr "5 лет"
 msgid "5Y"
 msgstr "5Л"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/components/domain/securityCard/QuotePanel.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "90 days"
@@ -1016,7 +1016,7 @@ msgstr "Чат, который читает ваш портфель и отве�
 msgid "A choice is needed"
 msgstr "Нужно выбрать"
 
-#: src/screens/Allocation/index.tsx
+#: src/screens/Allocation/Header.tsx
 msgid "A classification is a tree of categories and the weights of instruments in them. A global fund is 60 % United States and 40 % the rest of the world, which is why it is shares, not one category per instrument."
 msgstr "Классификация — это дерево категорий и веса бумаг в них. Глобальный фонд — это 60 % США и 40 % остального мира, поэтому доли, а не одна категория на бумагу."
 
@@ -1056,7 +1056,7 @@ msgstr "заметка с датой по инструменту"
 msgid "a dividend and a purchase"
 msgstr "дивиденд и покупка"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/text.ts
 msgid "A divider line: it splits the dashboard into meaningful parts."
 msgstr "Строка-разделитель: делит дашборд на смысловые части."
 
@@ -1064,7 +1064,7 @@ msgstr "Строка-разделитель: делит дашборд на см
 #~ msgid "A feed of events: date, instrument and amount as the broker saw them."
 #~ msgstr "Лента событий: дата, бумага и сумма так, как их видел брокер."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "A figure over a track: a savings goal, a contribution limit, or financial independence."
 msgstr "Показатель над полосой прогресса: накопительная цель, лимит взносов или финансовая независимость."
 
@@ -1389,7 +1389,7 @@ msgstr "Счёт"
 msgid "Account \"{0}\" carries {1} transactions. Delete them along with it?"
 msgstr "На счёте «{0}» {1} сделок. Удалить вместе с ними?"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Account balances, each in its own currency."
 msgstr "Остатки по счетам, каждый в своей валюте."
 
@@ -1405,7 +1405,7 @@ msgstr "Счёт для «{value}»"
 msgid "accounts"
 msgstr "счета"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/components/Nav/model.ts
 #: src/lib/tour/steps.ts
 #: src/screens/Accounts/GroupForm.tsx
@@ -1432,7 +1432,7 @@ msgid "accrued"
 msgstr "начислено"
 
 #: src/screens/Income/Composition.tsx
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 #: src/screens/Income/MonthPanel.tsx
 #: src/screens/Reports/Dividends.tsx
 #: src/screens/Reports/index.tsx
@@ -1495,7 +1495,7 @@ msgstr "Добавить бумагу"
 msgid "Add instruments"
 msgstr "Добавить инструменты"
 
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Add instruments…"
 msgstr "Добавить инструменты…"
 
@@ -1567,7 +1567,7 @@ msgid "against a cost basis of {0}"
 msgstr "к себестоимости {0}"
 
 #. placeholder {0}: formatMoney(marketValue, currency, { compact: true })
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 msgid "against a value of {0}"
 msgstr "к стоимости {0}"
 
@@ -1575,7 +1575,7 @@ msgstr "к стоимости {0}"
 #~ msgid "Against the benchmark"
 #~ msgstr "Против эталона"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Against the target"
 msgstr "Против цели"
 
@@ -1675,7 +1675,7 @@ msgstr "Всё время"
 msgid "All years"
 msgstr "Все годы"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "All-time high"
 msgstr "Исторический максимум"
@@ -2053,7 +2053,7 @@ msgstr "при таком темпе — {0}"
 msgid "Attribute"
 msgstr "Атрибут"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Settings/model.ts
 msgid "Attributes"
@@ -2067,7 +2067,7 @@ msgstr "Авто"
 msgid "Average capital"
 msgstr "Средний капитал"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "Average cost of one share, in the currency it was paid for."
 msgstr "Средняя цена одной бумаги в валюте покупки."
 
@@ -2193,11 +2193,11 @@ msgstr "ПОКУПКА"
 msgid "buy {0}"
 msgstr "купить {0}"
 
-#: src/screens/Rebalance/index.tsx
+#: src/screens/Rebalance/Controls.tsx
 msgid "Buy and sell"
 msgstr "Покупать и продавать"
 
-#: src/screens/Rebalance/index.tsx
+#: src/screens/Rebalance/Controls.tsx
 msgid "Buy only"
 msgstr "Только покупка"
 
@@ -2307,7 +2307,7 @@ msgid "Cash account"
 msgstr "Денежный счёт"
 
 #: src/screens/Accounts/index.tsx
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 #: src/screens/Settings/AccountsPanel.tsx
 msgid "Cash accounts"
 msgstr "Денежные счета"
@@ -2385,7 +2385,7 @@ msgstr "Сменить пароль"
 msgid "Change the split in {0}"
 msgstr "Изменить разбивку в «{0}»"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Charts"
 msgstr "Графики"
 
@@ -2516,7 +2516,7 @@ msgid "Closed in the period"
 msgstr "Закрыто за период"
 
 #: src/lib/kinds.ts
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Closed trades"
 msgstr "Закрытые сделки"
 
@@ -2629,7 +2629,7 @@ msgstr "Компонент"
 msgid "Components"
 msgstr "Компоненты"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Composition"
 msgstr "Состав"
 
@@ -2691,7 +2691,7 @@ msgid "Copy path"
 msgstr "Скопировать путь"
 
 #: src/screens/Positions/index.tsx
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Copy ticker"
 msgstr "Копировать тикер"
 
@@ -2712,7 +2712,7 @@ msgstr "Себестоимость"
 msgid "Cost-basis method"
 msgstr "Метод себестоимости"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/model.ts
 msgid "Costs"
@@ -2759,7 +2759,7 @@ msgstr "заводить"
 msgid "Create"
 msgstr "Создать"
 
-#: src/screens/Allocation/index.tsx
+#: src/screens/Allocation/Header.tsx
 msgid "Create a classification"
 msgstr "Создать классификацию"
 
@@ -2941,11 +2941,11 @@ msgstr "Колонка даты"
 msgid "Date format"
 msgstr "Формат даты"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Date this position was last paid."
 msgstr "Дата последней полученной выплаты."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Dates reached"
 msgstr "Наступившие даты"
 
@@ -2985,7 +2985,7 @@ msgstr "Дней от пика до дна."
 msgid "Days from the trough back to the peak."
 msgstr "Дней от дна обратно к пику."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Days the deepest fall lasted before the peak was regained."
 msgstr "Сколько дней длилось самое глубокое падение до возврата к пику."
 
@@ -3017,7 +3017,7 @@ msgstr "Самая глубокая"
 msgid "Deepest drawdowns"
 msgstr "Самые глубокие просадки"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Deepest fall from a peak inside the period."
 msgstr "Самое глубокое падение от пика внутри периода."
 
@@ -3040,7 +3040,7 @@ msgstr "Самое глубокое падение от пика внутри п
 #: src/screens/Settings/AttributesPanel.tsx
 #: src/screens/Settings/ProfilesPanel.tsx
 #: src/screens/Transactions/index.tsx
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Delete"
 msgstr "Удалить"
 
@@ -3141,7 +3141,7 @@ msgid "Delete the split"
 msgstr "Удалить сплит"
 
 #. placeholder {0}: list.name
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Delete the watchlist \"{0}\"? The instruments stay in the directory."
 msgstr "Удалить список наблюдения «{0}»? Инструменты останутся в справочнике."
 
@@ -3221,7 +3221,7 @@ msgstr "Определён по файлу: {0}"
 msgid "Developer"
 msgstr "Разработчику"
 
-#: src/screens/Rebalance/index.tsx
+#: src/screens/Rebalance/Controls.tsx
 msgid "Deviation from target"
 msgstr "Отклонение от цели"
 
@@ -3259,7 +3259,7 @@ msgstr "отключена"
 msgid "Disposals"
 msgstr "Выбытий"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "Distance to the highest close stored here, not the instrument's own record."
 msgstr "Расстояние до наибольшей сохранённой здесь цены, а не до рекорда самого инструмента."
@@ -3289,7 +3289,7 @@ msgstr "Дивиденд за год"
 msgid "Dividend yield"
 msgstr "Дивидендная доходность"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 #: src/components/domain/securityCard/CardHeader.tsx
 #: src/components/domain/securityCard/FactsPanel.tsx
 #: src/lib/kinds.ts
@@ -3298,7 +3298,7 @@ msgstr "Дивидендная доходность"
 msgid "Dividends"
 msgstr "Дивиденды"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Dividends and interest by month and year: the seasonality shows."
 msgstr "Дивиденды и проценты по месяцам и годам: видна сезонность."
 
@@ -3310,7 +3310,7 @@ msgstr "Дивиденды и проценты за период за вычет
 msgid "dividends and interest received"
 msgstr "полученные дивиденды и проценты"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Dividends received"
 msgstr "Дивиденды получены"
 
@@ -3331,7 +3331,7 @@ msgid "Do not report real returns"
 msgstr "Не показывать реальную доходность"
 
 #: src/components/domain/MarketRefresh.tsx
-#: src/screens/Allocation/index.tsx
+#: src/screens/Allocation/Header.tsx
 #: src/screens/dashboard/Dashboard.tsx
 #: src/screens/Import/AssetRow.tsx
 msgid "Done"
@@ -3362,7 +3362,7 @@ msgstr "Перетащите заголовок плитки, чтобы пер�
 msgid "Draw inflation"
 msgstr "Показывать инфляцию"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Drawdown"
 msgstr "Просадка"
 
@@ -3374,7 +3374,7 @@ msgstr "Просадка от пика"
 msgid "Drawdown from the peak, by day"
 msgstr "Просадка от пика по дням"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Drawdown length"
 msgstr "Длительность просадки"
 
@@ -3415,7 +3415,7 @@ msgstr "Каждая пара — это списание с одного счё
 msgid "Each payment counts under the category of whoever paid it, split by the same weights the tree uses for value."
 msgstr "Каждая выплата попадает в категорию того, кто её заплатил, и делится теми же весами, которыми дерево делит стоимость."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Each position's share of the return, largest first, with the total."
 msgstr "Доля каждой позиции в доходности, крупные сверху, и итог."
 
@@ -3515,7 +3515,7 @@ msgstr "Изменить лимит"
 msgid "Edit transaction"
 msgstr "Правка операции"
 
-#: src/screens/Allocation/index.tsx
+#: src/screens/Allocation/Header.tsx
 msgid "Edit tree"
 msgstr "Изменить дерево"
 
@@ -3769,7 +3769,7 @@ msgstr "Всё, из чего собрано приложение, и лицен
 msgid "Everything this build can ask. A source with a key of its own answers only once the key is saved."
 msgstr "Всё, что эта сборка умеет спрашивать. Источник со своим ключом отвечает только после того, как ключ сохранён."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Everything this holding has ever paid, over what the shares cost."
 msgstr "Всё, что эта позиция когда-либо выплатила, к стоимости покупки акций."
 
@@ -3828,7 +3828,7 @@ msgstr "Стоимость выхода минус стоимость входа
 msgid "Expand"
 msgstr "Раскрыть"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Expected dividends"
 msgstr "Ожидаемые дивиденды"
 
@@ -3927,7 +3927,7 @@ msgstr "Доля комиссий"
 msgid "Fee refund"
 msgstr "Возврат комиссии"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 #: src/lib/kinds.ts
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Reports/Charges.tsx
@@ -3957,7 +3957,7 @@ msgstr "Загружать данные при запуске"
 msgid "Field for column \"{name}\""
 msgstr "Поле для колонки «{name}»"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "FIFO"
 msgstr "FIFO"
 
@@ -4113,7 +4113,7 @@ msgstr "Из кэша"
 msgid "from column \"{0}\""
 msgstr "из колонки «{0}»"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "From high"
 msgstr "От макс."
@@ -4147,11 +4147,11 @@ msgstr "Фонд"
 msgid "Funds"
 msgstr "Фонды"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "FX gain"
 msgstr "Валютн. рез."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Import/labels.ts
 #: src/screens/Import/PreviewTables.tsx
 msgid "FX rate"
@@ -4322,7 +4322,7 @@ msgstr "скрыть строки"
 #~ msgid "High"
 #~ msgstr "Максимум"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "Highest close stored here, in the quote currency."
 msgstr "Наибольшая сохранённая здесь цена, в валюте котировки."
@@ -4376,7 +4376,7 @@ msgstr "Насколько портфель ниже последнего пик
 #~ msgid "How far the portfolio is from covering a year of spending, and when this pace gets there."
 #~ msgstr "Насколько портфель далёк от того, чтобы покрыть год расходов, и когда этот темп его туда приведёт."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "How far the portfolio sits below its peak, by day."
 msgstr "Насколько портфель ниже своего пика, по дням."
 
@@ -4428,7 +4428,7 @@ msgstr "Сколько"
 msgid "How much did I pay in fees?"
 msgstr "Сколько я заплатил комиссий?"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "How much of the same swing the losing days account for."
 msgstr "Какая часть того же разброса приходится на убыточные дни."
 
@@ -4489,7 +4489,7 @@ msgstr "Из чего сложился результат"
 msgid "how the result adds up, step by step"
 msgstr "из чего сложился результат, по шагам"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "How widely this position's daily returns swing, stated for a year."
 msgstr "Насколько сильно колеблется дневная доходность позиции, в пересчёте на год."
 
@@ -4552,7 +4552,7 @@ msgstr "Импорт атрибутов"
 msgid "Import attributes…"
 msgstr "Импорт атрибутов…"
 
-#: src/screens/Allocation/index.tsx
+#: src/screens/Allocation/Header.tsx
 #: src/screens/Allocation/TaxonomyDock.tsx
 msgid "Import from CSV…"
 msgstr "Импорт из CSV…"
@@ -4629,11 +4629,11 @@ msgstr "Доход"
 #~ msgid "Income accumulated over the period"
 #~ msgstr "Доход, накопленный за период"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Income by classification"
 msgstr "Доход по классификации"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Income calendar"
 msgstr "Календарь дохода"
 
@@ -4642,7 +4642,7 @@ msgstr "Календарь дохода"
 msgid "Income for the period"
 msgstr "Доход за период"
 
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 msgid "Income in the window against current market value."
 msgstr "Доход за период к текущей рыночной стоимости."
 
@@ -4679,7 +4679,7 @@ msgstr "Установить из папки…"
 msgid "Installed theme"
 msgstr "Установленная тема"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Instr. gain"
 msgstr "Рез. бумаги"
 
@@ -4690,7 +4690,7 @@ msgstr "инструмент"
 #: src/components/domain/AlertDialogs.tsx
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/PlanForm.tsx
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 #: src/screens/Allocation/MembersPanel.tsx
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
@@ -4721,7 +4721,7 @@ msgid "Instrument attributes"
 msgstr "Атрибуты инструментов"
 
 #: src/screens/Positions/index.tsx
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Instrument card…"
 msgstr "Карточка бумаги…"
 
@@ -4729,7 +4729,7 @@ msgstr "Карточка бумаги…"
 msgid "Instrument currency"
 msgstr "Валюта инструмента"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Instrument events"
 msgstr "События инструментов"
 
@@ -4803,11 +4803,11 @@ msgstr "Бумаги лежат на депо, а деньги по сделка
 #~ msgid "Instruments whose price reached a limit you set."
 #~ msgstr "Инструменты, цена которых достигла заданного лимита."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Instruments whose review date has arrived."
 msgstr "Инструменты, у которых наступила дата пересмотра."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Instruments you follow: the last price and the period's move."
 msgstr "Инструменты под наблюдением: последняя цена и движение за период."
 
@@ -4867,7 +4867,7 @@ msgstr "Вложенный капитал"
 msgid "Investor return with inflation taken out, flow by flow."
 msgstr "Доходность инвестора за вычетом инфляции, поток за потоком."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 #: src/screens/Trades/TradesTable.tsx
 msgid "IRR"
 msgstr "IRR"
@@ -4877,7 +4877,7 @@ msgid "Irregular"
 msgstr "Нерегулярно"
 
 #: src/components/domain/aiToolLabels.ts
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/record.tsx
 #: src/screens/Import/labels.ts
 msgid "ISIN"
 msgstr "ISIN"
@@ -5008,7 +5008,7 @@ msgstr "Вид"
 msgid "Largest drift"
 msgstr "Наибольший снос"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Largest positions"
 msgstr "Крупнейшие позиции"
 
@@ -5041,7 +5041,7 @@ msgstr "Последняя цена"
 msgid "Last quote"
 msgstr "Последняя котировка"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Last received"
 msgstr "Последняя выплата"
 
@@ -5055,7 +5055,7 @@ msgstr "Последнее обновление: {0}"
 msgid "Last used"
 msgstr "Последний раз"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Last year's payments over today's value."
 msgstr "Выплаты за год к сегодняшней стоимости."
 
@@ -5176,11 +5176,11 @@ msgstr "уровень"
 msgid "Level"
 msgstr "Уровень"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Level crossings"
 msgstr "Пересечения уровней"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 msgid "Levels"
 msgstr "Уровни"
 
@@ -5246,7 +5246,7 @@ msgstr "Связать с бумагой из базы"
 msgid "list"
 msgstr "список"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Lists"
 msgstr "Списки"
 
@@ -5366,7 +5366,7 @@ msgstr "Рыночные данные поступают из бесплатны
 msgid "Matches: {0} by ISIN, {1} by ticker, {2} by name."
 msgstr "Совпадения: {0} по ISIN, {1} по тикеру, {2} по названию."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Max drawdown"
 msgstr "Макс. просадка"
 
@@ -5380,7 +5380,7 @@ msgid "Menu"
 msgstr "Меню"
 
 #: src/screens/dashboard/dialogs/config/ShownFields.tsx
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "Metric"
 msgstr "Показатель"
 
@@ -5392,7 +5392,7 @@ msgstr "Показатель не найден."
 msgid "Minimize"
 msgstr "Свернуть"
 
-#: src/screens/Rebalance/index.tsx
+#: src/screens/Rebalance/Controls.tsx
 msgid "Mode"
 msgstr "Режим"
 
@@ -5466,7 +5466,7 @@ msgstr "Месяц и день в формате MM-DD. Год лимита не
 msgid "Monthly"
 msgstr "Ежемесячно"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Monthly return by year: a bad season shows at a glance."
 msgstr "Доходность по месяцам и годам: плохой сезон виден сразу."
 
@@ -5507,11 +5507,11 @@ msgstr "Переместить «{0}»"
 msgid "Move between rows of a table or a menu"
 msgstr "Перейти по строкам таблицы или меню"
 
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Move down"
 msgstr "Ниже"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "Move from the previous close to the last one."
 msgstr "Изменение от предыдущего закрытия к последнему."
@@ -5520,7 +5520,7 @@ msgstr "Изменение от предыдущего закрытия к по�
 msgid "Move to the next or the previous control"
 msgstr "Перейти к следующему или предыдущему элементу"
 
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Move up"
 msgstr "Выше"
 
@@ -5536,7 +5536,7 @@ msgstr "Сдвигается вместе с календарём: завтра 
 msgid "Moving average"
 msgstr "Скользящее среднее"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "moving avg"
 msgstr "средняя"
 
@@ -5828,11 +5828,11 @@ msgstr "Денежных остатков нет."
 msgid "No chats yet"
 msgstr "Пока нет чатов"
 
-#: src/screens/Allocation/index.tsx
+#: src/screens/Allocation/Header.tsx
 msgid "No classification has been created"
 msgstr "Ни одной классификации не заведено"
 
-#: src/screens/dashboard/widgets/chart.tsx
+#: src/screens/dashboard/widgets/income.tsx
 msgid "No classification has been set up yet."
 msgstr "Ни одной классификации ещё не заведено."
 
@@ -6019,7 +6019,7 @@ msgstr "Выплат по бумагам нет."
 msgid "No payments in this period"
 msgstr "За период выплат не было"
 
-#: src/screens/dashboard/widgets/chart.tsx
+#: src/screens/dashboard/widgets/income.tsx
 msgid "No payments in this period."
 msgstr "За период выплат не было."
 
@@ -6115,7 +6115,7 @@ msgstr "Для этого инструмента сплитов не запис�
 msgid "No standalone fees or taxes in this period"
 msgstr "За период отдельных комиссий и налогов не было"
 
-#: src/screens/dashboard/widgets/chart.tsx
+#: src/screens/dashboard/widgets/allocation.tsx
 #: src/screens/dashboard/widgets/periodLists.tsx
 msgid "No target has been set up yet."
 msgstr "Цель ещё не заведена."
@@ -6158,6 +6158,7 @@ msgstr "Операций пока нет"
 
 #: src/screens/dashboard/widgets/activity.tsx
 #: src/screens/dashboard/widgets/chart.tsx
+#: src/screens/dashboard/widgets/income.tsx
 #: src/screens/dashboard/widgets/list.tsx
 #: src/screens/dashboard/widgets/periodLists.tsx
 #: src/screens/dashboard/widgets/plugin.tsx
@@ -6321,7 +6322,7 @@ msgid "note"
 msgstr "заметка"
 
 #: src/components/domain/AlertDialogs.tsx
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/record.tsx
 #: src/components/domain/SecurityClassification.tsx
 #: src/lib/kinds.ts
 #: src/screens/Import/labels.ts
@@ -6332,7 +6333,7 @@ msgstr "заметка"
 msgid "Note"
 msgstr "Заметка"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Notes, dividends and splits, newest first."
 msgstr "Заметки, дивиденды и сплиты, сначала новые."
 
@@ -6473,7 +6474,7 @@ msgstr "число"
 msgid "Number"
 msgstr "Число"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "Numbers"
 msgstr "Числа"
 
@@ -6602,7 +6603,7 @@ msgstr "Раз в неделю"
 msgid "Once a year"
 msgstr "Раз в год"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "One figure over another: a yield, a cost share, how much of it is cash."
 msgstr "Одна величина к другой: доходность, доля расходов, сколько из этого денег."
 
@@ -6614,7 +6615,7 @@ msgstr "Один и тот же инструмент торгуется на р�
 msgid "One move"
 msgstr "Один перевод"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "One number from the catalog: value, return, drawdown."
 msgstr "Одно число из каталога: стоимость, доходность, просадка."
 
@@ -6893,7 +6894,7 @@ msgstr "Выплаты — все строки"
 msgid "Payments from instruments over the whole history, before withholding tax."
 msgstr "Выплаты по бумагам за всю историю, до вычета удержанного налога."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Reports/Dividends.tsx
 msgid "Pays"
 msgstr "Платит"
@@ -6922,7 +6923,7 @@ msgstr "Сколько процентных пунктов доходности 
 msgid "Percentages are a share inside the parent: \"equities 42 %, of which the core is 88 %\". A category left empty stays outside the target."
 msgstr "Проценты — доля внутри родителя: «акции 42 %, внутри них ядро 88 %». Незаполненная категория остаётся вне цели."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Perf. %"
 msgstr "Дох. %"
 
@@ -7052,7 +7053,7 @@ msgstr "Портфель"
 msgid "Portfolio after"
 msgstr "Портфель после"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Portfolio and benchmark"
 msgstr "Портфель и эталон"
 
@@ -7085,7 +7086,7 @@ msgstr "Название портфеля"
 msgid "Portfolio shares by area"
 msgstr "Доли портфеля площадью"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/text.ts
 msgid "Portfolio summary"
 msgstr "Сводка по портфелю"
 
@@ -7093,7 +7094,7 @@ msgstr "Сводка по портфелю"
 msgid "Portfolio value in {currency}"
 msgstr "Стоимость портфеля в {currency}"
 
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 msgid "Portfolio yield"
 msgstr "Доходность портфеля"
 
@@ -7135,7 +7136,8 @@ msgstr "Предыдущий месяц"
 msgid "Previous period"
 msgstr "Предыдущий период"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
+#: src/components/domain/positionColumns/types.ts
 #: src/components/domain/securityCard/FactsPanel.tsx
 #: src/components/domain/securityCard/RecentTransactions.tsx
 #: src/screens/Import/labels.ts
@@ -7208,7 +7210,7 @@ msgstr "Профиль"
 msgid "Profiles"
 msgstr "Профили"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "Progress"
 msgstr "Прогресс"
 
@@ -7238,11 +7240,11 @@ msgstr "Символ у провайдера"
 msgid "published through {0}"
 msgstr "данные по {0}"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "Purchase price"
 msgstr "Цена покупки"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "Purchase value, {currency}"
 msgstr "Стоимость покупки, {currency}"
 
@@ -7267,7 +7269,7 @@ msgstr "{0} кв. {short}"
 msgid "Q{quarter} {year}"
 msgstr "{quarter} кв. {year}"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/components/domain/securityCard/RecentTransactions.tsx
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
@@ -7378,7 +7380,7 @@ msgstr "Идёт обновление котировок и курсов"
 msgid "Rate to the base currency"
 msgstr "Курс к базовой валюте"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "Ratio"
 msgstr "Отношение"
 
@@ -7448,7 +7450,7 @@ msgstr "Реальная XIRR"
 #~ msgid "Real."
 #~ msgstr "Реализ."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "Realised"
 msgstr "Реализовано"
 
@@ -7478,7 +7480,7 @@ msgstr "получено"
 msgid "Received"
 msgstr "Получено"
 
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 msgid "Received in the period"
 msgstr "Получено за период"
 
@@ -7603,7 +7605,7 @@ msgstr "убрать инструмент из списка"
 msgid "remove an operation from your ledger"
 msgstr "удалить операцию из журнала"
 
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Remove from the list"
 msgstr "Убрать из списка"
 
@@ -7662,7 +7664,7 @@ msgid "Rename watchlist"
 msgstr "Переименовать список наблюдения"
 
 #: src/components/domain/aiChat/ChatList.tsx
-#: src/screens/Watchlist/index.tsx
+#: src/screens/Watchlist/useWatchlistActions.ts
 msgid "Rename…"
 msgstr "Переименовать…"
 
@@ -7756,7 +7758,8 @@ msgstr "Вернуть убранные встроенные пресеты"
 msgid "Restore what was detected"
 msgstr "Вернуть как определилось"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
+#: src/components/domain/positionColumns/types.ts
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
 msgid "Result"
@@ -7771,7 +7774,7 @@ msgstr "Результат закрытых сделок"
 msgid "Result of open trades"
 msgstr "Результат открытых сделок"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "Result of what has already been sold, counted under this method."
 msgstr "Результат уже проданного, посчитанный этим методом."
 
@@ -7836,7 +7839,7 @@ msgstr "Доходность по месяцам"
 msgid "Return by position"
 msgstr "Доходность по позициям"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Return heatmap"
 msgstr "Карта доходности"
 
@@ -7844,7 +7847,7 @@ msgstr "Карта доходности"
 msgid "Return measured two ways, because they answer different questions: one ignores your deposits and withdrawals, the other is built around when they happened. Ask the assistant which one you want."
 msgstr "Доходность считается двумя способами, потому что они отвечают на разные вопросы: один не замечает ваши пополнения и снятия, другой построен вокруг того, когда они произошли. Спросите у ассистента, какой нужен вам."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Return of the instrument itself, unaffected by what was paid in or out."
 msgstr "Доходность самого инструмента, не зависящая от вводов и выводов."
 
@@ -7872,9 +7875,9 @@ msgstr "Кольца"
 msgid "Rises above"
 msgstr "Поднимается выше"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 #: src/components/Nav/model.ts
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 #: src/screens/Risk/index.tsx
 msgid "Risk"
 msgstr "Риск"
@@ -7996,7 +7999,7 @@ msgstr "Сохранить в файл…"
 msgid "Saving…"
 msgstr "Сохраняем…"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Schedule read off the whole payment history, not the chosen period."
 msgstr "График, прочитанный по всей истории выплат, а не по выбранному периоду."
 
@@ -8080,7 +8083,7 @@ msgstr "Ищем…"
 msgid "Section"
 msgstr "Раздел"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/text.ts
 msgid "Section heading"
 msgstr "Заголовок раздела"
 
@@ -8195,7 +8198,7 @@ msgstr "ПРОДАЖА"
 msgid "sell {0}"
 msgstr "продать {0}"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 #: src/screens/Risk/RiskMetrics.tsx
 msgid "Semi-deviation"
 msgstr "Полуотклонение"
@@ -8263,7 +8266,7 @@ msgstr "расчёты через"
 msgid "Share"
 msgstr "Доля"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Share map"
 msgstr "Карта долей"
 
@@ -8287,11 +8290,11 @@ msgstr "Доля торговых дней, закрывшихся выше."
 msgid "share, %"
 msgstr "доля, %"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Shares as one bar: by instrument or by classification."
 msgstr "Доли одной полосой: по бумагам или по классификации."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Shares by area: the large and the small are visible at once."
 msgstr "Доли площадью: видно и крупное, и мелкое сразу."
 
@@ -8671,7 +8674,7 @@ msgstr "цель"
 
 #: src/screens/Allocation/model.ts
 #: src/screens/dashboard/dialogs/config/SubjectFields.tsx
-#: src/screens/Rebalance/index.tsx
+#: src/screens/Rebalance/Controls.tsx
 msgid "Target"
 msgstr "Цель"
 
@@ -8692,7 +8695,7 @@ msgstr "Целевая сумма"
 msgid "Target name"
 msgstr "Название цели"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Target value"
 msgstr "Целевая стоимость"
 
@@ -8746,7 +8749,7 @@ msgstr "Доля налогов"
 msgid "Tax refund"
 msgstr "Возврат налога"
 
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 #: src/screens/Income/MonthPanel.tsx
 #: src/screens/Reports/index.tsx
 msgid "Tax withheld"
@@ -8760,7 +8763,7 @@ msgstr "Удержано налога"
 #~ msgid "Tax withheld at the source: it never reaches the account, so it is not in \"received\" — but it is real money."
 #~ msgstr "Налог, удержанный у источника: до счёта он не доходит, поэтому в «получено» его нет — но это реальные деньги."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 #: src/lib/kinds.ts
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Reports/Charges.tsx
@@ -8791,7 +8794,7 @@ msgid "text"
 msgstr "текст"
 
 #: src/lib/kinds.ts
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/text.ts
 msgid "Text"
 msgstr "Текст"
 
@@ -8920,7 +8923,7 @@ msgstr "Ассистент хочет посмотреть: {0}"
 #~ msgid "The benchmark has no prices in this period."
 #~ msgstr "У эталона нет котировок за этот период."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "The best return of the period, whatever the position is worth."
 msgstr "Лучшая доходность за период — независимо от размера позиции."
 
@@ -9099,7 +9102,7 @@ msgstr "Даты файла разошлись с {0} по {1} — скорее 
 msgid "the file's instrument does not exist yet"
 msgstr "инструмент из файла ещё не существует"
 
-#: src/screens/Rebalance/index.tsx
+#: src/screens/Rebalance/Controls.tsx
 msgid "The fill is the current weight and the tick the target; hatching marks an overweight, a dashed run a shortfall."
 msgstr "Заливка — текущая доля, риска — цель; штриховка означает перевес, пунктир — недобор."
 
@@ -9139,7 +9142,7 @@ msgstr "Полный текст, который каждый компонент 
 msgid "The German securities number, when the broker prints one"
 msgstr "Немецкий номер бумаги, если брокер его печатает"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "The growth of one invested unit against each chosen benchmark."
 msgstr "Рост вложенной единицы против каждого выбранного эталона."
 
@@ -9187,7 +9190,7 @@ msgstr "Бумаги нет в базе"
 msgid "The instrument is used by transactions"
 msgstr "Бумага используется в сделках"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "The instrument's own share of the unrealised result."
 msgstr "Доля самого инструмента в нереализованном результате."
 
@@ -9223,7 +9226,7 @@ msgstr "Вид задаётся один раз: сменить его — зн�
 msgid "The kind of a saved account never changes: its transactions would stay on an account that no longer accepts them"
 msgstr "Вид заведённого счёта не меняется: его операции остались бы на счёте, который их больше не принимает"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "The last 90 closes, whatever period the screen is set to."
 msgstr "Последние 90 закрытий, независимо от выбранного периода."
@@ -9236,7 +9239,7 @@ msgstr "Последний дашборд остаётся. Переименуй
 msgid "The last profile cannot be deleted"
 msgstr "Последний профиль удалить нельзя"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "The latest closes that crossed a level you set, either way."
 msgstr "Последние закрытия, пересёкшие заданный уровень в любую сторону."
 
@@ -9308,11 +9311,11 @@ msgstr "Даты периода"
 msgid "The period's name"
 msgstr "Название периода"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "The period's result over the money this position had at work."
 msgstr "Результат за период к деньгам, которые работали в этой позиции."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "The period's time-weighted return restated as a yearly rate."
 msgstr "Взвешенная по времени доходность периода в пересчёте на год."
 
@@ -9560,11 +9563,11 @@ msgstr "тикер уже занят другим инструментом"
 #~ msgid "The time-weighted return brought to a yearly figure: next to volatility it shows what was paid for it."
 #~ msgstr "Доходность, взвешенная по времени, приведённая к году: рядом с волатильностью видно, чем за неё платили."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "The top of the positions table: weight, value, today."
 msgstr "Верх таблицы позиций: доля, стоимость, день."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "The trades the period closed, largest result first."
 msgstr "Сделки, закрытые за период, начиная с самого крупного результата."
 
@@ -9596,7 +9599,7 @@ msgstr "Пароли не совпадают."
 msgid "The update could not be downloaded or installed. Nothing has changed — this version keeps working, and the new one can be downloaded by hand from the releases page."
 msgstr "Обновление не удалось скачать или установить. Ничего не изменилось — эта версия продолжает работать, а новую можно скачать вручную со страницы релизов."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "The value line over the period with deposit bars beneath it."
 msgstr "Линия стоимости за период и столбики пополнений под ней."
 
@@ -9774,7 +9777,7 @@ msgstr "Страница плагина так ничего и не нарисо
 #~ msgid "This plugin's tile never drew anything."
 #~ msgstr "Плитка плагина так ничего и не нарисовала."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "This position's share of everything the current scope holds."
 msgstr "Доля позиции во всём, что охватывает текущий разрез."
 
@@ -9913,13 +9916,13 @@ msgid "today"
 msgstr "сегодня"
 
 #: src/components/domain/AsOfPicker.tsx
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/Watchlist/columns.tsx
 msgid "Today"
 msgstr "За день"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Today's rate from the quote currency into the base one."
 msgstr "Сегодняшний курс из валюты котировки в базовую."
 
@@ -9948,7 +9951,7 @@ msgstr "инструмент"
 msgid "Top"
 msgstr "Числитель"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Top performers"
 msgstr "Лучшие по доходности"
 
@@ -9989,7 +9992,7 @@ msgstr "Итоги по видам"
 msgid "Totals by year"
 msgstr "Итоги по годам"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Trade commissions included, so it exceeds what the charges report lists."
 msgstr "Включает комиссии сделок, поэтому больше, чем в отчёте по расходам."
 
@@ -10146,7 +10149,7 @@ msgstr "Две даты"
 msgid "two legs of one move"
 msgstr "две ноги одного перевода"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "TWR"
 msgstr "TWR"
 
@@ -10154,7 +10157,7 @@ msgstr "TWR"
 msgid "TWR (portfolio return)"
 msgstr "TWR (доходность портфеля)"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "TWR a year"
 msgstr "TWR в год"
 
@@ -10231,7 +10234,7 @@ msgstr "Разблокировка…"
 #~ msgid "Unreal."
 #~ msgstr "Нереализ."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "Unrealised"
 msgstr "Нереализовано"
 
@@ -10249,7 +10252,7 @@ msgstr "Нереализованный P/L"
 msgid "up"
 msgstr "в плюс"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Upcoming contributions"
 msgstr "Ближайшие взносы"
 
@@ -10295,11 +10298,11 @@ msgstr "Использовать эти источники"
 msgid "Value"
 msgstr "Стоимость"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 msgid "Value and cost"
 msgstr "Стоимость и покупка"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 #: src/screens/Performance/index.tsx
 msgid "Value and flows"
 msgstr "Стоимость и потоки"
@@ -10316,11 +10319,11 @@ msgstr "стоимость изменилась на"
 msgid "Value of the current selection at the valuation date."
 msgstr "Стоимость текущего выбора на дату оценки."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "Value today less what the shares cost under this method."
 msgstr "Сегодняшняя стоимость за вычетом покупки по этому методу."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Value, {currency}"
 msgstr "Стоимость, {currency}"
 
@@ -10389,7 +10392,7 @@ msgstr "Вид"
 #~ msgid "Vladimir · Trade Republic"
 #~ msgstr "Владимир · Trade Republic"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/dashboard/widgets/periodLists.tsx
 msgid "Volatility"
@@ -10411,7 +10414,7 @@ msgstr "волатильность и просадка"
 #~ msgid "Volatility of falling days only."
 #~ msgstr "Волатильность только по падающим дням."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "Volatility, Sharpe and the maximum drawdown over the period."
 msgstr "Волатильность, Sharpe и максимальная просадка за период."
 
@@ -10429,7 +10432,7 @@ msgstr "было {0}"
 #: src/components/domain/menuBar/model.ts
 #: src/components/Nav/model.ts
 #: src/screens/dashboard/dialogs/config/SubjectFields.tsx
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 #: src/screens/Watchlist/index.tsx
 msgid "Watchlist"
 msgstr "Наблюдение"
@@ -10452,7 +10455,7 @@ msgid "weeks"
 msgstr "недель"
 
 #: src/components/domain/PlanForm.tsx
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Weight"
 msgstr "Доля"
 
@@ -10498,11 +10501,11 @@ msgstr "состав группы счетов"
 msgid "What changed"
 msgstr "Что изменилось"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "What each category of the tree paid over the period."
 msgstr "Сколько каждая категория дерева заплатила за период."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "What each category should be worth, and how far off it is."
 msgstr "Сколько должна стоить каждая категория и насколько она от этого далека."
 
@@ -10566,7 +10569,7 @@ msgstr "Сколько счёт может принять за год и ско�
 msgid "What open trades would make if closed at the last price."
 msgstr "Сколько дали бы открытые сделки, закройся они по последней цене."
 
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 #: src/screens/Reports/index.tsx
 msgid "What reached the cash accounts, net of withholding tax."
 msgstr "Что дошло до денежных счетов, за вычетом удержанного налога."
@@ -10587,7 +10590,7 @@ msgstr "Что содержит сумма"
 #~ msgid "What the app looks like and which language it speaks"
 #~ msgstr "Как приложение выглядит и на каком языке говорит"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "What the exchange rate did to the unrealised result."
 msgstr "Что сделал с нереализованным результатом валютный курс."
 
@@ -10611,7 +10614,7 @@ msgstr "Во сколько обошлись открытые позиции: ц
 #~ msgid "What the open trades would make if they were closed at the last price — the unrealized result, split by purchase rather than by instrument."
 #~ msgstr "Что дали бы открытые сделки, закройся они по последней цене, — нереализованный результат в разрезе покупок, а не инструментов."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/text.ts
 msgid "What the period did and what drove it, written by the assistant on request."
 msgstr "Что случилось за период и из-за чего — ассистент пишет по запросу."
 
@@ -10619,7 +10622,7 @@ msgstr "Что случилось за период и из-за чего — а
 msgid "What the plans contribute"
 msgstr "Сколько дают планы"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "What the plans pay in next, soonest first."
 msgstr "Ближайшие взносы по планам, начиная с самого раннего."
 
@@ -10639,11 +10642,11 @@ msgstr "стоимость портфеля"
 msgid "What the portfolio was worth when the period opened plus everything paid in since."
 msgstr "Сколько портфель стоил на начало периода плюс всё внесённое с тех пор."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "What the position made over the chosen period, in the base currency."
 msgstr "Что позиция заработала за выбранный период, в базовой валюте."
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/lists.ts
 msgid "What the positions should pay next, from each instrument's past year."
 msgstr "Что позиции должны выплатить дальше — по прошлому году каждого инструмента."
 
@@ -10651,7 +10654,7 @@ msgstr "Что позиции должны выплатить дальше — �
 msgid "What the reports are computed from."
 msgstr "Из чего считаются отчёты."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/cost.tsx
 msgid "What the shares held today cost, counted under this method."
 msgstr "Во что обошлись имеющиеся бумаги по этому методу."
 
@@ -10663,7 +10666,7 @@ msgstr "Что написано в строке под числом."
 msgid "What this app does with your figures, and what it does not promise about them."
 msgstr "Что приложение делает с вашими цифрами и чего оно о них не обещает."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "What this position has actually been paid, in the base currency."
 msgstr "Что позиция фактически получила, в базовой валюте."
 
@@ -10728,7 +10731,7 @@ msgstr "откуда берутся цены инструмента"
 msgid "Where data comes from"
 msgstr "Откуда берутся данные"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Where each category stands against its target weight."
 msgstr "Где каждая категория стоит относительно своей целевой доли."
 
@@ -10804,7 +10807,7 @@ msgstr "Какой провайдер отвечает"
 msgid "which venue an instrument follows"
 msgstr "за какой площадкой следует инструмент"
 
-#: src/screens/dashboard/widgets/index.tsx
+#: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Who made the result"
 msgstr "Кто сделал результат"
 
@@ -10904,7 +10907,7 @@ msgstr "Выводы"
 msgid "Withdrawals give allowance back"
 msgstr "Снятия возвращают лимит"
 
-#: src/screens/Income/index.tsx
+#: src/screens/Income/Metrics.tsx
 msgid "Withheld at the source, so it is not in what was received."
 msgstr "Удержан у источника, поэтому не входит в полученное."
 
@@ -10920,7 +10923,7 @@ msgstr "Без инструментов взнос остаётся деньга
 msgid "Without both, holdings in another currency cannot be valued at all. Leaving with Decide later is an answer too: prices are then typed in by hand."
 msgstr "Без обоих активы в другой валюте оценить невозможно. Уйти через «Решить позже» — тоже ответ: тогда цены вводятся вручную."
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/record.tsx
 msgid "WKN"
 msgstr "WKN"
 
@@ -11001,7 +11004,7 @@ msgstr "С начала года"
 msgid "Yearly"
 msgstr "Раз в год"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/period.tsx
 msgid "Yearly rate that makes this position's payments add up to what it is worth."
 msgstr "Годовая ставка, при которой платежи позиции сходятся с её стоимостью."
 
@@ -11025,12 +11028,12 @@ msgstr "Доходность за год"
 msgid "yield on cost"
 msgstr "к вложенному"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 #: src/screens/Reports/Dividends.tsx
 msgid "Yield on cost"
 msgstr "К вложенному"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/columns.tsx
 msgid "Yield received"
 msgstr "Доходность получена"
 
@@ -11079,7 +11082,7 @@ msgstr "Свой провайдер"
 msgid "Your own sources"
 msgstr "Свои источники"
 
-#: src/components/domain/positionColumns.tsx
+#: src/components/domain/positionColumns/types.ts
 msgid "Your position"
 msgstr "Ваша позиция"
 

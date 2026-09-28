@@ -88,13 +88,7 @@ export function useReorder(
       if (!on) return;
       setDrag(null);
       if (commit && last?.drop) live.current(item, last.drop);
-      // The release after a drag is not a press of the row it landed on.
-      const swallow = (ev: MouseEvent) => {
-        ev.stopPropagation();
-        ev.preventDefault();
-      };
-      window.addEventListener("click", swallow, true);
-      window.setTimeout(() => window.removeEventListener("click", swallow, true), 0);
+      swallowNextClick();
     };
     const up = () => finish(true);
     const cancel = () => finish(false);
@@ -110,25 +104,49 @@ export function useReorder(
       if (touch) ev.preventDefault();
     };
 
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", cancel);
-    window.addEventListener("keydown", keys);
-    window.addEventListener("touchmove", pin, { passive: false });
-    window.addEventListener("contextmenu", menu);
+    const detach = onWindow(
+      {
+        pointermove: move,
+        pointerup: up,
+        pointercancel: cancel,
+        keydown: keys,
+        touchmove: pin,
+        contextmenu: menu,
+      },
+      { touchmove: { passive: false } },
+    );
     stop.current = () => {
       window.clearTimeout(hold);
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", cancel);
-      window.removeEventListener("keydown", keys);
-      window.removeEventListener("touchmove", pin);
-      window.removeEventListener("contextmenu", menu);
+      detach();
       stop.current = () => {};
     };
   };
 
   return { drag, start };
+}
+
+type WindowHandlers = { [K in keyof WindowEventMap]?: (ev: WindowEventMap[K]) => void };
+
+/** Listens on the window for the length of one gesture; the returned call removes every listener. */
+function onWindow(
+  handlers: WindowHandlers,
+  options: { [K in keyof WindowEventMap]?: AddEventListenerOptions } = {},
+): () => void {
+  const entries = Object.entries(handlers) as [keyof WindowEventMap, EventListener][];
+  for (const [type, handler] of entries) window.addEventListener(type, handler, options[type]);
+  return () => {
+    for (const [type, handler] of entries) window.removeEventListener(type, handler);
+  };
+}
+
+/** The release after a drag is not a press of the row it landed on. */
+function swallowNextClick() {
+  const swallow = (ev: MouseEvent) => {
+    ev.stopPropagation();
+    ev.preventDefault();
+  };
+  window.addEventListener("click", swallow, true);
+  window.setTimeout(() => window.removeEventListener("click", swallow, true), 0);
 }
 
 function locate(root: HTMLElement | null, el: HTMLElement, item: DragItem, x: number, y: number): Hit {

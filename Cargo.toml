@@ -19,6 +19,11 @@ license = "AGPL-3.0-only"
 homepage = "https://stonqs.app"
 repository = "https://github.com/vvvlladimir/stonqs"
 
+# Keeps functions from growing back after a split; the threshold is in clippy.toml. `warn` rather
+# than `deny` so a local build still runs; CI passes `-D warnings`, which makes it a failure there.
+[workspace.lints.clippy]
+too_many_lines = "warn"
+
 [workspace.dependencies]
 rust_decimal = { version = "1", features = ["serde-with-str", "maths"] }
 rust_decimal_macros = "1"

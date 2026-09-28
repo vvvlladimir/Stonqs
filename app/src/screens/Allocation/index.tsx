@@ -1,9 +1,8 @@
 import { Command } from "../../lib/commands";
-import { Trans, useLingui } from "@lingui/react/macro";
+import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { CheckIcon, TreeStructureIcon } from "@phosphor-icons/react";
 import { Page } from "../../components/Page";
-import { Async, Empty, Pending, QueryError, Seg } from "../../components/ui";
+import { Async, Pending, QueryError, Seg } from "../../components/ui";
 import {
   affects,
   useAllocation,
@@ -20,10 +19,11 @@ import {
 } from "../../lib/queries";
 import { BreakdownPanel } from "./BreakdownPanel";
 import { useAllocationDialogs } from "./Dialogs";
-import { AllocationMetrics, UnclassifiedBanner } from "./Header";
+import { AllocationMetrics, EditTreeToggle, NoClassification, UnclassifiedBanner } from "./Header";
 import { MembersPanel } from "./MembersPanel";
 import { TaxonomyDock } from "./TaxonomyDock";
-import { UNCLASSIFIED, views, bucketAt, descend, levelRows } from "./model";
+import { UNCLASSIFIED, views, bucketAt, descend, levelRows, type LevelRow } from "./model";
+import type { TaxonomyData } from "../../lib/types";
 import { useAsOf } from "../../lib/asOf";
 
 export function Allocation() {
@@ -86,20 +86,7 @@ export function Allocation() {
     onNodeDeleted: (id) => setPath(path.filter((key) => key !== id)),
   });
 
-  const enter = (key: string) => {
-    const row = rows.find((r) => r.key === key);
-    if (!row) return;
-    // Cash has no security card; open its allocation editor instead.
-    if (row.kind === "position" && row.subjectKind === "CASH") dialogs.openAssign(row.key);
-    else if (row.kind === "position") dialogs.openCard(row.key);
-    else setPath([...path, key]);
-  };
-
-  const enterTile = (key: string) => {
-    if (key === UNCLASSIFIED || taxonomy?.nodes.some((n) => n.id === key)) setPath([...path, key]);
-    else if (key.startsWith("cash:")) dialogs.openAssign(key);
-    else dialogs.openCard(key);
-  };
+  const { enter, enterTile } = navigation(rows, taxonomy, path, setPath, dialogs);
 
   if (taxonomies.isError) return <QueryError error={taxonomies.error} />;
   if (taxonomies.isPending) return <Pending />;
@@ -112,21 +99,7 @@ export function Allocation() {
         <>
           <Seg label={t`View`} value={view} onChange={setView} options={views(i18n)} />
 
-          <button
-            type="button"
-            className={`iconbtn${editing ? " iconbtn--on" : ""}`}
-            onClick={() => setEditing(!editing)}
-          >
-            {editing ? (
-              <>
-                <CheckIcon /> <Trans>Done</Trans>
-              </>
-            ) : (
-              <>
-                <TreeStructureIcon /> <Trans>Edit tree</Trans>
-              </>
-            )}
-          </button>
+          <EditTreeToggle editing={editing} onToggle={() => setEditing(!editing)} />
         </>
       }
       banner={
@@ -152,43 +125,7 @@ export function Allocation() {
       }
     >
       {!taxonomy ? (
-        <Empty
-          title={t`No classification has been created`}
-          action={
-            <>
-              <button type="button" className="btn" onClick={() => dialogs.openTaxonomy(null)}>
-                <Trans>Create a classification</Trans>
-              </button>
-              <button
-                type="button"
-                className="btn btn--ghost"
-                disabled={dialogs.busy !== null}
-                onClick={() => dialogs.pickImport(null)}
-              >
-                <Trans>Import from CSV…</Trans>
-              </button>
-              {/* A ready tree a plugin brought. It goes through the same preview and the same
-                  commit as a file, so there is nothing extra to explain here. */}
-              {(plugins.data?.taxonomy_sets ?? []).map((set) => (
-                <button
-                  key={set.key}
-                  type="button"
-                  className="btn btn--ghost"
-                  disabled={dialogs.busy !== null}
-                  onClick={() => dialogs.importSet(set.key, null)}
-                >
-                  {set.name}
-                </button>
-              ))}
-            </>
-          }
-        >
-          <Trans>
-            A classification is a tree of categories and the weights of instruments in them. A global fund is
-            60 % United States and 40 % the rest of the world, which is why it is shares, not one category per
-            instrument.
-          </Trans>
-        </Empty>
+        <NoClassification dialogs={dialogs} sets={plugins.data?.taxonomy_sets ?? []} />
       ) : (
         <Async query={allocation}>
           {(data) => (
@@ -248,4 +185,28 @@ export function Allocation() {
       {dialogs.node}
     </Page>
   );
+}
+
+/** Where a click leads: one level deeper, or to the card or the split of what a leaf stands for. */
+function navigation(
+  rows: LevelRow[],
+  taxonomy: TaxonomyData | null,
+  path: string[],
+  setPath: (path: string[]) => void,
+  dialogs: ReturnType<typeof useAllocationDialogs>,
+) {
+  const enter = (key: string) => {
+    const row = rows.find((r) => r.key === key);
+    if (!row) return;
+    // Cash has no security card; open its allocation editor instead.
+    if (row.kind === "position" && row.subjectKind === "CASH") dialogs.openAssign(row.key);
+    else if (row.kind === "position") dialogs.openCard(row.key);
+    else setPath([...path, key]);
+  };
+  const enterTile = (key: string) => {
+    if (key === UNCLASSIFIED || taxonomy?.nodes.some((n) => n.id === key)) setPath([...path, key]);
+    else if (key.startsWith("cash:")) dialogs.openAssign(key);
+    else dialogs.openCard(key);
+  };
+  return { enter, enterTile };
 }

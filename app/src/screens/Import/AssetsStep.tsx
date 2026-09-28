@@ -117,51 +117,30 @@ export function AssetsStep({
               </Trans>
             </ErrorText>
           )}
-          <List>
-            {unknown.map((s) => (
-              <AssetRow
-                key={s.value}
-                symbol={s}
-                aliases={mapping.symbol_aliases}
-                onAlias={setAlias}
-                onPlan={setPlanned}
-              />
-            ))}
-          </List>
+          <AssetList
+            symbols={unknown}
+            aliases={mapping.symbol_aliases}
+            onAlias={setAlias}
+            onPlan={setPlanned}
+          />
         </Panel>
       )}
 
-      {planned.length > 0 && (
-        <Panel title={t`Will be created`} note={String(planned.length)}>
-          <List>
-            {planned.map((s) => (
-              <AssetRow
-                key={s.value}
-                symbol={s}
-                aliases={mapping.symbol_aliases}
-                onAlias={setAlias}
-                onPlan={setPlanned}
-              />
-            ))}
-          </List>
-        </Panel>
-      )}
+      <AssetPanel
+        title={t`Will be created`}
+        symbols={planned}
+        aliases={mapping.symbol_aliases}
+        onAlias={setAlias}
+        onPlan={setPlanned}
+      />
 
-      {known.length > 0 && (
-        <Panel title={t`Already in the portfolio`} note={String(known.length)}>
-          <List>
-            {known.map((s) => (
-              <AssetRow
-                key={s.value}
-                symbol={s}
-                aliases={mapping.symbol_aliases}
-                onAlias={setAlias}
-                onPlan={setPlanned}
-              />
-            ))}
-          </List>
-        </Panel>
-      )}
+      <AssetPanel
+        title={t`Already in the portfolio`}
+        symbols={known}
+        aliases={mapping.symbol_aliases}
+        onAlias={setAlias}
+        onPlan={setPlanned}
+      />
 
       {cashOnly.length > 0 && (
         <Panel title={t`Symbols on cash transactions`} note={String(cashOnly.length)}>
@@ -179,5 +158,32 @@ export function AssetsStep({
         </Panel>
       )}
     </>
+  );
+}
+
+interface AssetListProps {
+  symbols: ImportPreviewData["symbols"];
+  aliases: ImportMapping["symbol_aliases"];
+  onAlias: (from: string, to: string) => void;
+  onPlan: (value: string, draft: SecurityDraft | null) => void;
+}
+
+function AssetList({ symbols, aliases, onAlias, onPlan }: AssetListProps) {
+  return (
+    <List>
+      {symbols.map((s) => (
+        <AssetRow key={s.value} symbol={s} aliases={aliases} onAlias={onAlias} onPlan={onPlan} />
+      ))}
+    </List>
+  );
+}
+
+/** A group of the file's instruments by how far they are identified; an empty group is not shown. */
+function AssetPanel({ title, ...list }: AssetListProps & { title: string }) {
+  if (list.symbols.length === 0) return null;
+  return (
+    <Panel title={title} note={String(list.symbols.length)}>
+      <AssetList {...list} />
+    </Panel>
   );
 }

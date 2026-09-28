@@ -1,7 +1,9 @@
 import { bucketLabel } from "../../lib/taxonomy";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Banner, Metric, Metrics, Money, Percent } from "../../components/ui";
-import type { Allocation, AllocationBucket } from "../../lib/types";
+import { CheckIcon, TreeStructureIcon } from "@phosphor-icons/react";
+import { Banner, Empty, Metric, Metrics, Money, Percent } from "../../components/ui";
+import type { Allocation, AllocationBucket, InstalledTaxonomySet } from "../../lib/types";
+import type { useAllocationDialogs } from "./Dialogs";
 import type { LevelRow } from "./model";
 
 /** Everything above the panels: the unclassified warning and the four level metrics. */
@@ -100,5 +102,71 @@ export function AllocationMetrics({
         tip={t`The heaviest part of this level.`}
       />
     </Metrics>
+  );
+}
+
+export function EditTreeToggle({ editing, onToggle }: { editing: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" className={`iconbtn${editing ? " iconbtn--on" : ""}`} onClick={onToggle}>
+      {editing ? (
+        <>
+          <CheckIcon /> <Trans>Done</Trans>
+        </>
+      ) : (
+        <>
+          <TreeStructureIcon /> <Trans>Edit tree</Trans>
+        </>
+      )}
+    </button>
+  );
+}
+
+/** The screen before any tree exists: start one, read one from a file, or take a plugin's. */
+export function NoClassification({
+  dialogs,
+  sets,
+}: {
+  dialogs: ReturnType<typeof useAllocationDialogs>;
+  sets: InstalledTaxonomySet[];
+}) {
+  const { t } = useLingui();
+  return (
+    <Empty
+      title={t`No classification has been created`}
+      action={
+        <>
+          <button type="button" className="btn" onClick={() => dialogs.openTaxonomy(null)}>
+            <Trans>Create a classification</Trans>
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            disabled={dialogs.busy !== null}
+            onClick={() => dialogs.pickImport(null)}
+          >
+            <Trans>Import from CSV…</Trans>
+          </button>
+          {/* A ready tree a plugin brought. It goes through the same preview and the same
+              commit as a file, so there is nothing extra to explain here. */}
+          {sets.map((set) => (
+            <button
+              key={set.key}
+              type="button"
+              className="btn btn--ghost"
+              disabled={dialogs.busy !== null}
+              onClick={() => dialogs.importSet(set.key, null)}
+            >
+              {set.name}
+            </button>
+          ))}
+        </>
+      }
+    >
+      <Trans>
+        A classification is a tree of categories and the weights of instruments in them. A global fund is 60 %
+        United States and 40 % the rest of the world, which is why it is shares, not one category per
+        instrument.
+      </Trans>
+    </Empty>
   );
 }

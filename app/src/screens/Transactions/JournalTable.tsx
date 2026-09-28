@@ -34,79 +34,7 @@ export function JournalTable({
   itemsFor: (row: TransactionRow) => MenuItem[];
 }) {
   const { t } = useLingui();
-  /** Bulk toggle for a whole year or month, driven by how much of it is already picked. */
-  const pickAll = (ids: string[], label: string) => {
-    const picked = ids.filter((id) => selection.has(id)).length;
-    return (
-      <CheckAll
-        all={picked === ids.length}
-        some={picked > 0 && picked < ids.length}
-        onChange={() => selection.setMany(ids, picked !== ids.length)}
-        label={label}
-      />
-    );
-  };
-
-  // Every month is its own section; the year heading rides on the first of them.
-  const sections: Array<Section<TransactionRow>> = groupByYear(data, rows).flatMap((year) =>
-    year.months.map((group, i) => {
-      const ids = group.rows.map((row) => row.id);
-      const monthLabel = formatMonth(group.year, group.month);
-      return {
-        key: `${group.year}-${group.month}`,
-        rows: group.rows,
-        heads: [
-          ...(i === 0
-            ? [
-                {
-                  key: `y${year.year}`,
-                  className: "grp--year",
-                  cells: (
-                    <>
-                      <td className="pick">
-                        {pickAll(
-                          year.rows.map((row) => row.id),
-                          t`Select all transactions of ${year.year}`,
-                        )}
-                      </td>
-                      <td colSpan={6} className="num">
-                        {year.year}
-                      </td>
-                      <td className="r num">
-                        <Money value={year.net_base} currency={currency} signed />
-                      </td>
-                      <td />
-                    </>
-                  ),
-                },
-              ]
-            : []),
-          {
-            key: `m${group.year}-${group.month}`,
-            className: "grp--month",
-            cells: (
-              <>
-                <td className="pick">{pickAll(ids, t`Select all transactions of ${monthLabel}`)}</td>
-                <td colSpan={6}>{formatMonthName(group.month)}</td>
-                <td className="r num">
-                  <Money value={group.net_base} currency={currency} signed />
-                </td>
-                <td />
-              </>
-            ),
-          },
-        ],
-        cardHead: (
-          <div className="section__head">
-            {pickAll(ids, t`Select all transactions of ${monthLabel}`)}
-            <h2>{monthLabel}</h2>
-            <span className="spacer" />
-            <Money value={group.net_base} currency={currency} signed />
-          </div>
-        ),
-      };
-    }),
-  );
+  const sections = useMonthSections(data, rows, currency, selection);
 
   return (
     <DataTable
@@ -221,6 +149,103 @@ export function JournalTable({
           actions={menu.button(row.id, itemsFor(row))}
         />
       )}
+    />
+  );
+}
+
+/** Every month is its own section, the core's totals on its heading; the year rides on the first. */
+function useMonthSections(
+  data: TransactionsData,
+  rows: TransactionRow[],
+  currency: string,
+  selection: ReturnType<typeof useSelection>,
+): Array<Section<TransactionRow>> {
+  const { t } = useLingui();
+  return groupByYear(data, rows).flatMap((year) =>
+    year.months.map((group, i) => {
+      const ids = group.rows.map((row) => row.id);
+      const monthLabel = formatMonth(group.year, group.month);
+      return {
+        key: `${group.year}-${group.month}`,
+        rows: group.rows,
+        heads: [
+          ...(i === 0
+            ? [
+                {
+                  key: `y${year.year}`,
+                  className: "grp--year",
+                  cells: (
+                    <>
+                      <td className="pick">
+                        <PickAll
+                          ids={year.rows.map((row) => row.id)}
+                          label={t`Select all transactions of ${year.year}`}
+                          selection={selection}
+                        />
+                      </td>
+                      <td colSpan={6} className="num">
+                        {year.year}
+                      </td>
+                      <td className="r num">
+                        <Money value={year.net_base} currency={currency} signed />
+                      </td>
+                      <td />
+                    </>
+                  ),
+                },
+              ]
+            : []),
+          {
+            key: `m${group.year}-${group.month}`,
+            className: "grp--month",
+            cells: (
+              <>
+                <td className="pick">
+                  <PickAll
+                    ids={ids}
+                    label={t`Select all transactions of ${monthLabel}`}
+                    selection={selection}
+                  />
+                </td>
+                <td colSpan={6}>{formatMonthName(group.month)}</td>
+                <td className="r num">
+                  <Money value={group.net_base} currency={currency} signed />
+                </td>
+                <td />
+              </>
+            ),
+          },
+        ],
+        cardHead: (
+          <div className="section__head">
+            <PickAll ids={ids} label={t`Select all transactions of ${monthLabel}`} selection={selection} />
+            <h2>{monthLabel}</h2>
+            <span className="spacer" />
+            <Money value={group.net_base} currency={currency} signed />
+          </div>
+        ),
+      };
+    }),
+  );
+}
+
+/** Bulk toggle for a whole year or month, driven by how much of it is already picked. */
+function PickAll({
+  ids,
+  label,
+  selection,
+}: {
+  ids: string[];
+  label: string;
+  selection: ReturnType<typeof useSelection>;
+}) {
+  const picked = ids.filter((id) => selection.has(id)).length;
+  return (
+    <CheckAll
+      all={picked === ids.length}
+      some={picked > 0 && picked < ids.length}
+      onChange={() => selection.setMany(ids, picked !== ids.length)}
+      label={label}
     />
   );
 }

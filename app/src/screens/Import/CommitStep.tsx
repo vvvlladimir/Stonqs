@@ -59,7 +59,6 @@ export function CommitStep({
 }) {
   const { t } = useLingui();
   const s = preview.summary;
-  const newSecurities = preview.symbols.filter((x) => x.required && !x.security_id);
   const willWrite =
     s.ready +
     s.updated +
@@ -101,88 +100,7 @@ export function CommitStep({
       )}
 
       <Panel title={t`What will be written`} note={t`${willWrite} of ${s.total}`}>
-        {/* One line per reason a row is in or out, with its switch where the reason is stated. */}
-        <List>
-          <ListRow
-            title={t`Ready to write`}
-            sub={t`parsed and matching nothing in the database`}
-            value={<Badge tone="in">{s.ready}</Badge>}
-          />
-          {s.unknown_securities > 0 && (
-            <ListRow
-              title={t`The instrument is not in the database`}
-              sub={
-                newSecurities.length > 0
-                  ? t`will be created: ${newSecurities.map((x) => x.planned?.symbol ?? x.value).join(", ")}`
-                  : t`the file's instrument does not exist yet`
-              }
-              value={<Badge tone="warn">{s.unknown_securities}</Badge>}
-              end={
-                <CheckField
-                  label={t`create`}
-                  checked={options.create_missing_securities}
-                  onChange={(on) => onOptions({ ...options, create_missing_securities: on })}
-                />
-              }
-            />
-          )}
-          {s.updated > 0 && (
-            <ListRow
-              title={t`Restated by the broker`}
-              sub={t`the same operation, with different values: the stored row is replaced`}
-              value={<Badge tone="warn">{s.updated}</Badge>}
-            />
-          )}
-          {s.duplicates > 0 && (
-            <ListRow
-              title={t`Duplicates`}
-              sub={t`the transaction's fingerprint is already in the database`}
-              value={<Badge>{s.duplicates}</Badge>}
-              end={
-                <CheckField
-                  label={t`write`}
-                  checked={options.import_duplicates}
-                  onChange={(on) => onOptions({ ...options, import_duplicates: on })}
-                />
-              }
-            />
-          )}
-          {s.similar > 0 && (
-            <ListRow
-              title={t`An operation like it is already stored`}
-              sub={t`same day, account, instrument and quantity — worth something else. Usually the stored row, corrected by hand after it was imported`}
-              value={<Badge tone="warn">{s.similar}</Badge>}
-              end={
-                <CheckField
-                  label={t`write`}
-                  checked={options.import_similar}
-                  onChange={(on) => onOptions({ ...options, import_similar: on })}
-                />
-              }
-            />
-          )}
-          {s.ignored > 0 && (
-            <ListRow
-              title={t`Skipped by decision`}
-              sub={t`these transaction kinds are marked "do not import" on the "Parsing" step`}
-              value={<Badge>{s.ignored}</Badge>}
-            />
-          )}
-          {s.invalid > 0 && (
-            <ListRow
-              title={t`Not parsed`}
-              sub={t`will be skipped: fix it on the "Parsing" step, or row by row below`}
-              value={<Badge tone="out">{s.invalid}</Badge>}
-            />
-          )}
-          {s.warnings > 0 && (
-            <ListRow
-              title={t`With notices`}
-              sub={t`they are written, but worth a look`}
-              value={<Badge tone="warn">{s.warnings}</Badge>}
-            />
-          )}
-        </List>
+        <WriteBreakdown preview={preview} options={options} onOptions={onOptions} />
 
         <Form
           onSubmit={onCommit}
@@ -212,5 +130,103 @@ export function CommitStep({
 
       <RowTable preview={preview} overrides={overrides} onOverrides={onOverrides} />
     </>
+  );
+}
+
+/** One line per reason a row is in or out, with its switch where the reason is stated. */
+function WriteBreakdown({
+  preview,
+  options,
+  onOptions,
+}: {
+  preview: ImportPreviewData;
+  options: ImportOptions;
+  onOptions: (o: ImportOptions) => void;
+}) {
+  const { t } = useLingui();
+  const s = preview.summary;
+  const newSecurities = preview.symbols.filter((x) => x.required && !x.security_id);
+  return (
+    <List>
+      <ListRow
+        title={t`Ready to write`}
+        sub={t`parsed and matching nothing in the database`}
+        value={<Badge tone="in">{s.ready}</Badge>}
+      />
+      {s.unknown_securities > 0 && (
+        <ListRow
+          title={t`The instrument is not in the database`}
+          sub={
+            newSecurities.length > 0
+              ? t`will be created: ${newSecurities.map((x) => x.planned?.symbol ?? x.value).join(", ")}`
+              : t`the file's instrument does not exist yet`
+          }
+          value={<Badge tone="warn">{s.unknown_securities}</Badge>}
+          end={
+            <CheckField
+              label={t`create`}
+              checked={options.create_missing_securities}
+              onChange={(on) => onOptions({ ...options, create_missing_securities: on })}
+            />
+          }
+        />
+      )}
+      {s.updated > 0 && (
+        <ListRow
+          title={t`Restated by the broker`}
+          sub={t`the same operation, with different values: the stored row is replaced`}
+          value={<Badge tone="warn">{s.updated}</Badge>}
+        />
+      )}
+      {s.duplicates > 0 && (
+        <ListRow
+          title={t`Duplicates`}
+          sub={t`the transaction's fingerprint is already in the database`}
+          value={<Badge>{s.duplicates}</Badge>}
+          end={
+            <CheckField
+              label={t`write`}
+              checked={options.import_duplicates}
+              onChange={(on) => onOptions({ ...options, import_duplicates: on })}
+            />
+          }
+        />
+      )}
+      {s.similar > 0 && (
+        <ListRow
+          title={t`An operation like it is already stored`}
+          sub={t`same day, account, instrument and quantity — worth something else. Usually the stored row, corrected by hand after it was imported`}
+          value={<Badge tone="warn">{s.similar}</Badge>}
+          end={
+            <CheckField
+              label={t`write`}
+              checked={options.import_similar}
+              onChange={(on) => onOptions({ ...options, import_similar: on })}
+            />
+          }
+        />
+      )}
+      {s.ignored > 0 && (
+        <ListRow
+          title={t`Skipped by decision`}
+          sub={t`these transaction kinds are marked "do not import" on the "Parsing" step`}
+          value={<Badge>{s.ignored}</Badge>}
+        />
+      )}
+      {s.invalid > 0 && (
+        <ListRow
+          title={t`Not parsed`}
+          sub={t`will be skipped: fix it on the "Parsing" step, or row by row below`}
+          value={<Badge tone="out">{s.invalid}</Badge>}
+        />
+      )}
+      {s.warnings > 0 && (
+        <ListRow
+          title={t`With notices`}
+          sub={t`they are written, but worth a look`}
+          value={<Badge tone="warn">{s.warnings}</Badge>}
+        />
+      )}
+    </List>
   );
 }

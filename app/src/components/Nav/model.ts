@@ -24,6 +24,7 @@ import {
 
 import type { ScreenId } from "../../lib/nav";
 import type { NavPrefs } from "../../lib/uiState";
+import type { DragItem, Drop } from "./useReorder";
 
 export interface NavScreen {
   id: ScreenId;
@@ -128,4 +129,34 @@ export function moveBefore<T>(list: readonly T[], id: T, before: T | null): T[] 
 
 export function sectionOf(sections: NavSection[], screen: ScreenId): NavSection | undefined {
   return sections.find((s) => s.screens.includes(screen));
+}
+
+/** What a finished drag changes in the stored arrangement; `null` when it changes nothing. */
+export function applyDrop(
+  layout: Arrangement,
+  prefs: NavPrefs,
+  item: DragItem,
+  drop: Drop,
+): Partial<NavPrefs> | null {
+  const id = item.id as ScreenId;
+  switch (drop.kind) {
+    case "section":
+      return {
+        sections: moveBefore(
+          layout.sections.map((s) => s.id),
+          item.id,
+          drop.before,
+        ),
+      };
+    case "screen": {
+      const section = layout.sections.find((s) => s.id === item.section);
+      if (!section) return null;
+      const screens = moveBefore(section.screens, id, drop.before as ScreenId | null);
+      return { screens: { ...prefs.screens, [section.id]: screens } };
+    }
+    case "fav":
+      return { favorites: moveBefore(layout.favorites, id, drop.before as ScreenId | null) };
+    case "unfav":
+      return { favorites: layout.favorites.filter((f) => f !== id) };
+  }
 }

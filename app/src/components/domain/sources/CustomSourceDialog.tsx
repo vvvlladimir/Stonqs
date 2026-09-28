@@ -47,14 +47,11 @@ export function CustomSourceDialog({
 }) {
   const { t } = useLingui();
   const [draft, setDraft] = useState<CustomSource>(source ?? EMPTY);
-  const [symbol, setSymbol] = useState("");
-  const [currency, setCurrency] = useState("USD");
   const header = draft.headers[0] ?? { name: "", value: "" };
   const complete = { ...draft, id: source?.id ?? slug(draft.label) };
 
   const save = useMutation({ mutationFn: () => api.marketCustomSave(complete), onSuccess: onClose });
   const remove = useMutation({ mutationFn: () => api.marketCustomDelete(complete.id), onSuccess: onClose });
-  const test = useMutation({ mutationFn: () => api.marketCustomTest(complete, symbol.trim(), currency) });
 
   const set = (patch: Partial<CustomSource>) => setDraft({ ...draft, ...patch });
   const [datePath, closePath] =
@@ -183,13 +180,26 @@ export function CustomSourceDialog({
         </button>
       )}
 
+      <TrySource source={complete} />
+    </FormDialog>
+  );
+}
+
+/** Asks the unsaved description for the last 30 days of one symbol or pair. */
+function TrySource({ source }: { source: CustomSource }) {
+  const { t } = useLingui();
+  const [symbol, setSymbol] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const test = useMutation({ mutationFn: () => api.marketCustomTest(source, symbol.trim(), currency) });
+  return (
+    <>
       <Field
-        label={draft.role === "fx" ? t`Try it with a pair` : t`Try it with a symbol`}
-        hint={draft.role === "fx" ? t`For example EUR/USD` : undefined}
+        label={source.role === "fx" ? t`Try it with a pair` : t`Try it with a symbol`}
+        hint={source.role === "fx" ? t`For example EUR/USD` : undefined}
       >
         <input value={symbol} onChange={(e) => setSymbol(e.target.value)} />
       </Field>
-      {draft.role === "quotes" && (
+      {source.role === "quotes" && (
         <Field label={t`Instrument currency`}>
           <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} />
         </Field>
@@ -218,6 +228,6 @@ export function CustomSourceDialog({
           )}
         </List>
       )}
-    </FormDialog>
+    </>
   );
 }

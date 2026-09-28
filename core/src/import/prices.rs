@@ -81,53 +81,21 @@ pub fn build_price_import(
     mapping: &PriceMapping,
     securities: &[Security],
 ) -> PriceImport {
+    let (date_column, close_column, date_format) = match required(parsed, mapping) {
+        Ok(found) => found,
+        Err(problem) => {
+            return PriceImport {
+                quotes: Vec::new(),
+                problems: vec![problem],
+                unknown_symbols: Vec::new(),
+            };
+        }
+    };
     let decimal_separator = parsed.config.decimal_separator.unwrap_or('.');
+    let instruments = Instruments::of(securities);
     let mut problems = Vec::new();
     let mut quotes = Vec::new();
     let mut unknown: BTreeSet<String> = BTreeSet::new();
-
-    let by_symbol: BTreeMap<String, &Security> = securities
-        .iter()
-        .map(|s| (normalize_alias(&s.symbol), s))
-        .collect();
-    let by_isin: BTreeMap<String, &Security> = securities
-        .iter()
-        .filter_map(|s| s.isin.as_ref().map(|i| (normalize_alias(i), s)))
-        .collect();
-
-    let Some(date_column) = mapping.column(PriceField::Date) else {
-        problems.push(ImportProblem::file(
-            ProblemCode::MissingColumn,
-            "no date column is mapped",
-        ));
-        return PriceImport {
-            quotes,
-            problems,
-            unknown_symbols: Vec::new(),
-        };
-    };
-    let Some(close_column) = mapping.column(PriceField::Close) else {
-        problems.push(ImportProblem::file(
-            ProblemCode::MissingColumn,
-            "no price column is mapped",
-        ));
-        return PriceImport {
-            quotes,
-            problems,
-            unknown_symbols: Vec::new(),
-        };
-    };
-    let Some(date_format) = parsed.config.date_format.as_deref() else {
-        problems.push(ImportProblem::file(
-            ProblemCode::BadDate,
-            "the date format was not detected — set it explicitly",
-        ));
-        return PriceImport {
-            quotes,
-            problems,
-            unknown_symbols: Vec::new(),
-        };
-    };
 
     for (index, _) in parsed.rows.iter().enumerate() {
         let number = index + 1;
@@ -159,10 +127,7 @@ pub fn build_price_import(
 
         let security = match mapping.column(PriceField::Symbol).and_then(value) {
             Some(symbol) => {
-                let found = by_symbol
-                    .get(&normalize_alias(symbol))
-                    .or_else(|| by_isin.get(&normalize_alias(symbol)))
-                    .copied();
+                let found = instruments.by_code(symbol);
                 if found.is_none() {
                     unknown.insert(symbol.to_string());
                     problems.push(ImportProblem::row(
@@ -171,14 +136,10 @@ pub fn build_price_import(
                         format!("security {symbol:?} is not in the database"),
                     ));
                 }
-                found.map(|s| (s.id.clone(), s.currency.clone()))
+                found
             }
-
             None => match &mapping.security_id {
-                Some(id) => securities
-                    .iter()
-                    .find(|s| s.id == *id)
-                    .map(|s| (s.id.clone(), s.currency.clone())),
+                Some(id) => securities.iter().find(|s| s.id == *id),
                 None => {
                     problems.push(ImportProblem::row(
                         ProblemCode::MissingValue,
@@ -189,7 +150,7 @@ pub fn build_price_import(
                 }
             },
         };
-        let Some((security_id, security_currency)) = security else {
+        let Some(security) = security else {
             continue;
         };
 
@@ -198,10 +159,10 @@ pub fn build_price_import(
             .and_then(value)
             .map(normalize_currency)
             .or_else(|| mapping.default_currency.clone())
-            .unwrap_or(security_currency);
+            .unwrap_or_else(|| security.currency.clone());
 
         quotes.push(Quote {
-            security_id,
+            security_id: security.id.clone(),
             date,
             close,
             currency,
@@ -214,5 +175,54 @@ pub fn build_price_import(
         quotes,
         problems,
         unknown_symbols: unknown.into_iter().collect(),
+    }
+}
+
+/// The date and price columns and the date format: without any of them no row can be read.
+fn required<'a>(
+    parsed: &'a ParsedCsv,
+    mapping: &'a PriceMapping,
+) -> Result<(&'a str, &'a str, &'a str), ImportProblem> {
+    let date = mapping
+        .column(PriceField::Date)
+        .ok_or_else(|| ImportProblem::file(ProblemCode::MissingColumn, "no date column is mapped"))?;
+    let close = mapping
+        .column(PriceField::Close)
+        .ok_or_else(|| ImportProblem::file(ProblemCode::MissingColumn, "no price column is mapped"))?;
+    let format = parsed.config.date_format.as_deref().ok_or_else(|| {
+        ImportProblem::file(
+            ProblemCode::BadDate,
+            "the date format was not detected — set it explicitly",
+        )
+    })?;
+    Ok((date, close, format))
+}
+
+/// Stored instruments by ticker and by ISIN; a price file may print either in one column.
+struct Instruments<'a> {
+    by_symbol: BTreeMap<String, &'a Security>,
+    by_isin: BTreeMap<String, &'a Security>,
+}
+
+impl<'a> Instruments<'a> {
+    fn of(securities: &'a [Security]) -> Self {
+        Instruments {
+            by_symbol: securities
+                .iter()
+                .map(|s| (normalize_alias(&s.symbol), s))
+                .collect(),
+            by_isin: securities
+                .iter()
+                .filter_map(|s| s.isin.as_ref().map(|i| (normalize_alias(i), s)))
+                .collect(),
+        }
+    }
+
+    fn by_code(&self, code: &str) -> Option<&'a Security> {
+        let code = normalize_alias(code);
+        self.by_symbol
+            .get(&code)
+            .or_else(|| self.by_isin.get(&code))
+            .copied()
     }
 }

@@ -68,16 +68,14 @@ fn security_rows_carry_the_note_wkn_and_attribute_values() {
     assert_eq!(json["kind"], "NUMBER");
 }
 
-/// A trigger travels with where the price stands and its latest crossings; a log line carries
-/// its rule's kind and instrument. Levels and prices are strings, a problem is a code (ADR-0034).
+/// A trigger travels with where the price stands and its latest crossings. Levels and prices are
+/// strings, a problem is a code (ADR-0034).
 #[test]
-fn alert_rows_carry_the_trigger_its_standing_and_its_log() {
+fn alert_rows_carry_the_trigger_and_its_standing() {
     use chrono::NaiveDate;
-    use sq_app_lib::commands::alerts::{AlertProblem, AlertRow, CrossingRow, SecurityEventRow};
+    use sq_app_lib::commands::alerts::{AlertProblem, AlertRow};
     use sq_core::calc::AlertStatus;
-    use sq_core::model::{
-        AlertCrossing, AlertKind, AlertSide, CrossingDirection, SecurityAlert, SecurityEvent,
-    };
+    use sq_core::model::{AlertCrossing, AlertSide, CrossingDirection, SecurityAlert};
 
     let day = |d| NaiveDate::from_ymd_opt(2024, 6, d).unwrap();
     let alert = SecurityAlert::price("sec-1", dec!(180), "EUR", day(1));
@@ -126,7 +124,18 @@ fn alert_rows_carry_the_trigger_its_standing_and_its_log() {
         serde_json::to_value(AlertProblem::MissingRate).unwrap(),
         "missing_rate"
     );
+}
 
+/// A log line carries its rule's kind and instrument beside the level and close of the moment.
+#[test]
+fn crossing_rows_carry_the_rule_they_belong_to() {
+    use chrono::NaiveDate;
+    use sq_app_lib::commands::alerts::CrossingRow;
+    use sq_core::model::{AlertCrossing, AlertKind, CrossingDirection, SecurityAlert};
+
+    let day = |d| NaiveDate::from_ymd_opt(2024, 6, d).unwrap();
+    let alert = SecurityAlert::price("sec-1", dec!(180), "EUR", day(1));
+    let crossing = AlertCrossing::new(&alert, day(4), CrossingDirection::Up, Some(dec!(181.35)));
     let json = serde_json::to_value(CrossingRow {
         crossing,
         kind: AlertKind::Price,
@@ -158,9 +167,18 @@ fn alert_rows_carry_the_trigger_its_standing_and_its_log() {
     assert_eq!(json["direction"], "UP");
     assert_eq!(json["level"], Value::String("180".into()));
     assert_eq!(json["price"], Value::String("181.35".into()));
+}
 
+/// A reported event is listed with its instrument and whether it was taken into the ledger.
+#[test]
+fn security_event_rows_say_whether_they_were_recorded() {
+    use chrono::NaiveDate;
+    use sq_app_lib::commands::alerts::SecurityEventRow;
+    use sq_core::model::SecurityEvent;
+
+    let day = NaiveDate::from_ymd_opt(2024, 6, 10).unwrap();
     let json = serde_json::to_value(SecurityEventRow {
-        event: SecurityEvent::split("sec-1", day(10), dec!(1), dec!(10), "yahoo"),
+        event: SecurityEvent::split("sec-1", day, dec!(1), dec!(10), "yahoo"),
         symbol: "NVDA".into(),
         name: "NVIDIA".into(),
         recorded: false,

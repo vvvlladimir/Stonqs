@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties, type PointerEventHandler, type ReactNode } from "react";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { Trans, useLingui } from "@lingui/react/macro";
 
@@ -9,7 +9,7 @@ import { usePointerDrag } from "../../lib/pointerDrag";
 import { ariaBinding, COMMANDS, useLayer } from "../../lib/commands";
 import { AsOfPicker } from "../domain/AsOfPicker";
 import { ScopePicker } from "../domain/ScopePicker";
-import { arrange, HOME, moveBefore, PLUGIN_SECTION, SCREENS, SETTINGS, TABS, type NavSection } from "./model";
+import { applyDrop, arrange, HOME, PLUGIN_SECTION, SCREENS, SETTINGS, TABS, type NavSection } from "./model";
 import { AlertsDot } from "./AlertsDot";
 import { DragGhost } from "./DragGhost";
 import { PluginSection } from "./PluginSection";
@@ -44,27 +44,8 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
   const store = (patch: Partial<NavPrefs>) => save((ui) => ({ ...ui, nav: { ...ui.nav, ...patch } }));
 
   const onDrop = (item: DragItem, drop: Drop) => {
-    const id = item.id as ScreenId;
-    switch (drop.kind) {
-      case "section":
-        return store({
-          sections: moveBefore(
-            layout.sections.map((s) => s.id),
-            item.id,
-            drop.before,
-          ),
-        });
-      case "screen": {
-        const section = layout.sections.find((s) => s.id === item.section);
-        if (!section) return;
-        const screens = moveBefore(section.screens, id, drop.before as ScreenId | null);
-        return store({ screens: { ...ui.nav.screens, [section.id]: screens } });
-      }
-      case "fav":
-        return store({ favorites: moveBefore(layout.favorites, id, drop.before as ScreenId | null) });
-      case "unfav":
-        return store({ favorites: layout.favorites.filter((f) => f !== id) });
-    }
+    const patch = applyDrop(layout, ui.nav, item, drop);
+    if (patch) store(patch);
   };
   const { drag, start } = useReorder(root, onDrop);
 
@@ -127,48 +108,6 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
     );
   };
 
-  const section = (sec: NavSection) => {
-    const open = layout.open === sec.id;
-    const key = `section:${sec.id}`;
-    return [
-      <button
-        key={key}
-        type="button"
-        className="nav__row nav__head"
-        aria-expanded={open}
-        data-nav-section=""
-        data-id={sec.id}
-        data-key={key}
-        data-drop={markAt(key)}
-        data-carried={carried("section", sec.id)}
-        onPointerDown={start({ kind: "section", id: sec.id })}
-        onClick={() => toggle(sec.id)}
-      >
-        <span className="nav__lbl">{i18n._(sec.label)}</span>
-        {sec.screens.some(hasDot) && <AlertsDot />}
-        <CaretRightIcon className="nav__caret" />
-      </button>,
-      <div
-        key={`fold:${sec.id}`}
-        className="nav__fold"
-        data-open={open ? "" : undefined}
-        data-opening={opening === sec.id ? "" : undefined}
-        // A folded list is still in the DOM so folding can animate; it must not take focus.
-        ref={(el) => {
-          if (el) el.inert = !open;
-        }}
-      >
-        <div className="nav__clip">
-          <div className="nav__sub" data-nav-sub="">
-            {sec.screens.map((id, i) =>
-              row(id, `screen:${id}`, " nav__row--sub", { kind: "screen", id, section: sec.id }, i),
-            )}
-          </div>
-        </div>
-      </div>,
-    ];
-  };
-
   const tabs = [HOME, ...layout.favorites].slice(0, TABS);
 
   return (
@@ -196,7 +135,23 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
             <div className="nav__label">
               <Trans>Sections</Trans>
             </div>
-            {layout.sections.flatMap(section)}
+            {layout.sections.map((sec) => (
+              <NavSectionItem
+                key={sec.id}
+                section={sec}
+                open={layout.open === sec.id}
+                opening={opening === sec.id}
+                dot={sec.screens.some(hasDot)}
+                drop={markAt(`section:${sec.id}`)}
+                carried={carried("section", sec.id)}
+                onPointerDown={start({ kind: "section", id: sec.id })}
+                onToggle={() => toggle(sec.id)}
+              >
+                {sec.screens.map((id, i) =>
+                  row(id, `screen:${id}`, " nav__row--sub", { kind: "screen", id, section: sec.id }, i),
+                )}
+              </NavSectionItem>
+            ))}
             <PluginSection
               screens={pluginScreens}
               active={screen === "plugin" ? focus : null}
@@ -235,6 +190,67 @@ export function Nav({ screen, focus, go, alertsDot }: Props) {
       />
 
       {drag && <DragGhost drag={drag} sections={layout.sections} />}
+    </>
+  );
+}
+
+/** A section heading and its folding list of screens. */
+function NavSectionItem({
+  section,
+  open,
+  opening,
+  dot,
+  drop,
+  carried,
+  onPointerDown,
+  onToggle,
+  children,
+}: {
+  section: NavSection;
+  open: boolean;
+  opening: boolean;
+  dot: boolean;
+  drop: string | undefined;
+  carried: string | undefined;
+  onPointerDown: PointerEventHandler<HTMLElement>;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  const { i18n } = useLingui();
+  const key = `section:${section.id}`;
+  return (
+    <>
+      <button
+        type="button"
+        className="nav__row nav__head"
+        aria-expanded={open}
+        data-nav-section=""
+        data-id={section.id}
+        data-key={key}
+        data-drop={drop}
+        data-carried={carried}
+        onPointerDown={onPointerDown}
+        onClick={onToggle}
+      >
+        <span className="nav__lbl">{i18n._(section.label)}</span>
+        {dot && <AlertsDot />}
+        <CaretRightIcon className="nav__caret" />
+      </button>
+      <div
+        className="nav__fold"
+        data-open={open ? "" : undefined}
+        data-opening={opening ? "" : undefined}
+        // A folded list is still in the DOM so folding can animate; it must not take focus.
+        ref={(el) => {
+          if (el) el.inert = !open;
+        }}
+      >
+        <div className="nav__clip">
+          <div className="nav__sub" data-nav-sub="">
+            {children}
+          </div>
+        </div>
+      </div>
     </>
   );
 }

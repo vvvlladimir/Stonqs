@@ -5,7 +5,7 @@ use super::charges::{Charges, resolve_rate};
 use super::lots::{acquire, add_lot, dispose, take_lots};
 use super::{CashFlow, ChargeRecord, Holdings, IncomeRecord};
 use crate::error::{Error, Result};
-use crate::model::{CorporateAction, Position, Transaction, TransactionKind};
+use crate::model::{CorporateAction, CostBasisMethod, Lot, Position, Transaction, TransactionKind};
 use rust_decimal::Decimal;
 
 /// Applies a split: quantity is multiplied and per-unit cost divided, preserving total cost.
@@ -97,45 +97,14 @@ impl HoldingsBuilder<'_> {
                      use DELIVERY_INBOUND if the shares came from outside the portfolio"
                     ))
                 })?;
-                let sid = t.security_id.clone().expect("validated: transfer has security");
-                let position = h
-                    .positions
-                    .entry(sid.clone())
-                    .or_insert_with(|| Position::new(&sid, &t.currency));
-                for lot in lots {
-                    position.quantity += lot.quantity;
-                    position.move_on_account(&t.account_id, lot.quantity);
-                    position.cost_basis += lot.quantity * lot.cost_per_unit;
-                    position.cost_basis_base += lot.quantity * lot.cost_per_unit_base;
-                    add_lot(position, lot, options.cost_basis);
-                }
+                receive_lots(h, t, lots, options.cost_basis);
             }
 
-            TransactionKind::Dividend => {
-                let net = charges.gross_base;
-                h.dividends_base += net;
-                // Record every dividend; the security ID is optional.
-                h.income.push(income_record(t, &charges, t.amount * rate, net));
-                if let Some(p) = t.security_id.as_ref().and_then(|sid| h.positions.get_mut(sid)) {
-                    p.dividends_base += net;
-                }
-            }
-            TransactionKind::Interest => {
-                let net = charges.gross_base;
-                h.interest_base += net;
-                h.income.push(income_record(t, &charges, t.amount * rate, net));
-            }
-            // Income by kind, never part of a position's dividends.
-            TransactionKind::Cashback | TransactionKind::Reward => {
-                let net = charges.gross_base;
-                h.income.push(income_record(t, &charges, t.amount * rate, net));
-            }
-            // Interest charges are negative income events; their components are not split here.
-            TransactionKind::InterestCharge => {
-                let net = -(t.amount * rate);
-                h.interest_base += net;
-                h.income.push(income_record(t, &charges, net, net));
-            }
+            TransactionKind::Dividend
+            | TransactionKind::Interest
+            | TransactionKind::Cashback
+            | TransactionKind::Reward
+            | TransactionKind::InterestCharge => income(h, t, &charges, rate),
 
             // Refunds reduce accumulated expenses instead of becoming income.
             TransactionKind::Fee | TransactionKind::FeeRefund => {
@@ -170,6 +139,49 @@ impl HoldingsBuilder<'_> {
             position.observe_quantity(t.quantity);
         }
         Ok(())
+    }
+}
+
+/// Books lots that left another account under the same link as this transfer-in.
+fn receive_lots(h: &mut Holdings, t: &Transaction, lots: Vec<Lot>, method: CostBasisMethod) {
+    let sid = t.security_id.clone().expect("validated: transfer has security");
+    let position = h
+        .positions
+        .entry(sid.clone())
+        .or_insert_with(|| Position::new(&sid, &t.currency));
+    for lot in lots {
+        position.quantity += lot.quantity;
+        position.move_on_account(&t.account_id, lot.quantity);
+        position.cost_basis += lot.quantity * lot.cost_per_unit;
+        position.cost_basis_base += lot.quantity * lot.cost_per_unit_base;
+        add_lot(position, lot, method);
+    }
+}
+
+/// Records one income event: a dividend, interest (earned or charged), a cashback or a reward.
+fn income(h: &mut Holdings, t: &Transaction, charges: &Charges, rate: Decimal) {
+    let net = charges.gross_base;
+    match t.kind {
+        TransactionKind::Dividend => {
+            h.dividends_base += net;
+            // Record every dividend; the security ID is optional.
+            h.income.push(income_record(t, charges, t.amount * rate, net));
+            if let Some(p) = t.security_id.as_ref().and_then(|sid| h.positions.get_mut(sid)) {
+                p.dividends_base += net;
+            }
+        }
+        TransactionKind::Interest => {
+            h.interest_base += net;
+            h.income.push(income_record(t, charges, t.amount * rate, net));
+        }
+        // Interest charges are negative income events; their components are not split here.
+        TransactionKind::InterestCharge => {
+            let net = -(t.amount * rate);
+            h.interest_base += net;
+            h.income.push(income_record(t, charges, net, net));
+        }
+        // Income by kind, never part of a position's dividends.
+        _ => h.income.push(income_record(t, charges, t.amount * rate, net)),
     }
 }
 

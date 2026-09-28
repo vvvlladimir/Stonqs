@@ -60,3 +60,14 @@ export function toInput(row: SecurityRow): SecurityInput {
     latest_source: row.latest_source,
   };
 }
+
+/** The search box: ticker, name or ISIN, case-insensitive. */
+export function matching(row: SecurityRow, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  return (
+    !needle ||
+    row.symbol.toLowerCase().includes(needle) ||
+    row.name.toLowerCase().includes(needle) ||
+    (row.isin ?? "").toLowerCase().includes(needle)
+  );
+}

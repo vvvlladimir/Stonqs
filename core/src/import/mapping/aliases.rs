@@ -4,6 +4,10 @@
 use super::ImportField;
 
 impl ImportField {
+    #[expect(
+        clippy::too_many_lines,
+        reason = "a dictionary: one arm per field, lines of data rather than logic"
+    )]
     pub(crate) fn header_aliases(self) -> &'static [&'static str] {
         match self {
             // Aliases are ordered canonical-first: the index breaks ties inside a tier.

@@ -168,9 +168,9 @@ pub fn default_kind_aliases() -> BTreeMap<String, TransactionKind> {
 }
 
 /// Operation wording by keyword; the first hit wins, so order matters.
-pub(crate) fn kind_from_keywords(normalized: &str) -> Option<TransactionKind> {
+const KEYWORDS: &[(&str, TransactionKind)] = {
     use TransactionKind::*;
-    const KEYWORDS: &[(&str, TransactionKind)] = &[
+    &[
         ("WITHHOLDING", Tax),
         ("STAMPDUTY", Tax),
         ("SDRT", Tax),
@@ -279,7 +279,10 @@ pub(crate) fn kind_from_keywords(normalized: &str) -> Option<TransactionKind> {
         ("TRASFERIMENTO", TransferIn),
         ("TRANSFERENCIA", TransferIn),
         ("ПЕРЕВОД", TransferIn),
-    ];
+    ]
+};
+
+pub(crate) fn kind_from_keywords(normalized: &str) -> Option<TransactionKind> {
     KEYWORDS
         .iter()
         .find(|(word, _)| normalized.contains(word))

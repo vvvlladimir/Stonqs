@@ -1,6 +1,7 @@
 import { useLingui } from "@lingui/react";
 import { Trans } from "@lingui/react/macro";
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from "react";
+import type { AppStatus, InstalledTheme } from "./lib/types";
 
 import { onDataChanged } from "./lib/api";
 import {
@@ -70,7 +71,6 @@ const AiChatPanel = lazy(() =>
 );
 
 export function App() {
-  const invalidate = useInvalidate();
   const [screen, setScreen] = useState<ScreenId>("dashboard");
   const [focus, setFocus] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
@@ -87,13 +87,7 @@ export function App() {
   useLanguage();
   // A webview opens no window itself, so every outward link in the app goes to the OS from here.
   useExternalLinks();
-  // A theme installed as a plugin is a stylesheet on this machine plus the built-in scheme it
-  // varies; both arrive a moment after the shell, which is why `useTheme` takes them separately.
-  const theme = useUiState().ui.theme;
-  const themeKey = pluginTheme(theme);
-  const installed = usePluginTheme(themeKey);
-  const base = plugins.data?.themes.find((t) => t.key === themeKey)?.base;
-  useTheme(theme, installed.data, base);
+  useAppTheme(plugins.data?.themes);
 
   // The window's title names the screen, so a screen reader and the OS window list say where
   // the user is; after a switch focus lands on the new screen instead of staying in the nav.
@@ -116,41 +110,21 @@ export function App() {
     main.current?.focus({ preventScroll: true });
   }, [screen]);
 
-  // A host-side write refreshes the screens that depend on what it touched.
-  useEffect(() => {
-    // An unknown kind from a newer host must not throw; the screens stay as they are.
-    const unlisten = onDataChanged((kind) => {
-      invalidate(...(affects[kind] ?? []));
-      // A generated brief cannot be invalidated — regenerating it spends the user's money — so
-      // the change is recorded and the tile says it is out of date instead.
-      noteChange(kind);
-    });
-    return () => {
-      unlisten.then((stop) => stop());
-    };
-  }, [invalidate]);
+  useHostChanges();
 
   // A locked profile shows nothing but its lock; every other query answers `locked` meanwhile.
   if (profiles.data?.locked)
     return (
-      <ToastProvider>
-        <div className="shell">
-          <main className="app">
-            <ProfileLock profiles={profiles.data} />
-          </main>
-        </div>
-      </ToastProvider>
+      <BareShell>
+        <ProfileLock profiles={profiles.data} />
+      </BareShell>
     );
 
   if (profiles.data && !picked && needsPick(profiles.data.profiles.length))
     return (
-      <ToastProvider>
-        <div className="shell">
-          <main className="app">
-            <ProfilePicker profiles={profiles.data} onPicked={() => setPicked(true)} />
-          </main>
-        </div>
-      </ToastProvider>
+      <BareShell>
+        <ProfilePicker profiles={profiles.data} onPicked={() => setPicked(true)} />
+      </BareShell>
     );
 
   if (status.isPending)
@@ -163,13 +137,9 @@ export function App() {
 
   if (status.data.account_count === 0) {
     return (
-      <ToastProvider>
-        <div className="shell">
-          <main className="app">
-            <Onboarding status={status.data} />
-          </main>
-        </div>
-      </ToastProvider>
+      <BareShell>
+        <Onboarding status={status.data} />
+      </BareShell>
     );
   }
 
@@ -205,26 +175,7 @@ export function App() {
                       <LedgerGapsBanner />
                       <AsOfBanner />
                       <main ref={main} id="main" className="app" tabIndex={-1} aria-label={screenTitle}>
-                        <Suspense fallback={<Pending />}>
-                          {screen === "dashboard" && <Dashboard />}
-                          {screen === "positions" && <Positions />}
-                          {screen === "transactions" && <Transactions key={focus} focus={focus} />}
-                          {screen === "performance" && <Performance />}
-                          {screen === "trades" && <Trades />}
-                          {screen === "risk" && <Risk />}
-                          {screen === "income" && <Income />}
-                          {screen === "allocation" && <Allocation />}
-                          {screen === "rebalance" && <Rebalance />}
-                          {screen === "plans" && <Plans />}
-                          {screen === "alerts" && <Alerts />}
-                          {screen === "watchlist" && <Watchlist />}
-                          {screen === "reports" && <Reports />}
-                          {screen === "import" && <Import />}
-                          {screen === "accounts" && <Accounts />}
-                          {screen === "securities" && <Securities key={focus} focus={focus} />}
-                          {screen === "settings" && <Settings status={status.data} />}
-                          {screen === "plugin" && <PluginScreen key={focus} screenKey={focus} />}
-                        </Suspense>
+                        <ScreenView screen={screen} focus={focus} status={status.data} />
                       </main>
                     </div>
 
@@ -260,4 +211,75 @@ export function App() {
       </NavProvider>
     </ToastProvider>
   );
+}
+
+/** A screen shown before the app proper: locked, picking a profile, or empty. */
+function BareShell({ children }: { children: ReactNode }) {
+  return (
+    <ToastProvider>
+      <div className="shell">
+        <main className="app">{children}</main>
+      </div>
+    </ToastProvider>
+  );
+}
+
+function ScreenView({
+  screen,
+  focus,
+  status,
+}: {
+  screen: ScreenId;
+  focus: string | null;
+  status: AppStatus;
+}) {
+  return (
+    <Suspense fallback={<Pending />}>
+      {screen === "dashboard" && <Dashboard />}
+      {screen === "positions" && <Positions />}
+      {screen === "transactions" && <Transactions key={focus} focus={focus} />}
+      {screen === "performance" && <Performance />}
+      {screen === "trades" && <Trades />}
+      {screen === "risk" && <Risk />}
+      {screen === "income" && <Income />}
+      {screen === "allocation" && <Allocation />}
+      {screen === "rebalance" && <Rebalance />}
+      {screen === "plans" && <Plans />}
+      {screen === "alerts" && <Alerts />}
+      {screen === "watchlist" && <Watchlist />}
+      {screen === "reports" && <Reports />}
+      {screen === "import" && <Import />}
+      {screen === "accounts" && <Accounts />}
+      {screen === "securities" && <Securities key={focus} focus={focus} />}
+      {screen === "settings" && <Settings status={status} />}
+      {screen === "plugin" && <PluginScreen key={focus} screenKey={focus} />}
+    </Suspense>
+  );
+}
+
+function useAppTheme(themes: InstalledTheme[] | undefined) {
+  // A theme installed as a plugin is a stylesheet on this machine plus the built-in scheme it
+  // varies; both arrive a moment after the shell, which is why `useTheme` takes them separately.
+  const theme = useUiState().ui.theme;
+  const themeKey = pluginTheme(theme);
+  const installed = usePluginTheme(themeKey);
+  const base = themes?.find((t) => t.key === themeKey)?.base;
+  useTheme(theme, installed.data, base);
+}
+
+/** A host-side write refreshes the screens that depend on what it touched. */
+function useHostChanges() {
+  const invalidate = useInvalidate();
+  useEffect(() => {
+    // An unknown kind from a newer host must not throw; the screens stay as they are.
+    const unlisten = onDataChanged((kind) => {
+      invalidate(...(affects[kind] ?? []));
+      // A generated brief cannot be invalidated — regenerating it spends the user's money — so
+      // the change is recorded and the tile says it is out of date instead.
+      noteChange(kind);
+    });
+    return () => {
+      unlisten.then((stop) => stop());
+    };
+  }, [invalidate]);
 }

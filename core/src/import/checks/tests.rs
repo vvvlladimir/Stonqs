@@ -1,4 +1,5 @@
 use super::*;
+use crate::import::preview::TransactionDraft;
 
 fn vote_of(rows: &[(TransactionKind, Decimal)]) -> SignVote {
     let mut vote = SignVote::default();

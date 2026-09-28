@@ -4,11 +4,9 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { api } from "../../lib/api";
-import { DriftBars } from "../../components/charts";
 import { Page } from "../../components/Page";
-import { Async, Choice, Empty, Panel, Pending, QueryError, Seg } from "../../components/ui";
+import { Empty, Pending, QueryError } from "../../components/ui";
 import { planFromTrades } from "../../lib/plans";
-import { slotOfNode } from "../../lib/taxonomy";
 import {
   affects,
   useAccounts,
@@ -23,6 +21,7 @@ import {
 import { PlanForm } from "../../components/domain/PlanForm";
 import type { PlanInput } from "../../lib/types";
 import { CashPanel } from "./CashPanel";
+import { DriftPanel, RebalanceControls } from "./Controls";
 import { RebalanceMetrics } from "./RebalanceMetrics";
 import { TargetForm } from "./TargetForm";
 import { TradesPanel } from "./TradesPanel";
@@ -96,26 +95,13 @@ export function Rebalance() {
       title={t`Rebalance`}
       note={target?.name}
       controls={
-        <>
-          {targets.data.length > 1 && (
-            <Choice
-              wide
-              label={t`Target`}
-              value={selected ?? ""}
-              onChange={setTargetId}
-              options={targets.data.map((t) => ({ value: t.id, label: t.name }))}
-            />
-          )}
-          <Seg
-            label={t`Mode`}
-            value={mode}
-            onChange={setMode}
-            options={[
-              { value: "both", label: t`Buy and sell` },
-              { value: "buy", label: t`Buy only` },
-            ]}
-          />
-        </>
+        <RebalanceControls
+          targets={targets.data}
+          selected={selected}
+          onTarget={setTargetId}
+          mode={mode}
+          onMode={setMode}
+        />
       }
       actions={
         <>
@@ -163,20 +149,7 @@ export function Rebalance() {
         <>
           <CashPanel cash={cash} onCash={setCash} total={plan.data?.total_base} currency={currency} />
 
-          <Panel
-            title={t`Deviation from target`}
-            info={t`The fill is the current weight and the tick the target; hatching marks an overweight, a dashed run a shortfall.`}
-          >
-            <Async query={plan}>
-              {() => (
-                <DriftBars
-                  items={items}
-                  currency={currency}
-                  slotOf={(nodeId) => slotOfNode(taxonomy, nodeId)}
-                />
-              )}
-            </Async>
-          </Panel>
+          <DriftPanel plan={plan} items={items} currency={currency} taxonomy={taxonomy} />
 
           <TradesPanel
             plan={plan}

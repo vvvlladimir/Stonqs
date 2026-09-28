@@ -41,8 +41,7 @@ export function AssignDialog({
   const save = useMutation({
     mutationFn: async () => {
       for (const node of leaves) {
-        const percent = Number((draft[node.id] ?? "").replace(",", ".") || "0");
-        if (percent > 0) {
+        if (percentIn(draft, node.id) > 0) {
           await api.classificationSave({
             subject_id: subjectId,
             node_id: node.id,
@@ -67,29 +66,10 @@ export function AssignDialog({
     onSuccess: () => invalidate(...affects.taxonomies),
   });
 
-  const sum = leaves.reduce(
-    (total, node) => total + Number((draft[node.id] ?? "").replace(",", ".") || "0"),
-    0,
-  );
+  const sum = leaves.reduce((total, node) => total + percentIn(draft, node.id), 0);
   const over = sum > 100.0001;
-
-  // Grouping keeps large taxonomies readable and opens only assigned groups.
-  const percentOf = (id: string) => Number((draft[id] ?? "").replace(",", ".") || "0");
   const needle = query.trim().toLowerCase();
-  const groups = new Map<string, { label: string; slot: number; nodes: TaxonomyNode[] }>();
-  for (const node of leaves) {
-    const parent = taxonomy.nodes.find((n) => n.id === node.parent_id);
-    const label = parent ? branchName(taxonomy, parent) : t`No parent`;
-    const key = parent?.id ?? "";
-    if (needle && !`${label} ${node.name}`.toLowerCase().includes(needle)) continue;
-    const group = groups.get(key) ?? {
-      label,
-      slot: slotOf(taxonomy, parent ?? node),
-      nodes: [],
-    };
-    group.nodes.push(node);
-    groups.set(key, group);
-  }
+  const groups = groupLeaves(taxonomy, leaves, needle, t`No parent`);
 
   return (
     <FormDialog
@@ -138,42 +118,17 @@ export function AssignDialog({
           )}
 
           <Scrolly className="acc" max={380}>
-            {[...groups.entries()].map(([key, group]) => {
-              const filled = group.nodes.filter((n) => percentOf(n.id) > 0);
-              const total = group.nodes.reduce((t, n) => t + percentOf(n.id), 0);
-              const expanded = open[key] ?? (needle !== "" || filled.length > 0);
-              return (
-                <div className="acc__group" key={key}>
-                  <button
-                    type="button"
-                    className="acc__head"
-                    aria-expanded={expanded}
-                    onClick={() => setOpen({ ...open, [key]: !expanded })}
-                  >
-                    <CaretRightIcon className={`acc__caret${expanded ? " acc__caret--on" : ""}`} />
-                    <Swatch slot={group.slot} />
-                    <span className="acc__name">{group.label}</span>
-                    <span className="acc__meta num">
-                      {filled.length > 0 ? `${Math.round(total)} %` : `${group.nodes.length}`}
-                    </span>
-                  </button>
-                  {expanded && (
-                    <div className="colpick">
-                      {group.nodes.map((node) => (
-                        <label key={node.id}>
-                          <span className="acc__leaf">{node.name}</span>
-                          <PercentInput
-                            value={draft[node.id] ?? ""}
-                            disabled={excluded}
-                            onChange={(value) => setDraft({ ...draft, [node.id]: value })}
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {[...groups.entries()].map(([key, group]) => (
+              <LeafGroup
+                key={key}
+                group={group}
+                draft={draft}
+                disabled={excluded}
+                expanded={open[key] ?? (needle !== "" || group.nodes.some((n) => percentIn(draft, n.id) > 0))}
+                onExpand={(expanded) => setOpen({ ...open, [key]: expanded })}
+                onChange={(id, value) => setDraft({ ...draft, [id]: value })}
+              />
+            ))}
             {groups.size === 0 && (
               <p className="muted">
                 <Trans>Nothing found.</Trans>
@@ -196,5 +151,86 @@ export function AssignDialog({
       )}
       <ErrorText error={toggle.error} />
     </FormDialog>
+  );
+}
+
+function percentIn(draft: Record<string, string>, id: string): number {
+  return Number((draft[id] ?? "").replace(",", ".") || "0");
+}
+
+interface LeafGroupData {
+  label: string;
+  slot: number;
+  nodes: TaxonomyNode[];
+}
+
+/** Leaves by their parent, so a large tree stays readable; the search filters on both names. */
+function groupLeaves(
+  taxonomy: TaxonomyData,
+  leaves: TaxonomyNode[],
+  needle: string,
+  noParent: string,
+): Map<string, LeafGroupData> {
+  const groups = new Map<string, LeafGroupData>();
+  for (const node of leaves) {
+    const parent = taxonomy.nodes.find((n) => n.id === node.parent_id);
+    const label = parent ? branchName(taxonomy, parent) : noParent;
+    const key = parent?.id ?? "";
+    if (needle && !`${label} ${node.name}`.toLowerCase().includes(needle)) continue;
+    const group = groups.get(key) ?? { label, slot: slotOf(taxonomy, parent ?? node), nodes: [] };
+    group.nodes.push(node);
+    groups.set(key, group);
+  }
+  return groups;
+}
+
+/** One parent's leaves; its heading shows the group's total once anything in it is filled. */
+function LeafGroup({
+  group,
+  draft,
+  disabled,
+  expanded,
+  onExpand,
+  onChange,
+}: {
+  group: LeafGroupData;
+  draft: Record<string, string>;
+  disabled: boolean;
+  expanded: boolean;
+  onExpand: (expanded: boolean) => void;
+  onChange: (id: string, value: string) => void;
+}) {
+  const filled = group.nodes.filter((n) => percentIn(draft, n.id) > 0);
+  const total = group.nodes.reduce((sum, n) => sum + percentIn(draft, n.id), 0);
+  return (
+    <div className="acc__group">
+      <button
+        type="button"
+        className="acc__head"
+        aria-expanded={expanded}
+        onClick={() => onExpand(!expanded)}
+      >
+        <CaretRightIcon className={`acc__caret${expanded ? " acc__caret--on" : ""}`} />
+        <Swatch slot={group.slot} />
+        <span className="acc__name">{group.label}</span>
+        <span className="acc__meta num">
+          {filled.length > 0 ? `${Math.round(total)} %` : `${group.nodes.length}`}
+        </span>
+      </button>
+      {expanded && (
+        <div className="colpick">
+          {group.nodes.map((node) => (
+            <label key={node.id}>
+              <span className="acc__leaf">{node.name}</span>
+              <PercentInput
+                value={draft[node.id] ?? ""}
+                disabled={disabled}
+                onChange={(value) => onChange(node.id, value)}
+              />
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

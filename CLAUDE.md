@@ -21,6 +21,7 @@ cargo test --workspace                             # unit + integration, no netw
 cargo test -p sq-core --lib -- --ignored    # live ECB request (fx/ecb.rs)
 cargo clippy --workspace --all-targets
 cargo fmt --check                                  # rustfmt.toml sets max_width = 110
+scripts/check-rs-size.sh                           # .rs files over 500 code lines (tests excluded)
 
 cargo test -p sq-core --test calc_examples          # one integration file
 cargo test -p sq-core --test calc_examples -- twr   # one test by name substring
@@ -140,6 +141,14 @@ stale one makes it confidently wrong rather than merely vague (`.claude/rules/as
   folder reaches it with `#[path = "../support/mod.rs"]`.
 - A module that outgrows one file becomes a folder with `mod.rs`, and the public API stays byte for
   byte what it was: callers keep importing `import::mapping`, not `import::mapping::aliases`.
+- Size is guarded, so a split does not grow back; blank lines and comments never count. A Rust
+  function over 100 lines fails clippy (`too_many_lines`, `clippy.toml`) unless it carries
+  `#[expect(clippy::too_many_lines, reason = "...")]`; a `.rs` file over 500 code lines, tests
+  excluded, is a CI warning and over 800 an error (`scripts/check-rs-size.sh`). ESLint caps a file
+  at 300 lines, a function at 80 and a component (`.tsx`) at 150; a genuine exception is an inline
+  `eslint-disable-next-line` with its reason, and an unneeded one fails the lint. Split rather than
+  raise a limit — a component into sub-components or a `use<Thing>` hook, a table's columns into
+  their own hook, pure logic into the screen's `model.ts`.
 - `sq_core::prelude` exists for callers touching many modules; export new commonly used types there.
 
 ## Architecture Decision Records

@@ -1,8 +1,6 @@
 import type { ScreenId } from "../nav";
 import { COMMAND_IDS, commandDef, type ChoiceId, type CommandId } from "./catalog";
 
-/** Mounted commands, published choices and the layer stack, as plain data with `subscribe`. */
-
 /** A favourite's index, a screen id — whatever the one command needs to know which one. */
 export type CommandArg = string | number | undefined;
 export type Handler = (arg: CommandArg) => void;
@@ -61,129 +59,131 @@ function winner<T extends { priority: number; order: number }>(list: T[] | undef
   );
 }
 
-export function createRegistry() {
-  const commands = new Map<CommandId, Stamped<CommandEntry>[]>();
-  const choices = new Map<ChoiceId, Stamped<ChoiceEntry>[]>();
-  const layers: Layer[] = [];
-  const intents = new Map<CommandId, number>();
-  const listeners = new Set<() => void>();
-  let nav: Navigator | null = null;
-  let order = 0;
-  let version = 0;
-  let last: { id: CommandId; source: RunSource; at: number } | null = null;
+/** Mounted commands, published choices and the layer stack. `subscribe` and `version` are fields
+ *  rather than methods: `useSyncExternalStore` is handed them on their own. */
+export class Registry {
+  readonly layers: Layer[] = [];
+  private readonly commands = new Map<CommandId, Stamped<CommandEntry>[]>();
+  private readonly choiceMap = new Map<ChoiceId, Stamped<ChoiceEntry>[]>();
+  private readonly intents = new Map<CommandId, number>();
+  private readonly listeners = new Set<() => void>();
+  private nav: Navigator | null = null;
+  private order = 0;
+  private count = 0;
+  private last: { id: CommandId; source: RunSource; at: number } | null = null;
 
-  const changed = () => {
-    version += 1;
-    for (const listener of listeners) listener();
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener);
+    return () => void this.listeners.delete(listener);
   };
+  version = () => this.count;
 
-  function add<K, T>(map: Map<K, Stamped<T>[]>, key: K, entry: T) {
-    const stamped = { ...entry, order: ++order };
+  register = (id: CommandId, entry: CommandEntry) => this.add(this.commands, id, entry);
+  publish = (id: ChoiceId, entry: ChoiceEntry) => this.add(this.choiceMap, id, entry);
+
+  pushLayer(layer: Layer) {
+    this.layers.push(layer);
+    this.changed();
+    return () => {
+      const at = this.layers.indexOf(layer);
+      if (at >= 0) this.layers.splice(at, 1);
+      this.changed();
+    };
+  }
+
+  navigate(next: Navigator) {
+    const moved = this.nav?.screen !== next.screen;
+    this.nav = next;
+    if (moved) this.changed();
+  }
+
+  /** Whether running `id` now would do something. */
+  can(id: CommandId): boolean {
+    if (!this.allowed(id)) return false;
+    return winner(this.commands.get(id)) !== undefined || this.elsewhere(id) !== null;
+  }
+
+  label(id: CommandId) {
+    return winner(this.commands.get(id))?.label;
+  }
+
+  run(id: CommandId, arg?: CommandArg, source: RunSource = "key"): boolean {
+    if (!this.allowed(id)) return false;
+    const entry = winner(this.commands.get(id));
+    const screen = entry ? null : this.elsewhere(id);
+    if (!entry && !screen) return false;
+    const now = Date.now();
+    const last = this.last;
+    if (last && last.id === id && last.source !== source && now - last.at < ECHO_MS) return true;
+    this.last = { id, source, at: now };
+    if (entry) entry.handler.current(arg);
+    else if (screen && this.nav) {
+      this.intents.set(id, now);
+      this.nav.go(screen);
+    }
+    return true;
+  }
+
+  /** Consumes the intent a command left for this screen, once. */
+  take(id: CommandId): boolean {
+    const at = this.intents.get(id);
+    this.intents.delete(id);
+    return at !== undefined && Date.now() - at < INTENT_MS;
+  }
+
+  /** Commands the palette may offer now, with the label their screen gave them. */
+  available(): Array<{ id: CommandId; label?: string }> {
+    return COMMAND_IDS.filter((id) => !commandDef(id).hidden && this.can(id)).map((id) => ({
+      id,
+      label: this.label(id),
+    }));
+  }
+
+  choice(id: ChoiceId): Choice | undefined {
+    return winner(this.choiceMap.get(id));
+  }
+
+  choices(): Array<[ChoiceId, Choice]> {
+    return [...this.choiceMap.keys()].flatMap((id) => {
+      const choice = winner(this.choiceMap.get(id));
+      return choice ? [[id, choice] as [ChoiceId, Choice]] : [];
+    });
+  }
+
+  pick(id: ChoiceId, value: string) {
+    winner(this.choiceMap.get(id))?.pick.current(value);
+  }
+
+  private changed() {
+    this.count += 1;
+    for (const listener of this.listeners) listener();
+  }
+
+  private add<K, T>(map: Map<K, Stamped<T>[]>, key: K, entry: T) {
+    const stamped = { ...entry, order: ++this.order };
     map.set(key, [...(map.get(key) ?? []), stamped]);
-    changed();
+    this.changed();
     return () => {
       map.set(
         key,
         (map.get(key) ?? []).filter((e) => e !== stamped),
       );
-      changed();
+      this.changed();
     };
   }
 
-  const allowed = (id: CommandId) => {
-    const layer = layers[layers.length - 1];
+  private allowed(id: CommandId) {
+    const layer = this.layers[this.layers.length - 1];
     return !layer || layer.pass.current.includes(id);
-  };
+  }
 
   /** A command nobody on this screen answers, which its own screen would. */
-  const elsewhere = (id: CommandId) => {
+  private elsewhere(id: CommandId) {
     const screen = commandDef(id).screen;
-    return screen !== undefined && nav !== null && nav.screen !== screen ? screen : null;
-  };
-
-  const registry = {
-    layers,
-
-    subscribe(listener: () => void) {
-      listeners.add(listener);
-      return () => void listeners.delete(listener);
-    },
-    version: () => version,
-
-    register: (id: CommandId, entry: CommandEntry) => add(commands, id, entry),
-    publish: (id: ChoiceId, entry: ChoiceEntry) => add(choices, id, entry),
-
-    pushLayer(layer: Layer) {
-      layers.push(layer);
-      changed();
-      return () => {
-        const at = layers.indexOf(layer);
-        if (at >= 0) layers.splice(at, 1);
-        changed();
-      };
-    },
-
-    navigate(next: Navigator) {
-      const moved = nav?.screen !== next.screen;
-      nav = next;
-      if (moved) changed();
-    },
-
-    /** Whether running `id` now would do something. */
-    can(id: CommandId): boolean {
-      if (!allowed(id)) return false;
-      return winner(commands.get(id)) !== undefined || elsewhere(id) !== null;
-    },
-
-    label: (id: CommandId) => winner(commands.get(id))?.label,
-
-    run(id: CommandId, arg?: CommandArg, source: RunSource = "key"): boolean {
-      if (!allowed(id)) return false;
-      const entry = winner(commands.get(id));
-      const screen = entry ? null : elsewhere(id);
-      if (!entry && !screen) return false;
-      const now = Date.now();
-      if (last && last.id === id && last.source !== source && now - last.at < ECHO_MS) return true;
-      last = { id, source, at: now };
-      if (entry) entry.handler.current(arg);
-      else if (screen && nav) {
-        intents.set(id, now);
-        nav.go(screen);
-      }
-      return true;
-    },
-
-    /** Consumes the intent a command left for this screen, once. */
-    take(id: CommandId): boolean {
-      const at = intents.get(id);
-      intents.delete(id);
-      return at !== undefined && Date.now() - at < INTENT_MS;
-    },
-
-    /** Commands the palette may offer now, with the label their screen gave them. */
-    available(): Array<{ id: CommandId; label?: string }> {
-      return COMMAND_IDS.filter((id) => !commandDef(id).hidden && registry.can(id)).map((id) => ({
-        id,
-        label: registry.label(id),
-      }));
-    },
-
-    choice(id: ChoiceId): Choice | undefined {
-      return winner(choices.get(id));
-    },
-
-    choices(): Array<[ChoiceId, Choice]> {
-      return [...choices.keys()].flatMap((id) => {
-        const choice = winner(choices.get(id));
-        return choice ? [[id, choice] as [ChoiceId, Choice]] : [];
-      });
-    },
-
-    pick(id: ChoiceId, value: string) {
-      winner(choices.get(id))?.pick.current(value);
-    },
-  };
-  return registry;
+    return screen !== undefined && this.nav !== null && this.nav.screen !== screen ? screen : null;
+  }
 }
 
-export type Registry = ReturnType<typeof createRegistry>;
+export function createRegistry() {
+  return new Registry();
+}

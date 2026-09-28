@@ -100,11 +100,27 @@ pub fn demo_world() -> Result<DemoWorld> {
         store.save_transaction(&tx)?;
     }
 
-    // Seed market data manually so the demo does not require a network.
+    seed_market_data(&store, &apple, &world, &benchmark)?;
+    let (taxonomy_id, target) = seed_regions(&store, &portfolio, &apple, &world)?;
+
+    Ok(DemoWorld {
+        store,
+        portfolio,
+        accounts: vec![ib, tr],
+        apple,
+        world,
+        benchmark,
+        taxonomy_id,
+        target,
+    })
+}
+
+/// Seeds quotes and rates by hand so the demo does not require a network.
+fn seed_market_data(store: &Store, apple: &Security, world: &Security, benchmark: &Security) -> Result<()> {
     let mut quotes = Vec::new();
     for (security, currency, series) in [
         (
-            &apple,
+            apple,
             "USD",
             vec![
                 (day(6, 5), dec!(195)),
@@ -114,7 +130,7 @@ pub fn demo_world() -> Result<DemoWorld> {
             ],
         ),
         (
-            &world,
+            world,
             "EUR",
             vec![
                 (day(6, 10), dec!(85)),
@@ -124,7 +140,7 @@ pub fn demo_world() -> Result<DemoWorld> {
             ],
         ),
         (
-            &benchmark,
+            benchmark,
             "USD",
             vec![(day(6, 1), dec!(5300)), (day(12, 31), dec!(5900))],
         ),
@@ -147,8 +163,16 @@ pub fn demo_world() -> Result<DemoWorld> {
         FxRate::new("USD", "EUR", day(11, 4), dec!(0.92)),
         FxRate::new("USD", "EUR", day(12, 31), dec!(0.95)),
     ])?;
+    Ok(())
+}
 
-    // The broad fund is split by regional weights; Apple is entirely US.
+/// The broad fund is split by regional weights; Apple is entirely US.
+fn seed_regions(
+    store: &Store,
+    portfolio: &Portfolio,
+    apple: &Security,
+    world: &Security,
+) -> Result<(String, AllocationTarget)> {
     let taxonomy = Taxonomy::new("Regions", TaxonomyKind::Region);
     store.save_taxonomy(&taxonomy)?;
     let us = TaxonomyNode::root(&taxonomy.id, "United States");
@@ -167,17 +191,7 @@ pub fn demo_world() -> Result<DemoWorld> {
         .with_weight(&us.id, dec!(0.6))
         .with_weight(&eu.id, dec!(0.4));
     store.save_target(&target)?;
-
-    Ok(DemoWorld {
-        store,
-        portfolio,
-        accounts: vec![ib, tr],
-        apple,
-        world,
-        benchmark,
-        taxonomy_id: taxonomy.id,
-        target,
-    })
+    Ok((taxonomy.id, target))
 }
 
 /// Run the end-to-end valuation and return metrics demo.

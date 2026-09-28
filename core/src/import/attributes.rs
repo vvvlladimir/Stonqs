@@ -155,27 +155,7 @@ pub fn build_attribute_preview(
         ));
     }
 
-    // A column already defined keeps its kind — an attribute's kind never changes (ADR-0031).
-    let columns: Vec<(usize, PreviewAttribute)> = config
-        .attributes
-        .iter()
-        .filter_map(|header| {
-            let idx = parsed.headers.iter().position(|h| h == header)?;
-            let existing = defs.iter().find(|d| d.name.eq_ignore_ascii_case(header));
-            Some((
-                idx,
-                PreviewAttribute {
-                    name: existing.map(|d| d.name.clone()).unwrap_or_else(|| header.clone()),
-                    kind: existing
-                        .map(|d| d.kind)
-                        .unwrap_or_else(|| infer_kind(parsed, idx)),
-                    attribute_id: existing.map(|d| d.id.clone()),
-                    values: 0,
-                },
-            ))
-        })
-        .collect();
-    let (indices, mut attributes): (Vec<usize>, Vec<PreviewAttribute>) = columns.into_iter().unzip();
+    let (indices, mut attributes) = preview_columns(parsed, config, defs);
 
     let mut rows = Vec::new();
     for (i, row) in parsed.rows.iter().enumerate() {
@@ -209,29 +189,7 @@ pub fn build_attribute_preview(
             ));
         }
 
-        let mut values = BTreeMap::new();
-        for (slot, idx) in indices.iter().enumerate() {
-            let raw = row.get(*idx).map(|v| v.trim()).unwrap_or_default();
-            if raw.is_empty() {
-                continue;
-            }
-            let attribute = &attributes[slot];
-            match attribute.kind.normalize(raw) {
-                Ok(value) => {
-                    values.insert(attribute.name.clone(), value);
-                    attributes[slot].values += 1;
-                }
-                // The kind of an attribute that already exists is not up for negotiation, so a
-                // cell that does not fit it is dropped with its reason, not silently stored.
-                Err(e) => problems.push(problem(
-                    i + 1,
-                    Some(attribute.name.clone()),
-                    ProblemCode::NotANumber,
-                    format!("{e}; the cell is skipped"),
-                    Severity::Error,
-                )),
-            }
-        }
+        let values = row_values(i + 1, row, &indices, &mut attributes, &mut problems);
 
         rows.push(AttributeRow {
             row: i + 1,
@@ -250,6 +208,68 @@ pub fn build_attribute_preview(
         rows,
         problems,
     }
+}
+
+/// The file's attribute columns, each with its index in the row.
+fn preview_columns(
+    parsed: &ParsedCsv,
+    config: &AttributeCsvConfig,
+    defs: &[SecurityAttributeDef],
+) -> (Vec<usize>, Vec<PreviewAttribute>) {
+    // A column already defined keeps its kind — an attribute's kind never changes (ADR-0031).
+    config
+        .attributes
+        .iter()
+        .filter_map(|header| {
+            let idx = parsed.headers.iter().position(|h| h == header)?;
+            let existing = defs.iter().find(|d| d.name.eq_ignore_ascii_case(header));
+            Some((
+                idx,
+                PreviewAttribute {
+                    name: existing.map(|d| d.name.clone()).unwrap_or_else(|| header.clone()),
+                    kind: existing
+                        .map(|d| d.kind)
+                        .unwrap_or_else(|| infer_kind(parsed, idx)),
+                    attribute_id: existing.map(|d| d.id.clone()),
+                    values: 0,
+                },
+            ))
+        })
+        .unzip()
+}
+
+/// One row's non-empty cells, normalised to their attribute's kind; counts each on its attribute.
+fn row_values(
+    number: usize,
+    row: &[String],
+    indices: &[usize],
+    attributes: &mut [PreviewAttribute],
+    problems: &mut Vec<ImportProblem>,
+) -> BTreeMap<String, String> {
+    let mut values = BTreeMap::new();
+    for (slot, idx) in indices.iter().enumerate() {
+        let raw = row.get(*idx).map(|v| v.trim()).unwrap_or_default();
+        if raw.is_empty() {
+            continue;
+        }
+        let attribute = &attributes[slot];
+        match attribute.kind.normalize(raw) {
+            Ok(value) => {
+                values.insert(attribute.name.clone(), value);
+                attributes[slot].values += 1;
+            }
+            // The kind of an attribute that already exists is not up for negotiation, so a
+            // cell that does not fit it is dropped with its reason, not silently stored.
+            Err(e) => problems.push(problem(
+                number,
+                Some(attribute.name.clone()),
+                ProblemCode::NotANumber,
+                format!("{e}; the cell is skipped"),
+                Severity::Error,
+            )),
+        }
+    }
+    values
 }
 
 /// Merges into what is stored: attributes the file does not name are left alone.

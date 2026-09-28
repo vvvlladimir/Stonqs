@@ -1,4 +1,3 @@
-import { plural } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import {
@@ -10,29 +9,18 @@ import {
 } from "../../lib/queries";
 import { pickRange, usePeriodRanges, type PeriodId } from "../../lib/periods";
 import { Page } from "../../components/Page";
-import {
-  Async,
-  Choice,
-  Empty,
-  Metric,
-  Metrics,
-  Money,
-  Panel,
-  Pending,
-  Percent,
-  QueryError,
-} from "../../components/ui";
+import { Async, Choice, Empty, Panel, Pending, QueryError } from "../../components/ui";
 import { PeriodControl } from "../../components/domain/PeriodControl";
-import { formatMoney, formatPercent, signOf } from "../../lib/format";
 import type { PaymentPeriod, TransactionKind } from "../../lib/types";
 import { ByTaxonomy } from "./ByTaxonomy";
+import { IncomeMetrics } from "./Metrics";
 import { CalendarPanel } from "./CalendarPanel";
 import { Composition, KindLegend } from "./Composition";
 import { Events } from "./Events";
 import { MonthPanel } from "./MonthPanel";
 import { Payers } from "./Payers";
 import { PaymentsPanel } from "./PaymentsPanel";
-import { kindOptions, kindSlots, pickMonth, ratio, valueBySecurity } from "./model";
+import { kindOptions, kindSlots, pickMonth, valueBySecurity } from "./model";
 import { useAsOf } from "../../lib/asOf";
 
 /** Core provides dated income records and comparison totals; the UI only groups them. */
@@ -90,52 +78,7 @@ export function Income() {
         </>
       }
       banner={income.isError ? <QueryError error={income.error} /> : undefined}
-      metrics={
-        <Metrics>
-          <Metric
-            label={t`Received in the period`}
-            value={data ? <Money value={data.total.net_base} currency={currency} /> : "…"}
-            hint={
-              data
-                ? t`${formatMoney(data.change_base, currency, { signed: true, compact: true })} versus the previous window`
-                : undefined
-            }
-            tone={data ? signOf(data.change_base) : "neutral"}
-            tip={t`What reached the cash accounts, net of withholding tax.`}
-          />
-          <Metric
-            label={t`Tax withheld`}
-            value={data ? <Money value={data.total.taxes_base} currency={currency} /> : "…"}
-            hint={
-              data
-                ? t`${formatPercent(ratio(data.total.taxes_base, data.total.gross_base))} of the accrued amount`
-                : undefined
-            }
-            tip={t`Withheld at the source, so it is not in what was received.`}
-          />
-          <Metric
-            label={t`Accrued`}
-            value={data ? <Money value={data.total.gross_base} currency={currency} /> : "…"}
-            hint={data ? plural(data.total.events, { one: "# payment", other: "# payments" }) : undefined}
-          />
-          <Metric
-            label={t`Portfolio yield`}
-            value={
-              data && marketValue ? (
-                <Percent value={ratio(data.total.gross_base, marketValue)} digits={1} />
-              ) : (
-                "…"
-              )
-            }
-            hint={
-              marketValue
-                ? t`against a value of ${formatMoney(marketValue, currency, { compact: true })}`
-                : undefined
-            }
-            tip={t`Income in the window against current market value.`}
-          />
-        </Metrics>
-      }
+      metrics={<IncomeMetrics data={data} currency={currency} marketValue={marketValue} />}
     >
       {data && all && data.total.events === 0 && all.total.events === 0 ? (
         <Empty title={t`No payments in this period`}>

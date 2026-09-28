@@ -38,15 +38,11 @@ export function useAllocationDialogs(opts: Options) {
   const [nodeDialog, setNodeDialog] = useState<{ node: TaxonomyNode | null } | null>(null);
   const [taxonomyDialog, setTaxonomyDialog] = useState<{ taxonomy: TaxonomyData | null } | null>(null);
   const [removing, setRemoving] = useState<TaxonomyData | null>(null);
-  const [grouping, setGrouping] = useState<TaxonomyData | null>(null);
-  // A file is a path and a plugin's set is bytes; the dialog above them is the same one, so the
-  // difference is carried here rather than in two dialogs.
-  const [importing, setImporting] = useState<{
-    source: { path: string } | { content: number[] };
-    preview: TaxonomyPreview;
-    into: TaxonomyData | null;
-  } | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const selectChanged = (id: string) => {
+    opts.onSelect(id);
+    opts.onChanged();
+  };
+  const files = useTaxonomyFiles(selectChanged);
 
   const saveTaxonomy = useMutation({
     mutationFn: api.taxonomySave,
@@ -65,46 +61,6 @@ export function useAllocationDialogs(opts: Options) {
       opts.onChanged();
     },
   });
-
-  const pickImport = async (into: TaxonomyData | null) => {
-    const path = await openFile({
-      multiple: false,
-      filters: [{ name: "CSV", extensions: ["csv"] }],
-    });
-    if (typeof path !== "string") return;
-    setBusy("import");
-    try {
-      setImporting({ source: { path }, into, preview: await api.taxonomyImportPreviewPath(path) });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  /** The same import, over a ready set a plugin brought: same preview, same commit, same dialog. */
-  const importSet = async (key: string, into: TaxonomyData | null) => {
-    const [plugin, set] = key.split("/");
-    setBusy("import");
-    try {
-      const content = await api.pluginTaxonomyCsv(plugin, set);
-      setImporting({ source: { content }, into, preview: await api.taxonomyImportPreview(content) });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const exportCsv = async (t: TaxonomyData) => {
-    const path = await saveFile({
-      defaultPath: `${t.name}.csv`,
-      filters: [{ name: "CSV", extensions: ["csv"] }],
-    });
-    if (!path) return;
-    setBusy("export");
-    try {
-      await api.taxonomyExportSave(t.id, path);
-    } finally {
-      setBusy(null);
-    }
-  };
 
   const taxonomy = opts.taxonomy;
 
@@ -148,67 +104,22 @@ export function useAllocationDialogs(opts: Options) {
         />
       )}
 
-      {importing && (
-        <ImportDialog
-          preview={importing.preview}
-          into={importing.into}
-          busy={busy === "commit"}
-          onClose={() => setImporting(null)}
-          onImport={async (name, withTargets) => {
-            setBusy("commit");
-            try {
-              const into = importing.into?.id ?? null;
-              const saved =
-                "path" in importing.source
-                  ? await api.taxonomyImportCommitPath(importing.source.path, name, into, withTargets)
-                  : await api.taxonomyImportCommit(importing.source.content, name, into, withTargets);
-              setImporting(null);
-              opts.onSelect(saved.id);
-              opts.onChanged();
-            } finally {
-              setBusy(null);
-            }
-          }}
-        />
-      )}
-
-      {grouping && (
-        <GroupDialog
-          into={grouping}
-          busy={busy === "group"}
-          onClose={() => setGrouping(null)}
-          onGroup={async (attributeId) => {
-            setBusy("group");
-            try {
-              await api.taxonomyGroupCommit(attributeId, grouping.id, null);
-              setGrouping(null);
-              opts.onSelect(grouping.id);
-              opts.onChanged();
-            } finally {
-              setBusy(null);
-            }
-          }}
-        />
-      )}
+      {files.node}
 
       {taxonomyDialog && (
         <TaxonomyDialog
           taxonomy={taxonomyDialog.taxonomy}
-          busy={busy === "create"}
+          busy={files.busy === "create"}
           onClose={() => setTaxonomyDialog(null)}
           onSave={async (name, attributeId) => {
             // Naming an attribute creates the tree and fills it in one command: a fresh tree
             // classifies nothing, so there is nothing a grouping could overwrite.
             if (attributeId) {
-              setBusy("create");
-              try {
+              await files.run("create", async () => {
                 const saved = await api.taxonomyGroupCommit(attributeId, null, name);
                 setTaxonomyDialog(null);
-                opts.onSelect(saved.id);
-                opts.onChanged();
-              } finally {
-                setBusy(null);
-              }
+                selectChanged(saved.id);
+              });
               return;
             }
             saveTaxonomy.mutate({ id: taxonomyDialog.taxonomy?.id ?? null, name });
@@ -233,17 +144,106 @@ export function useAllocationDialogs(opts: Options) {
 
   return {
     node,
-    busy,
+    busy: files.busy,
     openCard: card.open,
     openAssign: setAssigning,
     openNode: (node: TaxonomyNode | null) => setNodeDialog({ node }),
     openTaxonomy: (taxonomy: TaxonomyData | null) => setTaxonomyDialog({ taxonomy }),
     openDelete: setRemoving,
-    openGroup: setGrouping,
-    pickImport,
-    importSet,
-    exportCsv,
+    openGroup: files.openGroup,
+    pickImport: files.pickImport,
+    importSet: files.importSet,
+    exportCsv: files.exportCsv,
   };
+}
+
+/** A tree read from a file or a plugin's set, written to a file, or grown from an attribute: the
+ *  flows that wait on the host, and so share one `busy` naming which of them is running. */
+function useTaxonomyFiles(onDone: (id: string) => void) {
+  // A file is a path and a plugin's set is bytes; the dialog above them is the same one, so the
+  // difference is carried here rather than in two dialogs.
+  const [importing, setImporting] = useState<{
+    source: { path: string } | { content: number[] };
+    preview: TaxonomyPreview;
+    into: TaxonomyData | null;
+  } | null>(null);
+  const [grouping, setGrouping] = useState<TaxonomyData | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const run = async (what: string, work: () => Promise<void>) => {
+    setBusy(what);
+    try {
+      await work();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const pickImport = async (into: TaxonomyData | null) => {
+    const path = await openFile({ multiple: false, filters: [{ name: "CSV", extensions: ["csv"] }] });
+    if (typeof path !== "string") return;
+    await run("import", async () =>
+      setImporting({ source: { path }, into, preview: await api.taxonomyImportPreviewPath(path) }),
+    );
+  };
+
+  /** The same import, over a ready set a plugin brought: same preview, same commit, same dialog. */
+  const importSet = (key: string, into: TaxonomyData | null) =>
+    run("import", async () => {
+      const [plugin, set] = key.split("/");
+      const content = await api.pluginTaxonomyCsv(plugin, set);
+      setImporting({ source: { content }, into, preview: await api.taxonomyImportPreview(content) });
+    });
+
+  const exportCsv = async (t: TaxonomyData) => {
+    const path = await saveFile({
+      defaultPath: `${t.name}.csv`,
+      filters: [{ name: "CSV", extensions: ["csv"] }],
+    });
+    if (!path) return;
+    await run("export", () => api.taxonomyExportSave(t.id, path));
+  };
+
+  const node = (
+    <>
+      {importing && (
+        <ImportDialog
+          preview={importing.preview}
+          into={importing.into}
+          busy={busy === "commit"}
+          onClose={() => setImporting(null)}
+          onImport={(name, withTargets) =>
+            run("commit", async () => {
+              const into = importing.into?.id ?? null;
+              const saved =
+                "path" in importing.source
+                  ? await api.taxonomyImportCommitPath(importing.source.path, name, into, withTargets)
+                  : await api.taxonomyImportCommit(importing.source.content, name, into, withTargets);
+              setImporting(null);
+              onDone(saved.id);
+            })
+          }
+        />
+      )}
+
+      {grouping && (
+        <GroupDialog
+          into={grouping}
+          busy={busy === "group"}
+          onClose={() => setGrouping(null)}
+          onGroup={(attributeId) =>
+            run("group", async () => {
+              await api.taxonomyGroupCommit(attributeId, grouping.id, null);
+              setGrouping(null);
+              onDone(grouping.id);
+            })
+          }
+        />
+      )}
+    </>
+  );
+
+  return { busy, run, node, pickImport, importSet, exportCsv, openGroup: setGrouping };
 }
 
 function subjectName(members: NodeMember[] | undefined, subjectId: string): string {

@@ -124,71 +124,112 @@ export function BreakdownPanel({
           />
         </div>
 
-        <aside className={`bd__side${editing ? " is-editing-tax" : ""}`}>
-          <div className="panel__head">
-            <h3>{here ? bucketLabel(i18n, here) : taxonomy.name}</h3>
-            <span className="spacer" />
-            {editing && (
-              <button type="button" className="wbtn" aria-label={t`Add category`} onClick={onAddNode}>
-                <PlusIcon />
-              </button>
-            )}
-          </div>
-
-          <Tree>
-            {rows.map((row) => {
-              const node = taxonomy.nodes.find((n) => n.id === row.key);
-              const share = targetOf(target, row.key);
-              return (
-                <TreeNode
-                  key={row.key}
-                  slot={row.slot}
-                  unassigned={row.key === UNCLASSIFIED}
-                  name={
-                    <>
-                      {row.label}
-                      {share && (
-                        <span className="tag">
-                          <Trans>
-                            target <Percent value={share} digits={0} />
-                          </Trans>
-                        </span>
-                      )}
-                      {row.kind === "node" && <span className="dim"> ›</span>}
-                    </>
-                  }
-                  value={<Money value={row.value} currency={currency} digits={0} />}
-                  weight={<Percent value={row.weight} digits={1} />}
-                  tools={
-                    node && (
-                      <button
-                        type="button"
-                        className="wbtn"
-                        aria-label={t`Edit category`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditNode(node);
-                        }}
-                      >
-                        <PencilSimpleIcon />
-                      </button>
-                    )
-                  }
-                  onClick={() => onEnter(row.key)}
-                />
-              );
-            })}
-          </Tree>
-
-          <div className="bd__total">
-            <span className="muted">
-              <Trans>Total</Trans>
-            </span>
-            <span className="spacer" />
-            <Money value={here ? here.value_base : total} currency={currency} className="nm" />
-          </div>
-        </aside>
+        <LevelList
+          taxonomy={taxonomy}
+          rows={rows}
+          here={here}
+          total={total}
+          currency={currency}
+          target={target}
+          editing={editing}
+          onEnter={onEnter}
+          onAddNode={onAddNode}
+          onEditNode={onEditNode}
+        />
       </div>
     </Panel>
+  );
+}
+
+/** The categories of this level as a list beside the chart, with their targets and editing tools. */
+function LevelList({
+  taxonomy,
+  rows,
+  here,
+  total,
+  currency,
+  target,
+  editing,
+  onEnter,
+  onAddNode,
+  onEditNode,
+}: {
+  taxonomy: TaxonomyData;
+  rows: LevelRow[];
+  here: AllocationBucket | null;
+  total: string;
+  currency: string;
+  target: AllocationTarget | null;
+  editing: boolean;
+  onEnter: (key: string) => void;
+  onAddNode: () => void;
+  onEditNode: (node: TaxonomyNode) => void;
+}) {
+  const { t, i18n } = useLingui();
+  return (
+    <aside className={`bd__side${editing ? " is-editing-tax" : ""}`}>
+      <div className="panel__head">
+        <h3>{here ? bucketLabel(i18n, here) : taxonomy.name}</h3>
+        <span className="spacer" />
+        {editing && (
+          <button type="button" className="wbtn" aria-label={t`Add category`} onClick={onAddNode}>
+            <PlusIcon />
+          </button>
+        )}
+      </div>
+
+      <Tree>
+        {rows.map((row) => {
+          const node = taxonomy.nodes.find((n) => n.id === row.key);
+          const share = targetOf(target, row.key);
+          return (
+            <TreeNode
+              key={row.key}
+              slot={row.slot}
+              unassigned={row.key === UNCLASSIFIED}
+              name={
+                <>
+                  {row.label}
+                  {share && (
+                    <span className="tag">
+                      <Trans>
+                        target <Percent value={share} digits={0} />
+                      </Trans>
+                    </span>
+                  )}
+                  {row.kind === "node" && <span className="dim"> ›</span>}
+                </>
+              }
+              value={<Money value={row.value} currency={currency} digits={0} />}
+              weight={<Percent value={row.weight} digits={1} />}
+              tools={
+                node && (
+                  <button
+                    type="button"
+                    className="wbtn"
+                    aria-label={t`Edit category`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditNode(node);
+                    }}
+                  >
+                    <PencilSimpleIcon />
+                  </button>
+                )
+              }
+              onClick={() => onEnter(row.key)}
+            />
+          );
+        })}
+      </Tree>
+
+      <div className="bd__total">
+        <span className="muted">
+          <Trans>Total</Trans>
+        </span>
+        <span className="spacer" />
+        <Money value={here ? here.value_base : total} currency={currency} className="nm" />
+      </div>
+    </aside>
   );
 }

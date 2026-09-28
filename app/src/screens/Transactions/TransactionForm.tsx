@@ -132,44 +132,23 @@ export function TransactionForm({
         />
       </Field>
 
-      <FieldPair>
-        <Field
-          label={t`Commission`}
-          hint={t`On a buy it joins the cost basis; on a sell it reduces proceeds`}
-        >
-          <input
-            inputMode="decimal"
-            value={draft.fees ?? ""}
-            onChange={(e) => onChange({ ...draft, fees: e.target.value || null })}
-          />
-        </Field>
-        <Field label={t`Currency`} hint={t`Empty: the transaction's own`}>
-          <input
-            value={draft.fee_currency ?? ""}
-            maxLength={3}
-            placeholder={draft.currency}
-            onChange={(e) => onChange({ ...draft, fee_currency: code(e.target.value) })}
-          />
-        </Field>
-      </FieldPair>
-
-      <FieldPair>
-        <Field label={t`Tax`}>
-          <input
-            inputMode="decimal"
-            value={draft.taxes ?? ""}
-            onChange={(e) => onChange({ ...draft, taxes: e.target.value || null })}
-          />
-        </Field>
-        <Field label={t`Currency`} hint={t`Empty: the transaction's own`}>
-          <input
-            value={draft.tax_currency ?? ""}
-            maxLength={3}
-            placeholder={draft.currency}
-            onChange={(e) => onChange({ ...draft, tax_currency: code(e.target.value) })}
-          />
-        </Field>
-      </FieldPair>
+      <ChargeFields
+        label={t`Commission`}
+        hint={t`On a buy it joins the cost basis; on a sell it reduces proceeds`}
+        amount={draft.fees}
+        currency={draft.fee_currency}
+        own={draft.currency}
+        onAmount={(fees) => onChange({ ...draft, fees })}
+        onCurrency={(fee_currency) => onChange({ ...draft, fee_currency })}
+      />
+      <ChargeFields
+        label={t`Tax`}
+        amount={draft.taxes}
+        currency={draft.tax_currency}
+        own={draft.currency}
+        onAmount={(taxes) => onChange({ ...draft, taxes })}
+        onCurrency={(tax_currency) => onChange({ ...draft, tax_currency })}
+      />
 
       <Field
         label={t`Rate to the base currency`}
@@ -189,5 +168,41 @@ export function TransactionForm({
         />
       </Field>
     </FormDialog>
+  );
+}
+
+/** A charge and the currency it was billed in; an empty currency is the transaction's own. */
+function ChargeFields({
+  label,
+  hint,
+  amount,
+  currency,
+  own,
+  onAmount,
+  onCurrency,
+}: {
+  label: string;
+  hint?: string;
+  amount: string | null;
+  currency: string | null;
+  own: string;
+  onAmount: (amount: string | null) => void;
+  onCurrency: (currency: string | null) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <FieldPair>
+      <Field label={label} hint={hint}>
+        <input inputMode="decimal" value={amount ?? ""} onChange={(e) => onAmount(e.target.value || null)} />
+      </Field>
+      <Field label={t`Currency`} hint={t`Empty: the transaction's own`}>
+        <input
+          value={currency ?? ""}
+          maxLength={3}
+          placeholder={own}
+          onChange={(e) => onCurrency(code(e.target.value))}
+        />
+      </Field>
+    </FieldPair>
   );
 }

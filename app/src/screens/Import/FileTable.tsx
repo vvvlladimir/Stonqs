@@ -74,20 +74,6 @@ export function FileTable({
     label: `${accountKindLabel(i18n, account.kind)} · ${account.name} · ${account.currency}`,
   }));
 
-  /** "their value = our value", the one sentence every decision here is written in. */
-  const pair = (value: string, done: boolean, control: ReactNode) => (
-    <>
-      <div className="inline">
-        <b className="mono">{value || "—"}</b>
-        {!done && <Tag warn>{t`not mapped`}</Tag>}
-      </div>
-      <div className="inline">
-        <span className="dim">=</span>
-        {control}
-      </div>
-    </>
-  );
-
   /** Mapped columns lead, unmapped ones step back: the eye should land on the work. */
   const tone = (name: string) => (field[name] ? "mono" : "mono dim");
 
@@ -98,54 +84,36 @@ export function FileTable({
     const skip = skipped.has(key);
     // A wording answered by a rule shows that answer, not the kind it happens to alias.
     const split = splitOf(mapping, value);
-    return pair(
-      value,
-      Boolean(kind) || skip || Boolean(split),
-      <Choice
-        wide
-        label={t`Transaction kind for "${value}"`}
-        placeholder={t`— not mapped —`}
-        value={split ?? (skip ? SKIP : (kind ?? ""))}
-        onChange={(next) => edit!.onChange(assignKinds(mapping, [value], next as KindChoice))}
-        options={kindOptions}
-      />,
+    return (
+      <Pair value={value} done={Boolean(kind) || skip || Boolean(split)}>
+        <Choice
+          wide
+          label={t`Transaction kind for "${value}"`}
+          placeholder={t`— not mapped —`}
+          value={split ?? (skip ? SKIP : (kind ?? ""))}
+          onChange={(next) => edit!.onChange(assignKinds(mapping, [value], next as KindChoice))}
+          options={kindOptions}
+        />
+      </Pair>
     );
   };
 
   const accountCell = (row: PreviewRow) => {
     const value = row.raw[accountColumn!] ?? "";
     const id = accountOf.get(normalizeAlias(value)) ?? null;
-    return pair(
-      value,
-      Boolean(id),
-      <Choice
-        wide
-        label={t`Account for "${value}"`}
-        placeholder={t`— choose an account —`}
-        value={id ?? ""}
-        onChange={(next) => edit!.onChange(assignAccounts(mapping, [value], next))}
-        options={accountOptions}
-      />,
+    return (
+      <Pair value={value} done={Boolean(id)}>
+        <Choice
+          wide
+          label={t`Account for "${value}"`}
+          placeholder={t`— choose an account —`}
+          value={id ?? ""}
+          onChange={(next) => edit!.onChange(assignAccounts(mapping, [value], next))}
+          options={accountOptions}
+        />
+      </Pair>
     );
   };
-
-  const header = (name: string) => (
-    <>
-      <div className={field[name] ? "nm" : "dim"}>{name}</div>
-      {edit ? (
-        <Choice
-          tight
-          label={t`Field for column "${name}"`}
-          placeholder={t`— not used —`}
-          value={field[name] ?? ""}
-          onChange={(next) => edit.onChange(assignColumn(mapping, name, next as ImportField | ""))}
-          options={fieldOptions}
-        />
-      ) : (
-        <div className="sub">{field[name] ? fieldLabel(i18n, field[name]) : t`not used`}</div>
-      )}
-    </>
-  );
 
   const columns = [
     {
@@ -159,7 +127,9 @@ export function FileTable({
       const editable = edit && (name === kindColumn || name === accountColumn);
       return {
         key: name,
-        header: header(name),
+        header: (
+          <ColumnHead name={name} field={field[name]} mapping={mapping} edit={edit} options={fieldOptions} />
+        ),
         align: "left" as const,
         className: editable ? "ask" : tone(name),
         clamp: editable ? (false as const) : undefined,
@@ -199,5 +169,56 @@ export function FileTable({
         columns={columns}
       />
     </Scrolly>
+  );
+}
+
+/** "their value = our value", the one sentence every decision here is written in. */
+function Pair({ value, done, children }: { value: string; done: boolean; children: ReactNode }) {
+  const { t } = useLingui();
+  return (
+    <>
+      <div className="inline">
+        <b className="mono">{value || "—"}</b>
+        {!done && <Tag warn>{t`not mapped`}</Tag>}
+      </div>
+      <div className="inline">
+        <span className="dim">=</span>
+        {children}
+      </div>
+    </>
+  );
+}
+
+/** A file column's name over the field it is read as: a choice while editing, a statement otherwise. */
+function ColumnHead({
+  name,
+  field,
+  mapping,
+  edit,
+  options,
+}: {
+  name: string;
+  field: ImportField | undefined;
+  mapping: ImportMapping;
+  edit: FileTableEdit | undefined;
+  options: Array<{ value: ImportField; label: string }>;
+}) {
+  const { t, i18n } = useLingui();
+  return (
+    <>
+      <div className={field ? "nm" : "dim"}>{name}</div>
+      {edit ? (
+        <Choice
+          tight
+          label={t`Field for column "${name}"`}
+          placeholder={t`— not used —`}
+          value={field ?? ""}
+          onChange={(next) => edit.onChange(assignColumn(mapping, name, next as ImportField | ""))}
+          options={options}
+        />
+      ) : (
+        <div className="sub">{field ? fieldLabel(i18n, field) : t`not used`}</div>
+      )}
+    </>
   );
 }

@@ -20,7 +20,8 @@ export function PerformanceMetrics({ data, benchmarkId, benchmarkLabel, comparis
   const { t } = useLingui();
   const currency = data?.base_currency ?? "";
   const summary = data?.summary;
-  const noBenchmark = benchmarkId === "";
+  const realTiles = useRealTiles(real);
+  const benchmarkTiles = useBenchmarkTiles(benchmarkId !== "", benchmarkLabel, comparison, since);
 
   return (
     <MetricStrip>
@@ -50,29 +51,7 @@ export function PerformanceMetrics({ data, benchmarkId, benchmarkLabel, comparis
         }
         tip={t`Return that accounts for the dates money went in and out.`}
       />
-      {real && (
-        <>
-          <Metric
-            label={t`Real TWR`}
-            value={<Percent value={real.twr.real} signed tone={false} />}
-            tone={signOf(real.twr.real)}
-            hint={
-              <>
-                {formatRegion(real.twr.region)} {t`prices`}{" "}
-                <Percent value={real.twr.inflation} signed tone={false} />
-              </>
-            }
-            tip={t`The portfolio return with inflation taken out, through ${formatDay(real.twr.to)}.`}
-          />
-          <Metric
-            label={t`Real XIRR`}
-            value={real.xirr ? <Percent value={real.xirr} signed tone={false} /> : t`— did not converge`}
-            tone={real.xirr ? signOf(real.xirr) : "neutral"}
-            hint={t`each deposit at its own price level`}
-            tip={t`Investor return with inflation taken out, flow by flow.`}
-          />
-        </>
-      )}
+      {realTiles}
       <Metric
         label={t`Earned over the period`}
         value={summary ? <Money value={summary.delta_base} currency={currency} signed /> : "…"}
@@ -140,36 +119,72 @@ export function PerformanceMetrics({ data, benchmarkId, benchmarkLabel, comparis
         }
         tip={t`The highest value inside the period, and how far under it the period ends.`}
       />
-      <Metric
-        label={t`Benchmark`}
-        value={
-          noBenchmark ? (
-            t`— none chosen`
-          ) : comparison ? (
-            <Percent value={comparison.benchmark_twr} signed tone={false} />
-          ) : (
-            "…"
-          )
-        }
-        tone={comparison && !noBenchmark ? signOf(comparison.benchmark_twr) : "neutral"}
-        hint={
-          noBenchmark
-            ? t`chosen in the header`
-            : since
-              ? t`${benchmarkLabel ?? ""} — since ${formatDay(since)}`
-              : benchmarkLabel
-        }
-        tip={t`Time-weighted return of the benchmark over the window the two share.`}
-      />
-      <Metric
-        label={t`Excess`}
-        value={
-          noBenchmark ? "—" : comparison ? <Percent value={comparison.excess} signed tone={false} /> : "…"
-        }
-        tone={comparison && !noBenchmark ? signOf(comparison.excess) : "neutral"}
-        hint={t`portfolio minus benchmark`}
-        tip={t`The difference of the two time-weighted returns.`}
-      />
+      {benchmarkTiles}
     </MetricStrip>
   );
+}
+
+/** Both returns with the price level taken out; none until a price-index region is named. The
+ *  tiles come back as an array because the shelf counts its children to know what to fold. */
+function useRealTiles(real: RealPerformance | null | undefined) {
+  const { t } = useLingui();
+  if (!real) return [];
+  return [
+    <Metric
+      key="real-twr"
+      label={t`Real TWR`}
+      value={<Percent value={real.twr.real} signed tone={false} />}
+      tone={signOf(real.twr.real)}
+      hint={
+        <>
+          {formatRegion(real.twr.region)} {t`prices`}{" "}
+          <Percent value={real.twr.inflation} signed tone={false} />
+        </>
+      }
+      tip={t`The portfolio return with inflation taken out, through ${formatDay(real.twr.to)}.`}
+    />,
+    <Metric
+      key="real-xirr"
+      label={t`Real XIRR`}
+      value={real.xirr ? <Percent value={real.xirr} signed tone={false} /> : t`— did not converge`}
+      tone={real.xirr ? signOf(real.xirr) : "neutral"}
+      hint={t`each deposit at its own price level`}
+      tip={t`Investor return with inflation taken out, flow by flow.`}
+    />,
+  ];
+}
+
+function useBenchmarkTiles(
+  chosen: boolean,
+  label: string | undefined,
+  comparison: BenchmarkComparison | undefined,
+  since: string | undefined,
+) {
+  const { t } = useLingui();
+  return [
+    <Metric
+      key="benchmark"
+      label={t`Benchmark`}
+      value={
+        !chosen ? (
+          t`— none chosen`
+        ) : comparison ? (
+          <Percent value={comparison.benchmark_twr} signed tone={false} />
+        ) : (
+          "…"
+        )
+      }
+      tone={comparison && chosen ? signOf(comparison.benchmark_twr) : "neutral"}
+      hint={!chosen ? t`chosen in the header` : since ? t`${label ?? ""} — since ${formatDay(since)}` : label}
+      tip={t`Time-weighted return of the benchmark over the window the two share.`}
+    />,
+    <Metric
+      key="excess"
+      label={t`Excess`}
+      value={!chosen ? "—" : comparison ? <Percent value={comparison.excess} signed tone={false} /> : "…"}
+      tone={comparison && chosen ? signOf(comparison.excess) : "neutral"}
+      hint={t`portfolio minus benchmark`}
+      tip={t`The difference of the two time-weighted returns.`}
+    />,
+  ];
 }

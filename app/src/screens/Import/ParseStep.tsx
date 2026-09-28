@@ -48,78 +48,7 @@ export function ParseStep({
   const stray = Object.values(mapping.columns).filter(
     (column): column is string => Boolean(column) && !preview.headers.includes(column),
   );
-  const kindColumn = mapping.columns.KIND;
-  const accountColumn = mapping.columns.ACCOUNT;
-  // A skipped value is decided, not outstanding: it moves out of the work list.
-  const todo = preview.kinds.filter((k) => !k.kind && !k.ignored);
-
-  // The file's own row is the example: one per distinct value, found once and reused.
-  const exampleOf = useMemo(() => {
-    const by = new Map<string, PreviewRow>();
-    if (!kindColumn) return by;
-    for (const row of preview.rows) {
-      const key = normalizeAlias(row.raw[kindColumn] ?? "");
-      if (!by.has(key)) by.set(key, row);
-    }
-    return by;
-  }, [preview.rows, kindColumn]);
-
-  const accountExampleOf = useMemo(() => {
-    const by = new Map<string, PreviewRow>();
-    if (!accountColumn) return by;
-    for (const row of preview.rows) {
-      const key = normalizeAlias(row.raw[accountColumn] ?? "");
-      if (!by.has(key)) by.set(key, row);
-    }
-    return by;
-  }, [preview.rows, accountColumn]);
-
-  const rowsFor = (values: string[]) =>
-    values.map((value) => exampleOf.get(normalizeAlias(value))).filter(Boolean) as PreviewRow[];
-
-  const sections: FileTableSection[] = [];
-
-  if (!kindColumn) {
-    sections.push({
-      key: "rows",
-      title: t`File rows`,
-      note: t`point at the transaction-kind column in the header — only unique operations stay here then`,
-      rows: preview.rows.slice(0, 20),
-    });
-  } else {
-    const done = preview.kinds.filter((k) => k.kind || k.ignored);
-    if (todo.length > 0) {
-      sections.push({
-        key: "kinds-todo",
-        title: t`A choice is needed`,
-        note: t`these transaction kinds were not recognized`,
-        rows: rowsFor(todo.map((k) => k.value)),
-      });
-    }
-    if (done.length > 0) {
-      sections.push({
-        key: "kinds-done",
-        title: t`Recognized`,
-        note: t`one row per unique transaction kind; "do not import" is a decision too`,
-        rows: rowsFor(done.map((k) => k.value)),
-      });
-    }
-  }
-
-  if (accountColumn && preview.accounts.length > 0) {
-    const rows = preview.accounts
-      .map((a) => accountExampleOf.get(normalizeAlias(a.value)))
-      .filter(Boolean) as PreviewRow[];
-    if (rows.length > 0) {
-      sections.push({
-        key: "accounts",
-        title: t`Accounts from the file`,
-        note: t`one row per value of column "${accountColumn}"`,
-        rows,
-      });
-    }
-  }
-
+  const { sections, todo } = useMappingSections(preview, mapping);
   const total = sections.reduce((n, section) => n + section.rows.length, 0);
 
   return (
@@ -188,4 +117,73 @@ export function ParseStep({
       <ParsedPanel preview={preview} />
     </>
   );
+}
+
+/** The file's own row is the example: the first one per distinct value of `column`. */
+function firstRowByValue(rows: PreviewRow[], column: string | null | undefined): Map<string, PreviewRow> {
+  const by = new Map<string, PreviewRow>();
+  if (!column) return by;
+  for (const row of rows) {
+    const key = normalizeAlias(row.raw[column] ?? "");
+    if (!by.has(key)) by.set(key, row);
+  }
+  return by;
+}
+
+/** One example row per operation wording, split into what still needs a choice and what is
+ *  settled, then one per account value; without a kind column, the first rows of the file. */
+function useMappingSections(preview: ImportPreviewData, mapping: ImportMapping) {
+  const { t } = useLingui();
+  const kindColumn = mapping.columns.KIND;
+  const accountColumn = mapping.columns.ACCOUNT;
+  // A skipped value is decided, not outstanding: it moves out of the work list.
+  const todo = preview.kinds.filter((k) => !k.kind && !k.ignored);
+  const exampleOf = useMemo(() => firstRowByValue(preview.rows, kindColumn), [preview.rows, kindColumn]);
+  const accountExampleOf = useMemo(
+    () => firstRowByValue(preview.rows, accountColumn),
+    [preview.rows, accountColumn],
+  );
+  const rowsFor = (values: string[]) =>
+    values.map((value) => exampleOf.get(normalizeAlias(value))).filter(Boolean) as PreviewRow[];
+
+  const sections: FileTableSection[] = [];
+  if (!kindColumn) {
+    sections.push({
+      key: "rows",
+      title: t`File rows`,
+      note: t`point at the transaction-kind column in the header — only unique operations stay here then`,
+      rows: preview.rows.slice(0, 20),
+    });
+  } else {
+    const done = preview.kinds.filter((k) => k.kind || k.ignored);
+    if (todo.length > 0) {
+      sections.push({
+        key: "kinds-todo",
+        title: t`A choice is needed`,
+        note: t`these transaction kinds were not recognized`,
+        rows: rowsFor(todo.map((k) => k.value)),
+      });
+    }
+    if (done.length > 0) {
+      sections.push({
+        key: "kinds-done",
+        title: t`Recognized`,
+        note: t`one row per unique transaction kind; "do not import" is a decision too`,
+        rows: rowsFor(done.map((k) => k.value)),
+      });
+    }
+  }
+
+  const accountRows = preview.accounts
+    .map((a) => accountExampleOf.get(normalizeAlias(a.value)))
+    .filter(Boolean) as PreviewRow[];
+  if (accountColumn && accountRows.length > 0) {
+    sections.push({
+      key: "accounts",
+      title: t`Accounts from the file`,
+      note: t`one row per value of column "${accountColumn}"`,
+      rows: accountRows,
+    });
+  }
+  return { sections, todo };
 }

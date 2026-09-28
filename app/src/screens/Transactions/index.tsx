@@ -2,7 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react";
-import { api, today } from "../../lib/api";
+import { api } from "../../lib/api";
 import { ariaKeys, Command } from "../../lib/commands";
 import { Page } from "../../components/Page";
 import {
@@ -18,9 +18,9 @@ import {
   type MenuItem,
 } from "../../components/ui";
 import { formatMoney } from "../../lib/format";
-import { transactionLabel } from "../../lib/kinds";
 import { affects, useAccounts, useInvalidate, useTransactions } from "../../lib/queries";
 import type { TransactionFilter, TransactionInput, TransactionRow } from "../../lib/types";
+import { blankTransaction, draftOf, matching, securitiesIn, yearsOf } from "./model";
 import { Filters } from "./Filters";
 import { JournalTable } from "./JournalTable";
 import { TransactionForm } from "./TransactionForm";
@@ -66,63 +66,16 @@ export function Transactions({ focus }: { focus?: string | null }) {
   });
 
   // Search stays client-side; server filters also change the core's monthly totals.
-  const needle = query.trim().toLowerCase();
-  const shown = (rows.data?.rows ?? []).filter(
-    (row) =>
-      !needle ||
-      (row.symbol ?? "").toLowerCase().includes(needle) ||
-      (row.note ?? "").toLowerCase().includes(needle) ||
-      transactionLabel(i18n, row.kind).toLowerCase().includes(needle) ||
-      row.account_name.toLowerCase().includes(needle),
-  );
+  const shown = (rows.data?.rows ?? []).filter(matching(i18n, query));
   const selection = useSelection(shown.map((row) => row.id));
 
   if (accounts.isError) return <QueryError error={accounts.error} />;
   if (accounts.isPending) return <Pending />;
 
-  // Purchases default to a securities account because cash accounts cannot hold them.
-  const firstDepot = accounts.data.find((a) => a.kind === "SECURITIES");
+  const blank = () => blankTransaction(accounts.data);
+  const edit = (row: TransactionRow) => setDraft(draftOf(row));
 
-  const blank = (): TransactionInput => ({
-    id: null,
-    account_id: firstDepot?.id ?? accounts.data[0]?.id ?? "",
-    security_id: null,
-    kind: "BUY",
-    date: today(),
-    quantity: null,
-    price: null,
-    amount: null,
-    fees: null,
-    taxes: null,
-    currency: firstDepot?.currency ?? accounts.data[0]?.currency ?? "EUR",
-    fee_currency: null,
-    tax_currency: null,
-    fx_rate_to_base: null,
-    note: null,
-  });
-
-  const edit = (row: TransactionRow) =>
-    setDraft({
-      id: row.id,
-      account_id: row.account_id,
-      security_id: row.security_id,
-      kind: row.kind,
-      date: row.date,
-      quantity: row.quantity,
-      price: row.price,
-      amount: row.amount,
-      fees: row.fees,
-      taxes: row.taxes,
-      currency: row.currency,
-      fee_currency: row.fee_currency,
-      tax_currency: row.tax_currency,
-      fx_rate_to_base: row.fx_rate_to_base,
-      note: row.note,
-    });
-
-  const years = [...new Set((all.data?.rows ?? []).map((row) => row.date.slice(0, 4)))].sort(
-    (a, b) => Number(b) - Number(a),
-  );
+  const years = yearsOf(all.data?.rows ?? []);
 
   const currency = rows.data?.base_currency ?? "";
 
@@ -182,14 +135,7 @@ export function Transactions({ focus }: { focus?: string | null }) {
             currency: a.currency,
             kind: a.kind,
           }))}
-          securities={(all.data?.rows ?? [])
-            .filter((row) => row.security_id)
-            .reduce<Array<{ id: string; symbol: string }>>((list, row) => {
-              if (!list.some((s) => s.id === row.security_id)) {
-                list.push({ id: row.security_id!, symbol: row.symbol ?? row.security_id! });
-              }
-              return list;
-            }, [])}
+          securities={securitiesIn(all.data?.rows ?? [])}
           onChange={setDraft}
           onSubmit={() => save.mutate(draft)}
           onCancel={() => setDraft(null)}

@@ -58,6 +58,24 @@ export default tseslint.config(
     },
   },
   {
+    // Size guards, so a file split once does not grow back. Blank lines and comments are free.
+    // Never widen a limit to let a file through — split it. A genuine exception is an inline
+    // `eslint-disable-next-line` with the reason, and it fails once it is no longer needed.
+    files: ["**/*.{ts,tsx}"],
+    linterOptions: { reportUnusedDisableDirectives: "error" },
+    rules: {
+      "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
+      "max-lines-per-function": ["error", { max: 80, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
+    // A component's body is mostly markup, so it gets more room than logic does.
+    files: ["**/*.tsx"],
+    rules: {
+      "max-lines-per-function": ["error", { max: 150, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
     // A context and the hook that reads it are one file on purpose: the pair is the primitive,
     // and splitting it to keep fast refresh would cost every reader a hop for a dev-time gain.
     // Editing one of these files reloads the window; that is the trade, and it is why the list

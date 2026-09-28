@@ -142,7 +142,7 @@ Two neighbours carry what grew out of this file: `.claude/rules/ai-assistant.md`
   currency (`calc::instrument_move`) and takes no source. What a *position* in that instrument
   shows is joined on the frontend from `usePositions`/`usePositionReturns` under the picker — never
   recomputed for the list. Both tables draw from one column catalogue
-  (`components/domain/positionColumns.tsx`) and one `ColumnPicker`; the choices are
+  (`components/domain/positionColumns.ts`, its parts in `positionColumns/`) and one `ColumnPicker`; the choices are
   `UiState::position_columns` and `watch_columns` — **the stored array is the display order**, so
   the picker returns it as dragged and never re-sorts it into catalogue order. How each table is
   ordered is stored beside it (`position_sort`, `watch_sort`). A purchase figure is only ever

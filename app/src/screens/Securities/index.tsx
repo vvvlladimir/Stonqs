@@ -28,7 +28,7 @@ import { SecurityForm } from "./SecurityForm";
 import { Splits } from "./Splits";
 import { SecurityTable } from "./SecurityTable";
 import { Banners } from "./Banners";
-import { cuts, EMPTY, currencyMismatch, inCut, toInput, type Cut } from "./model";
+import { cuts, EMPTY, currencyMismatch, inCut, matching, toInput, type Cut } from "./model";
 import { useAttributeFile } from "./useAttributeFile";
 import { useIdentify } from "./useIdentify";
 
@@ -52,21 +52,11 @@ export function Securities({ focus }: { focus?: string | null }) {
   // Build the selection hook before early returns.
   const rows = securities.data ?? [];
   const broken = rows.filter((row) => row.needs_lookup);
-  const venueless = rows.filter((row) => row.mic === null);
-  // Named in the summary because the symptom sits in one cell of one row otherwise.
-  const thin = rows.filter((row) => row.sparse_history);
   // Quote currency may differ from the directory currency; that often indicates another listing.
   const mismatched = rows.filter(currencyMismatch);
-  const needle = query.trim().toLowerCase();
-  const shown = rows.filter(
-    (row) =>
-      inCut(row, cut) &&
-      (!needle ||
-        row.symbol.toLowerCase().includes(needle) ||
-        row.name.toLowerCase().includes(needle) ||
-        (row.isin ?? "").toLowerCase().includes(needle)),
-  );
+  const shown = rows.filter((row) => inCut(row, cut) && matching(row, query));
   const selection = useSelection(shown.map((row) => row.id));
+  const summary = useDirectorySummary(shown, rows);
 
   // Reuse the shared refresh job used by Settings.
   const { running } = useRefreshStatus();
@@ -129,49 +119,15 @@ export function Securities({ focus }: { focus?: string | null }) {
     <Page
       archetype="registry"
       title={t`Instruments`}
-      summary={[
-        t`${shown.length} of ${securities.data.length} instruments`,
-        venueless.length > 0
-          ? plural(venueless.length, { one: "# without a venue", other: "# without a venue" })
-          : null,
-        broken.length > 0
-          ? plural(broken.length, { one: "# not identified", other: "# not identified" })
-          : null,
-        thin.length > 0
-          ? plural(thin.length, { one: "# with too little history", other: "# with too little history" })
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")}
+      summary={summary}
       actions={
-        <>
-          <button className="btn btn--ghost" disabled={running} onClick={() => refresh.mutate()}>
-            <ArrowsClockwiseIcon /> {running ? t`Refreshing…` : t`Refresh quotes`}
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost"
-            aria-haspopup="menu"
-            aria-label={t`More actions`}
-            onClick={(e) =>
-              menu.openFrom(
-                "securities",
-                [
-                  { label: t`Import attributes…`, onSelect: () => void attributes.pick() },
-                  { label: t`Export attributes`, onSelect: () => void attributes.exportAll() },
-                ],
-                e.currentTarget,
-              )
-            }
-          >
-            <DotsThreeIcon />
-          </button>
-          <button className="btn" onClick={create}>
-            <PlusIcon /> <Trans>Add instrument</Trans>
-          </button>
-          <Command id="new" label={t`Add instrument`} run={create} />
-          <Command id="newInstrument" run={create} />
-        </>
+        <DirectoryActions
+          refreshing={running}
+          onRefresh={() => refresh.mutate()}
+          menu={menu}
+          attributes={attributes}
+          onCreate={create}
+        />
       }
       filters={
         <>
@@ -237,5 +193,72 @@ export function Securities({ focus }: { focus?: string | null }) {
 
       {menu.node}
     </Page>
+  );
+}
+
+/** How many are shown, and the three reasons an instrument may be priced wrong — named here
+ *  because otherwise each one is a single cell of a single row. */
+function useDirectorySummary(shown: SecurityRow[], rows: SecurityRow[]): string {
+  const { t } = useLingui();
+  const venueless = rows.filter((row) => row.mic === null);
+  const broken = rows.filter((row) => row.needs_lookup);
+  const thin = rows.filter((row) => row.sparse_history);
+  return [
+    t`${shown.length} of ${rows.length} instruments`,
+    venueless.length > 0
+      ? plural(venueless.length, { one: "# without a venue", other: "# without a venue" })
+      : null,
+    broken.length > 0 ? plural(broken.length, { one: "# not identified", other: "# not identified" }) : null,
+    thin.length > 0
+      ? plural(thin.length, { one: "# with too little history", other: "# with too little history" })
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function DirectoryActions({
+  refreshing,
+  onRefresh,
+  menu,
+  attributes,
+  onCreate,
+}: {
+  refreshing: boolean;
+  onRefresh: () => void;
+  menu: ReturnType<typeof useMenu>;
+  attributes: ReturnType<typeof useAttributeFile>;
+  onCreate: () => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <>
+      <button className="btn btn--ghost" disabled={refreshing} onClick={onRefresh}>
+        <ArrowsClockwiseIcon /> {refreshing ? t`Refreshing…` : t`Refresh quotes`}
+      </button>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        aria-haspopup="menu"
+        aria-label={t`More actions`}
+        onClick={(e) =>
+          menu.openFrom(
+            "securities",
+            [
+              { label: t`Import attributes…`, onSelect: () => void attributes.pick() },
+              { label: t`Export attributes`, onSelect: () => void attributes.exportAll() },
+            ],
+            e.currentTarget,
+          )
+        }
+      >
+        <DotsThreeIcon />
+      </button>
+      <button className="btn" onClick={onCreate}>
+        <PlusIcon /> <Trans>Add instrument</Trans>
+      </button>
+      <Command id="new" label={t`Add instrument`} run={onCreate} />
+      <Command id="newInstrument" run={onCreate} />
+    </>
   );
 }

@@ -1,0 +1,5 @@
+# Clippy counts code lines only: blank lines and comments are free, so documenting a function never
+# pushes it over. 100 is clippy's own default, written down so it is a decision and not an accident.
+# The lint itself is switched on in `[workspace.lints]` (Cargo.toml); a function kept long on purpose
+# carries `#[expect(clippy::too_many_lines, reason = "...")]`, which fails once it is short again.
+too-many-lines-threshold = 100

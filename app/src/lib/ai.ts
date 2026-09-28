@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useReducer } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLingui } from "@lingui/react/macro";
 import { CUSTOM_PROVIDER, providerName } from "./kinds";
@@ -40,6 +40,82 @@ export interface LiveTool {
   content?: string;
 }
 
+/** What the panel shows of the turn in flight. */
+interface Turn {
+  pending: string;
+  /** Kept apart from `pending`: the thinking is shown above the answer and folded away, so the
+   *  two must not be concatenated into one stream of text. */
+  thinking: string;
+  busy: boolean;
+  live: LiveTool[];
+  request: ToolRequest | null;
+  error: UiError | null;
+  /** What the *last* question cost, not the chat: a new message starts the count again, the way a
+   *  chat's running total belongs in Settings rather than over the input box. */
+  usage: AiUsage | null;
+}
+
+const IDLE: Turn = {
+  pending: "",
+  thinking: "",
+  busy: false,
+  live: [],
+  request: null,
+  error: null,
+  usage: null,
+};
+
+/** The summary is persisted with the turn, so every live copy goes when the stored one lands. */
+const SETTLED = { busy: false, live: [], request: null, pending: "", thinking: "" } satisfies Partial<Turn>;
+
+type TurnAction = AiEvent | { type: "start" } | { type: "refused"; error: UiError } | { type: "decided" };
+
+function turnReducer(turn: Turn, action: TurnAction): Turn {
+  switch (action.type) {
+    case "start":
+      return { ...IDLE, busy: true };
+    case "refused":
+      return { ...turn, busy: false, error: action.error };
+    case "decided":
+      return { ...turn, request: null };
+    case "text":
+      return { ...turn, pending: turn.pending + action.text };
+    case "tool_requested":
+      return {
+        ...turn,
+        request: {
+          requestId: action.request_id,
+          tool: action.tool,
+          params: action.params,
+          write: action.write,
+          reason: action.reason,
+        },
+      };
+    case "tool_running":
+      return {
+        ...turn,
+        request: null,
+        live: [...turn.live, { kind: "tool", name: action.tool, reason: action.reason }],
+      };
+    case "tool_finished":
+      // The last unfinished entry for this tool: the model may call one twice in a turn, and the
+      // second answer belongs to the second call.
+      return { ...turn, live: fill(turn.live, action.tool, action.content) };
+    case "reasoning":
+      return { ...turn, thinking: turn.thinking + action.text };
+    case "searching":
+      return { ...turn, live: [...turn.live, { kind: "search", name: action.query }] };
+    case "usage":
+      // Assigned, never added: the host sends the turn's running total, so a step that arrives
+      // twice or out of order still leaves the right number on screen.
+      return { ...turn, usage: action.usage };
+    case "done":
+      return { ...turn, ...SETTLED };
+    case "error":
+      return { ...turn, ...SETTLED, error: action.error };
+  }
+}
+
 /** The stream, kept out of the query cache: only its persisted result belongs there. Failures stay `UiError`. */
 export function useChatSend(chatId: string | null) {
   const client = useQueryClient();
@@ -48,28 +124,12 @@ export function useChatSend(chatId: string | null) {
   // The date lens, for the same reason: a question asked over a past portfolio is about it.
   const { date: asOf, isToday } = useAsOf();
   const invalidate = useInvalidate();
-  const [pending, setPending] = useState("");
-  // Kept apart from `pending`: the thinking is shown above the answer and folded away, so the
-  // two must not be concatenated into one stream of text.
-  const [thinking, setThinking] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [live, setLive] = useState<LiveTool[]>([]);
-  const [request, setRequest] = useState<ToolRequest | null>(null);
-  const [error, setError] = useState<UiError | null>(null);
-  // What the *last* question cost, not the chat: a new message starts the count again, the way
-  // a chat's running total belongs in Settings rather than over the input box.
-  const [usage, setUsage] = useState<AiUsage | null>(null);
+  const [turn, dispatch] = useReducer(turnReducer, IDLE);
 
   const send = useCallback(
     async (text: string) => {
       if (!chatId) return;
-      setPending("");
-      setThinking("");
-      setError(null);
-      setLive([]);
-      setRequest(null);
-      setUsage(null);
-      setBusy(true);
+      dispatch({ type: "start" });
 
       // Shown at once; the host writes the same turn, so the refetch replaces it with an identical row.
       const optimistic: ChatMessage = {
@@ -84,67 +144,22 @@ export function useChatSend(chatId: string | null) {
         optimistic,
       ]);
 
-      const settle = () => {
-        setBusy(false);
-        setLive([]);
-        setRequest(null);
-        setPending("");
-        // The summary is persisted with the turn, so the live copy goes when the stored one lands.
-        setThinking("");
-        // Always, not only on success: the user's own turn was persisted before the call, so
-        // even a failed reply leaves the chat further along than the cache thinks.
-        invalidate(keys.aiMessages(chatId), keys.aiChats(), keys.aiGrants(chatId));
-      };
-
       try {
         await api.aiSend(chatId, text, screen, isToday ? null : asOf, (event: AiEvent) => {
-          switch (event.type) {
-            case "text":
-              setPending((current) => current + event.text);
-              break;
-            case "tool_requested":
-              setRequest({
-                requestId: event.request_id,
-                tool: event.tool,
-                params: event.params,
-                write: event.write,
-                reason: event.reason,
-              });
-              break;
-            case "tool_running":
-              setRequest(null);
-              setLive((current) => [...current, { kind: "tool", name: event.tool, reason: event.reason }]);
-              break;
-            case "tool_finished":
-              // The last unfinished entry for this tool: the model may call one twice in a turn,
-              // and the second answer belongs to the second call.
-              setLive((current) => fill(current, event.tool, event.content));
-              break;
-            case "reasoning":
-              setThinking((current) => current + event.text);
-              break;
-            case "searching":
-              setLive((current) => [...current, { kind: "search", name: event.query }]);
-              break;
-            case "usage":
-              // Assigned, never added: the host sends the turn's running total, so a step
-              // that arrives twice or out of order still leaves the right number on screen.
-              setUsage(event.usage);
-              break;
-            case "done":
-              settle();
-              break;
-            case "error":
-              setError(event.error);
-              settle();
-              break;
+          dispatch(event);
+          // Always, not only on success: the user's own turn was persisted before the call, so
+          // even a failed reply leaves the chat further along than the cache thinks.
+          if (event.type === "done" || event.type === "error") {
+            invalidate(keys.aiMessages(chatId), keys.aiChats(), keys.aiGrants(chatId));
           }
         });
       } catch (e) {
         // The command refused before the turn started (panel off, no key saved). Nothing was
         // written, so the optimistic line has to go.
-        setBusy(false);
-        setError(e instanceof ApiError ? e.detail : { code: "internal", message: String(e) });
+        dispatch({
+          type: "refused",
+          error: e instanceof ApiError ? e.detail : { code: "internal", message: String(e) },
+        });
         client.setQueryData<ChatMessage[]>(keys.aiMessages(chatId), (current) =>
           (current ?? []).filter((message) => message.id !== optimistic.id),
         );
@@ -156,15 +171,15 @@ export function useChatSend(chatId: string | null) {
   const decide = useCallback((requestId: string, decision: ToolDecision) => {
     // Cleared first: the card is answered whatever the host makes of it, and a second click
     // on a card already spent would be answering nothing.
-    setRequest(null);
-    void api.aiToolDecide(requestId, decision).catch(() => setRequest(null));
+    dispatch({ type: "decided" });
+    void api.aiToolDecide(requestId, decision).catch(() => dispatch({ type: "decided" }));
   }, []);
 
   const stop = useCallback(() => {
     void api.aiCancel();
   }, []);
 
-  return { pending, thinking, busy, live, request, error, usage, send, decide, stop };
+  return { ...turn, send, decide, stop };
 }
 
 function fill(live: LiveTool[], tool: string, content: string): LiveTool[] {

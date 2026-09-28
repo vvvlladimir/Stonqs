@@ -43,7 +43,6 @@ pub fn build_taxonomy_preview(
     let isin_idx = index_of(&config.isin);
 
     let mut detected_name = String::new();
-
     let mut nodes: BTreeMap<Vec<String>, Option<Decimal>> = BTreeMap::new();
     let mut assignments: Vec<PreviewAssignment> = Vec::new();
 
@@ -53,93 +52,24 @@ pub fn build_taxonomy_preview(
                 .map(|v| v.trim().to_string())
                 .unwrap_or_default()
         };
-        let mut path: Vec<String> = level_idx
-            .iter()
-            .map(|k| row.get(*k).map(|v| v.trim().to_string()).unwrap_or_default())
-            .collect();
-        while path.last().is_some_and(|v| v.is_empty()) {
-            path.pop();
-        }
-        if path.is_empty() {
+        let Some(path) = category_path(row, &level_idx, config.root_is_name, &mut detected_name) else {
             continue;
-        }
-        if config.root_is_name {
-            if detected_name.is_empty() {
-                detected_name = path[0].clone();
-            }
-
-            // A repeated first level is the tree name, not a category.
-            if is_unclassified(&path[0]) {
-                continue;
-            }
-            path.remove(0);
-            if path.is_empty() {
-                continue;
-            }
-        } else if is_unclassified(&path[0]) {
-            continue;
-        }
-
-        let symbol = cell(symbol_idx);
-        let isin = cell(isin_idx);
-        let weight_raw = cell(weight_idx);
+        };
+        let cells = Cells {
+            symbol: cell(symbol_idx),
+            isin: cell(isin_idx),
+            weight: cell(weight_idx),
+        };
         let target_raw = cell(target_idx);
-        let is_assignment =
-            !symbol.is_empty() || !isin.is_empty() || (!weight_raw.is_empty() && target_raw.is_empty());
+        let is_assignment = !cells.symbol.is_empty()
+            || !cells.isin.is_empty()
+            || (!cells.weight.is_empty() && target_raw.is_empty());
 
         if is_assignment {
-            let label = path.pop().unwrap_or_default();
-            if path.is_empty() {
-                continue;
+            if let Some(assignment) = read_assignment(i + 1, path, cells, config, securities, &mut problems) {
+                nodes.entry(assignment.path.clone()).or_default();
+                assignments.push(assignment);
             }
-            let weight = match parse_percent(&weight_raw) {
-                Some(v) => v / Decimal::ONE_HUNDRED,
-
-                None if weight_raw.is_empty() => Decimal::ONE,
-                None => {
-                    problems.push(problem(
-                        i + 1,
-                        config.weight.clone(),
-                        ProblemCode::NotANumber,
-                        format!("the share {weight_raw:?} could not be parsed; the row is skipped"),
-                        Severity::Error,
-                    ));
-                    continue;
-                }
-            };
-            if weight <= Decimal::ZERO {
-                continue;
-            }
-            let hit = match_security(&symbol, &isin, &label, securities);
-            if hit.is_none() {
-                problems.push(problem(
-                    i + 1,
-                    config.symbol.clone(),
-                    ProblemCode::UnknownSecurity,
-                    format!(
-                        "\"{label}\" ({}) is not in the database — this row's split will not be written",
-                        [symbol.as_str(), isin.as_str()]
-                            .iter()
-                            .filter(|v| !v.is_empty())
-                            .cloned()
-                            .collect::<Vec<_>>()
-                            .join(" · ")
-                    ),
-                    Severity::Warning,
-                ));
-            }
-
-            nodes.entry(path.clone()).or_default();
-            assignments.push(PreviewAssignment {
-                row: i + 1,
-                path,
-                label,
-                symbol,
-                isin,
-                weight: weight.min(Decimal::ONE),
-                security_id: hit.as_ref().map(|(s, _)| s.id.clone()),
-                matched_by: hit.map(|(_, how)| how.to_string()),
-            });
         } else {
             let target = parse_percent(&target_raw).filter(|v| *v > Decimal::ZERO);
             let entry = nodes.entry(path).or_default();
@@ -156,16 +86,7 @@ pub fn build_taxonomy_preview(
             target: target.map(|t| t / Decimal::ONE_HUNDRED),
         })
         .collect();
-
-    let name = name
-        .map(str::to_string)
-        .filter(|n| !n.trim().is_empty())
-        .unwrap_or(detected_name);
-    let name = if name.trim().is_empty() {
-        "Imported classification".to_string()
-    } else {
-        name
-    };
+    let name = tree_name(name, detected_name);
 
     TaxonomyPreview {
         kind: guess_kind(&name),
@@ -174,6 +95,116 @@ pub fn build_taxonomy_preview(
         nodes,
         assignments,
         problems,
+    }
+}
+
+/// The row's level cells without trailing blanks. With `root_is_name` the first level is the
+/// tree's name, repeated on every row: the first one seen is kept and the level dropped.
+fn category_path(
+    row: &[String],
+    level_idx: &[usize],
+    root_is_name: bool,
+    detected_name: &mut String,
+) -> Option<Vec<String>> {
+    let mut path: Vec<String> = level_idx
+        .iter()
+        .map(|k| row.get(*k).map(|v| v.trim().to_string()).unwrap_or_default())
+        .collect();
+    while path.last().is_some_and(|v| v.is_empty()) {
+        path.pop();
+    }
+    if path.is_empty() {
+        return None;
+    }
+    if root_is_name && detected_name.is_empty() {
+        detected_name.clone_from(&path[0]);
+    }
+    if is_unclassified(&path[0]) {
+        return None;
+    }
+    if root_is_name {
+        path.remove(0);
+    }
+    (!path.is_empty()).then_some(path)
+}
+
+/// The cells that make a row an instrument's share rather than a category.
+struct Cells {
+    symbol: String,
+    isin: String,
+    weight: String,
+}
+
+/// An instrument row: its own name is the last level, and the levels above it are its category.
+fn read_assignment(
+    number: usize,
+    mut path: Vec<String>,
+    cells: Cells,
+    config: &TaxonomyCsvConfig,
+    securities: &[Security],
+    problems: &mut Vec<ImportProblem>,
+) -> Option<PreviewAssignment> {
+    let Cells { symbol, isin, weight } = cells;
+    let label = path.pop().unwrap_or_default();
+    if path.is_empty() {
+        return None;
+    }
+    let weight = match parse_percent(&weight) {
+        Some(v) => v / Decimal::ONE_HUNDRED,
+        None if weight.is_empty() => Decimal::ONE,
+        None => {
+            problems.push(problem(
+                number,
+                config.weight.clone(),
+                ProblemCode::NotANumber,
+                format!("the share {weight:?} could not be parsed; the row is skipped"),
+                Severity::Error,
+            ));
+            return None;
+        }
+    };
+    if weight <= Decimal::ZERO {
+        return None;
+    }
+    let hit = match_security(&symbol, &isin, &label, securities);
+    if hit.is_none() {
+        let codes: Vec<&str> = [symbol.as_str(), isin.as_str()]
+            .into_iter()
+            .filter(|v| !v.is_empty())
+            .collect();
+        problems.push(problem(
+            number,
+            config.symbol.clone(),
+            ProblemCode::UnknownSecurity,
+            format!(
+                "\"{label}\" ({}) is not in the database — this row's split will not be written",
+                codes.join(" · ")
+            ),
+            Severity::Warning,
+        ));
+    }
+    Some(PreviewAssignment {
+        row: number,
+        path,
+        label,
+        symbol,
+        isin,
+        weight: weight.min(Decimal::ONE),
+        security_id: hit.as_ref().map(|(s, _)| s.id.clone()),
+        matched_by: hit.map(|(_, how)| how.to_string()),
+    })
+}
+
+/// The caller's name, else the one the file repeats, else a placeholder the user renames.
+fn tree_name(given: Option<&str>, detected: String) -> String {
+    let name = given
+        .map(str::to_string)
+        .filter(|n| !n.trim().is_empty())
+        .unwrap_or(detected);
+    if name.trim().is_empty() {
+        "Imported classification".to_string()
+    } else {
+        name
     }
 }
 

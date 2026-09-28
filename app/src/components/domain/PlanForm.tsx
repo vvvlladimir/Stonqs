@@ -51,33 +51,6 @@ export function PlanForm({
     });
   };
 
-  const setLeg = (index: number, patch: Partial<PlanInput["legs"][number]>) =>
-    onChange({
-      ...draft,
-      legs: draft.legs.map((leg, i) => (i === index ? { ...leg, ...patch } : leg)),
-    });
-
-  const addLeg = () => {
-    const used = new Set(draft.legs.map((l) => l.security_id));
-    const next = securities.find((s) => !used.has(s.id));
-    if (!next) return;
-    onChange({
-      ...draft,
-      // The first instrument moves the plan onto a depot: cash cannot hold a share.
-      account_id: depots.some((a) => a.id === draft.account_id) ? draft.account_id : (depots[0]?.id ?? ""),
-      legs: [...draft.legs, { security_id: next.id, weight: "1" }],
-    });
-  };
-
-  const dropLeg = (index: number) => onChange({ ...draft, legs: draft.legs.filter((_, i) => i !== index) });
-
-  const ready =
-    draft.name.trim().length > 0 &&
-    draft.account_id.length > 0 &&
-    amountOf(draft.amount) > 0 &&
-    amountOf(draft.fees) + amountOf(draft.taxes) < amountOf(draft.amount) &&
-    draft.legs.every((leg) => amountOf(leg.weight) > 0);
-
   return (
     <FormDialog
       title={title ?? (draft.id ? t`Edit plan` : t`New plan`)}
@@ -85,7 +58,7 @@ export function PlanForm({
       onSubmit={onSubmit}
       busy={pending}
       error={error}
-      ready={ready}
+      ready={planReady(draft)}
       submitLabel={submitLabel}
       wide
     >
@@ -168,57 +141,7 @@ export function PlanForm({
         </FieldRow>
       </FieldSet>
 
-      <FieldSet
-        label={t`What it buys`}
-        hint={
-          draft.legs.length === 0
-            ? t`Without an instrument the contribution stays as cash on the account.`
-            : t`Weights are read against each other, so 60 and 40 split the same way as 6 and 4.`
-        }
-      >
-        {draft.legs.map((leg, index) => (
-          <FieldRow
-            key={leg.security_id}
-            note={formatPercent(String(legShare(draft.legs, index)), { digits: 1 })}
-            end={
-              <button
-                type="button"
-                className="iconbtn iconbtn--danger"
-                aria-label={t`Remove instrument`}
-                onClick={() => dropLeg(index)}
-              >
-                <TrashIcon />
-              </button>
-            }
-          >
-            <select
-              aria-label={t`Instrument`}
-              value={leg.security_id}
-              onChange={(e) => setLeg(index, { security_id: e.target.value })}
-            >
-              {securities.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.symbol} · {s.name}
-                </option>
-              ))}
-            </select>
-            <input
-              inputMode="decimal"
-              aria-label={t`Weight`}
-              value={leg.weight}
-              onChange={(e) => setLeg(index, { weight: e.target.value })}
-            />
-          </FieldRow>
-        ))}
-        <button
-          type="button"
-          className="btn btn--ghost"
-          onClick={addLeg}
-          disabled={depots.length === 0 || draft.legs.length >= securities.length}
-        >
-          <PlusIcon /> <Trans>Add instrument</Trans>
-        </button>
-      </FieldSet>
+      <PlanLegs draft={draft} securities={securities} depots={depots} onChange={onChange} />
 
       <CheckField
         label={t`Active`}
@@ -226,5 +149,104 @@ export function PlanForm({
         onChange={(active) => onChange({ ...draft, active })}
       />
     </FormDialog>
+  );
+}
+
+function planReady(draft: PlanInput): boolean {
+  return (
+    draft.name.trim().length > 0 &&
+    draft.account_id.length > 0 &&
+    amountOf(draft.amount) > 0 &&
+    amountOf(draft.fees) + amountOf(draft.taxes) < amountOf(draft.amount) &&
+    draft.legs.every((leg) => amountOf(leg.weight) > 0)
+  );
+}
+
+/** The instruments a contribution buys and their weights; none leaves it as cash. */
+function PlanLegs({
+  draft,
+  securities,
+  depots,
+  onChange,
+}: {
+  draft: PlanInput;
+  securities: SecurityRow[];
+  depots: AccountRow[];
+  onChange: (draft: PlanInput) => void;
+}) {
+  const { t } = useLingui();
+
+  const setLeg = (index: number, patch: Partial<PlanInput["legs"][number]>) =>
+    onChange({
+      ...draft,
+      legs: draft.legs.map((leg, i) => (i === index ? { ...leg, ...patch } : leg)),
+    });
+
+  const addLeg = () => {
+    const used = new Set(draft.legs.map((l) => l.security_id));
+    const next = securities.find((s) => !used.has(s.id));
+    if (!next) return;
+    onChange({
+      ...draft,
+      // The first instrument moves the plan onto a depot: cash cannot hold a share.
+      account_id: depots.some((a) => a.id === draft.account_id) ? draft.account_id : (depots[0]?.id ?? ""),
+      legs: [...draft.legs, { security_id: next.id, weight: "1" }],
+    });
+  };
+
+  const dropLeg = (index: number) => onChange({ ...draft, legs: draft.legs.filter((_, i) => i !== index) });
+
+  return (
+    <FieldSet
+      label={t`What it buys`}
+      hint={
+        draft.legs.length === 0
+          ? t`Without an instrument the contribution stays as cash on the account.`
+          : t`Weights are read against each other, so 60 and 40 split the same way as 6 and 4.`
+      }
+    >
+      {draft.legs.map((leg, index) => (
+        <FieldRow
+          key={leg.security_id}
+          note={formatPercent(String(legShare(draft.legs, index)), { digits: 1 })}
+          end={
+            <button
+              type="button"
+              className="iconbtn iconbtn--danger"
+              aria-label={t`Remove instrument`}
+              onClick={() => dropLeg(index)}
+            >
+              <TrashIcon />
+            </button>
+          }
+        >
+          <select
+            aria-label={t`Instrument`}
+            value={leg.security_id}
+            onChange={(e) => setLeg(index, { security_id: e.target.value })}
+          >
+            {securities.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.symbol} · {s.name}
+              </option>
+            ))}
+          </select>
+          <input
+            inputMode="decimal"
+            aria-label={t`Weight`}
+            value={leg.weight}
+            onChange={(e) => setLeg(index, { weight: e.target.value })}
+          />
+        </FieldRow>
+      ))}
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={addLeg}
+        disabled={depots.length === 0 || draft.legs.length >= securities.length}
+      >
+        <PlusIcon /> <Trans>Add instrument</Trans>
+      </button>
+    </FieldSet>
   );
 }

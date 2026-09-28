@@ -9,6 +9,7 @@ import type {
   ImportPreviewData,
   ImportResult,
   ParseConfig,
+  Plugin,
   RowOverride,
   Unlock,
 } from "../../lib/types";
@@ -23,19 +24,13 @@ const BLANK_CONFIG: ParseConfig = {
   decimal_separator: null,
 };
 
+type Detected = { config: ParseConfig; mapping: ImportMapping };
+
 /** One import from file to commit; every layout change re-asks the core for the preview. */
 export function useImportSession() {
   const invalidate = useInvalidate();
-  const [step, setStep] = useState(0);
+  const layout = useLayout();
   const [fileName, setFileName] = useState<string | null>(null);
-  const [preview, setPreview] = useState<ImportPreviewData | null>(null);
-  // What the core made of the file on its own. Kept so that picking a template — which
-  // answers every question at once, and may answer them for the wrong broker — stays undoable.
-  const [detected, setDetected] = useState<{ config: ParseConfig; mapping: ImportMapping } | null>(null);
-  const [config, setConfig] = useState<ParseConfig | null>(null);
-  const [mapping, setMapping] = useState<ImportMapping | null>(null);
-  const [overrides, setOverrides] = useState<RowOverride[]>([]);
-  const [template, setTemplate] = useState("");
   const [options, setOptions] = useState<ImportOptions>({
     create_missing_securities: true,
     new_security_kind: "OTHER",
@@ -43,9 +38,6 @@ export function useImportSession() {
     import_similar: false,
   });
   const [result, setResult] = useState<ImportResult | null>(null);
-
-  const accounts = useAccounts();
-  const templates = useImportTemplates();
   const plugins = usePlugins();
 
   // A plugin's reader recognised a sealed file: which file, which reader asked, and whether a
@@ -61,18 +53,66 @@ export function useImportSession() {
     },
     onSuccess: (data) => {
       setSealed(null);
-      setPreview(data);
-      // A recognised file arrives already laid out, so what the core would have detected on
-      // its own is not in hand — "— detect —" asks for it again rather than replaying it.
-      setDetected(data.applied_template ? null : { config: data.config, mapping: data.mapping });
-      setConfig(data.config);
-      setMapping(data.mapping);
-      setOverrides([]);
       setResult(null);
-      setTemplate(data.applied_template ?? "");
-      setStep(0);
+      layout.adopt(data);
     },
   });
+
+  const commit = useMutation({
+    mutationFn: () => api.importCommit(layout.config!, layout.mapping, layout.overrides, options),
+    onSuccess: (data) => {
+      setResult(data);
+      invalidate(...affects.transactions);
+    },
+  });
+
+  const pickFile = async () => {
+    const path = await open({
+      multiple: false,
+      filters: [{ name: "Broker export", extensions: readableExtensions(plugins.data?.plugins ?? []) }],
+    });
+    if (typeof path !== "string") return;
+    setFileName(path.split("/").pop() ?? path);
+    load.mutate({ path });
+  };
+
+  const reset = () => {
+    api.importClear();
+    layout.adopt(null);
+    setResult(null);
+    setFileName(null);
+  };
+
+  const { adopt: _, ...shown } = layout;
+  return {
+    ...shown,
+    fileName,
+    options,
+    setOptions,
+    result,
+    sealed,
+    setSealed,
+    plugins,
+    load,
+    commit,
+    pickFile,
+    reset,
+  };
+}
+
+/** How the file is read and laid out, and the preview that reading gives. */
+function useLayout() {
+  const [step, setStep] = useState(0);
+  const [preview, setPreview] = useState<ImportPreviewData | null>(null);
+  // What the core made of the file on its own. Kept so that picking a template — which
+  // answers every question at once, and may answer them for the wrong broker — stays undoable.
+  const [detected, setDetected] = useState<Detected | null>(null);
+  const [config, setConfig] = useState<ParseConfig | null>(null);
+  const [mapping, setMapping] = useState<ImportMapping | null>(null);
+  const [overrides, setOverrides] = useState<RowOverride[]>([]);
+  const [template, setTemplate] = useState("");
+  const accounts = useAccounts();
+  const templates = useImportTemplates();
 
   const refresh = useMutation({
     mutationFn: (next: { config: ParseConfig; mapping: ImportMapping | null; overrides: RowOverride[] }) =>
@@ -80,13 +120,18 @@ export function useImportSession() {
     onSuccess: (data) => setPreview(data),
   });
 
-  const commit = useMutation({
-    mutationFn: () => api.importCommit(config!, mapping, overrides, options),
-    onSuccess: (data) => {
-      setResult(data);
-      invalidate(...affects.transactions);
-    },
-  });
+  /** A freshly loaded file, or none. */
+  const adopt = (data: ImportPreviewData | null) => {
+    setPreview(data);
+    // A recognised file arrives already laid out, so what the core would have detected on
+    // its own is not in hand — "— detect —" asks for it again rather than replaying it.
+    setDetected(data && !data.applied_template ? { config: data.config, mapping: data.mapping } : null);
+    setConfig(data?.config ?? null);
+    setMapping(data?.mapping ?? null);
+    setOverrides([]);
+    setTemplate(data?.applied_template ?? "");
+    setStep(0);
+  };
 
   // Recompute the preview after each mapping change.
   const apply = (nextConfig: ParseConfig, nextMapping: ImportMapping | null, next: RowOverride[]) => {
@@ -96,30 +141,12 @@ export function useImportSession() {
     refresh.mutate({ config: nextConfig, mapping: nextMapping, overrides: next });
   };
 
-  const pickFile = async () => {
-    // A plugin's reader is only reachable if its files can be picked, so the filter is the app's
-    // own endings plus whatever the installed readers say they read.
-    const fromPlugins = (plugins.data?.plugins ?? [])
-      .filter((plugin) => plugin.status === "ok")
-      .flatMap((plugin) => plugin.readers)
-      .flatMap((reader) => reader.extensions)
-      .map((extension) => extension.replace(/^\./, "").toLowerCase());
-    const extensions = [...new Set(["csv", "txt", "xml", "json", ...fromPlugins])];
-    const path = await open({
-      multiple: false,
-      filters: [{ name: "Broker export", extensions }],
-    });
-    if (typeof path !== "string") return;
-    setFileName(path.split("/").pop() ?? path);
-    load.mutate({ path });
-  };
-
   const current = mapping ?? preview?.mapping ?? null;
-  const account = current?.account_id ?? null;
 
   /** Lay the file out by a saved template, or — with no id — by what the core detected. */
   const applyTemplate = (id: string) => {
     setTemplate(id);
+    const account = current?.account_id ?? null;
     const found = templates.data?.find((t) => t.id === id);
     if (!found) {
       if (detected) apply(detected.config, { ...detected.mapping, account_id: account }, overrides);
@@ -133,23 +160,9 @@ export function useImportSession() {
     apply(found.config, { ...found.mapping, account_id: kept }, overrides);
   };
 
-  const reset = () => {
-    api.importClear();
-    setPreview(null);
-    setDetected(null);
-    setConfig(null);
-    setMapping(null);
-    setOverrides([]);
-    setResult(null);
-    setFileName(null);
-    setTemplate("");
-    setStep(0);
-  };
-
   return {
     step,
     setStep,
-    fileName,
     preview,
     config,
     mapping,
@@ -157,20 +170,22 @@ export function useImportSession() {
     overrides,
     template,
     setTemplate,
-    options,
-    setOptions,
-    result,
-    sealed,
-    setSealed,
     accounts,
     templates,
-    plugins,
-    load,
     refresh,
-    commit,
     apply,
-    pickFile,
     applyTemplate,
-    reset,
+    adopt,
   };
+}
+
+/** A plugin's reader is only reachable if its files can be picked, so the filter is the app's own
+ *  endings plus whatever the installed readers say they read. */
+function readableExtensions(plugins: Plugin[]): string[] {
+  const fromPlugins = plugins
+    .filter((plugin) => plugin.status === "ok")
+    .flatMap((plugin) => plugin.readers)
+    .flatMap((reader) => reader.extensions)
+    .map((extension) => extension.replace(/^\./, "").toLowerCase());
+  return [...new Set(["csv", "txt", "xml", "json", ...fromPlugins])];
 }

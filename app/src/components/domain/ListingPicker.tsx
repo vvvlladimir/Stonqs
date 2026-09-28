@@ -90,73 +90,11 @@ export function ListingPicker({ row, onClose }: { row: SecurityRow; onClose: () 
         )}
 
         {usable.length > 0 && (
-          <DataTable
-            card={false}
-            rows={usable}
-            rowKey={(listing) => `${listing.mic}-${listing.ticker}`}
-            columns={[
-              {
-                key: "symbol",
-                sort: (listing) => listing.symbol,
-                header: t`Symbol`,
-                align: "left",
-                className: "nm",
-                cell: (listing) => (
-                  <>
-                    {listing.symbol}
-                    {isCurrent(listing) && (
-                      <span className="badge">
-                        <Trans>current</Trans>
-                      </span>
-                    )}
-                  </>
-                ),
-              },
-              {
-                key: "exchange",
-                sort: (listing) => listing.exchange ?? listing.mic,
-                header: t`Exchange`,
-                align: "left",
-                cell: (listing) => listing.exchange ?? listing.mic,
-              },
-              {
-                key: "currency",
-                sort: (listing) => listing.currency,
-                header: t`Currency`,
-                align: "left",
-                cell: (listing) => listing.currency ?? "—",
-              },
-              {
-                key: "price",
-                sort: (listing) => toNumber(listing.last_close),
-                header: t`Last price`,
-                cell: (listing) =>
-                  listing.last_close && listing.currency ? (
-                    <Money value={listing.last_close} currency={listing.currency} />
-                  ) : (
-                    "—"
-                  ),
-              },
-              {
-                key: "acts",
-                align: "left",
-                className: "acts",
-                cell: (listing) => (
-                  <button
-                    className="iconbtn iconbtn--sm"
-                    disabled={isCurrent(listing) || choose.isPending || !listing.currency || !listing.symbol}
-                    title={
-                      listing.currency
-                        ? undefined
-                        : t`Venue not checked — refresh the list to learn its currency`
-                    }
-                    onClick={() => choose.mutate(listing)}
-                  >
-                    <Trans>Choose</Trans>
-                  </button>
-                ),
-              },
-            ]}
+          <ListingTable
+            listings={usable}
+            isCurrent={isCurrent}
+            busy={choose.isPending}
+            onChoose={(listing) => choose.mutate(listing)}
           />
         )}
 
@@ -180,5 +118,87 @@ export function ListingPicker({ row, onClose }: { row: SecurityRow; onClose: () 
         </Buttons>
       </section>
     </Modal>
+  );
+}
+
+function ListingTable({
+  listings,
+  isCurrent,
+  busy,
+  onChoose,
+}: {
+  listings: Listing[];
+  isCurrent: (listing: Listing) => boolean;
+  busy: boolean;
+  onChoose: (listing: Listing) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <DataTable
+      card={false}
+      rows={listings}
+      rowKey={(listing) => `${listing.mic}-${listing.ticker}`}
+      columns={[
+        {
+          key: "symbol",
+          sort: (listing) => listing.symbol,
+          header: t`Symbol`,
+          align: "left",
+          className: "nm",
+          cell: (listing) => (
+            <>
+              {listing.symbol}
+              {isCurrent(listing) && (
+                <span className="badge">
+                  <Trans>current</Trans>
+                </span>
+              )}
+            </>
+          ),
+        },
+        {
+          key: "exchange",
+          sort: (listing) => listing.exchange ?? listing.mic,
+          header: t`Exchange`,
+          align: "left",
+          cell: (listing) => listing.exchange ?? listing.mic,
+        },
+        {
+          key: "currency",
+          sort: (listing) => listing.currency,
+          header: t`Currency`,
+          align: "left",
+          cell: (listing) => listing.currency ?? "—",
+        },
+        {
+          key: "price",
+          sort: (listing) => toNumber(listing.last_close),
+          header: t`Last price`,
+          cell: (listing) =>
+            listing.last_close && listing.currency ? (
+              <Money value={listing.last_close} currency={listing.currency} />
+            ) : (
+              "—"
+            ),
+        },
+        {
+          key: "acts",
+          align: "left",
+          className: "acts",
+          cell: (listing) => (
+            <button
+              className="iconbtn iconbtn--sm"
+              disabled={isCurrent(listing) || busy || !listing.currency || !listing.symbol}
+              title={
+                listing.currency ? undefined : t`Venue not checked — refresh the list to learn its currency`
+              }
+              onClick={() => onChoose(listing)}
+            >
+              <Trans>Choose</Trans>
+            </button>
+          ),
+        },
+      ]}
+    />
   );
 }

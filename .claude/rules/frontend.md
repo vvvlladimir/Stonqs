@@ -234,7 +234,7 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   and no per-breakpoint layout to keep in step. A board leaves the app as a file through
   `boardToFile`/`boardFromFile`, which is also the format of `lib/defaultDashboard.json`: the
   shipped dashboard is authored by exporting one, never by editing code.
-- The widget catalog is `screens/dashboard/widgets/`: `model.ts` (types and shared helpers), one file per catalog group (`chart`, `list` / `periodLists`, `tiles`, and the value widgets split as `value` / `activity` / `ratio` / `progress` over the shared `figure`, with `metrics` their catalog), and `index.tsx` as the registry alone. A registry file declares no components and a group file exports nothing but components — that is what keeps fast refresh working.
+- The widget catalog is `screens/dashboard/widgets/`: `model.ts` (types and shared helpers), one file per catalog group (`chart`, `list` / `periodLists`, `tiles`, and the value widgets split as `value` / `activity` / `ratio` / `progress` over the shared `figure`, with `metrics` their catalog), the catalog entries per picker group in `catalog/` (`lists`, `numbers`, `charts`, `text` — the palette groups by `group`, so the split changes no order), and `index.tsx` as the registry alone. A registry file declares no components and a group file exports nothing but components — that is what keeps fast refresh working.
 
 ## i18n
 

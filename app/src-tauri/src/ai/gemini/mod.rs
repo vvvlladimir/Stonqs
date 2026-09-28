@@ -154,25 +154,13 @@ fn read_stream<R: std::io::BufRead>(
     sink: &mut dyn FnMut(AiEvent),
     cancelled: &dyn Fn() -> bool,
 ) -> AiResult<AiTurn> {
-    let mut text = String::new();
-    let mut thinking = String::new();
-    let mut thinking_signature: Option<String> = None;
-    let mut calls: Vec<Block> = Vec::new();
-    let mut searched: Vec<String> = Vec::new();
+    let mut turn = Turn::default();
     let mut usage = Usage::default();
     let mut finish = String::new();
 
     for event in SseReader::new(reader) {
         if cancelled() {
-            return Ok(turn(
-                text,
-                thinking,
-                thinking_signature,
-                calls,
-                searched,
-                StopReason::Cancelled,
-                Usage::default(),
-            ));
+            return Ok(turn.finish(StopReason::Cancelled, Usage::default()));
         }
         let event = event.map_err(|e| AiError::Network(e.to_string()))?;
         let Ok(data) = serde_json::from_str::<Value>(&event.data) else {
@@ -188,56 +176,10 @@ fn read_stream<R: std::io::BufRead>(
         }
 
         let candidate = &data["candidates"][0];
-        if let Some(parts) = candidate["content"]["parts"].as_array() {
-            for part in parts {
-                let signature = part["thoughtSignature"].as_str().map(str::to_string);
-                if let Some(call) = part.get("functionCall").filter(|c| c.is_object()) {
-                    let name = call["name"].as_str().unwrap_or_default().to_string();
-                    calls.push(Block::ToolCall {
-                        // Gemini names no call; the index keeps two calls of one tool apart.
-                        id: format!("{name}#{}", calls.len()),
-                        name,
-                        args_json: call["args"].to_string(),
-                        signature,
-                    });
-                    continue;
-                }
-                let Some(chunk) = part["text"].as_str().filter(|c| !c.is_empty()) else {
-                    // A part carrying nothing but a signature still carries it.
-                    if signature.is_some() {
-                        thinking_signature = signature;
-                    }
-                    continue;
-                };
-                // A thought part is the same shape as an answer part with one flag on it.
-                if part["thought"].as_bool().unwrap_or(false) {
-                    thinking.push_str(chunk);
-                    if signature.is_some() {
-                        thinking_signature = signature;
-                    }
-                    sink(AiEvent::Reasoning {
-                        text: chunk.to_string(),
-                    });
-                } else {
-                    text.push_str(chunk);
-                    sink(AiEvent::Text {
-                        text: chunk.to_string(),
-                    });
-                }
-            }
+        for part in candidate["content"]["parts"].as_array().into_iter().flatten() {
+            turn.part(part, sink);
         }
-        // The search is the provider's own: what comes back is the query it ran, not results to
-        // hand anywhere.
-        if let Some(queries) = candidate["groundingMetadata"]["webSearchQueries"].as_array() {
-            for query in queries.iter().filter_map(|q| q.as_str()) {
-                if !searched.iter().any(|seen| seen == query) {
-                    searched.push(query.to_string());
-                    sink(AiEvent::Searching {
-                        query: query.to_string(),
-                    });
-                }
-            }
-        }
+        turn.searches(&candidate["groundingMetadata"], sink);
         // A prompt blocked outright has no candidate at all, only this.
         if data["promptFeedback"]["blockReason"].is_string() {
             finish = "SAFETY".to_string();
@@ -247,59 +189,106 @@ fn read_stream<R: std::io::BufRead>(
         }
     }
 
-    let stop = match finish.as_str() {
+    let stop = stop_reason(&finish, !turn.calls.is_empty());
+    Ok(turn.finish(stop, usage))
+}
+
+fn stop_reason(finish: &str, called: bool) -> StopReason {
+    match finish {
         "MAX_TOKENS" => StopReason::MaxTokens,
         "SAFETY" | "PROHIBITED_CONTENT" | "BLOCKLIST" | "SPII" | "RECITATION" | "IMAGE_SAFETY" => {
             StopReason::Refusal
         }
         "MALFORMED_FUNCTION_CALL" | "UNEXPECTED_TOOL_CALL" => StopReason::Error(finish.to_lowercase()),
-        _ => {
-            if calls.is_empty() {
-                StopReason::EndTurn
-            } else {
-                StopReason::ToolUse
-            }
-        }
-    };
-    Ok(turn(
-        text,
-        thinking,
-        thinking_signature,
-        calls,
-        searched,
-        stop,
-        usage,
-    ))
+        _ if called => StopReason::ToolUse,
+        _ => StopReason::EndTurn,
+    }
 }
 
-#[allow(clippy::too_many_arguments)]
-fn turn(
+/// What a turn has streamed so far, in the order it becomes blocks.
+#[derive(Default)]
+struct Turn {
     text: String,
     thinking: String,
     thinking_signature: Option<String>,
     calls: Vec<Block>,
     searched: Vec<String>,
-    stop_reason: StopReason,
-    usage: Usage,
-) -> AiTurn {
-    let mut blocks = Vec::new();
-    if !thinking.is_empty() {
-        blocks.push(Block::Reasoning {
-            text: thinking,
-            signature: thinking_signature,
-        });
+}
+
+impl Turn {
+    fn part(&mut self, part: &Value, sink: &mut dyn FnMut(AiEvent)) {
+        let signature = part["thoughtSignature"].as_str().map(str::to_string);
+        if let Some(call) = part.get("functionCall").filter(|c| c.is_object()) {
+            let name = call["name"].as_str().unwrap_or_default().to_string();
+            self.calls.push(Block::ToolCall {
+                // Gemini names no call; the index keeps two calls of one tool apart.
+                id: format!("{name}#{}", self.calls.len()),
+                name,
+                args_json: call["args"].to_string(),
+                signature,
+            });
+            return;
+        }
+        let Some(chunk) = part["text"].as_str().filter(|c| !c.is_empty()) else {
+            // A part carrying nothing but a signature still carries it.
+            if signature.is_some() {
+                self.thinking_signature = signature;
+            }
+            return;
+        };
+        // A thought part is the same shape as an answer part with one flag on it.
+        if part["thought"].as_bool().unwrap_or(false) {
+            self.thinking.push_str(chunk);
+            if signature.is_some() {
+                self.thinking_signature = signature;
+            }
+            sink(AiEvent::Reasoning {
+                text: chunk.to_string(),
+            });
+        } else {
+            self.text.push_str(chunk);
+            sink(AiEvent::Text {
+                text: chunk.to_string(),
+            });
+        }
     }
-    for query in searched {
-        blocks.push(Block::WebSearch { query });
+
+    /// The search is the provider's own: what comes back is the query it ran, not results to
+    /// hand anywhere.
+    fn searches(&mut self, grounding: &Value, sink: &mut dyn FnMut(AiEvent)) {
+        let Some(queries) = grounding["webSearchQueries"].as_array() else {
+            return;
+        };
+        for query in queries.iter().filter_map(|q| q.as_str()) {
+            if !self.searched.iter().any(|seen| seen == query) {
+                self.searched.push(query.to_string());
+                sink(AiEvent::Searching {
+                    query: query.to_string(),
+                });
+            }
+        }
     }
-    if !text.is_empty() {
-        blocks.push(Block::Text { text });
-    }
-    blocks.extend(calls);
-    AiTurn {
-        blocks,
-        stop_reason,
-        usage,
+
+    fn finish(self, stop_reason: StopReason, usage: Usage) -> AiTurn {
+        let mut blocks = Vec::new();
+        if !self.thinking.is_empty() {
+            blocks.push(Block::Reasoning {
+                text: self.thinking,
+                signature: self.thinking_signature,
+            });
+        }
+        for query in self.searched {
+            blocks.push(Block::WebSearch { query });
+        }
+        if !self.text.is_empty() {
+            blocks.push(Block::Text { text: self.text });
+        }
+        blocks.extend(self.calls);
+        AiTurn {
+            blocks,
+            stop_reason,
+            usage,
+        }
     }
 }
 

@@ -36,9 +36,6 @@ export function Dashboard() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   // The board, not the window: the grid element is what has the columns.
   const cols = useBoardColumns(gridRef);
-  const toast = useToast();
-  // A rejected file is a lasting message beside the board, not a toast that fades.
-  const [importError, setImportError] = useState<string | null>(null);
 
   const board = ui.dashboards.find((d) => d.id === ui.active_dashboard) ?? ui.dashboards[0];
 
@@ -47,6 +44,7 @@ export function Dashboard() {
     patch({ dashboards: ui.dashboards.map((d) => (d.id === board.id ? { ...d, widgets } : d)) });
 
   const tiles = useBoardDrag(board.widgets, setBoard, gridRef);
+  const files = useBoardFiles(board, ui.dashboards, patch);
 
   if (loadError) return <ErrorText error={loadError} />;
   if (!ready)
@@ -83,33 +81,15 @@ export function Dashboard() {
           <EditBar
             board={board}
             onRename={() => setDialog({ kind: "board", action: "rename" })}
-            onDuplicate={() => {
-              const copy: Board = {
-                id: newId("d"),
-                name: t`${board.name} — copy`,
-                widgets: board.widgets.map((w) => ({ ...w, id: newId("w"), cfg: { ...w.cfg } })),
-              };
-              patch({ dashboards: [...ui.dashboards, copy], active_dashboard: copy.id });
-            }}
-            onExport={() => downloadJson(fileNameOf(board.name, "dashboard"), boardToFile(board))}
-            onImport={async () => {
-              const text = await pickJsonFile();
-              if (text === null) return;
-              const imported = boardFromFile(text);
-              if (!imported) {
-                setImportError(t`That file is not a dashboard layout.`);
-                return;
-              }
-              setImportError(null);
-              patch({ dashboards: [...ui.dashboards, imported], active_dashboard: imported.id });
-              toast(t`Layout imported.`);
-            }}
+            onDuplicate={files.duplicate}
+            onExport={files.exportBoard}
+            onImport={files.importBoard}
             onDelete={() => setDialog({ kind: "delete" })}
           />
         ) : undefined
       }
     >
-      <ErrorText>{importError}</ErrorText>
+      <ErrorText>{files.importError}</ErrorText>
 
       {/* `wboard` is the container the tiles' own stylesheet measures, so the columns the
           layout draws and the columns this file counts are one width. */}
@@ -194,4 +174,38 @@ export function Dashboard() {
       />
     </Page>
   );
+}
+
+/** A board copied, written to a file, or read from one. A rejected file is a lasting message
+ *  beside the board, not a toast that fades. */
+function useBoardFiles(board: Board, boards: Board[], patch: (next: Partial<UiState>) => void) {
+  const { t } = useLingui();
+  const toast = useToast();
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const duplicate = () => {
+    const copy: Board = {
+      id: newId("d"),
+      name: t`${board.name} — copy`,
+      widgets: board.widgets.map((w) => ({ ...w, id: newId("w"), cfg: { ...w.cfg } })),
+    };
+    patch({ dashboards: [...boards, copy], active_dashboard: copy.id });
+  };
+
+  const exportBoard = () => downloadJson(fileNameOf(board.name, "dashboard"), boardToFile(board));
+
+  const importBoard = async () => {
+    const text = await pickJsonFile();
+    if (text === null) return;
+    const imported = boardFromFile(text);
+    if (!imported) {
+      setImportError(t`That file is not a dashboard layout.`);
+      return;
+    }
+    setImportError(null);
+    patch({ dashboards: [...boards, imported], active_dashboard: imported.id });
+    toast(t`Layout imported.`);
+  };
+
+  return { duplicate, exportBoard, importBoard, importError };
 }

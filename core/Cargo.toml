@@ -37,3 +37,6 @@ libsqlite3-sys = { version = "0.35", features = ["bundled-sqlcipher-vendored-ope
 rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
 chrono.workspace = true
+
+[lints]
+workspace = true

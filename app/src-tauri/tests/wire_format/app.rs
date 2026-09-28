@@ -380,78 +380,13 @@ fn profile_list_keys_match_the_typescript_types() {
 
 #[test]
 fn a_plugin_carries_its_status_flattened_beside_its_name() {
-    use sq_app_lib::plugins::{
-        Base, DictionaryDef, PluginInfo, Provides, Read, ReaderDef, ScreenDef, ScreenInfo, Size, Status,
-        TaxonomyDef, ThemeDef, ToolDef, ToolInfo, WidgetDef, WidgetInfo, WriterDef, WriterInfo,
-    };
+    use sq_app_lib::plugins::{PluginInfo, Status};
 
     let json = serde_json::to_value(PluginInfo {
         id: "com.example.midnight".into(),
         name: "Midnight".into(),
         version: "1.0.0".into(),
-        provides: Provides {
-            themes: vec![ThemeDef {
-                id: "midnight".into(),
-                name: "Midnight".into(),
-                file: "midnight.css".into(),
-                base: Base::Dark,
-            }],
-            layouts: Vec::new(),
-            readers: vec![ReaderDef {
-                id: "mt940".into(),
-                file: "reader.wasm".into(),
-                sample: "sample.sta".into(),
-                expected: "expected.json".into(),
-                extensions: vec![".sta".into()],
-            }],
-            taxonomies: vec![TaxonomyDef {
-                id: "regions".into(),
-                name: "Regions".into(),
-                file: "regions.csv".into(),
-            }],
-            dictionaries: vec![DictionaryDef {
-                id: "fi".into(),
-                file: "words.json".into(),
-                sample: "sample.csv".into(),
-            }],
-            writers: vec![WriterDef {
-                id: "ledger".into(),
-                name: "Ledger journal".into(),
-                file: "writer.wasm".into(),
-                sample: "sample.json".into(),
-                expected: "expected.journal".into(),
-                extension: "journal".into(),
-            }],
-            widgets: vec![WidgetDef {
-                id: "heat".into(),
-                name: "Heat map".into(),
-                description: String::new(),
-                file: "heat.js".into(),
-                reads: vec![Read::Positions],
-                periodic: false,
-                size: Size { w: 6, h: 8 },
-                min: Size { w: 3, h: 4 },
-            }],
-            screens: vec![ScreenDef {
-                id: "spending".into(),
-                name: "Spending".into(),
-                description: String::new(),
-                file: "spending.js".into(),
-                reads: vec![Read::Transactions],
-                periodic: true,
-                storage: true,
-            }],
-            tools: vec![ToolDef {
-                id: "concentration".into(),
-                name: "Concentration".into(),
-                description: String::new(),
-                file: "tool.wasm".into(),
-                schema: "schema.json".into(),
-                reads: vec![Read::Positions],
-                sample: "sample.json".into(),
-                expected: "expected.json".into(),
-            }],
-        },
+        provides: provides_one_of_each(),
         status: Status::Api { wants: 2, speaks: 1 },
     })
     .unwrap();
@@ -494,8 +429,85 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
         keys(&json["writers"][0]),
         ["expected", "extension", "file", "id", "name", "sample"]
     );
+}
 
-    // What the export menu is offered: addressed the way the save command names it.
+/// One content entry of every kind a package can ship.
+fn provides_one_of_each() -> sq_app_lib::plugins::Provides {
+    use sq_app_lib::plugins::{
+        Base, DictionaryDef, Provides, Read, ReaderDef, ScreenDef, Size, TaxonomyDef, ThemeDef, ToolDef,
+        WidgetDef, WriterDef,
+    };
+
+    Provides {
+        themes: vec![ThemeDef {
+            id: "midnight".into(),
+            name: "Midnight".into(),
+            file: "midnight.css".into(),
+            base: Base::Dark,
+        }],
+        layouts: Vec::new(),
+        readers: vec![ReaderDef {
+            id: "mt940".into(),
+            file: "reader.wasm".into(),
+            sample: "sample.sta".into(),
+            expected: "expected.json".into(),
+            extensions: vec![".sta".into()],
+        }],
+        taxonomies: vec![TaxonomyDef {
+            id: "regions".into(),
+            name: "Regions".into(),
+            file: "regions.csv".into(),
+        }],
+        dictionaries: vec![DictionaryDef {
+            id: "fi".into(),
+            file: "words.json".into(),
+            sample: "sample.csv".into(),
+        }],
+        writers: vec![WriterDef {
+            id: "ledger".into(),
+            name: "Ledger journal".into(),
+            file: "writer.wasm".into(),
+            sample: "sample.json".into(),
+            expected: "expected.journal".into(),
+            extension: "journal".into(),
+        }],
+        widgets: vec![WidgetDef {
+            id: "heat".into(),
+            name: "Heat map".into(),
+            description: String::new(),
+            file: "heat.js".into(),
+            reads: vec![Read::Positions],
+            periodic: false,
+            size: Size { w: 6, h: 8 },
+            min: Size { w: 3, h: 4 },
+        }],
+        screens: vec![ScreenDef {
+            id: "spending".into(),
+            name: "Spending".into(),
+            description: String::new(),
+            file: "spending.js".into(),
+            reads: vec![Read::Transactions],
+            periodic: true,
+            storage: true,
+        }],
+        tools: vec![ToolDef {
+            id: "concentration".into(),
+            name: "Concentration".into(),
+            description: String::new(),
+            file: "tool.wasm".into(),
+            schema: "schema.json".into(),
+            reads: vec![Read::Positions],
+            sample: "sample.json".into(),
+            expected: "expected.json".into(),
+        }],
+    }
+}
+
+/// What the export menu is offered: addressed the way the save command names it.
+#[test]
+fn an_export_menu_entry_is_addressed_the_way_the_save_command_names_it() {
+    use sq_app_lib::plugins::WriterInfo;
+
     let json = serde_json::to_value(WriterInfo {
         key: "app.stonqs.ledger/ledger".into(),
         name: "Ledger journal".into(),
@@ -504,9 +516,14 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
     })
     .unwrap();
     assert_eq!(keys(&json), ["extension", "key", "name", "plugin"]);
+}
 
-    // What the palette is offered: the reads it will be handed are part of the entry, because
-    // placing the tile is the consent to them (ADR-0083).
+/// What the palette is offered: the reads it will be handed are part of the entry, because
+/// placing the tile is the consent to them (ADR-0083).
+#[test]
+fn a_widget_entry_carries_the_reads_it_will_be_handed() {
+    use sq_app_lib::plugins::{Read, Size, WidgetInfo};
+
     let json = serde_json::to_value(WidgetInfo {
         key: "app.stonqs.heat/heat".into(),
         name: "Heat map".into(),
@@ -538,8 +555,13 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
         serde_json::json!(["positions", "valuation", "performance"])
     );
     assert_eq!(keys(&json["size"]), ["h", "w"]);
+}
 
-    // A screen is addressed like a widget and says whether it keeps a document (ADR-0084).
+/// A screen is addressed like a widget and says whether it keeps a document (ADR-0084).
+#[test]
+fn a_screen_entry_says_whether_it_keeps_a_document() {
+    use sq_app_lib::plugins::{Read, ScreenInfo};
+
     let json = serde_json::to_value(ScreenInfo {
         key: "app.stonqs.spending/spending".into(),
         name: "Spending".into(),
@@ -565,8 +587,13 @@ fn a_plugin_carries_its_status_flattened_beside_its_name() {
         ]
     );
     assert_eq!(json["reads"], serde_json::json!(["transactions"]));
+}
 
-    // A tool as Settings lists it: whose, and what it is handed (ADR-0085).
+/// A tool as Settings lists it: whose, and what it is handed (ADR-0085).
+#[test]
+fn a_tool_entry_names_its_plugin_and_what_it_is_handed() {
+    use sq_app_lib::plugins::{Read, ToolInfo};
+
     let json = serde_json::to_value(ToolInfo {
         key: "app.stonqs.concentration/concentration".into(),
         name: "Concentration".into(),

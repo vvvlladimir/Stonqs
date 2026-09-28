@@ -69,6 +69,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --all --check
 
+      # Warns on the pull request about a source file over 500 code lines, fails over 800. Needs
+      # no toolchain, so one runner is enough.
+      - name: File size
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: scripts/check-rs-size.sh
+
+      # `too_many_lines` is on in `[workspace.lints]`; `-D warnings` is what makes it fail here.
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
 

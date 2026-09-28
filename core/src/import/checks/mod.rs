@@ -1,11 +1,14 @@
 use super::mapping::{AmountBasis, AmountSign};
 use super::parse::{ImportProblem, ProblemCode};
-use super::preview::{ImportRow, KindMapping, TransactionDraft};
+use super::preview::{ImportRow, KindMapping};
 use crate::model::TransactionKind;
 use chrono::{Datelike, NaiveDate};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use std::collections::BTreeMap;
+
+mod row;
+pub use row::check_row;
 
 /// Optional context for plausibility checks.
 #[derive(Debug, Clone, Copy, Default)]
@@ -186,170 +189,6 @@ pub fn resolve_direction(kind: TransactionKind, value: Decimal, sign: AmountSign
         Some(other) => Direction::Flipped(other),
         None => Direction::Conflict,
     }
-}
-
-/// Allowance per unit, because the printed unit price is rounded and that rounding scales with quantity.
-const AMOUNT_TOLERANCE_PER_UNIT: Decimal = dec!(0.005);
-const AMOUNT_TOLERANCE_RATIO: Decimal = dec!(0.002);
-const AMOUNT_TOLERANCE_ABSOLUTE: Decimal = dec!(0.01);
-
-fn amount_tolerance(quantity: Decimal, expected: Decimal) -> Decimal {
-    AMOUNT_TOLERANCE_ABSOLUTE
-        + quantity.abs() * AMOUNT_TOLERANCE_PER_UNIT
-        + expected.abs() * AMOUNT_TOLERANCE_RATIO
-}
-
-/// Emits non-blocking plausibility diagnostics for one draft.
-pub fn check_row(number: usize, draft: &TransactionDraft, context: &CheckContext<'_>) -> Vec<ImportProblem> {
-    let mut out = Vec::new();
-
-    if draft.kind.affects_quantity()
-        && !draft.quantity.is_zero()
-        && !draft.price.is_zero()
-        && !draft.amount.is_zero()
-    {
-        let expected = draft.quantity * draft.price;
-        if (draft.amount - expected).abs() > amount_tolerance(draft.quantity, expected) {
-            out.push(
-                ImportProblem::row(
-                    ProblemCode::AmountVsQuantityPrice,
-                    number,
-                    format!(
-                        "the amount {} does not match quantity × price ({} × {} = {}). \
-                         Check the columns and the decimal separator",
-                        draft.amount,
-                        draft.quantity,
-                        draft.price,
-                        expected.round_dp(4)
-                    ),
-                )
-                .with("amount", draft.amount)
-                .with("quantity", draft.quantity)
-                .with("price", draft.price)
-                .with("expected", expected.round_dp(4))
-                .warn(),
-            );
-        }
-    }
-
-    let charges = draft.fees + draft.taxes;
-    if !draft.amount.is_zero() && charges > draft.amount {
-        out.push(
-            ImportProblem::row(
-                ProblemCode::FeeExceedsAmount,
-                number,
-                format!(
-                    "commission and tax ({charges}) exceed the transaction amount ({}) — \
-                     the columns look swapped",
-                    draft.amount
-                ),
-            )
-            .with("charges", charges)
-            .with("amount", draft.amount)
-            .warn(),
-        );
-    }
-
-    if let (Some(_), Some(base)) = (draft.fx_rate_to_base, context.base_currency)
-        && draft.currency == base
-    {
-        out.push(
-            ImportProblem::row(
-                ProblemCode::FxRateOnBaseCurrency,
-                number,
-                format!(
-                    "an FX rate is given while the transaction currency {base} equals the base \
-                     currency: it is not applied. This column usually holds the source currency's rate"
-                ),
-            )
-            .with("base", base)
-            .warn(),
-        );
-    }
-
-    if draft.kind.cash_sign() != 0 && draft.amount.is_zero() && draft.fees.is_zero() && draft.taxes.is_zero()
-    {
-        out.push(
-            ImportProblem::row(
-                ProblemCode::ZeroAmount,
-                number,
-                "a transaction for zero: it will not move any balance",
-            )
-            .warn(),
-        );
-    }
-
-    if draft.currency.len() != 3 || !draft.currency.chars().all(|c| c.is_ascii_alphabetic()) {
-        out.push(
-            ImportProblem::row(
-                ProblemCode::SuspiciousCurrency,
-                number,
-                format!("{:?} does not look like a currency code", draft.currency),
-            )
-            .with("currency", &draft.currency)
-            .warn(),
-        );
-    }
-
-    // Shares crossing the boundary at zero cost make the whole position read as profit.
-    if draft.kind.affects_quantity()
-        && !draft.quantity.is_zero()
-        && draft.price.is_zero()
-        && draft.amount.is_zero()
-    {
-        out.push(
-            ImportProblem::row(
-                ProblemCode::DeliveryWithoutCost,
-                number,
-                format!(
-                    "{} shares move with no value given: the lot enters at a cost of zero and the \
-                     whole holding will read as profit. Enter the price paid, or the total, on this row",
-                    draft.quantity
-                ),
-            )
-            .with("quantity", draft.quantity)
-            .with("symbol", draft.symbol.as_deref().unwrap_or("-"))
-            .warn(),
-        );
-    }
-
-    if let Some(account) = context.account_currency
-        && !draft.currency.eq_ignore_ascii_case(account)
-    {
-        out.push(
-            ImportProblem::row(
-                ProblemCode::AccountCurrencyMismatch,
-                number,
-                format!(
-                    "the row is in {} and the account it lands on keeps {account}: correct if the \
-                     currency column was read wrong, ignore if the account really holds both",
-                    draft.currency
-                ),
-            )
-            .with("currency", &draft.currency)
-            .with("account", account)
-            .warn(),
-        );
-    }
-
-    if let Some(today) = context.today
-        && draft.date > today
-    {
-        out.push(
-            ImportProblem::row(
-                ProblemCode::FutureDate,
-                number,
-                format!(
-                    "the date {} lies in the future — check the date format",
-                    draft.date
-                ),
-            )
-            .with("date", draft.date)
-            .warn(),
-        );
-    }
-
-    out
 }
 
 const MAX_SPAN_YEARS: i32 = 50;
