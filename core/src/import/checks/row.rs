@@ -3,6 +3,7 @@
 use super::CheckContext;
 use crate::import::parse::{ImportProblem, ProblemCode};
 use crate::import::preview::TransactionDraft;
+use chrono::Datelike;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
@@ -23,6 +24,7 @@ const ROW_CHECKS: &[RowCheck] = &[
     delivery_without_cost,
     account_currency_mismatch,
     future_date,
+    ancient_date,
 ];
 
 /// Emits non-blocking plausibility diagnostics for one draft.
@@ -197,6 +199,27 @@ fn account_currency_mismatch(
         )
         .with("currency", &draft.currency)
         .with("account", account)
+        .warn()
+    })
+}
+
+/// The first year a date in a broker file can plausibly carry. Everything reading the ledger
+/// starts at the oldest operation — the series, the "all time" period, the quote refresh window —
+/// so a placeholder year costs far more than the row it sits on.
+const EARLIEST_PLAUSIBLE_YEAR: i32 = 1900;
+
+fn ancient_date(number: usize, draft: &TransactionDraft, _: &CheckContext<'_>) -> Option<ImportProblem> {
+    (draft.date.year() < EARLIEST_PLAUSIBLE_YEAR).then(|| {
+        ImportProblem::row(
+            ProblemCode::AncientDate,
+            number,
+            format!(
+                "the date {} is before {EARLIEST_PLAUSIBLE_YEAR} — check the date format",
+                draft.date
+            ),
+        )
+        .with("date", draft.date)
+        .with("year", EARLIEST_PLAUSIBLE_YEAR)
         .warn()
     })
 }

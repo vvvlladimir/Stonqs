@@ -139,11 +139,13 @@ export const PROBLEM_LABELS: Record<ProblemCode, MessageDescriptor> = {
   FX_RATE_ON_BASE_CURRENCY: msg`an FX rate on the base currency is not applied`,
   SINGLE_KIND_VALUE: msg`one transaction kind for the whole file`,
   FUTURE_DATE: msg`a date in the future`,
+  ANCIENT_DATE: msg`a date long before any brokerage`,
   IMPLAUSIBLE_DATE_SPAN: msg`the dates span decades`,
   ZERO_AMOUNT: msg`a zero amount`,
   SUSPICIOUS_CURRENCY: msg`an odd currency code`,
   DELIVERY_WITHOUT_COST: msg`shares moved with no value given`,
   ACCOUNT_CURRENCY_MISMATCH: msg`another currency than the account keeps`,
+  INVALID_ISIN: msg`the ISIN fails its check digit`,
   TICKER_ISIN_CONFLICT: msg`the ticker already names another instrument`,
   SIMILAR_IN_STORE: msg`an operation like it is already stored`,
   POSSIBLE_SPLIT: msg`the prices step by a whole factor`,
@@ -287,6 +289,10 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
       return i18n._(msg`${p.currency} does not look like a currency code.`);
     case "FUTURE_DATE":
       return i18n._(msg`The date ${p.date} lies in the future — check the date format.`);
+    case "ANCIENT_DATE":
+      return i18n._(
+        msg`The date ${p.date} is before ${p.year}. Every figure is read from the oldest operation onwards, so a placeholder date here stretches the whole history — check the date format.`,
+      );
     case "SINGLE_KIND_VALUE":
       return i18n._(
         msg`All ${p.rows} rows carry the same transaction kind ${p.kind} — check that the right column is assigned to the kind.`,
@@ -302,6 +308,10 @@ export function problemDetail(i18n: I18n, problem: ImportProblem): string {
     case "ACCOUNT_CURRENCY_MISMATCH":
       return i18n._(
         msg`The row is in ${p.currency} and the account it lands on keeps ${p.account}. Correct it if the currency column was read wrong; ignore it if the account really holds both.`,
+      );
+    case "INVALID_ISIN":
+      return i18n._(
+        msg`${p.isin} is not a valid ISIN — its check digit does not match, so the row is matched by its ticker instead. Check for a typo or a shifted column.`,
       );
     case "TICKER_ISIN_CONFLICT":
       return i18n._(

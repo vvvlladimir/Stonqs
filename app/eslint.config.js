@@ -76,6 +76,16 @@ export default tseslint.config(
     },
   },
   {
+    // A test's name is written for whoever reads the failure, and nothing here reaches a
+    // window: the one place in `src` where an English string is not a missing translation.
+    // `max-lines-per-function` goes with it — a `describe` is a list, not a function body.
+    files: ["**/*.test.ts"],
+    rules: {
+      "lingui/no-unlocalized-strings": "off",
+      "max-lines-per-function": "off",
+    },
+  },
+  {
     // A context and the hook that reads it are one file on purpose: the pair is the primitive,
     // and splitting it to keep fast refresh would cost every reader a hop for a dev-time gain.
     // Editing one of these files reloads the window; that is the trade, and it is why the list

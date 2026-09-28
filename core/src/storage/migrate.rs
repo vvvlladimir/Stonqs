@@ -166,6 +166,16 @@ pub fn run(conn: &Connection, path: Option<&Path>) -> Result<()> {
         [],
         |r| r.get(0),
     )?;
+    // A rollback after an update, or two machines sharing one profile folder: the older build
+    // would open the file happily and write rows missing everything the newer one added.
+    let supported = MIGRATIONS.last().map_or(0, |(v, _, _)| *v);
+    if from > supported {
+        return Err(Error::NewerDatabase {
+            found: from,
+            supported,
+        });
+    }
+
     let pending = MIGRATIONS.iter().any(|(v, _, _)| *v > from);
     if from > 0
         && pending

@@ -469,3 +469,95 @@ date,type,symbol,isin,quantity,unit_price,amount,currency
 
     assert_eq!(import().imported, 0, "the same file twice writes nothing twice");
 }
+
+/// A currency is the key a rate is looked up by for as long as the portfolio exists, so a cell
+/// that cannot be one is refused where it is read. Written instead, the row would report missing
+/// market data forever and send every refresh after a pair no source has ever heard of.
+#[test]
+fn a_cell_that_cannot_be_a_currency_code_refuses_its_row() {
+    const CSV: &str = "\
+date,type,symbol,quantity,unit_price,currency,amount
+2024-01-15,BUY,AAPL,10,185.50,DOLLARS AND CENTS,1855
+2024-01-16,BUY,AAPL,10,185.50,USDT,1855
+";
+    let (store, account) = store_with_account();
+    let service = ImportService::new(&store);
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+
+    let preview = service
+        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+
+    assert_eq!(preview.rows[0].status, RowStatus::Invalid);
+    assert!(
+        preview.rows[0]
+            .problems
+            .iter()
+            .any(|p| p.code == ProblemCode::SuspiciousCurrency && p.severity == Severity::Error)
+    );
+    // A crypto ticker is longer than three letters and is nobody's registry: still a currency.
+    assert_eq!(preview.rows[1].draft.as_ref().unwrap().currency, "USDT");
+}
+
+/// Two ways a file names an instrument that is not one: a dash where the row has none, and an
+/// identifier one keystroke off. Both used to be taken at face value — the first as an
+/// instrument whose ticker is "-", the second as an ISIN no registry answers to, stored on the
+/// security and never questioned again.
+#[test]
+fn a_dash_is_not_a_ticker_and_a_failed_check_digit_is_not_an_isin() {
+    const CSV: &str = "\
+date,type,symbol,isin,quantity,unit_price,currency,amount
+2024-01-15,DEPOSIT,-,,,,EUR,500
+2024-01-16,BUY,AAPL,US0378331006,10,185.50,EUR,1855
+";
+    let (store, account) = store_with_account();
+    let service = ImportService::new(&store);
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+
+    let preview = service
+        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+
+    assert_eq!(preview.rows[0].draft.as_ref().unwrap().symbol, None);
+    assert!(!preview.unknown_symbols().contains(&"-"));
+
+    // One digit off the real US0378331005: said once, left out, and the row still imports.
+    let second = preview.rows[1].draft.as_ref().unwrap();
+    assert_eq!(second.symbol.as_deref(), Some("AAPL"));
+    assert_eq!(second.isin, None);
+    assert!(
+        preview.rows[1]
+            .problems
+            .iter()
+            .any(|p| p.code == ProblemCode::InvalidIsin && p.severity == Severity::Warning)
+    );
+}
+
+/// A placeholder year costs far more than its own row: every figure is read from the oldest
+/// operation onwards, so one 0001 deposit stretches the series, the "all time" period and the
+/// quote refresh window over two millennia. A warning, like every check here — the row may well
+/// be a real one typed badly, and the wizard lets the cell be corrected.
+#[test]
+fn a_date_before_any_brokerage_existed_is_said_out_loud() {
+    const CSV: &str = "\
+date,type,currency,amount
+0001-01-01,DEPOSIT,EUR,100
+";
+    let (store, account) = store_with_account();
+    let service = ImportService::new(&store);
+    let mapping = ImportMapping::detect(&headers_of(CSV)).with_account(&account.id);
+
+    let preview = service
+        .preview(CSV.as_bytes(), &ParseConfig::default(), Some(&mapping), &[])
+        .unwrap();
+
+    assert_eq!(preview.rows[0].status, RowStatus::Ready);
+    assert!(
+        preview.rows[0]
+            .problems
+            .iter()
+            .any(|p| p.code == ProblemCode::AncientDate && p.severity == Severity::Warning),
+        "{:?}",
+        preview.rows[0].problems
+    );
+}

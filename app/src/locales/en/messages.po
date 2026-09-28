@@ -492,6 +492,11 @@ msgstr "{0} in total"
 msgid "{0} is larger than the {1} this app calculates with — check the decimal separator and the column mapping."
 msgstr "{0} is larger than the {1} this app calculates with — check the decimal separator and the column mapping."
 
+#. placeholder {0}: p.isin
+#: src/screens/Import/labels.ts
+msgid "{0} is not a valid ISIN — its check digit does not match, so the row is matched by its ticker instead. Check for a typo or a shifted column."
+msgstr "{0} is not a valid ISIN — its check digit does not match, so the row is matched by its ticker instead. Check for a typo or a shifted column."
+
 #. placeholder {0}: formatMoney(plan.cash_left_base, currency, { digits: 0 })
 #: src/screens/Rebalance/RebalanceMetrics.tsx
 msgid "{0} left over"
@@ -1053,6 +1058,10 @@ msgstr "A CSV or TXT from the broker's web office, or an Interactive Brokers Fle
 #: src/screens/Import/labels.ts
 msgid "a date in the future"
 msgstr "a date in the future"
+
+#: src/screens/Import/labels.ts
+msgid "a date long before any brokerage"
+msgstr "a date long before any brokerage"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "a dated note on an instrument"
@@ -6106,6 +6115,10 @@ msgstr "No securities accounts"
 msgid "No shares."
 msgstr "No shares."
 
+#: src/screens/Performance/Metrics.tsx
+msgid "No single yearly rate fits these deposits and withdrawals"
+msgstr "No single yearly rate fits these deposits and withdrawals"
+
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "No source of exchange rates is on, so anything held in a currency other than the portfolio's cannot be valued. Turn one on below."
 msgstr "No source of exchange rates is on, so anything held in a currency other than the portfolio's cannot be valued. Turn one on below."
@@ -9038,6 +9051,12 @@ msgid "the data source"
 msgstr "the data source"
 
 #. placeholder {0}: p.date
+#. placeholder {1}: p.year
+#: src/screens/Import/labels.ts
+msgid "The date {0} is before {1}. Every figure is read from the oldest operation onwards, so a placeholder date here stretches the whole history — check the date format."
+msgstr "The date {0} is before {1}. Every figure is read from the oldest operation onwards, so a placeholder date here stretches the whole history — check the date format."
+
+#. placeholder {0}: p.date
 #: src/screens/Import/labels.ts
 msgid "The date {0} lies in the future — check the date format."
 msgstr "The date {0} lies in the future — check the date format."
@@ -9150,8 +9169,8 @@ msgid "The first target"
 msgstr "The first target"
 
 #: src/screens/Performance/Metrics.tsx
-msgid "The flows never change sign — the equation has no root"
-msgstr "The flows never change sign — the equation has no root"
+#~ msgid "The flows never change sign — the equation has no root"
+#~ msgstr "The flows never change sign — the equation has no root"
 
 #: src/screens/Settings/AboutPanel.tsx
 msgid "The full text each component asks to travel with a copy of the app."
@@ -9232,6 +9251,10 @@ msgstr "The interface language and the colour scheme."
 #: src/screens/Risk.tsx
 #~ msgid "the interface picks the bucket count from the column width: a bin is a property of the screen, not of the portfolio"
 #~ msgstr "the interface picks the bucket count from the column width: a bin is a property of the screen, not of the portfolio"
+
+#: src/screens/Import/labels.ts
+msgid "the ISIN fails its check digit"
+msgstr "the ISIN fails its check digit"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #~ msgid "The kind computes nothing: it hints at what to fill the tree with."
@@ -9823,6 +9846,10 @@ msgstr "This profile is locked. Enter its password to continue."
 #: src/screens/Settings/HelpPanel.tsx
 msgid "This profile is the demo one. Your own data lives in the other profiles."
 msgstr "This profile is the demo one. Your own data lives in the other profiles."
+
+#: src/components/ui/Async.tsx
+msgid "This profile was last opened by a newer version of the app. Update Stonqs to open it."
+msgstr "This profile was last opened by a newer version of the app. Update Stonqs to open it."
 
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "This profile's data and API keys are encrypted with it."

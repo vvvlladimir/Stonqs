@@ -46,6 +46,7 @@ pnpm tauri dev           # desktop app against the release data dir (app.stonqs)
 pnpm dev:app             # same, but identifier app.stonqs.dev -> its own profiles/DB
 pnpm tauri build         # bundled desktop app
 pnpm build               # frontend only: tsc --noEmit && vite build
+pnpm test                # vitest over the pure modules (src/**/*.test.ts); no DOM, no host
 pnpm record:tour         # fresh demo profile, every screen, IPC -> e2e/fixtures/ipc.json
                          # (read by the stonqs-site repository's `pnpm screenshots`)
 pnpm i18n:extract        # refresh src/locales/{en,ru}/messages.po from the code

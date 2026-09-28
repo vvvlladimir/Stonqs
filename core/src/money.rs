@@ -13,6 +13,16 @@ pub fn normalize_currency(code: &str) -> Currency {
     code.trim().to_ascii_uppercase()
 }
 
+/// Whether a code can be a currency at all: two to six letters or digits, at least one of them a
+/// letter. Not a list — a crypto ticker is nobody's registry — but a shape, so a broker's
+/// "1 000,50" or "DOLLARS AND CENTS" is not written as money nothing will ever find a rate for.
+pub fn is_currency_code(code: &str) -> bool {
+    let code = code.trim();
+    (2..=6).contains(&code.chars().count())
+        && code.chars().all(|c| c.is_ascii_alphanumeric())
+        && code.chars().any(|c| c.is_ascii_alphabetic())
+}
+
 /// A minor unit as a source spells it, and its ratio to the major currency.
 struct MinorUnit {
     code: &'static str,

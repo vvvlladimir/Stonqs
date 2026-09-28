@@ -5,6 +5,11 @@ one only through `Store::open_encrypted` (ADR-0049). A migration is plain SQL ei
 
 `storage/migrate.rs` holds `MIGRATIONS: &[(version, name, include_str!(...))]`, applied in order, each in its own transaction. `PRAGMA foreign_keys = ON` is set on every connection. **An applied migration is never edited** — add `000N_*.sql` and a new tuple.
 
+A version **above** the last one this build knows is `Error::NewerDatabase` and nothing is opened:
+a rollback after an update, or two machines sharing one profile folder, would otherwise have the
+older build writing rows without the columns and invariants the newer one added. The UI says
+"update the app", the way a canonical file of a newer version already does.
+
 Before the first migration of an **upgrade**, the file is copied beside itself as
 `<name>.bak-v<from>` (`migrate::back_up`, ADR-0062): a WAL checkpoint first, so the copy is not
 missing committed pages; an encrypted database copies as the encrypted bytes it already is; a

@@ -87,6 +87,12 @@ pub enum UiError {
         plugin: String,
         message: String,
     },
+    /// The profile was migrated by a newer build: this one must not write into it.
+    NewerDatabase {
+        found: i64,
+        supported: i64,
+        message: String,
+    },
     /// Host failure, such as an unavailable data directory or poisoned mutex.
     Internal {
         message: String,
@@ -133,6 +139,11 @@ impl From<Error> for UiError {
             },
             Error::Math(_) => UiError::Math { message },
             Error::Backup(_) => UiError::Storage { message },
+            Error::NewerDatabase { found, supported } => UiError::NewerDatabase {
+                found,
+                supported,
+                message,
+            },
         }
     }
 }
@@ -200,6 +211,7 @@ impl std::fmt::Display for UiError {
             | UiError::FileProtected { message, .. }
             | UiError::Reader { message, .. }
             | UiError::Writer { message, .. }
+            | UiError::NewerDatabase { message, .. }
             | UiError::Internal { message } => message,
         };
         f.write_str(message)

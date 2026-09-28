@@ -72,6 +72,10 @@ pub enum ProblemCode {
 
     FutureDate,
 
+    /// A date so far in the past that no brokerage operation carries it: a placeholder, or a
+    /// format read the wrong way round.
+    AncientDate,
+
     ImplausibleDateSpan,
 
     ZeroAmount,
@@ -84,6 +88,10 @@ pub enum ProblemCode {
 
     /// The row is denominated in a currency the account it lands on does not keep.
     AccountCurrencyMismatch,
+
+    /// The row's ISIN fails its own check digit, so it is not used: a mistyped or shifted cell
+    /// would otherwise name an instrument that does not exist.
+    InvalidIsin,
 
     /// The file's ticker names an instrument already stored under a different ISIN: one ticker,
     /// two instruments.

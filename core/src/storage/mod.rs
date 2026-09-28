@@ -344,4 +344,27 @@ mod tests {
         }
         migrate::run(&conn, None).unwrap();
     }
+
+    /// The other direction: a profile folder shared with a newer build, or an app rolled back
+    /// after an update. The older build understands neither the columns nor the invariants that
+    /// came with the versions it is missing, so it refuses the file instead of writing into it.
+    #[test]
+    fn a_database_from_a_newer_build_is_refused_rather_than_written_into() {
+        let store = Store::open_in_memory().unwrap();
+        let ahead = MIGRATIONS.last().unwrap().0 + 1;
+        store
+            .conn()
+            .execute(
+                "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?1, 'future', '')",
+                rusqlite::params![ahead],
+            )
+            .unwrap();
+
+        match migrate::run(store.conn(), None) {
+            Err(crate::error::Error::NewerDatabase { found, supported }) => {
+                assert_eq!((found, supported), (ahead, MIGRATIONS.last().unwrap().0));
+            }
+            other => panic!("expected a refusal, got {other:?}"),
+        }
+    }
 }

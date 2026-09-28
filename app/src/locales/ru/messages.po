@@ -492,6 +492,11 @@ msgstr "{0} всего"
 msgid "{0} is larger than the {1} this app calculates with — check the decimal separator and the column mapping."
 msgstr "{0} больше предела {1}, с которым работает приложение, — проверьте десятичный разделитель и сопоставление колонок."
 
+#. placeholder {0}: p.isin
+#: src/screens/Import/labels.ts
+msgid "{0} is not a valid ISIN — its check digit does not match, so the row is matched by its ticker instead. Check for a typo or a shifted column."
+msgstr "{0} — некорректный ISIN: контрольная цифра не сходится, поэтому строка сопоставляется по тикеру. Проверьте опечатку или сдвиг колонки."
+
 #. placeholder {0}: formatMoney(plan.cash_left_base, currency, { digits: 0 })
 #: src/screens/Rebalance/RebalanceMetrics.tsx
 msgid "{0} left over"
@@ -1053,6 +1058,10 @@ msgstr "CSV или TXT из личного кабинета брокера — �
 #: src/screens/Import/labels.ts
 msgid "a date in the future"
 msgstr "дата в будущем"
+
+#: src/screens/Import/labels.ts
+msgid "a date long before any brokerage"
+msgstr "дата задолго до появления брокеров"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "a dated note on an instrument"
@@ -6101,6 +6110,10 @@ msgstr "Счетов с бумагами нет"
 msgid "No shares."
 msgstr "Долей нет."
 
+#: src/screens/Performance/Metrics.tsx
+msgid "No single yearly rate fits these deposits and withdrawals"
+msgstr "Ни одна годовая ставка не описывает эти пополнения и снятия"
+
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "No source of exchange rates is on, so anything held in a currency other than the portfolio's cannot be valued. Turn one on below."
 msgstr "Ни один источник курсов не включён, поэтому активы в валюте, отличной от валюты портфеля, оценить нельзя. Включите источник ниже."
@@ -9033,6 +9046,12 @@ msgid "the data source"
 msgstr "источник данных"
 
 #. placeholder {0}: p.date
+#. placeholder {1}: p.year
+#: src/screens/Import/labels.ts
+msgid "The date {0} is before {1}. Every figure is read from the oldest operation onwards, so a placeholder date here stretches the whole history — check the date format."
+msgstr "Дата {0} раньше {1}. Все показатели считаются от самой старой операции, поэтому дата-заглушка растягивает всю историю — проверьте формат даты."
+
+#. placeholder {0}: p.date
 #: src/screens/Import/labels.ts
 msgid "The date {0} lies in the future — check the date format."
 msgstr "Дата {0} в будущем — проверьте формат даты."
@@ -9145,8 +9164,8 @@ msgid "The first target"
 msgstr "Первая цель"
 
 #: src/screens/Performance/Metrics.tsx
-msgid "The flows never change sign — the equation has no root"
-msgstr "Знак потоков не меняется — уравнение без корня"
+#~ msgid "The flows never change sign — the equation has no root"
+#~ msgstr "Знак потоков не меняется — уравнение без корня"
 
 #: src/screens/Settings/AboutPanel.tsx
 msgid "The full text each component asks to travel with a copy of the app."
@@ -9227,6 +9246,10 @@ msgstr "Язык интерфейса и цветовая схема."
 #: src/screens/Risk.tsx
 #~ msgid "the interface picks the bucket count from the column width: a bin is a property of the screen, not of the portfolio"
 #~ msgstr "число корзин выбирает интерфейс по ширине колонки: бин — свойство экрана, а не портфеля"
+
+#: src/screens/Import/labels.ts
+msgid "the ISIN fails its check digit"
+msgstr "ISIN не проходит проверку контрольной цифры"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #~ msgid "The kind computes nothing: it hints at what to fill the tree with."
@@ -9818,6 +9841,10 @@ msgstr "Профиль заблокирован. Введите его паро�
 #: src/screens/Settings/HelpPanel.tsx
 msgid "This profile is the demo one. Your own data lives in the other profiles."
 msgstr "Это и есть демо-профиль. Ваши собственные данные — в других профилях."
+
+#: src/components/ui/Async.tsx
+msgid "This profile was last opened by a newer version of the app. Update Stonqs to open it."
+msgstr "Этот профиль в последний раз открывала более новая версия приложения. Обновите Stonqs, чтобы открыть его."
 
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "This profile's data and API keys are encrypted with it."

@@ -41,11 +41,26 @@ pub fn xirr(flows: &[CashFlow]) -> Result<Decimal> {
     if let Some(rate) = newton(&series) {
         return to_decimal(rate);
     }
+    // Both ends of the bracket on the same side of zero means the root is not inside it at all —
+    // a million turning into one over a single day is an annual rate no number states. That is a
+    // different answer from "the solver ran out of steps", and the two used to share a sentence.
+    if npv(&series, RATE_FLOOR) * npv(&series, RATE_CEILING) > 0.0 {
+        return Err(Error::Math(format!(
+            "XIRR lies outside the {:.0}% to {:.0}% this solves for",
+            RATE_FLOOR * 100.0,
+            RATE_CEILING * 100.0
+        )));
+    }
     match bisect(&series) {
         Some(rate) => to_decimal(rate),
         None => Err(Error::Math("XIRR did not converge".into())),
     }
 }
+
+/// The rates bisection searches between. Below −100% fractional powers are undefined, and a year
+/// is long enough for a thousandfold.
+const RATE_FLOOR: f64 = -0.9999;
+const RATE_CEILING: f64 = 1000.0;
 
 /// NPV at `rate`.
 fn npv(series: &[(f64, f64)], rate: f64) -> f64 {
@@ -87,9 +102,10 @@ fn newton(series: &[(f64, f64)]) -> Option<f64> {
     None
 }
 
-/// Bisection over -99.99% to +100,000%; high returns can be thousands of percent.
+/// Bisection between [`RATE_FLOOR`] and [`RATE_CEILING`], which the caller has checked brackets
+/// a root.
 fn bisect(series: &[(f64, f64)]) -> Option<f64> {
-    let (mut low, mut high) = (-0.9999_f64, 1000.0_f64);
+    let (mut low, mut high) = (RATE_FLOOR, RATE_CEILING);
     let (mut f_low, f_high) = (npv(series, low), npv(series, high));
     if f_low * f_high > 0.0 {
         return None;
@@ -127,6 +143,23 @@ mod tests {
         CashFlow {
             date: NaiveDate::from_ymd_opt(y, m, d).unwrap(),
             amount_base: amount,
+        }
+    }
+
+    /// A million out and one back the next day is a loss of essentially everything in a day, so
+    /// the yearly rate is past −99.99 % and there is nothing to state. The opposite case is the
+    /// same sentence from the other side: one euro turning into a million overnight annualises
+    /// past +100 000 %. Both are told apart from a solver that simply ran out of steps.
+    #[test]
+    fn a_rate_no_year_can_hold_says_so_rather_than_blaming_the_solver() {
+        for (out, back) in [(dec!(-1000000), dec!(1)), (dec!(-1), dec!(1000000))] {
+            let flows = vec![flow(2024, 1, 1, out), flow(2024, 1, 2, back)];
+            match xirr(&flows) {
+                Err(Error::Math(message)) => {
+                    assert!(message.contains("outside"), "expected a range, got {message:?}")
+                }
+                other => panic!("expected a refusal, got {other:?}"),
+            }
         }
     }
 

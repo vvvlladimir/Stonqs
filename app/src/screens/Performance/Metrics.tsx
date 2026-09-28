@@ -44,12 +44,12 @@ export function PerformanceMetrics({ data, benchmarkId, benchmarkLabel, comparis
       />
       <Metric
         label={t`XIRR (investor return)`}
-        value={data?.xirr ? <Percent value={data.xirr} signed tone={false} /> : t`— did not converge`}
+        value={data?.xirr ? <Percent value={data.xirr} signed tone={false} /> : "—"}
         tone={data?.xirr ? signOf(data.xirr) : "neutral"}
         hint={
           data?.xirr
             ? t`including the dates of deposits`
-            : t`The flows never change sign — the equation has no root`
+            : t`No single yearly rate fits these deposits and withdrawals`
         }
         tip={t`Return that accounts for the dates money went in and out.`}
       />

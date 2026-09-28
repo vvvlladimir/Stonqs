@@ -282,7 +282,10 @@ export function formatDayNumeric(date: string): string {
 /** A decimal string as a number to order rows by: an absent value stays absent, never 0. */
 export function toNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined || value === "") return null;
-  return Number(value);
+  // Sorting is what this feeds, and a table reads `null` as "no value, sorts last". `NaN`
+  // compares false against everything instead, which is an order rather than an absence.
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? null : parsed;
 }
 
 export function toneClass(value: string): string {

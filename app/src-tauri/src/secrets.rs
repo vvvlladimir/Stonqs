@@ -11,9 +11,7 @@ use zeroize::Zeroizing;
 
 impl AppState {
     pub(crate) fn vault(&self) -> UiResult<MutexGuard<'_, Option<Unlocked>>> {
-        self.vault
-            .lock()
-            .map_err(|_| UiError::internal("the vault state is poisoned"))
+        Ok(crate::state::recover(&self.vault))
     }
 
     fn folder(&self) -> UiResult<std::path::PathBuf> {

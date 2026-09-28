@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+/// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { lingui } from "@lingui/vite-plugin";
@@ -52,6 +53,12 @@ function ipcRecorder(): Plugin {
 }
 
 export default defineConfig({
+  // Unit tests cover the pure modules only — what `lib/` computes before anything is rendered.
+  // Anything needing a DOM or a host belongs in an end-to-end run, not here.
+  test: {
+    include: ["src/**/*.test.ts"],
+    environment: "node",
+  },
   // The macro plugin rewrites `<Trans>`/`t` at build time, so no message catalog is
   // looked up at runtime; `lingui()` compiles the imported `.po` catalogs.
   plugins: [react({ babel: { plugins: ["@lingui/babel-plugin-lingui-macro"] } }), lingui(), ipcRecorder()],

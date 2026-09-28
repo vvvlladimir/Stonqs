@@ -48,6 +48,11 @@ pub enum Error {
     /// The pre-migration copy failed, so the upgrade did not run (ADR-0062).
     #[error("could not back up the database before migrating: {0}")]
     Backup(String),
+
+    /// The file was migrated by a newer build than this one: an older app writing into it would
+    /// ignore columns and invariants it has never heard of.
+    #[error("the database is at version {found}, newer than the {supported} this build knows")]
+    NewerDatabase { found: i64, supported: i64 },
 }
 
 impl Error {

@@ -56,6 +56,8 @@ export type UiError =
   | { code: "reader"; plugin: string; message: string }
   /** A plugin's file writer failed or refused the document: `plugin` is which one. */
   | { code: "writer"; plugin: string; message: string }
+  /** The profile file was migrated by a newer build of the app than this one. */
+  | { code: "newer_database"; found: number; supported: number; message: string }
   | { code: "internal"; message: string };
 
 // Positions

@@ -138,6 +138,14 @@ pub struct AppState {
     import_file: Mutex<Option<crate::commands::import::ImportFile>>,
 }
 
+/// Takes a lock whether or not a panic once happened while it was held. Nothing behind these
+/// mutexes is half-written by a panic: a `Store`'s writes are SQLite transactions, and everything
+/// else is a value replaced whole. Poisoning them would only mean that one bad row kept every
+/// later command answering "the database state is poisoned" until the app was restarted.
+pub(crate) fn recover<T>(lock: &Mutex<T>) -> MutexGuard<'_, T> {
+    lock.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
 impl AppState {
     /// Initialize paths, storage, settings, and the current portfolio.
     pub fn bootstrap(app: &App) -> UiResult<Self> {
@@ -175,10 +183,7 @@ impl AppState {
     }
 
     pub fn db_path(&self) -> UiResult<PathBuf> {
-        self.db_path
-            .lock()
-            .map(|path| path.clone())
-            .map_err(|_| UiError::internal("the profile state is poisoned"))
+        Ok(recover(&self.db_path).clone())
     }
 
     /// The database as a background thread opens it for itself: path and, for an encrypted
@@ -209,10 +214,7 @@ impl AppState {
     }
 
     pub fn profile_id(&self) -> UiResult<String> {
-        self.profile
-            .lock()
-            .map(|id| id.clone())
-            .map_err(|_| UiError::internal("the profile state is poisoned"))
+        Ok(recover(&self.profile).clone())
     }
 
     /// The new database opens before anything changes; running refreshes and turns finish into the old profile.
@@ -237,14 +239,8 @@ impl AppState {
         *self.portfolio()? = opened.portfolio;
         *self.scope()? = settings.scope.clone();
         *self.settings()? = settings;
-        *self
-            .db_path
-            .lock()
-            .map_err(|_| UiError::internal("the profile state is poisoned"))? = db_path;
-        *self
-            .profile
-            .lock()
-            .map_err(|_| UiError::internal("the profile state is poisoned"))? = id.to_string();
+        *recover(&self.db_path) = db_path;
+        *recover(&self.profile) = id.to_string();
         *self.import_file()? = None;
         // The custom provider's address is a setting, and settings are per profile.
         self.clear_models();
@@ -255,9 +251,7 @@ impl AppState {
 
     /// The store whatever the lock says: for the code that swaps it.
     pub(crate) fn store_raw(&self) -> UiResult<MutexGuard<'_, Store>> {
-        self.store
-            .lock()
-            .map_err(|_| UiError::internal("the database state is poisoned"))
+        Ok(recover(&self.store))
     }
 
     /// Puts a freshly opened database in place of the current one and reads its portfolio.
@@ -269,8 +263,8 @@ impl AppState {
         Ok(())
     }
 
-    /// Lock storage, converting a poisoned mutex into a host error. A locked profile is refused
-    /// here, the one door nearly every command passes through (ADR-0048).
+    /// Lock storage. A locked profile is refused here, the one door nearly every command passes
+    /// through (ADR-0048).
     pub fn store(&self) -> UiResult<MutexGuard<'_, Store>> {
         if self.is_locked() {
             return Err(UiError::Locked {
@@ -281,15 +275,11 @@ impl AppState {
     }
 
     pub fn portfolio(&self) -> UiResult<MutexGuard<'_, Portfolio>> {
-        self.portfolio
-            .lock()
-            .map_err(|_| UiError::internal("the portfolio state is poisoned"))
+        Ok(recover(&self.portfolio))
     }
 
     pub fn scope(&self) -> UiResult<MutexGuard<'_, crate::scope::DataScope>> {
-        self.scope
-            .lock()
-            .map_err(|_| UiError::internal("the scope state is poisoned"))
+        Ok(recover(&self.scope))
     }
 
     /// Return a portfolio copy narrowed to the active scope.
@@ -338,21 +328,15 @@ impl AppState {
     }
 
     pub fn settings(&self) -> UiResult<MutexGuard<'_, crate::settings::AppSettings>> {
-        self.settings
-            .lock()
-            .map_err(|_| UiError::internal("the settings state is poisoned"))
+        Ok(recover(&self.settings))
     }
 
     pub fn refresh(&self) -> UiResult<MutexGuard<'_, crate::jobs::RefreshStatus>> {
-        self.refresh
-            .lock()
-            .map_err(|_| UiError::internal("the refresh state is poisoned"))
+        Ok(recover(&self.refresh))
     }
 
     pub fn import_file(&self) -> UiResult<MutexGuard<'_, Option<crate::commands::import::ImportFile>>> {
-        self.import_file
-            .lock()
-            .map_err(|_| UiError::internal("the import state is poisoned"))
+        Ok(recover(&self.import_file))
     }
 
     /// Reload the portfolio after account or currency changes.
@@ -372,4 +356,27 @@ fn load_or_create_portfolio(store: &Store) -> UiResult<Portfolio> {
     let portfolio = Portfolio::new("Main", "EUR");
     store.save_portfolio(&portfolio)?;
     Ok(portfolio)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::recover;
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::sync::Mutex;
+
+    /// One panic under the lock used to end every later command with "the database state is
+    /// poisoned", which outlives the bad row that caused it and is fixed only by a restart.
+    #[test]
+    fn a_lock_held_by_a_panicking_call_is_still_usable_afterwards() {
+        let lock = Mutex::new(7u32);
+        let panicked = catch_unwind(AssertUnwindSafe(|| {
+            let mut held = recover(&lock);
+            *held = 8;
+            panic!("a command died holding it");
+        }));
+
+        assert!(panicked.is_err());
+        assert!(lock.is_poisoned());
+        assert_eq!(*recover(&lock), 8);
+    }
 }

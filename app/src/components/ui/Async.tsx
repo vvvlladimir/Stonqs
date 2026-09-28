@@ -59,6 +59,10 @@ export function useUiErrorText(detail: UiError): string {
       return i18n._(msg`The ${detail.plugin} reader could not read this file: ${detail.message}`);
     case "writer":
       return i18n._(msg`The ${detail.plugin} format could not be written: ${detail.message}`);
+    case "newer_database":
+      return i18n._(
+        msg`This profile was last opened by a newer version of the app. Update Stonqs to open it.`,
+      );
     case "internal":
       return i18n._(msg`Internal error: ${detail.message}`);
   }

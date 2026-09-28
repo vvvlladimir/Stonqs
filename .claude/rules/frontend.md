@@ -249,3 +249,11 @@ crosses to Rust is `.claude/rules/ui-boundary.md`; the assistant's panel is
   `eslint-disable-next-line` with the reason, not a widening of the list.
 
 `pnpm lint` (eslint) and `pnpm lint:css` (stylelint, `no-duplicate-selectors`) guard this; `pnpm format` is prettier at the same 110-column width as rustfmt.
+
+## Tests
+
+`pnpm test` is vitest over `src/**/*.test.ts`, in the **node** environment: the pure modules only —
+what a screen computes before anything is rendered (`format`, `uiState`'s migrations, `grid`,
+`resolveColumnIds`). A test sits beside what it tests. Nothing here mounts a component or reaches
+`lib/api`: a test needing a DOM or a host is an end-to-end test, and this app has none yet. Test
+names are developer English and the i18n rule is off for those files alone.
