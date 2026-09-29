@@ -29,6 +29,8 @@ cd app && pnpm install
 pnpm tauri dev | pnpm dev:app (separate app.stonqs.dev data) | pnpm tauri build
 pnpm build                                      # tsc --noEmit && vite build
 pnpm test [--project pure|dom]                  # vitest
+pnpm dev:browser                                # app in a browser, real commands over a demo (?screen=<id>)
+pnpm e2e [--project webkit|webkit-ru|chromium]  # Playwright: every screen, 3 widths, axe
 pnpm lint | pnpm lint:css | pnpm format
 pnpm i18n:extract                               # must report no missing translations
 UPDATE_FIXTURES=1 cargo test -p sq-app --test wizard_fixture   # regen e2e/fixtures/import-wizard.json

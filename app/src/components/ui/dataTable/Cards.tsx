@@ -22,8 +22,12 @@ export function Cards<T>({
         as="li"
         box={cards === "cards"}
         top
-        title={cols.map((c, i) => (slot(c, i) === "title" ? c.cell(row) : null))}
-        value={cols.map((c, i) => (slot(c, i) === "value" ? c.cell(row) : null))}
+        title={cols.map((c, i) =>
+          slot(c, i) === "title" ? <Fragment key={c.key}>{c.cell(row)}</Fragment> : null,
+        )}
+        value={cols.map((c, i) =>
+          slot(c, i) === "value" ? <Fragment key={c.key}>{c.cell(row)}</Fragment> : null,
+        )}
         foot={cols.map((c, i) =>
           slot(c, i) === "fact" ? (
             <span key={c.key}>

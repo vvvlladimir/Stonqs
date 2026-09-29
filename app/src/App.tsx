@@ -65,13 +65,21 @@ const RecordTour = import.meta.env.VITE_RECORD_TOUR
   ? lazy(() => import("./lib/ipcTourRecorder").then((m) => ({ default: m.RecordTour })))
   : null;
 
+/** The browser playground keeps the screen in the address (`?screen=positions`), so a reload or an
+ *  e2e run lands on it. The desktop app always opens on the overview. */
+function initialScreen(): ScreenId {
+  if (!import.meta.env.VITE_BROWSER_HOST) return "dashboard";
+  const asked = new URLSearchParams(window.location.search).get("screen");
+  return asked && asked in SCREENS ? (asked as ScreenId) : "dashboard";
+}
+
 // The panel carries the markdown renderer, and it is mounted only once it is opened.
 const AiChatPanel = lazy(() =>
   import("./components/domain/AiChatPanel").then((m) => ({ default: m.AiChatPanel })),
 );
 
 export function App() {
-  const [screen, setScreen] = useState<ScreenId>("dashboard");
+  const [screen, setScreen] = useState<ScreenId>(initialScreen);
   const [focus, setFocus] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
   const status = useStatus();
@@ -148,6 +156,7 @@ export function App() {
   const go = (id: ScreenId, withFocus?: string) => {
     setScreen(id);
     setFocus(withFocus ?? null);
+    if (import.meta.env.VITE_BROWSER_HOST) window.history.replaceState(null, "", `?screen=${id}`);
   };
 
   return (

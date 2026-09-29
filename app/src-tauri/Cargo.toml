@@ -44,5 +44,9 @@ rand.workspace = true
 tauri-plugin-updater.workspace = true
 tauri-plugin-process.workspace = true
 
+# `tauri::test` gives the browser host (`examples/browser_host`) a `State` without a window.
+[dev-dependencies]
+tauri = { workspace = true, features = ["test"] }
+
 [lints]
 workspace = true

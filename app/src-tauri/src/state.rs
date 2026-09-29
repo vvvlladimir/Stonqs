@@ -149,9 +149,13 @@ pub(crate) fn recover<T>(lock: &Mutex<T>) -> MutexGuard<'_, T> {
 impl AppState {
     /// Initialize paths, storage, settings, and the current portfolio.
     pub fn bootstrap(app: &App) -> UiResult<Self> {
-        let dir = app.path().app_data_dir()?;
-        std::fs::create_dir_all(&dir).map_err(|e| UiError::internal(e.to_string()))?;
-        let profiles = crate::profiles::Profiles::new(&dir);
+        Self::at(&app.path().app_data_dir()?)
+    }
+
+    /// The same over a data directory of the caller's choosing — the browser host's temp folder.
+    pub fn at(dir: &std::path::Path) -> UiResult<Self> {
+        std::fs::create_dir_all(dir).map_err(|e| UiError::internal(e.to_string()))?;
+        let profiles = crate::profiles::Profiles::new(dir);
         // The first profile's name is user data, seeded in English like the default taxonomies.
         let profile = profiles.ensure("Default")?;
         let db_path = profiles.db_path(&profile.id);
@@ -172,7 +176,7 @@ impl AppState {
             portfolio: Mutex::new(opened.portfolio),
             db_path: Mutex::new(db_path),
             db_gate: RwLock::new(()),
-            plugins: crate::plugins::Plugins::new(&dir),
+            plugins: crate::plugins::Plugins::new(dir),
             profiles,
             profile: Mutex::new(profile.id),
             vault: Mutex::new(opened.vault),

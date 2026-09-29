@@ -19,4 +19,4 @@ paths:
 - Board width: `.wboard` + `useBoardColumns(gridRef)`; CSS `@container board`. Tile = `container-type: size` (`.w` over `.box`); figures scale with `clamp(…, min(11cqw, 26cqh), …)`.
 - Charts fill tiles: `height="fill"`, `Chart` measures `.chart__plot`; `.w__body` is a flex column. Screen panels keep fixed heights. List visuals (`Contributions`, `DriftBars`) grow rows up to a comfortable height.
 - Boards export/import via `boardToFile`/`boardFromFile`; `lib/defaultDashboard.json` is authored by exporting a board, never edited in code.
-- Check new widgets in `app/mockups/widgets.html` (`pnpm mockup`) before running the app.
+- Check new widgets in the browser playground (`pnpm dev:browser`, then add the tile on the board) before running the desktop app.

@@ -52,6 +52,11 @@ function ipcRecorder(): Plugin {
   };
 }
 
+// The browser host (src/lib/api/browserHost.ts): same origin, so no CORS and no second address.
+const browserHost = process.env.VITE_BROWSER_HOST
+  ? { "/__host": `http://127.0.0.1:${process.env.BROWSER_HOST_PORT ?? 1430}` }
+  : undefined;
+
 export default defineConfig({
   // Two kinds of test, kept apart by their file name rather than by a folder. `pure` is what
   // `lib/` computes before anything is rendered and stays in node — no DOM to slow it down and
@@ -82,5 +87,8 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     watch: { ignored: ["**/src-tauri/**", "**/e2e/**"] },
+    proxy: browserHost,
   },
+  // `pnpm e2e` serves a build: one chunk per screen instead of hundreds of modules per page.
+  preview: { proxy: browserHost },
 });

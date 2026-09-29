@@ -23,10 +23,15 @@ const queryClient = new QueryClient({
 // Must run before first paint — tokens.css variables are keyed off [data-theme].
 applyTheme("system");
 
+// In a plain browser the host is the Rust browser host over HTTP; connected before anything asks.
+const host = import.meta.env.VITE_BROWSER_HOST
+  ? import("./lib/api/browserHost").then((m) => m.connectBrowserHost())
+  : Promise.resolve();
+
 // The OS language until the settings arrive; rendering waits for the catalog. `record:tour` opens its profile first.
 const ready = import.meta.env.VITE_RECORD_TOUR
   ? import("./lib/ipcTour").then((m) => m.prepareTour())
-  : Promise.resolve(true);
+  : host.then(() => true);
 
 void Promise.all([ready, activateLocale(resolveLocale("system", null))]).then(([go]) => {
   if (!go) return;

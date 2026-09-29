@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "vite",
     "dev:app": "tauri dev --config src-tauri/tauri.dev.conf.json",
+    "dev:browser": "node scripts/browser-dev.mjs",
+    "e2e": "playwright test -c e2e",
     "record:ipc": "VITE_RECORD_IPC=1 tauri dev --config src-tauri/tauri.dev.conf.json",
     "record:tour": "node scripts/record-tour.mjs",
     "build": "tsc --noEmit && vite build",
@@ -44,11 +46,13 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@lingui/babel-plugin-lingui-macro": "^6.7.0",
     "@lingui/cli": "^6.7.0",
     "@lingui/format-po": "^6.7.0",
     "@lingui/vite-plugin": "^6.7.0",
+    "@playwright/test": "^1.63.0",
     "@tauri-apps/cli": "^2.1.0",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",

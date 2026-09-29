@@ -17,3 +17,8 @@ local-docs/
 
 # Lingui compiles the .po catalogs during the Vite build; the .js output is generated.
 app/src/locales/*/messages.js
+
+# Playwright (app/e2e)
+app/test-results/
+app/playwright-report/
+app/e2e/.dist/
