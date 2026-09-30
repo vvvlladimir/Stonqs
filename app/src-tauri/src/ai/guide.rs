@@ -49,6 +49,10 @@ const REFERENCE: &[(&str, &str)] = &[
         include_str!("../../../../docs/ai-reference/importing-data.md"),
     ),
     (
+        "net-worth",
+        include_str!("../../../../docs/ai-reference/net-worth.md"),
+    ),
+    (
         "income-and-costs",
         include_str!("../../../../docs/ai-reference/income-and-costs.md"),
     ),
@@ -110,6 +114,10 @@ const GUIDES: &[(&str, &str)] = &[
         include_str!("../../../../docs/user-guide/accounts.md"),
     ),
     ("plans", include_str!("../../../../docs/user-guide/plans.md")),
+    (
+        "networth",
+        include_str!("../../../../docs/user-guide/networth.md"),
+    ),
     ("alerts", include_str!("../../../../docs/user-guide/alerts.md")),
     (
         "securities",
@@ -150,6 +158,7 @@ pub const SCREEN_IDS: &[&str] = &[
     "transactions",
     "accounts",
     "plans",
+    "networth",
     "alerts",
     "securities",
     "watchlist",

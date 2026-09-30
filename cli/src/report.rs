@@ -229,3 +229,61 @@ pub fn rebalance(args: &[String]) -> Result<()> {
     );
     Ok(())
 }
+
+/// Print net worth: the portfolio, what else is owned, what is owed, and the line between two
+/// dates. None of it touches a return — it is a second total (ADR-0092).
+pub fn networth(args: &[String]) -> Result<()> {
+    let world = demo_world()?;
+    let range = parse_range(args, world.default_range())?;
+    let analytics = world.analytics()?;
+    let reading = analytics.net_worth(range.to)?;
+
+    println!("net worth on {}, base {}", reading.date, reading.base_currency);
+    println!("{}", "-".repeat(78));
+    println!(
+        "{:<28} {:<10} {:>14} {:>12}",
+        "thing", "kind", "value", "valued on"
+    );
+    for holding in &reading.holdings {
+        let sign = match holding.side {
+            AssetSide::Owned => "",
+            AssetSide::Owed => "-",
+        };
+        println!(
+            "{:<28} {:<10} {:>14} {:>12}",
+            holding.name,
+            holding.kind.as_str().to_lowercase(),
+            format!("{sign}{}", money(holding.amount_base)),
+            holding.valued_on,
+        );
+    }
+    println!("{}", "-".repeat(78));
+    println!("invested       {:>14}", money(reading.investments_base));
+    println!("other assets   {:>14}", money(reading.owned_base));
+    println!("liabilities    {:>14}", money(reading.owed_base));
+    println!("net worth      {:>14}", money(reading.net_base));
+    if let Some(share) = reading.invested_share {
+        println!("of which invested: {}", percent(share));
+    }
+    if !reading.not_valued_yet.is_empty() {
+        println!("never valued yet: {}", reading.not_valued_yet.len());
+    }
+
+    let line = analytics.net_worth_series(range.from, range.to)?;
+    println!("{}", "-".repeat(78));
+    println!(
+        "{:<12} {:>14} {:>14} {:>14} {:>14}",
+        "day", "invested", "owned", "owed", "net"
+    );
+    for point in &line.points {
+        println!(
+            "{:<12} {:>14} {:>14} {:>14} {:>14}",
+            point.date,
+            money(point.investments_base),
+            money(point.owned_base),
+            money(point.owed_base),
+            money(point.net_base),
+        );
+    }
+    Ok(())
+}

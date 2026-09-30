@@ -6,6 +6,7 @@ export type * from "./allocation";
 export type * from "./imports";
 export type * from "./income";
 export type * from "./market";
+export type * from "./networth";
 export type * from "./payments";
 export type * from "./performance";
 export type * from "./periods";

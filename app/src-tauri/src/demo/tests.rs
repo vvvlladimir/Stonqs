@@ -64,6 +64,38 @@ fn the_extras_are_readable() {
         1
     );
     assert_eq!(store.list_attribute_defs().expect("attributes").len(), 2);
+    assert_eq!(store.list_assets(&portfolio.id).expect("assets").len(), 3);
+}
+
+/// The demo's net worth adds the flat and the car and subtracts the mortgage, and the portfolio's
+/// own total is untouched by all three (ADR-0092).
+#[test]
+fn net_worth_is_the_portfolio_plus_what_is_owned_minus_what_is_owed() {
+    let (store, portfolio, today) = seeded();
+    let analytics = PortfolioAnalytics::new(&store, &portfolio).expect("analytics");
+
+    let valuation = analytics.valuation_at(today).expect("a valuation");
+    let reading = analytics.net_worth(today).expect("net worth");
+
+    assert_eq!(reading.investments_base, valuation.total_value_base);
+    assert_eq!(
+        reading.net_base,
+        valuation.total_value_base + reading.owned_base - reading.owed_base
+    );
+    assert!(reading.owed_base > Decimal::ZERO, "{reading:?}");
+    assert!(reading.not_valued_yet.is_empty(), "{reading:?}");
+    // Every figure is months old at the latest, so each row can name its own day.
+    assert!(
+        reading.holdings.iter().all(|h| h.valued_on < today),
+        "{reading:?}"
+    );
+    assert!(
+        !analytics
+            .net_worth_series(today - chrono::Duration::days(365), today)
+            .expect("a line")
+            .points
+            .is_empty()
+    );
 }
 
 fn test_security(store: &Store, symbol: &str) -> String {

@@ -16,6 +16,7 @@ const SCREENS = [
   "securities",
   "watchlist",
   "plans",
+  "networth",
   "alerts",
   "performance",
   "trades",

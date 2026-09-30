@@ -10,6 +10,7 @@ export const TOOL_LABELS: Record<string, MessageDescriptor> = {
   portfolio_risk: msg`volatility and drawdown`,
   plans_goals: msg`your savings goals`,
   accounts_limits: msg`your contribution limits`,
+  net_worth: msg`everything you own and owe`,
   positions_list: msg`the instruments you hold`,
   accounts_list: msg`your accounts and cash`,
   allocation_trees: msg`your classification trees`,

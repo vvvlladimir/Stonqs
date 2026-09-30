@@ -91,6 +91,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [35](0035-a-watchlist-is-a-list-of-instruments-read-off-their-own-quotes.md) | A watchlist is a named list of instruments, read off their own quotes | Accepted |
 | [68](0068-a-goal-is-an-intention-and-a-limit-is-measured-never-enforced.md) | A goal is an intention, and a contribution limit is measured, never enforced | Accepted; withdrawal netting superseded by [71](0071-a-withdrawal-restores-allowance-only-when-the-limit-says-so.md) |
 | [71](0071-a-withdrawal-restores-allowance-only-when-the-limit-says-so.md) | A withdrawal restores allowance only when the limit says so | Accepted |
+| [92](0092-net-worth-is-a-second-total-made-of-dated-manual-valuations.md) | Net worth is a second total, made of dated manual valuations | Accepted |
 
 ## The host and the interface
 

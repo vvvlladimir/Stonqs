@@ -10,6 +10,7 @@ export * from "./plugins";
 export * from "./ai";
 export * from "./ledger";
 export * from "./plans";
+export * from "./networth";
 export * from "./securities";
 export * from "./reports";
 export * from "./taxonomy";

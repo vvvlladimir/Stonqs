@@ -21,6 +21,7 @@ fn main() {
         "allocation" => report::allocation(&args[1..]),
         "benchmark" => report::benchmark(&args[1..]),
         "rebalance" => report::rebalance(&args[1..]),
+        "networth" => report::networth(&args[1..]),
         "import" => import::run(&args[1..]),
         "lookup" => market::lookup(&args[1..]),
         "listings" => market::listings(&args[1..]),
@@ -55,6 +56,7 @@ fn print_help() {
          {:33}breakdowns of the current valuation\n  \
          benchmark [from] [to]            portfolio against a benchmark\n  \
          rebalance                        plan to reach the target structure\n  \
+         networth [from] [to]             assets and debts beside the portfolio\n  \
          import [file] [--preset name] [--resolve] [--commit]\n  \
          {:33}parse a broker CSV (defaults to\n  \
          {:33}cli/samples/trades.csv); --resolve identifies\n  \

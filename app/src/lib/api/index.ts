@@ -7,6 +7,7 @@ import { reportsApi } from "./reports";
 import { taxonomyApi } from "./taxonomy";
 import { importApi } from "./import";
 import { marketApi } from "./market";
+import { netWorthApi } from "./networth";
 import { pluginsApi } from "./plugins";
 import { aiApi } from "./ai";
 import { appApi } from "./app";
@@ -24,6 +25,7 @@ export const api = {
   ...taxonomyApi,
   ...importApi,
   ...marketApi,
+  ...netWorthApi,
   ...pluginsApi,
   ...aiApi,
   ...appApi,

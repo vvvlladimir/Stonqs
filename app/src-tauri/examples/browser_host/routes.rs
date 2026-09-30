@@ -10,8 +10,8 @@ use serde::de::DeserializeOwned;
 use serde_json::Value;
 use sq_app_lib::commands::{
     accounts, ai, alerts, allocation, attributes, corporate_actions, dashboard, demo, goals, import,
-    inflation, payments, performance, periods, plans, plugins, portfolio, positions, profiles, reports,
-    securities, sources, trades, transactions, watchlists,
+    inflation, networth, payments, performance, periods, plans, plugins, portfolio, positions, profiles,
+    reports, securities, sources, trades, transactions, watchlists,
 };
 use sq_app_lib::error::UiResult;
 use sq_app_lib::state::AppState;
@@ -170,6 +170,9 @@ routes! {
         plans::fire_projection { annual_spending, withdrawal_rate, expected_return, contribution };
         goals::goals_list { date };
         goals::limits_list { date };
+        networth::net_worth { date };
+        networth::net_worth_series { from, to };
+        networth::asset_values { asset_id };
         watchlists::watchlists_list {};
         watchlists::watchlist_rows { id, from, to };
         settings::settings_get {};
@@ -259,6 +262,10 @@ pub const DESKTOP_ONLY: &[(&str, &str)] = &[
     ("goal_delete", "handle"),
     ("limit_save", "handle"),
     ("limit_delete", "handle"),
+    ("asset_save", "handle"),
+    ("asset_delete", "handle"),
+    ("asset_value_save", "handle"),
+    ("asset_value_delete", "handle"),
     ("watchlist_save", "handle"),
     ("watchlist_delete", "handle"),
     ("securities_adopt_source", "handle"),

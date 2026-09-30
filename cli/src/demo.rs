@@ -101,6 +101,7 @@ pub fn demo_world() -> Result<DemoWorld> {
     }
 
     seed_market_data(&store, &apple, &world, &benchmark)?;
+    seed_assets(&store, &portfolio)?;
     let (taxonomy_id, target) = seed_regions(&store, &portfolio, &apple, &world)?;
 
     Ok(DemoWorld {
@@ -163,6 +164,31 @@ fn seed_market_data(store: &Store, apple: &Security, world: &Security, benchmark
         FxRate::new("USD", "EUR", day(11, 4), dec!(0.92)),
         FxRate::new("USD", "EUR", day(12, 31), dec!(0.95)),
     ])?;
+    Ok(())
+}
+
+/// A flat and the mortgage on it: net worth has something to add and something to subtract, and
+/// neither one may reach a single figure of the portfolio (ADR-0092).
+fn seed_assets(store: &Store, portfolio: &Portfolio) -> Result<()> {
+    let flat = Asset::new("Flat in Leipzig", AssetKind::Property, "EUR");
+    store.save_asset(&portfolio.id, &flat)?;
+    let mut mortgage = Asset::new("Mortgage", AssetKind::Mortgage, "EUR");
+    mortgage.secured_by = Some(flat.id.clone());
+    mortgage.schedule = Some(Amortization {
+        rate: dec!(0.0345),
+        monthly_payment: dec!(1100),
+        ends_on: Some(NaiveDate::from_ymd_opt(2049, 5, 1).expect("valid date")),
+    });
+    store.save_asset(&portfolio.id, &mortgage)?;
+
+    for value in [
+        AssetValue::new(&flat.id, day(6, 1), dec!(320000)),
+        AssetValue::new(&flat.id, day(12, 1), dec!(335000)),
+        AssetValue::new(&mortgage.id, day(6, 1), dec!(214000)),
+        AssetValue::new(&mortgage.id, day(12, 1), dec!(208500)),
+    ] {
+        store.save_asset_value(&value)?;
+    }
     Ok(())
 }
 

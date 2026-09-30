@@ -8,6 +8,7 @@ export type ScreenId =
   | "transactions"
   | "accounts"
   | "plans"
+  | "networth"
   | "alerts"
   | "securities"
   | "watchlist"
