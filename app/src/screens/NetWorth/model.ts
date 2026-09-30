@@ -38,10 +38,14 @@ export function assetToInput(asset: Asset): AssetInput {
   };
 }
 
-/** The window the line is drawn over: whole years back from the reading date. */
+/** The window the line is drawn over: whole years back from the reading date. A 29 February
+ *  reading lands on the 28th of a common year, the same clamp the core's month arithmetic makes;
+ *  keeping the 29th would send the reading a date that does not exist. */
 export function windowFrom(date: DateString, years: number): DateString {
   const year = Number(date.slice(0, 4)) - years;
-  return `${year}${date.slice(4)}`;
+  const rest = date.slice(4);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  return `${year}${rest === "-02-29" && !leap ? "-02-28" : rest}`;
 }
 
 export function isOwed(input: AssetInput): boolean {

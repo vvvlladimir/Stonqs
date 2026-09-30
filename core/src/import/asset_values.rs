@@ -38,7 +38,8 @@ pub struct ValueRow {
     pub date: NaiveDate,
     #[serde(with = "rust_decimal::serde::str")]
     pub amount: Decimal,
-    /// Whether a figure for this thing on this day is already stored — the row replaces it.
+    /// Whether this row writes over a figure for the same thing on the same day — one already
+    /// stored, or one an earlier row of this same file writes first.
     pub replaces: bool,
 }
 
@@ -49,6 +50,11 @@ pub struct ValuesPreview {
     pub rows: Vec<ValueRow>,
     /// Names the portfolio has no thing for, each once, in the order the file names them.
     pub unmatched: Vec<String>,
+    /// Names the portfolio holds more than one thing under, each once. Nothing is written for
+    /// them: two flats both called "Apartment" are told apart by nothing a name-only file
+    /// carries, and picking either one writes the figure onto the wrong flat half the time.
+    #[serde(default)]
+    pub ambiguous: Vec<String>,
     pub problems: Vec<ImportProblem>,
 }
 
@@ -81,8 +87,9 @@ impl ValuesPreview {
 pub fn build_values_preview(parsed: &ParsedCsv, assets: &[Asset], stored: &[AssetValue]) -> ValuesPreview {
     let config = detect_values_config(parsed);
     let mut problems = parsed.problems.clone();
-    let mut rows = Vec::new();
+    let mut rows: Vec<ValueRow> = Vec::new();
     let mut unmatched: Vec<String> = Vec::new();
+    let mut ambiguous: Vec<String> = Vec::new();
 
     let (Some(name_column), Some(date_column), Some(amount_column)) =
         (&config.name, &config.date, &config.amount)
@@ -95,6 +102,7 @@ pub fn build_values_preview(parsed: &ParsedCsv, assets: &[Asset], stored: &[Asse
             config,
             rows,
             unmatched,
+            ambiguous,
             problems,
         };
     };
@@ -143,15 +151,28 @@ pub fn build_values_preview(parsed: &ParsedCsv, assets: &[Asset], stored: &[Asse
         // thing by it, and refusing the row over a sign would help nobody.
         let amount = amount.abs();
 
-        let asset_id = match_asset(assets, &label).map(|asset| asset.id.clone());
-        if asset_id.is_none() && !unmatched.iter().any(|seen| seen.eq_ignore_ascii_case(&label)) {
-            unmatched.push(label.clone());
-        }
-        let replaces = asset_id.as_deref().is_some_and(|id| {
-            stored
-                .iter()
-                .any(|value| value.asset_id == id && value.date == date)
+        let asset_id = resolve(&label, assets, &mut unmatched, &mut ambiguous);
+        // A day is answered once: by a figure already stored, or by an earlier row of this same
+        // file, which the commit then writes over. Counting only the stored ones would promise
+        // two figures for a day that ends up holding one.
+        let id = asset_id.as_deref();
+        let in_store = id.is_some_and(|id| stored.iter().any(|v| v.asset_id == id && v.date == date));
+        let in_file = id.is_some_and(|id| {
+            rows.iter()
+                .any(|r| r.asset_id.as_deref() == Some(id) && r.date == date)
         });
+        if in_file {
+            problems.push(
+                ImportProblem::cell(
+                    ProblemCode::DuplicateInFile,
+                    number,
+                    date_column.clone(),
+                    "the file already answers this day for this thing; the last figure wins",
+                )
+                .warn(),
+            );
+        }
+        let replaces = in_store || in_file;
 
         rows.push(ValueRow {
             row: number,
@@ -167,7 +188,36 @@ pub fn build_values_preview(parsed: &ParsedCsv, assets: &[Asset], stored: &[Asse
         config,
         rows,
         unmatched,
+        ambiguous,
         problems,
+    }
+}
+
+/// The thing a row names, if the portfolio holds exactly one under that name. Names that found
+/// nothing and names that found several are kept apart: they ask the owner for different things.
+fn resolve(
+    label: &str,
+    assets: &[Asset],
+    unmatched: &mut Vec<String>,
+    ambiguous: &mut Vec<String>,
+) -> Option<String> {
+    match match_asset(assets, label) {
+        NameMatch::One(asset) => Some(asset.id.clone()),
+        NameMatch::Many => {
+            remember(ambiguous, label);
+            None
+        }
+        NameMatch::None => {
+            remember(unmatched, label);
+            None
+        }
+    }
+}
+
+/// Adds a name to a list it is not on yet, spelling and case as the file wrote it the first time.
+fn remember(names: &mut Vec<String>, label: &str) {
+    if !names.iter().any(|seen| seen.eq_ignore_ascii_case(label)) {
+        names.push(label.to_string());
     }
 }
 
@@ -220,12 +270,26 @@ pub fn detect_values_config(parsed: &ParsedCsv) -> ValuesCsvConfig {
     ValuesCsvConfig { name, date, amount }
 }
 
-/// Exactly the name, ignoring case and surrounding space. No fuzzy match: writing a figure onto
-/// the wrong flat is worse than reporting a name back.
-fn match_asset<'a>(assets: &'a [Asset], label: &str) -> Option<&'a Asset> {
-    assets
+/// What a name in the file found in the portfolio.
+enum NameMatch<'a> {
+    One(&'a Asset),
+    /// Two things or more answer to it. Nothing in the model makes a name unique, so this is a
+    /// state the portfolio can really be in.
+    Many,
+    None,
+}
+
+/// Exactly the name, ignoring case and surrounding space. No fuzzy match, and no first-one-wins:
+/// writing a figure onto the wrong flat is worse than reporting a name back.
+fn match_asset<'a>(assets: &'a [Asset], label: &str) -> NameMatch<'a> {
+    let mut found = assets
         .iter()
-        .find(|asset| asset.name.trim().eq_ignore_ascii_case(label.trim()))
+        .filter(|asset| asset.name.trim().eq_ignore_ascii_case(label.trim()));
+    match (found.next(), found.next()) {
+        (Some(asset), None) => NameMatch::One(asset),
+        (Some(_), Some(_)) => NameMatch::Many,
+        _ => NameMatch::None,
+    }
 }
 
 /// Every valuation of every thing as one CSV — the file this import reads back.

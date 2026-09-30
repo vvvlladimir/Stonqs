@@ -5748,6 +5748,11 @@ msgstr "Ещё действия"
 msgid "more is sold than was ever received"
 msgstr "продано больше, чем поступало"
 
+#. placeholder {0}: preview.ambiguous.join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "More than one thing goes by {0} — rename one of them, or the file cannot say which it means."
+msgstr "Под именем {0} значится не одна вещь — переименуйте одну из них, иначе файл не скажет, о какой речь."
+
 #: src/lib/kinds.ts
 msgid "Mortgage"
 msgstr "Ипотека"
@@ -8267,6 +8272,11 @@ msgstr "строк"
 #: src/screens/dashboard/dialogs/config/Config.tsx
 msgid "Rows"
 msgstr "Строк"
+
+#. placeholder {0}: repeated.slice(0, 8).join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Rows {0} answer a day the file has already answered — of each such day, the last figure is the one kept."
+msgstr "Строки {0} называют день, который файл уже назвал — за такой день останется последняя сумма."
 
 #. placeholder {0}: skipped.slice(0, 8).join(", ")
 #: src/screens/NetWorth/ValuesFileDialog.tsx

@@ -112,6 +112,55 @@ fn a_share_of_a_negative_net_worth_is_not_reported() {
     assert_eq!(reading.invested_share, None);
 }
 
+/// The line skips the per-reading detail, so every point has to answer with what a full reading
+/// of that same day answers: the line is the same figures, drawn cheaper.
+#[test]
+fn every_point_of_the_line_agrees_with_a_reading_of_that_day() {
+    let series = ValueSeries {
+        base_currency: "EUR".into(),
+        dates: vec![d(2026, 1, 1), d(2026, 3, 1), d(2026, 6, 1)],
+        total_value_base: vec![dec!(50000), dec!(55000), dec!(60000)],
+        external_flow_base: vec![Decimal::ZERO, Decimal::ZERO, Decimal::ZERO],
+    };
+    let mut closed = Asset::new("Car", AssetKind::Vehicle, "CHF");
+    closed.id = "car".into();
+    closed.closed_on = Some(d(2026, 5, 1));
+    let assets = vec![house(), mortgage(), closed];
+    let values = vec![
+        AssetValue::new("house", d(2026, 2, 1), dec!(400000)),
+        AssetValue::new("house", d(2026, 5, 1), dec!(410000)),
+        AssetValue::new("debt", d(2026, 1, 15), dec!(250000)),
+        AssetValue::new("car", d(2026, 1, 15), dec!(20000)),
+    ];
+
+    let line = net_worth_series(
+        &series,
+        &assets,
+        &values,
+        "EUR",
+        d(2026, 1, 1),
+        d(2026, 6, 30),
+        &Rates,
+    )
+    .unwrap();
+
+    assert!(!line.points.is_empty());
+    for point in &line.points {
+        let reading = net_worth(
+            point.investments_base,
+            &assets,
+            &values,
+            "EUR",
+            point.date,
+            &Rates,
+        )
+        .unwrap();
+        assert_eq!(point.owned_base, reading.owned_base, "owned on {}", point.date);
+        assert_eq!(point.owed_base, reading.owed_base, "owed on {}", point.date);
+        assert_eq!(point.net_base, reading.net_base, "net on {}", point.date);
+    }
+}
+
 /// The line moves where something was measured: a valuation, a closing, or a portfolio day.
 #[test]
 fn the_series_has_a_point_where_the_sum_can_move() {

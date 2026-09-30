@@ -65,6 +65,51 @@ fn a_row_for_a_day_already_answered_is_named_as_a_replacement() {
     assert!(!plan.rows[1].replaces);
 }
 
+/// Nothing in the model makes a name unique. Two things answering to one name means the file
+/// cannot say which it means, so neither is written and the name is reported back.
+#[test]
+fn a_name_two_things_answer_to_is_refused_rather_than_guessed() {
+    let mut first = Asset::new("Apartment", AssetKind::Property, "EUR");
+    first.id = "flat-a".into();
+    let mut second = Asset::new("apartment", AssetKind::Property, "EUR");
+    second.id = "flat-b".into();
+    let parsed = parse_csv(
+        b"asset,date,value\nApartment,2026-01-15,400000\nApartment,2026-06-30,410000\n",
+        &ParseConfig::default(),
+    )
+    .unwrap();
+
+    let plan = build_values_preview(&parsed, &[first, second], &[]);
+
+    assert_eq!(plan.ambiguous, vec!["Apartment".to_string()]);
+    assert!(plan.unmatched.is_empty());
+    assert_eq!(plan.writes(), 0);
+    assert_eq!(plan.rows.len(), 2);
+}
+
+/// Two rows for one thing on one day: the commit writes the last over the first, so the preview
+/// counts the second as a replacement rather than promising two figures for one day.
+#[test]
+fn a_day_answered_twice_inside_the_file_is_named_as_a_replacement() {
+    let plan = preview(
+        "asset,date,value\nFlat,2026-01-15,400000\nFlat,2026-01-15,410000\n",
+        &[],
+    );
+
+    assert!(!plan.rows[0].replaces);
+    assert!(plan.rows[1].replaces);
+    assert_eq!(plan.replacements(), 1);
+    // A warning, not an error: the row is still written, and the last figure is the one kept.
+    let repeated: Vec<_> = plan
+        .problems
+        .iter()
+        .filter(|p| p.code == ProblemCode::DuplicateInFile)
+        .collect();
+    assert_eq!(repeated.len(), 1, "{:?}", plan.problems);
+    assert_eq!(repeated[0].row, Some(2));
+    assert!(!repeated[0].is_error());
+}
+
 /// A debt written as a negative means the same thing by it; both sides are stored positive.
 #[test]
 fn a_negative_figure_is_read_as_what_is_owed() {

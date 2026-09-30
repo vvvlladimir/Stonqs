@@ -258,6 +258,32 @@ pub fn net_worth(
     })
 }
 
+/// The two sides on `date`, and nothing else. What a full [`NetWorth`] carries besides them —
+/// the sorted holdings, the equity each debt leaves, the month-by-month amortization of every
+/// schedule — is per-reading detail no point of a line ever shows, and a line is drawn over
+/// thousands of days.
+fn sides_on(
+    assets: &[Asset],
+    history: &History<'_>,
+    base: &str,
+    date: NaiveDate,
+    rates: &dyn RateLookup,
+) -> Result<(Decimal, Decimal)> {
+    let mut owned_base = Decimal::ZERO;
+    let mut owed_base = Decimal::ZERO;
+    for asset in assets.iter().filter(|asset| present(asset, date)) {
+        let Some(value) = value_as_of(history, &asset.id, date) else {
+            continue;
+        };
+        let amount_base = rates.convert(value.amount, &asset.currency, base, date)?;
+        match asset.side() {
+            AssetSide::Owned => owned_base += amount_base,
+            AssetSide::Owed => owed_base += amount_base,
+        }
+    }
+    Ok((owned_base, owed_base))
+}
+
 /// What a debt leaves of the thing it is secured on. Several debts may name one asset — a
 /// mortgage and a renovation loan on the same flat — so they are summed rather than matched one
 /// to one, and an asset nothing is secured on keeps no equity figure at all: repeating its own
@@ -321,16 +347,19 @@ pub fn net_worth_series(
             .filter(|d| (from..=to).contains(d)),
     );
 
+    // Sorted once for the whole line rather than once per day.
+    let history = history(values);
     let points = dates
         .into_iter()
         .map(|date| {
-            let reading = net_worth(invested_on(portfolio, date), assets, values, &base, date, rates)?;
+            let investments_base = invested_on(portfolio, date);
+            let (owned_base, owed_base) = sides_on(assets, &history, &base, date, rates)?;
             Ok(NetWorthPoint {
                 date,
-                investments_base: reading.investments_base,
-                owned_base: reading.owned_base,
-                owed_base: reading.owed_base,
-                net_base: reading.net_base,
+                investments_base,
+                owned_base,
+                owed_base,
+                net_base: investments_base + owned_base - owed_base,
             })
         })
         .collect::<Result<Vec<_>>>()?;

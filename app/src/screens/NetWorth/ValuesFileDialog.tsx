@@ -19,9 +19,13 @@ export function ValuesFileDialog({
   const writes = preview.rows.filter((row) => row.asset_id !== null);
   const replacing = writes.filter((row) => row.replaces).length;
   const things = new Set(writes.map((row) => row.asset_id)).size;
-  const skipped = [...new Set(preview.problems.filter((p) => p.row !== null).map((p) => p.row!))].sort(
-    (a, b) => a - b,
-  );
+  // Errors only: a warning leaves its row importable, and listing it as left out would be a lie.
+  const skipped = [
+    ...new Set(preview.problems.filter((p) => p.row !== null && p.severity === "ERROR").map((p) => p.row!)),
+  ].sort((a, b) => a - b);
+  const repeated = preview.problems
+    .filter((p) => p.code === "DUPLICATE_IN_FILE" && p.row !== null)
+    .map((p) => p.row!);
 
   return (
     <Modal
@@ -56,6 +60,25 @@ export function ValuesFileDialog({
         <Banner tone="warn">
           <Trans>
             No thing here goes by {preview.unmatched.join(", ")} — add it first, then import again.
+          </Trans>
+        </Banner>
+      )}
+
+      {preview.ambiguous.length > 0 && (
+        // Two things under one name: the file names neither, so no figure is written for either.
+        <Banner tone="warn">
+          <Trans>
+            More than one thing goes by {preview.ambiguous.join(", ")} — rename one of them, or the file
+            cannot say which it means.
+          </Trans>
+        </Banner>
+      )}
+
+      {repeated.length > 0 && (
+        <Banner tone="warn">
+          <Trans>
+            Rows {repeated.slice(0, 8).join(", ")} answer a day the file has already answered — of each such
+            day, the last figure is the one kept.
           </Trans>
         </Banner>
       )}

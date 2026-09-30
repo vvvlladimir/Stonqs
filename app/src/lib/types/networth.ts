@@ -182,5 +182,7 @@ export interface ValuesPreview {
   rows: ValueRow[];
   /** Names the portfolio has no thing for; nothing is created from a file. */
   unmatched: string[];
+  /** Names more than one thing answers to; nothing is written for them either. */
+  ambiguous: string[];
   problems: ImportProblem[];
 }

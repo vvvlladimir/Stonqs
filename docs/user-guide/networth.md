@@ -28,9 +28,11 @@ figure. **Value history** lists every figure ever written for one thing and lets
 **Import valuations…** reads a CSV of figures — one row per thing per day, joined to what you
 already have **by name** — and shows what it would write before writing anything, including which
 days it would replace. A name the portfolio does not hold is reported rather than created: a file
-cannot say what kind of thing it is or which way its amount points. Because one day holds one
-figure, importing the same file twice changes nothing. **Export** writes the file this same import
-reads back.
+cannot say what kind of thing it is or which way its amount points. A name more than one thing
+answers to is reported too, and no figure is written for any of them — rename one of the two, and
+the file can say which it means. Because one day holds one figure, importing the same file twice
+changes nothing; a file that names one thing's day twice keeps the last figure and says so.
+**Export** writes the file this same import reads back.
 
 Each row shows the age of its figure and says so once it is over half a year old; a banner counts
 how many. An old figure is not wrong — only you can tell whether it still holds — so the app

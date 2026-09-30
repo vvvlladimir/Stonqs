@@ -5753,6 +5753,11 @@ msgstr "More actions"
 msgid "more is sold than was ever received"
 msgstr "more is sold than was ever received"
 
+#. placeholder {0}: preview.ambiguous.join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "More than one thing goes by {0} — rename one of them, or the file cannot say which it means."
+msgstr "More than one thing goes by {0} — rename one of them, or the file cannot say which it means."
+
 #: src/lib/kinds.ts
 msgid "Mortgage"
 msgstr "Mortgage"
@@ -8272,6 +8277,11 @@ msgstr "rows"
 #: src/screens/dashboard/dialogs/config/Config.tsx
 msgid "Rows"
 msgstr "Rows"
+
+#. placeholder {0}: repeated.slice(0, 8).join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Rows {0} answer a day the file has already answered — of each such day, the last figure is the one kept."
+msgstr "Rows {0} answer a day the file has already answered — of each such day, the last figure is the one kept."
 
 #. placeholder {0}: skipped.slice(0, 8).join(", ")
 #: src/screens/NetWorth/ValuesFileDialog.tsx
