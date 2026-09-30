@@ -1,13 +1,7 @@
 name: CodeQL
+# Weekly, not per push: the queries are the same ones every time, and what changes under them is
+# the advisory set rather than the diff. `workflow_dispatch` is for looking before a release.
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - "**/*.md"
-      - docs/**
-      - local-docs/**
-      - LICENSE
-      - .github/ISSUE_TEMPLATE/**
   schedule:
     - cron: "0 7 * * 1"
   workflow_dispatch:
