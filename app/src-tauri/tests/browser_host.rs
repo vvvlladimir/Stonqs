@@ -1,5 +1,12 @@
 //! The browser host (`examples/browser_host`) answers the frontend in a plain browser with the real
 //! command functions. Two ways it could quietly stop doing that are checked here, without a browser.
+//!
+//! Not on Windows. This is the one test binary that links Tauri's app API, and there the linked
+//! exe dies at load with `STATUS_ENTRYPOINT_NOT_FOUND` before a single test runs — a DLL the
+//! loader resolves differently for a binary in `target\debug\deps`. The browser host is a
+//! development tool for the e2e suite, which runs on Linux and macOS, so the answer is to not
+//! build this binary there rather than to ship a workaround for a host nothing uses.
+#![cfg(not(windows))]
 
 #[path = "../examples/browser_host/routes.rs"]
 mod routes;

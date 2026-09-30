@@ -500,79 +500,79 @@
     },
     {
       "name": "cranelift-assembler-x64",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://crates.io/crates/cranelift-assembler-x64"
     },
     {
       "name": "cranelift-assembler-x64-meta",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://crates.io/crates/cranelift-assembler-x64-meta"
     },
     {
       "name": "cranelift-bforest",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-bitset",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-codegen",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-codegen-meta",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-codegen-shared",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-control",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-entity",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-frontend",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-isle",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime/tree/main/cranelift/isle"
     },
     {
       "name": "cranelift-native",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "cranelift-srcgen",
-      "version": "0.136.0",
+      "version": "0.136.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
@@ -830,7 +830,7 @@
     },
     {
       "name": "encoding_rs",
-      "version": "0.8.41",
+      "version": "0.8.42",
       "licence": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
       "url": "https://github.com/hsivonen/encoding_rs"
     },
@@ -1705,22 +1705,10 @@
       "url": "https://github.com/tauri-apps/muda"
     },
     {
-      "name": "multiversion",
-      "version": "0.9.0",
-      "licence": "MIT OR Apache-2.0",
-      "url": "https://github.com/calebzulawski/multiversion"
-    },
-    {
       "name": "multiversion_no_op",
       "version": "1.0.0",
       "licence": "Apache-2.0 OR MIT",
       "url": "https://github.com/hsivonen/multiversion_no_op"
-    },
-    {
-      "name": "multiversion-macros",
-      "version": "0.9.0",
-      "licence": "MIT OR Apache-2.0",
-      "url": "https://github.com/calebzulawski/multiversion"
     },
     {
       "name": "ndk",
@@ -2180,13 +2168,13 @@
     },
     {
       "name": "pulley-interpreter",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime/tree/main/pulley"
     },
     {
       "name": "pulley-macros",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime/tree/main/pulley/macros"
     },
@@ -2810,7 +2798,7 @@
     },
     {
       "name": "tauri",
-      "version": "2.11.5",
+      "version": "2.11.6",
       "licence": "Apache-2.0 OR MIT",
       "url": "https://github.com/tauri-apps/tauri"
     },
@@ -2930,7 +2918,7 @@
     },
     {
       "name": "thiserror",
-      "version": "2.0.20",
+      "version": "2.0.21",
       "licence": "MIT OR Apache-2.0",
       "url": "https://github.com/dtolnay/thiserror"
     },
@@ -2942,7 +2930,7 @@
     },
     {
       "name": "thiserror-impl",
-      "version": "2.0.20",
+      "version": "2.0.21",
       "licence": "MIT OR Apache-2.0",
       "url": "https://github.com/dtolnay/thiserror"
     },
@@ -3350,85 +3338,85 @@
     },
     {
       "name": "wasmtime",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-environ",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-component-macro",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-component-util",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-core",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://crates.io/crates/wasmtime-internal-core"
     },
     {
       "name": "wasmtime-internal-cranelift",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-fiber",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-jit-debug",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-jit-icache-coherence",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-unwinder",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-versioned-export-macros",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-internal-wit-bindgen",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-wasi",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
     {
       "name": "wasmtime-wasi-io",
-      "version": "49.0.0",
+      "version": "49.0.1",
       "licence": "Apache-2.0 WITH LLVM-exception",
       "url": "https://github.com/bytecodealliance/wasmtime"
     },
