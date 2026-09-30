@@ -4,7 +4,6 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useTour } from "../../../lib/tour";
 import { useLayer } from "../../../lib/commands";
 import { Modal } from "../../ui";
-import { SourcesSetup } from "../sources";
 import { useAnchor } from "./useAnchor";
 
 /** Distance the card keeps from its anchor and from the window's edges. */
@@ -21,7 +20,6 @@ export function TourLayer() {
     <>
       {tour.offered && <TourOffer />}
       {tour.step && <TourCard key={tour.step.id} />}
-      {tour.chooseSources && <SourcesSetup onClose={tour.closeSources} />}
     </>
   );
 }

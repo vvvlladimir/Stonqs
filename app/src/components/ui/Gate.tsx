@@ -6,20 +6,31 @@ export function Gate({
   lead,
   children,
   foot,
+  wide,
+  step,
+  actions,
 }: {
   title: ReactNode;
   lead?: ReactNode;
   children: ReactNode;
   foot?: ReactNode;
+  /** A card holding a list rather than a few fields. */
+  wide?: boolean;
+  /** Where in a sequence of gates this one is: "Step 2 of 2". */
+  step?: ReactNode;
+  /** Buttons pinned to the card's foot, so a long card never scrolls them away. */
+  actions?: ReactNode;
 }) {
   return (
-    <div className="gate">
+    <div className={wide ? "gate gate--wide" : "gate"}>
       <section className="box panel gate__card">
         <header className="gate__head">
+          {step && <p className="gate__step">{step}</p>}
           <h1>{title}</h1>
           {lead && <p className="gate__lead">{lead}</p>}
         </header>
         {children}
+        {actions && <div className="gate__actions">{actions}</div>}
       </section>
       {foot && <div className="gate__foot">{foot}</div>}
     </div>

@@ -1535,7 +1535,7 @@ msgstr "Добавить заметку"
 msgid "Add or remove periods"
 msgstr "Добавить или убрать периоды"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Add source"
 msgstr "Добавить источник"
@@ -1918,7 +1918,7 @@ msgstr "Anthropic messages"
 msgid "Any JSON or CSV price endpoint can be added without an update of the app."
 msgstr "Любой источник цен в JSON или CSV можно добавить без обновления приложения."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 msgid "Any JSON or CSV price endpoint: its address, and where the dates and closes sit in the answer."
 msgstr "Любой JSON- или CSV-адрес с ценами: сам адрес и то, где в ответе лежат даты и цены закрытия."
 
@@ -2097,6 +2097,7 @@ msgstr "Средний срок"
 #: src/components/domain/tour/TourLayer.tsx
 #: src/screens/Allocation/BreakdownPanel.tsx
 #: src/screens/Import/index.tsx
+#: src/screens/Onboarding.tsx
 msgid "Back"
 msgstr "Назад"
 
@@ -2497,7 +2498,7 @@ msgstr "Нажмите, чтобы повторить."
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/SecurityPopup.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 #: src/components/domain/UpdateDialog.tsx
 #: src/components/ui/Modal.tsx
 #: src/screens/dashboard/dialogs/BoardDialogs.tsx
@@ -2668,6 +2669,10 @@ msgstr "Подключить"
 msgid "Connected"
 msgstr "Подключено"
 
+#: src/screens/Onboarding.tsx
+msgid "Continue"
+msgstr "Продолжить"
+
 #: src/screens/Performance/PositionReturns.tsx
 msgid "Contribution"
 msgstr "Вклад"
@@ -2791,15 +2796,14 @@ msgid "Create on this screen"
 msgstr "Создать на этом экране"
 
 #: src/screens/Onboarding.tsx
-msgid "Create portfolio"
-msgstr "Создать портфель"
+#~ msgid "Create portfolio"
+#~ msgstr "Создать портфель"
 
 #: src/screens/Securities/AttributeImportDialog.tsx
 msgid "created on import"
 msgstr "будет создано при импорте"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
-#: src/screens/Onboarding.tsx
 msgid "Creating…"
 msgstr "Создаём…"
 
@@ -3012,7 +3016,7 @@ msgstr "Сколько дней длилось самое глубокое па�
 #~ msgid "Debug"
 #~ msgstr "Отладка"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Decide later"
 msgstr "Решить позже"
 
@@ -3467,7 +3471,7 @@ msgstr "изменить"
 
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/SecurityAlerts.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Accounts/LimitCard.tsx
 #: src/screens/dashboard/Dashboard.tsx
 #: src/screens/Plans/GoalCard.tsx
@@ -3784,7 +3788,7 @@ msgstr "всё сопоставлено"
 msgid "Everything this app was built from, and the licence each part keeps."
 msgstr "Всё, из чего собрано приложение, и лицензия каждой части."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Everything this build can ask. A source with a key of its own answers only once the key is saved."
 msgstr "Всё, что эта сборка умеет спрашивать. Источник со своим ключом отвечает только после того, как ключ сохранён."
 
@@ -3817,8 +3821,8 @@ msgstr "Опережение"
 msgid "Exchange"
 msgstr "Биржа"
 
+#: src/components/domain/sources/OwnSources.tsx
 #: src/components/domain/sources/SourceRow.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "exchange rates"
 msgstr "курсы валют"
@@ -4015,8 +4019,8 @@ msgid "Fill it"
 msgstr "Заполнить"
 
 #: src/screens/Onboarding.tsx
-msgid "Filling…"
-msgstr "Заполняем…"
+#~ msgid "Filling…"
+#~ msgstr "Заполняем…"
 
 #: src/screens/Securities/SecurityForm.tsx
 msgid "Fills the days the own source has not published yet"
@@ -6638,6 +6642,10 @@ msgstr "Одна величина к другой: доходность, дол�
 msgid "One instrument trades on many exchanges and in many currencies. Pick the venue your broker actually traded on: price and cost basis then share one currency, and the valuation stops going through an exchange rate every day. Switching a venue deletes the quotes already downloaded — the new one has a different price series."
 msgstr "Один и тот же инструмент торгуется на разных биржах и в разных валютах. Выберите ту площадку, на которой сделки совершал ваш брокер: тогда цена и себестоимость будут в одной валюте, а оценка не будет каждый день проходить через курс. Смена площадки стирает загруженные котировки — у новой другой ряд цен."
 
+#: src/screens/Onboarding.tsx
+#~ msgid "One more question before the app opens. The answer can be changed in Settings, under Market data."
+#~ msgstr "Ещё один вопрос перед тем, как открыть приложение. Ответ можно изменить в Настройках, в разделе «Рыночные данные»."
+
 #: src/screens/Import/TransferPairs.tsx
 msgid "One move"
 msgstr "Один перевод"
@@ -6993,15 +7001,15 @@ msgstr "TWR за период, в год"
 msgid "Periods"
 msgstr "Периоды"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Pick a source of exchange rates first."
 msgstr "Сначала выберите источник курсов валют."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Pick a source of prices and one of exchange rates first."
 msgstr "Сначала выберите источник цен и источник курсов валют."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Pick a source of prices first."
 msgstr "Сначала выберите источник цен."
 
@@ -7204,11 +7212,15 @@ msgstr "Регион индекса цен"
 msgid "prices"
 msgstr "цены"
 
+#: src/screens/Onboarding.tsx
+msgid "Prices and exchange rates come from services other people run, under their own terms. Until one is on, prices are typed in by hand. This can be changed later in Settings, under Market data."
+msgstr "Цены и курсы валют берутся из сервисов, которые ведут другие люди, на их собственных условиях. Пока ни один не включён, цены вводятся вручную. Выбор можно изменить позже в Настройках, в разделе «Рыночные данные»."
+
 #: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Prices of instruments"
 msgstr "Цены инструментов"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
 msgstr "Цены, курсы и сведения об инструментах загружаются из сервисов, которыми управляют другие люди. Пока ни один не включён, приложение не обращается ни к кому, а цены вводятся вручную. Включая источник, вы соглашаетесь с его собственными условиями для этих запросов."
 
@@ -7384,8 +7396,8 @@ msgstr "Источник котировок"
 msgid "Quote source for unidentified instruments"
 msgstr "Источник котировок для неопознанных бумаг"
 
+#: src/components/domain/sources/OwnSources.tsx
 #: src/components/domain/sources/SourceRow.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "quotes"
 msgstr "котировки"
@@ -8017,7 +8029,7 @@ msgid "Save to a file…"
 msgstr "Сохранить в файл…"
 
 #: src/components/domain/sources/SourceKeyDialog.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 #: src/components/ui/formLabels.ts
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -8190,7 +8202,7 @@ msgstr "Выбрать все"
 msgid "Select All"
 msgstr "Выбрать все"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Select all and continue"
 msgstr "Выбрать все и продолжить"
 
@@ -8343,7 +8355,7 @@ msgstr "Sharpe"
 msgid "Shipped"
 msgstr "Встроенные"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Shipped sources"
 msgstr "Встроенные источники"
 
@@ -8596,6 +8608,14 @@ msgstr "Остаётся деньгами на счёте"
 #: src/components/domain/PeriodEditor.tsx
 msgid "Stays where it is put. A window that ends in the future stops at today."
 msgstr "Остаётся там, где задан. Окно, кончающееся в будущем, обрывается на сегодня."
+
+#: src/screens/Onboarding.tsx
+msgid "Step 1 of 2"
+msgstr "Шаг 1 из 2"
+
+#: src/screens/Onboarding.tsx
+msgid "Step 2 of 2"
+msgstr "Шаг 2 из 2"
 
 #: src/screens/Trades/index.tsx
 #: src/screens/Trades/TradeMetrics.tsx
@@ -9724,7 +9744,7 @@ msgstr "Эти значения встретились только в стро�
 msgid "they are written, but worth a look"
 msgstr "записываются, но стоит просмотреть"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
 msgstr "Они добавлены, когда ни один источник не был включён, поэтому их цены никто не загружает. Инструмент, которому вы задали источник сами, сохранит его."
 
@@ -10322,11 +10342,11 @@ msgstr "Обновления"
 msgid "Use {firstQuotes}"
 msgstr "Использовать {firstQuotes}"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Use {firstQuotes} for the {orphans} instruments that have no price source"
 msgstr "Использовать {firstQuotes} для инструментов без источника цен: {orphans}"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Use these sources"
 msgstr "Использовать эти источники"
 
@@ -10769,6 +10789,7 @@ msgid "where an instrument's prices come from"
 msgstr "откуда берутся цены инструмента"
 
 #: src/components/domain/sources/SourcesSetup.tsx
+#: src/screens/Onboarding.tsx
 msgid "Where data comes from"
 msgstr "Откуда берутся данные"
 
@@ -10960,7 +10981,7 @@ msgstr "Удержан у источника и до счёта не доход�
 msgid "Without an instrument the contribution stays as cash on the account."
 msgstr "Без инструментов взнос остаётся деньгами на счёте."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Without both, holdings in another currency cannot be valued at all. Leaving with Decide later is an answer too: prices are then typed in by hand."
 msgstr "Без обоих активы в другой валюте оценить невозможно. Уйти через «Решить позже» — тоже ответ: тогда цены вводятся вручную."
 
@@ -11118,7 +11139,7 @@ msgstr "Ваши заметки, а также дивиденды и сплит�
 msgid "Your own provider"
 msgstr "Свой провайдер"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Your own sources"
 msgstr "Свои источники"

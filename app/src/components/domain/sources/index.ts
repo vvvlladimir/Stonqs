@@ -4,3 +4,4 @@ export { SourcesSetup } from "./SourcesSetup";
 export { CustomSourceDialog } from "./CustomSourceDialog";
 export { sourceNeeds, type SourceNeeds } from "./model";
 export { useSourceKeys } from "./useSourceKeys";
+export { useSourcesSetup } from "./useSourcesSetup";

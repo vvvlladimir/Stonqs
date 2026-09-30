@@ -5,12 +5,15 @@ import { api } from "../lib/api";
 import { affects, useInvalidate, useProfiles } from "../lib/queries";
 import { openProfile } from "../lib/profiles";
 import { ProfileRows } from "../components/domain/ProfilePicker";
+import { useSourcesSetup } from "../components/domain/sources";
 import { ErrorText, Field, FieldPair, Form, Gate, GateSection } from "../components/ui";
 import type { AppStatus, SetupInput } from "../lib/types";
 
+/** What the profile starts with, written only once the sources step is left, however it is left. */
+type Commit = () => Promise<unknown>;
+
+/** Profile first, then the sources question on the same gate (ADR-0091). */
 export function Onboarding({ status }: { status: AppStatus }) {
-  const { t } = useLingui();
-  const invalidate = useInvalidate();
   const [draft, setDraft] = useState<SetupInput>({
     portfolio_name: status.portfolio_name,
     base_currency: status.base_currency,
@@ -18,26 +21,71 @@ export function Onboarding({ status }: { status: AppStatus }) {
     account_currency: status.base_currency,
     securities_account_name: "",
   });
+  const [commit, setCommit] = useState<Commit | null>(null);
 
-  const setup = useMutation({
-    mutationFn: api.setupPortfolio,
-    onSuccess: () => invalidate(...affects.portfolio),
+  if (commit) return <SourcesStep commit={commit} onBack={() => setCommit(null)} />;
+  return (
+    <ProfileStep
+      draft={draft}
+      setDraft={setDraft}
+      onSetup={() => setCommit(() => () => api.setupPortfolio(draft))}
+      onDemo={() => setCommit(() => api.demoSeed)}
+    />
+  );
+}
+
+/** Nothing is written until here: the portfolio, or the demo, arrives with the answer. */
+function SourcesStep({ commit, onBack }: { commit: Commit; onBack: () => void }) {
+  const { t } = useLingui();
+  const invalidate = useInvalidate();
+  const { body, actions } = useSourcesSetup({
+    intro: false,
+    after: commit,
+    onDone: () => invalidate(...affects.portfolio),
   });
+  return (
+    <Gate
+      wide
+      step={t`Step 2 of 2`}
+      title={<Trans>Where data comes from</Trans>}
+      lead={t`Prices and exchange rates come from services other people run, under their own terms. Until one is on, prices are typed in by hand. This can be changed later in Settings, under Market data.`}
+      actions={
+        <>
+          <button type="button" className="btn btn--quiet" onClick={onBack}>
+            <Trans>Back</Trans>
+          </button>
+          {actions}
+        </>
+      }
+    >
+      {body}
+    </Gate>
+  );
+}
+
+function ProfileStep({
+  draft,
+  setDraft,
+  onSetup,
+  onDemo,
+}: {
+  draft: SetupInput;
+  setDraft: (draft: SetupInput) => void;
+  onSetup: () => void;
+  onDemo: () => void;
+}) {
+  const { t } = useLingui();
 
   // A new profile opens here, empty; the way back to the others must not require setting it up.
   const profiles = useProfiles();
   const others = (profiles.data?.profiles ?? []).filter((p) => p.id !== profiles.data?.open);
   const leave = useMutation({ mutationFn: (id: string) => openProfile(id, profiles.data?.open ?? "") });
 
-  const seed = useMutation({
-    mutationFn: api.demoSeed,
-    onSuccess: () => invalidate(...affects.portfolio),
-  });
-
   const currency = (value: string) => value.toUpperCase();
 
   return (
     <Gate
+      step={t`Step 1 of 2`}
       title={<Trans>Let's set up the portfolio</Trans>}
       lead={t`Money and instruments live on separate accounts: cash on one, securities on another that settles through it.`}
       foot={
@@ -55,10 +103,9 @@ export function Onboarding({ status }: { status: AppStatus }) {
                 app does before importing anything of your own.
               </Trans>
             </p>
-            <button className="btn btn--ghost" onClick={() => seed.mutate()} disabled={seed.isPending}>
-              {seed.isPending ? t`Filling…` : t`Try with a demo portfolio`}
+            <button className="btn btn--ghost" onClick={onDemo}>
+              {t`Try with a demo portfolio`}
             </button>
-            <ErrorText error={seed.error} />
           </GateSection>
           {/* Said once at the start, where the app is first trusted with a number; the whole of it
               is in Settings, under About. */}
@@ -72,17 +119,14 @@ export function Onboarding({ status }: { status: AppStatus }) {
       }
     >
       <Form
-        onSubmit={() => setup.mutate(draft)}
-        busy={setup.isPending}
-        error={setup.error}
+        onSubmit={onSetup}
         ready={
           draft.portfolio_name.trim() !== "" &&
           draft.account_name.trim() !== "" &&
           draft.base_currency.length === 3 &&
           draft.account_currency.length === 3
         }
-        submitLabel={t`Create portfolio`}
-        busyLabel={t`Creating…`}
+        submitLabel={t`Continue`}
       >
         <FieldPair>
           <Field label={t`Portfolio name`}>

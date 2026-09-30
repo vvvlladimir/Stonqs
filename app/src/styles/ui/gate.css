@@ -10,6 +10,9 @@
 .gate__foot {
   width: min(100%, 460px);
 }
+.gate--wide .gate__card {
+  width: min(100%, 720px);
+}
 /* The frame is the panel's own; the gate only adds the spacing of a card that is the whole screen. */
 .gate__card {
   display: grid;
@@ -18,6 +21,26 @@
 .gate__head {
   display: grid;
   gap: var(--sp-3);
+}
+.gate__step {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+/* Pinned to the bottom of the scroller while the card runs past it; the card's own padding
+   below is taken over so the bar sits flush with the card's edge. */
+.gate__actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+  margin: 0 calc(-1 * var(--box-pad)) calc(-1 * var(--box-pad));
+  padding: var(--sp-5) var(--box-pad) var(--box-pad);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
 }
 .gate__lead {
   margin: 0;

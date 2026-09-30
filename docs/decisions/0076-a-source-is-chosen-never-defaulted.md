@@ -1,6 +1,6 @@
 # 76: A data source is chosen, never defaulted
 
-- Status: Accepted
+- Status: Accepted; where a new profile is asked superseded by ADR-0091
 
 ## Context
 

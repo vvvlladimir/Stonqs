@@ -36,8 +36,9 @@ typed in by hand. The rows on that panel are the picker itself: `Turn on` beside
 whole of the answer, and from that press the source is asked. The panel shows an error while the
 sources on cannot price a portfolio — one that publishes prices and one that publishes exchange
 rates are both needed, and without the second anything held in another currency cannot be valued
-at all. The error goes as soon as both are on. The same question is asked by a dialog on a new
-profile and by the data chip beside the search box while nothing usable is chosen. In that dialog,
+at all. The error goes as soon as both are on. The same question is the second step of setting up a new
+profile, right after the portfolio's name and accounts (or the demo portfolio), and a dialog opened
+by the data chip beside the search box while nothing usable is chosen. There,
 `Select all and continue` turns on every source that answers without a key of its own and applies
 the choice in one press, `Add key` opens the field for the ones that need one, `Add source`
 describes a price address of your own, and `Use these sources` applies whatever is switched on.

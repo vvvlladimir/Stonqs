@@ -1,6 +1,6 @@
 # 77: The guided tour is a declaration over the real screens
 
-- Status: Accepted
+- Status: Accepted; the sources dialog before the offer superseded by ADR-0091
 
 ## Context
 

@@ -227,7 +227,10 @@ function BareShell({ children }: { children: ReactNode }) {
   return (
     <ToastProvider>
       <div className="shell">
-        <main className="app">{children}</main>
+        {/* `.main` is the scroller once the shell owns the viewport (≥1000px). */}
+        <div className="main">
+          <main className="app">{children}</main>
+        </div>
       </div>
     </ToastProvider>
   );

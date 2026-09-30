@@ -44,7 +44,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [53](0053-market-sources-are-switched-and-keyed-by-the-user.md) | Market sources are switched and keyed by the user | Accepted |
 | [54](0054-a-quote-source-the-user-describes.md) | A quote source the user describes | Accepted |
 | [55](0055-a-keyed-source-s-daily-allowance-is-counted-in-the-profile.md) | A keyed source's daily allowance is counted in the profile | Accepted |
-| [76](0076-a-source-is-chosen-never-defaulted.md) | A data source is chosen, never defaulted | Accepted; supersedes the shipped default provider of [50](0050-a-market-data-source-is-a-catalogue-row.md) |
+| [76](0076-a-source-is-chosen-never-defaulted.md) | A data source is chosen, never defaulted | Accepted; supersedes the shipped default provider of [50](0050-a-market-data-source-is-a-catalogue-row.md); where a new profile is asked superseded by [91](0091-the-sources-question-is-a-step-of-onboarding.md) |
 
 ## Import
 
@@ -110,7 +110,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [73](0073-a-block-is-laid-out-by-its-own-width.md) | A block is laid out by its own width, not by the window's | Accepted; the phone rule narrowed by [74](0074-a-tile-s-smallest-width-is-the-board-owner-s.md) |
 | [74](0074-a-tile-s-smallest-width-is-the-board-owner-s.md) | A tile's smallest width is the board owner's | Accepted |
 | [75](0075-one-surface-for-a-tile-and-a-panel.md) | One surface for a dashboard tile and a screen's panel | Accepted |
-| [77](0077-the-tour-is-a-declaration-over-the-real-screens.md) | The guided tour is a declaration over the real screens | Accepted |
+| [77](0077-the-tour-is-a-declaration-over-the-real-screens.md) | The guided tour is a declaration over the real screens | Accepted; the sources dialog before the offer superseded by [91](0091-the-sources-question-is-a-step-of-onboarding.md) |
 | [78](0078-the-app-states-what-it-is-not.md) | The app states what it is not, and carries its notices | Accepted |
 | [79](0079-a-latest-close-source-extends-the-tail-and-never-rewrites-the-history.md) | A latest-close source extends the tail and never rewrites the history | Accepted |
 | [80](0080-a-file-writer-is-the-reader-turned-round.md) | A file writer is the reader turned round | Accepted |
@@ -120,6 +120,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [84](0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md) | A plugin screen, and the one document a plugin keeps | Accepted |
 | [85](0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md) | A plugin's assistant tool is a component that answers from its declared reads | Accepted; the two copies of the projection superseded by [88](0088-the-host-builds-what-a-plugin-reads.md) |
 | [88](0088-the-host-builds-what-a-plugin-reads.md) | The host builds what a plugin reads, for a page and a tool alike | Accepted |
+| [91](0091-the-sources-question-is-a-step-of-onboarding.md) | The sources question is a step of onboarding | Accepted |
 
 ## Profiles, keys and encryption
 

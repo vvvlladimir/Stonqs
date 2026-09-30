@@ -1535,7 +1535,7 @@ msgstr "Add note"
 msgid "Add or remove periods"
 msgstr "Add or remove periods"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Add source"
 msgstr "Add source"
@@ -1918,7 +1918,7 @@ msgstr "Anthropic messages"
 msgid "Any JSON or CSV price endpoint can be added without an update of the app."
 msgstr "Any JSON or CSV price endpoint can be added without an update of the app."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 msgid "Any JSON or CSV price endpoint: its address, and where the dates and closes sit in the answer."
 msgstr "Any JSON or CSV price endpoint: its address, and where the dates and closes sit in the answer."
 
@@ -2097,6 +2097,7 @@ msgstr "Average holding"
 #: src/components/domain/tour/TourLayer.tsx
 #: src/screens/Allocation/BreakdownPanel.tsx
 #: src/screens/Import/index.tsx
+#: src/screens/Onboarding.tsx
 msgid "Back"
 msgstr "Back"
 
@@ -2497,7 +2498,7 @@ msgstr "Click to try again."
 
 #: src/components/domain/AiChatPanel.tsx
 #: src/components/domain/SecurityPopup.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 #: src/components/domain/UpdateDialog.tsx
 #: src/components/ui/Modal.tsx
 #: src/screens/dashboard/dialogs/BoardDialogs.tsx
@@ -2668,6 +2669,10 @@ msgstr "Connect"
 msgid "Connected"
 msgstr "Connected"
 
+#: src/screens/Onboarding.tsx
+msgid "Continue"
+msgstr "Continue"
+
 #: src/screens/Performance/PositionReturns.tsx
 msgid "Contribution"
 msgstr "Contribution"
@@ -2791,15 +2796,14 @@ msgid "Create on this screen"
 msgstr "Create on this screen"
 
 #: src/screens/Onboarding.tsx
-msgid "Create portfolio"
-msgstr "Create portfolio"
+#~ msgid "Create portfolio"
+#~ msgstr "Create portfolio"
 
 #: src/screens/Securities/AttributeImportDialog.tsx
 msgid "created on import"
 msgstr "created on import"
 
 #: src/screens/Allocation/TaxonomyDialog.tsx
-#: src/screens/Onboarding.tsx
 msgid "Creating…"
 msgstr "Creating…"
 
@@ -3012,7 +3016,7 @@ msgstr "Days the deepest fall lasted before the peak was regained."
 #~ msgid "Debug"
 #~ msgstr "Debug"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Decide later"
 msgstr "Decide later"
 
@@ -3467,7 +3471,7 @@ msgstr "edit"
 
 #: src/components/domain/menuBar/model.ts
 #: src/components/domain/SecurityAlerts.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Accounts/LimitCard.tsx
 #: src/screens/dashboard/Dashboard.tsx
 #: src/screens/Plans/GoalCard.tsx
@@ -3784,7 +3788,7 @@ msgstr "everything is mapped"
 msgid "Everything this app was built from, and the licence each part keeps."
 msgstr "Everything this app was built from, and the licence each part keeps."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Everything this build can ask. A source with a key of its own answers only once the key is saved."
 msgstr "Everything this build can ask. A source with a key of its own answers only once the key is saved."
 
@@ -3817,8 +3821,8 @@ msgstr "Excess"
 msgid "Exchange"
 msgstr "Exchange"
 
+#: src/components/domain/sources/OwnSources.tsx
 #: src/components/domain/sources/SourceRow.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "exchange rates"
 msgstr "exchange rates"
@@ -4015,8 +4019,8 @@ msgid "Fill it"
 msgstr "Fill it"
 
 #: src/screens/Onboarding.tsx
-msgid "Filling…"
-msgstr "Filling…"
+#~ msgid "Filling…"
+#~ msgstr "Filling…"
 
 #: src/screens/Securities/SecurityForm.tsx
 msgid "Fills the days the own source has not published yet"
@@ -6643,6 +6647,10 @@ msgstr "One figure over another: a yield, a cost share, how much of it is cash."
 msgid "One instrument trades on many exchanges and in many currencies. Pick the venue your broker actually traded on: price and cost basis then share one currency, and the valuation stops going through an exchange rate every day. Switching a venue deletes the quotes already downloaded — the new one has a different price series."
 msgstr "One instrument trades on many exchanges and in many currencies. Pick the venue your broker actually traded on: price and cost basis then share one currency, and the valuation stops going through an exchange rate every day. Switching a venue deletes the quotes already downloaded — the new one has a different price series."
 
+#: src/screens/Onboarding.tsx
+#~ msgid "One more question before the app opens. The answer can be changed in Settings, under Market data."
+#~ msgstr "One more question before the app opens. The answer can be changed in Settings, under Market data."
+
 #: src/screens/Import/TransferPairs.tsx
 msgid "One move"
 msgstr "One move"
@@ -6998,15 +7006,15 @@ msgstr "period TWR, per year"
 msgid "Periods"
 msgstr "Periods"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Pick a source of exchange rates first."
 msgstr "Pick a source of exchange rates first."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Pick a source of prices and one of exchange rates first."
 msgstr "Pick a source of prices and one of exchange rates first."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Pick a source of prices first."
 msgstr "Pick a source of prices first."
 
@@ -7209,11 +7217,15 @@ msgstr "Price-index region"
 msgid "prices"
 msgstr "prices"
 
+#: src/screens/Onboarding.tsx
+msgid "Prices and exchange rates come from services other people run, under their own terms. Until one is on, prices are typed in by hand. This can be changed later in Settings, under Market data."
+msgstr "Prices and exchange rates come from services other people run, under their own terms. Until one is on, prices are typed in by hand. This can be changed later in Settings, under Market data."
+
 #: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Prices of instruments"
 msgstr "Prices of instruments"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
 msgstr "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
 
@@ -7389,8 +7401,8 @@ msgstr "Quote source"
 msgid "Quote source for unidentified instruments"
 msgstr "Quote source for unidentified instruments"
 
+#: src/components/domain/sources/OwnSources.tsx
 #: src/components/domain/sources/SourceRow.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "quotes"
 msgstr "quotes"
@@ -8022,7 +8034,7 @@ msgid "Save to a file…"
 msgstr "Save to a file…"
 
 #: src/components/domain/sources/SourceKeyDialog.tsx
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 #: src/components/ui/formLabels.ts
 #: src/screens/Performance/CalculationSheet.tsx
 #: src/screens/Reports/index.tsx
@@ -8195,7 +8207,7 @@ msgstr "Select all"
 msgid "Select All"
 msgstr "Select All"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Select all and continue"
 msgstr "Select all and continue"
 
@@ -8348,7 +8360,7 @@ msgstr "Sharpe"
 msgid "Shipped"
 msgstr "Shipped"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Shipped sources"
 msgstr "Shipped sources"
 
@@ -8601,6 +8613,14 @@ msgstr "Stays as cash on the account"
 #: src/components/domain/PeriodEditor.tsx
 msgid "Stays where it is put. A window that ends in the future stops at today."
 msgstr "Stays where it is put. A window that ends in the future stops at today."
+
+#: src/screens/Onboarding.tsx
+msgid "Step 1 of 2"
+msgstr "Step 1 of 2"
+
+#: src/screens/Onboarding.tsx
+msgid "Step 2 of 2"
+msgstr "Step 2 of 2"
 
 #: src/screens/Trades/index.tsx
 #: src/screens/Trades/TradeMetrics.tsx
@@ -9729,7 +9749,7 @@ msgstr "These values appear only on rows that need no instrument: a transfer, a 
 msgid "they are written, but worth a look"
 msgstr "they are written, but worth a look"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
 msgstr "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
 
@@ -10327,11 +10347,11 @@ msgstr "Updates"
 msgid "Use {firstQuotes}"
 msgstr "Use {firstQuotes}"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Use {firstQuotes} for the {orphans} instruments that have no price source"
 msgstr "Use {firstQuotes} for the {orphans} instruments that have no price source"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Use these sources"
 msgstr "Use these sources"
 
@@ -10774,6 +10794,7 @@ msgid "where an instrument's prices come from"
 msgstr "where an instrument's prices come from"
 
 #: src/components/domain/sources/SourcesSetup.tsx
+#: src/screens/Onboarding.tsx
 msgid "Where data comes from"
 msgstr "Where data comes from"
 
@@ -10965,7 +10986,7 @@ msgstr "Withheld at the source, so it never reaches the account."
 msgid "Without an instrument the contribution stays as cash on the account."
 msgstr "Without an instrument the contribution stays as cash on the account."
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/SourcesPicker.tsx
 msgid "Without both, holdings in another currency cannot be valued at all. Leaving with Decide later is an answer too: prices are then typed in by hand."
 msgstr "Without both, holdings in another currency cannot be valued at all. Leaving with Decide later is an answer too: prices are then typed in by hand."
 
@@ -11123,7 +11144,7 @@ msgstr "Your own notes, plus the dividends and splits reported by the quote sour
 msgid "Your own provider"
 msgstr "Your own provider"
 
-#: src/components/domain/sources/SourcesSetup.tsx
+#: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
 msgid "Your own sources"
 msgstr "Your own sources"
