@@ -44,6 +44,9 @@ export interface UiState {
   watch_sort: TableSort | null;
   /** How the Trades screen cuts trades: per position or per purchase. */
   trades_by: TradeGrouping;
+  /** Tax rate on an unrealized gain, as a percent the owner typed; `""` asks for no tax view
+   *  (ADR-0093). An assumption, so it lives here rather than in the portfolio. */
+  net_worth_tax_rate: string;
   /** Colour scheme: an explicit one, or whatever the OS reports. */
   theme: ThemePreference;
   /** Width of the AI panel in pixels, on a screen wide enough for it to be a side panel. */
@@ -128,6 +131,7 @@ export const DEFAULT_UI: UiState = {
   position_sort: null,
   watch_sort: null,
   trades_by: "POSITION",
+  net_worth_tax_rate: "",
   theme: "system",
   ai_panel_width: 420,
   ai_briefs: {},
@@ -165,6 +169,8 @@ export function parseUiState(raw: unknown): UiState {
     position_sort: tableSort(value.position_sort),
     watch_sort: tableSort(value.watch_sort),
     trades_by: value.trades_by === "LOT" ? "LOT" : "POSITION",
+    net_worth_tax_rate:
+      typeof value.net_worth_tax_rate === "string" ? value.net_worth_tax_rate : DEFAULT_UI.net_worth_tax_rate,
     theme: isTheme(value.theme) ? value.theme : DEFAULT_UI.theme,
     ai_panel_width: clampPanel(value.ai_panel_width),
     ai_briefs: briefs(value.ai_briefs),

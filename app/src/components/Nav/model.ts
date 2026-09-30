@@ -13,6 +13,7 @@ import {
   FileArrowUpIcon,
   FileTextIcon,
   GearIcon,
+  HouseLineIcon,
   ListBulletsIcon,
   PuzzlePieceIcon,
   ReceiptIcon,
@@ -59,6 +60,7 @@ export const SCREENS: Record<ScreenId, NavScreen> = {
   allocation: { id: "allocation", title: msg`Allocation`, icon: ChartPieSliceIcon },
   income: { id: "income", title: msg`Income`, icon: CoinsIcon },
   plans: { id: "plans", title: msg`Plans`, icon: CalendarDotsIcon },
+  networth: { id: "networth", title: msg`Net worth`, icon: HouseLineIcon },
   rebalance: { id: "rebalance", title: msg`Rebalance`, icon: ScalesIcon },
   import: { id: "import", title: msg`Import`, icon: FileArrowUpIcon },
   reports: { id: "reports", title: msg`Reports`, icon: FileTextIcon },
@@ -83,7 +85,7 @@ const SECTIONS: NavSection[] = [
     label: msg`Analysis`,
     screens: ["performance", "trades", "risk", "allocation", "income"],
   },
-  { id: "planning", label: msg`Planning`, screens: ["plans", "rebalance"] },
+  { id: "planning", label: msg`Planning`, screens: ["plans", "networth", "rebalance"] },
   { id: "data", label: msg`Data`, screens: ["import", "reports"] },
 ];
 

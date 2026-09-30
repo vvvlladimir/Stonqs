@@ -54,6 +54,7 @@ const Income = lazy(() => import("./screens/Income").then((m) => ({ default: m.I
 const Allocation = lazy(() => import("./screens/Allocation").then((m) => ({ default: m.Allocation })));
 const Rebalance = lazy(() => import("./screens/Rebalance").then((m) => ({ default: m.Rebalance })));
 const Plans = lazy(() => import("./screens/Plans").then((m) => ({ default: m.Plans })));
+const NetWorth = lazy(() => import("./screens/NetWorth").then((m) => ({ default: m.NetWorth })));
 const Watchlist = lazy(() => import("./screens/Watchlist").then((m) => ({ default: m.Watchlist })));
 const Alerts = lazy(() => import("./screens/Alerts").then((m) => ({ default: m.Alerts })));
 const Reports = lazy(() => import("./screens/Reports").then((m) => ({ default: m.Reports })));
@@ -257,6 +258,7 @@ function ScreenView({
       {screen === "allocation" && <Allocation />}
       {screen === "rebalance" && <Rebalance />}
       {screen === "plans" && <Plans />}
+      {screen === "networth" && <NetWorth />}
       {screen === "alerts" && <Alerts />}
       {screen === "watchlist" && <Watchlist />}
       {screen === "reports" && <Reports />}

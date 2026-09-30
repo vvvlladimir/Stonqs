@@ -22,7 +22,7 @@ cargo test -p sq-core --lib calc::xirr               # one module's unit tests
 cargo test -p sq-core --test phase3_import           # import suite (+ --release -- --ignored: timing)
 cd fuzz && cargo +nightly fuzz run parse_any -- -max_total_time=60
 cargo check -p sq-app                           # host only
-cargo run -p sq-cli -- demo | series | risk | benchmark | rebalance | allocation [..] | import [file] [--resolve] [--commit]
+cargo run -p sq-cli -- demo | series | risk | benchmark | rebalance | networth | allocation [..] | import [file] [--resolve] [--commit]
 cargo run -p sq-cli -- lookup <ISIN> | listings <ISIN> EUR | quotes AAPL <from> <to> | rates USD EUR <from> <to>   # network
 
 cd app && pnpm install

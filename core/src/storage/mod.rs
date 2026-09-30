@@ -5,6 +5,7 @@ mod accounts;
 mod ai_chats;
 mod ai_usage;
 mod alerts;
+mod assets;
 mod attributes;
 mod corporate_actions;
 mod events;

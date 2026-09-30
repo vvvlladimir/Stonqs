@@ -15,6 +15,7 @@ pub mod import;
 pub mod inflation;
 pub mod listings;
 pub mod lookup;
+pub mod networth;
 pub mod payments;
 pub mod performance;
 pub mod periods;

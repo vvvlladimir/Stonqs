@@ -2,6 +2,7 @@ import type { I18n, MessageDescriptor } from "@lingui/core";
 import { msg, plural } from "@lingui/core/macro";
 import type {
   AccountKind,
+  AssetKind,
   AlertDirection,
   AlertKind,
   AttributeKind,
@@ -165,6 +166,45 @@ export function securityKindLabel(i18n: I18n, kind: SecurityKind): string {
 
 export function accountKindLabel(i18n: I18n, kind: AccountKind): string {
   return i18n._(ACCOUNT_KIND_LABELS[kind]);
+}
+
+export const ASSET_KIND_LABELS: Record<AssetKind, MessageDescriptor> = {
+  PROPERTY: msg`Property`,
+  VEHICLE: msg`Vehicle`,
+  COLLECTIBLE: msg`Collectible`,
+  CASH: msg`Cash held elsewhere`,
+  PRIVATE: msg`Private holding`,
+  RECEIVABLE: msg`Money lent out`,
+  OTHER: msg`Other`,
+  MORTGAGE: msg`Mortgage`,
+  LOAN: msg`Loan`,
+  CREDIT_CARD: msg`Credit card`,
+  CREDIT_LINE: msg`Credit line`,
+  TAX_DUE: msg`Tax due`,
+};
+
+/** Things owned, in the order the form offers them. */
+export const OWNED_ASSET_KINDS: AssetKind[] = [
+  "PROPERTY",
+  "VEHICLE",
+  "COLLECTIBLE",
+  "CASH",
+  "PRIVATE",
+  "RECEIVABLE",
+  "OTHER",
+];
+
+/** Things owed. A debt is entered as what is still owed, never as a negative amount. */
+export const OWED_ASSET_KINDS: AssetKind[] = ["MORTGAGE", "LOAN", "CREDIT_CARD", "CREDIT_LINE", "TAX_DUE"];
+
+export function assetKindLabel(i18n: I18n, kind: AssetKind): string {
+  const label = ASSET_KIND_LABELS[kind];
+  return label ? i18n._(label) : kind;
+}
+
+/** Which way a kind points, without asking the host: the two lists are the definition. */
+export function isOwedKind(kind: AssetKind): boolean {
+  return OWED_ASSET_KINDS.includes(kind);
 }
 
 /** Kinds the import wizard can map a broker column onto, in the order it offers them. */

@@ -7,6 +7,7 @@ mod import;
 mod inflation;
 mod ledger;
 mod market;
+mod networth;
 mod performance;
 mod positions;
 mod reports;

@@ -77,6 +77,9 @@ export const keys = {
   performanceBreakdown: (from?: DateString, to?: DateString, period?: SheetPeriod, source?: Source) =>
     key("performance-breakdown", from, to, period, source ?? undefined),
   goals: (date?: DateString) => key("goals", date),
+  netWorth: (date?: DateString, taxRate?: string) => key("net-worth", date, taxRate),
+  netWorthSeries: (from?: DateString, to?: DateString) => key("net-worth-series", from, to),
+  assetValues: (assetId?: string) => key("asset-values", assetId),
   limits: (date?: DateString) => key("limits", date),
   trades: (from?: DateString, to?: DateString, by?: TradeGrouping, source?: Source) =>
     key("trades", from, to, by, source ?? undefined),

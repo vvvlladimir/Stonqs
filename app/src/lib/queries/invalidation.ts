@@ -35,6 +35,9 @@ const REPORTS: QueryKey[] = [
   keys.allocationTree(),
   keys.rebalance(),
   keys.accountsTotal(),
+  // Net worth carries the portfolio's own total, so it moves with every transaction and price.
+  keys.netWorth(),
+  keys.netWorthSeries(),
 ];
 
 /** Rules and events of instruments. A fresh quote decides whether a limit fired. A watch row
@@ -52,6 +55,9 @@ const PLANS: QueryKey[] = [keys.plans(), keys.planDue(), keys.planProjection(), 
 
 /** A goal reads a valuation and a limit reads the ledger, so both move with either. */
 const GOALS: QueryKey[] = [keys.goals(), keys.limits()];
+
+/** A valuation the owner writes, and the reading built on it. */
+const ASSETS: QueryKey[] = [keys.netWorth(), keys.netWorthSeries(), keys.assetValues()];
 
 /** Stored lists that carry computed fields (balances, counts). */
 const LISTS: QueryKey[] = [keys.accounts(), keys.accountGroups(), keys.securities()];
@@ -77,6 +83,7 @@ export const affects: Record<DataChangeKind, QueryKey[]> = {
   transactions: [...LISTS, ...REPORTS, ...PLANS, ...GOALS, keys.transferSuggestions()],
   plans: PLANS,
   goals: GOALS,
+  assets: ASSETS,
   alerts: ALERTS,
   watchlists: [keys.watchlists(), keys.watchlistRows()],
   accounts: [...LISTS, keys.scope(), ...REPORTS, ...GOALS],

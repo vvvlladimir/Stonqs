@@ -3,6 +3,7 @@
 mod allocation;
 mod goals;
 mod inflation;
+mod networth;
 mod reports;
 mod returns;
 mod risk;

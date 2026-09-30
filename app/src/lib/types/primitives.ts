@@ -9,6 +9,7 @@ export type DateString = string;
 /** What a host write touched, as emitted by `events.rs`. */
 export type DataChangeKind =
   | "accounts"
+  | "assets"
   | "ai_chats"
   | "alerts"
   | "goals"

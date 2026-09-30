@@ -16,6 +16,7 @@ mod args;
 mod fmt;
 mod lookup;
 mod market;
+mod networth;
 mod plans;
 pub mod plugin;
 mod portfolio;
@@ -78,6 +79,7 @@ pub const CATALOGUE: &[Tool] = &[
     portfolio::POSITIONS_LIST,
     portfolio::POSITIONS_RETURNS,
     portfolio::ACCOUNTS_LIST,
+    networth::NET_WORTH,
     accounts::ACCOUNT_GROUPS_LIST,
     allocation::ALLOCATION_TREES,
     allocation::ALLOCATION_BREAKDOWN,

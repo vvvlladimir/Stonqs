@@ -199,6 +199,16 @@ msgstr "{0, plural, one {# disposal} other {# disposals}}"
 msgid "{0, plural, one {# due} other {# due}}"
 msgstr "{0, plural, one {# due} other {# due}}"
 
+#. placeholder {0}: reading.stale_count
+#: src/screens/NetWorth/index.tsx
+msgid "{0, plural, one {# figure here has not been revisited for more than half a year} other {# figures here have not been revisited for more than half a year}}"
+msgstr "{0, plural, one {# figure here has not been revisited for more than half a year} other {# figures here have not been revisited for more than half a year}}"
+
+#. placeholder {0}: writes.length
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "{0, plural, one {# figure} other {# figures}}"
+msgstr "{0, plural, one {# figure} other {# figures}}"
+
 #. placeholder {0}: groups.data?.length ?? 0
 #: src/screens/Accounts/index.tsx
 msgid "{0, plural, one {# group} other {# groups}}"
@@ -236,8 +246,10 @@ msgstr "{0, plural, one {# kind} other {# kinds}}"
 msgid "{0, plural, one {# list} other {# lists}}"
 msgstr "{0, plural, one {# list} other {# lists}}"
 
+#. placeholder {0}: payoff.months_left
 #. placeholder {0}: progress.months_left
 #: src/screens/dashboard/widgets/progress.tsx
+#: src/screens/NetWorth/AssetFoot.tsx
 #: src/screens/Plans/GoalCard.tsx
 msgid "{0, plural, one {# month left} other {# months left}}"
 msgstr "{0, plural, one {# month left} other {# months left}}"
@@ -412,6 +424,11 @@ msgstr "{0} · {1} of {2} · {3} downloaded"
 msgid "{0} · previous period"
 msgstr "{0} · previous period"
 
+#. placeholder {0}: asset.name
+#: src/screens/NetWorth/ValueHistory.tsx
+msgid "{0} · value history"
+msgstr "{0} · value history"
+
 #. placeholder {0}: p.quantity
 #. placeholder {1}: p.symbol
 #. placeholder {2}: p.date
@@ -485,6 +502,12 @@ msgstr "{0} in the app and {1} in the interface, each under its own licence."
 #: src/components/domain/securityCard/RecentTransactions.tsx
 msgid "{0} in total"
 msgstr "{0} in total"
+
+#. placeholder {0}: formatMoney(reading.net_base, currency)
+#. placeholder {1}: formatMoney(reading.investments_base, currency)
+#: src/screens/NetWorth/index.tsx
+msgid "{0} in total, of which {1} is invested"
+msgstr "{0} in total, of which {1} is invested"
 
 #. placeholder {0}: p.value
 #. placeholder {1}: p.limit
@@ -649,6 +672,17 @@ msgstr "{0}: {1} · {2, plural, one {# payment} other {# payments}}"
 msgid "{0}: no data"
 msgstr "{0}: no data"
 
+#. placeholder {0}: String(Number(schedule.rate) * 100)
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "{0}% a year · <0/> a month"
+msgstr "{0}% a year · <0/> a month"
+
+#. placeholder {0}: String(Number(schedule.rate) * 100)
+#. placeholder {1}: schedule.ends_on ? <> · ends {formatDay(schedule.ends_on)}</> : null
+#: src/screens/NetWorth/AssetCard.tsx
+#~ msgid "{0}% a year · <0/> a month{1}"
+#~ msgstr "{0}% a year · <0/> a month{1}"
+
 #. placeholder {0}: Math.round(progress * 100)
 #: src/components/domain/UpdateDialog.tsx
 msgid "{0}% downloaded"
@@ -754,6 +788,10 @@ msgstr "{positiveDays} of {0}"
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{readers, plural, one {# file reader} other {# file readers}}"
 msgstr "{readers, plural, one {# file reader} other {# file readers}}"
+
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "{replacing, plural, one {# figure replaced} other {# figures replaced}}"
+msgstr "{replacing, plural, one {# figure replaced} other {# figures replaced}}"
 
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{screens, plural, one {# screen} other {# screens}}"
@@ -900,6 +938,23 @@ msgstr "<0/> left"
 msgid "<0/> of <1/> stays as cash — it does not reach a whole unit"
 msgstr "<0/> of <1/> stays as cash — it does not reach a whole unit"
 
+#: src/screens/NetWorth/Totals.tsx
+msgid "<0/> of everything owned"
+msgstr "<0/> of everything owned"
+
+#. placeholder {0}: payoff.ends_on !== null ? formatDay(payoff.ends_on) : formatDay(payoff.payoff_on!)
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "<0/> of interest still to pay, and the contract ends {0}"
+msgstr "<0/> of interest still to pay, and the contract ends {0}"
+
+#: src/screens/NetWorth/Totals.tsx
+msgid "<0/> of net worth"
+msgstr "<0/> of net worth"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "<0/> of things owned is outside this: they have no purchase price, so there is no gain here to tax."
+msgstr "<0/> of things owned is outside this: they have no purchase price, so there is no gain here to tax."
+
 #: src/components/domain/SecurityAlerts.tsx
 msgid "<0/> per share"
 msgstr "<0/> per share"
@@ -911,6 +966,10 @@ msgstr "<0/> received"
 #: src/components/domain/securityCard/CardHeader.tsx
 msgid "<0/> today"
 msgstr "<0/> today"
+
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "<0/> yours, after <1/> owed on it"
+msgstr "<0/> yours, after <1/> owed on it"
 
 #. placeholder {0}: action.ratio_from
 #. placeholder {1}: action.ratio_to
@@ -942,6 +1001,7 @@ msgid "1 month"
 msgstr "1 month"
 
 #: src/lib/periods.ts
+#: src/screens/NetWorth/index.tsx
 msgid "1 year"
 msgstr "1 year"
 
@@ -974,6 +1034,7 @@ msgid "3Y"
 msgstr "3Y"
 
 #: src/lib/periods.ts
+#: src/screens/NetWorth/index.tsx
 msgid "5 years"
 msgstr "5 years"
 
@@ -990,6 +1051,10 @@ msgstr "90 days"
 #: src/screens/Securities/Splits.tsx
 msgid "A 2:1 split is 1 → 2; a 1:10 reverse split is 10 → 1. The position keeps its value: only the quantity and the per-share cost move."
 msgstr "A 2:1 split is 1 → 2; a 1:10 reverse split is 10 → 1. The position keeps its value: only the quantity and the per-share cost move."
+
+#: src/screens/NetWorth/Totals.tsx
+msgid "A balance sheet, not a performance: nothing here has a return."
+msgstr "A balance sheet, not a performance: nothing here has a return."
 
 #: src/screens/Import/AccountTarget.tsx
 msgid "A bank or wallet statement"
@@ -1087,9 +1152,17 @@ msgstr "A figure over a track: a savings goal, a contribution limit, or financia
 msgid "a figure too large to calculate with"
 msgstr "a figure too large to calculate with"
 
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "A figure you write yourself; nothing here is priced by a market."
+msgstr "A figure you write yourself; nothing here is priced by a market."
+
 #: src/lib/tour/steps.ts
 msgid "A file from a broker, read through a wizard. Nothing is written until the last step, and a file imported twice adds nothing the second time."
 msgstr "A file from a broker, read through a wizard. Nothing is written until the last step, and a file imported twice adds nothing the second time."
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "A flat, a car, something valuable, money held where the app has no ledger. None of it has a return — it only makes net worth complete."
+msgstr "A flat, a car, something valuable, money held where the app has no ledger. None of it has a return — it only makes net worth complete."
 
 #: src/screens/Plans/Goals.tsx
 msgid "A goal is an amount by a date — a deposit, a car, a year of runway. It changes nothing in the portfolio; it says how far the accounts you pick are from that amount."
@@ -1130,6 +1203,10 @@ msgstr "a month needed"
 #: src/screens/Performance/index.tsx
 #~ msgid "A monthly TWR is a chain inside the month, not a ratio of two values: a deposit on the 15th would otherwise turn into a gain."
 #~ msgstr "A monthly TWR is a chain inside the month, not a ratio of two values: a deposit on the 15th would otherwise turn into a gain."
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "A mortgage, a loan, a credit card. Its rate and payment describe what is ahead; what is owed today is the figure you write."
+msgstr "A mortgage, a loan, a credit card. Its rate and payment describe what is ahead; what is owed today is the figure you write."
 
 #: src/screens/dashboard/dialogs/config/ShownFields.tsx
 msgid "A multiple, like 2.5×"
@@ -1314,6 +1391,10 @@ msgstr "a target allocation"
 msgid "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 msgstr "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "A tax rate is between 0 and 100%."
+msgstr "A tax rate is between 0 and 100%."
+
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 msgstr "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
@@ -1488,9 +1569,18 @@ msgstr "add a branch to a tree"
 msgid "Add a period"
 msgstr "Add a period"
 
+#: src/screens/NetWorth/ValueHistory.tsx
+msgid "Add a valuation"
+msgstr "Add a valuation"
+
 #: src/components/domain/aiToolLabels.ts
 msgid "add an instrument to your list"
 msgstr "add an instrument to your list"
+
+#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Sides.tsx
+msgid "Add asset"
+msgstr "Add asset"
 
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "Add attribute"
@@ -1499,6 +1589,10 @@ msgstr "Add attribute"
 #: src/screens/Allocation/BreakdownPanel.tsx
 msgid "Add category"
 msgstr "Add category"
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "Add debt"
+msgstr "Add debt"
 
 #: src/screens/Settings/DataPanel.tsx
 msgid "Add demo data"
@@ -1579,6 +1673,10 @@ msgstr "Adds it to the instrument's splits, which restates the lots"
 #: src/screens/Rebalance/RebalanceMetrics.tsx
 msgid "after rounding to the step"
 msgstr "after rounding to the step"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "After tax"
+msgstr "After tax"
 
 #. placeholder {0}: formatMoney(data.gains_total.cost_base, currency, { compact: true })
 #: src/screens/Reports/index.tsx
@@ -2289,6 +2387,7 @@ msgstr "Calendar by year and month"
 #: src/components/ui/formLabels.ts
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs/BoardDialogs.tsx
+#: src/screens/NetWorth/ValuesFileDialog.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -2339,6 +2438,10 @@ msgstr "Cash accounts hold money; securities accounts hold instruments and settl
 #: src/screens/Plans/DuePanel.tsx
 msgid "Cash contribution"
 msgstr "Cash contribution"
+
+#: src/lib/kinds.ts
+msgid "Cash held elsewhere"
+msgstr "Cash held elsewhere"
 
 #: src/screens/Rebalance/PlanTable.tsx
 msgid "Cash is part of the plan — it is paid in, not bought"
@@ -2526,6 +2629,11 @@ msgstr "closed"
 msgid "Closed"
 msgstr "Closed"
 
+#. placeholder {0}: formatDay(asset.closed_on)
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "closed {0}"
+msgstr "closed {0}"
+
 #: src/lib/alerts.ts
 msgid "Closed at {price} on {day}."
 msgstr "Closed at {price} on {day}."
@@ -2534,6 +2642,10 @@ msgstr "Closed at {price} on {day}."
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "Closed in the period"
 msgstr "Closed in the period"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Closed on"
+msgstr "Closed on"
 
 #: src/lib/kinds.ts
 #: src/screens/dashboard/widgets/catalog/lists.ts
@@ -2559,6 +2671,10 @@ msgstr "Collapse"
 #: src/screens/Import/FilePreview.tsx
 msgid "collapse to {SHOWN}"
 msgstr "collapse to {SHOWN}"
+
+#: src/lib/kinds.ts
+msgid "Collectible"
+msgstr "Collectible"
 
 #: src/screens/Allocation/NodeDialog.tsx
 msgid "Colour"
@@ -2807,6 +2923,14 @@ msgstr "created on import"
 msgid "Creating…"
 msgstr "Creating…"
 
+#: src/lib/kinds.ts
+msgid "Credit card"
+msgstr "Credit card"
+
+#: src/lib/kinds.ts
+msgid "Credit line"
+msgstr "Credit line"
+
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Cross the level (or reach the date today)"
 msgstr "Cross the level (or reach the date today)"
@@ -2845,6 +2969,7 @@ msgstr "currency"
 #: src/screens/Import/labels.ts
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
+#: src/screens/NetWorth/AssetForm.tsx
 #: src/screens/Onboarding.tsx
 #: src/screens/Plans/GoalForm.tsx
 #: src/screens/Securities/SecurityForm.tsx
@@ -2972,6 +3097,10 @@ msgstr "Date this position was last paid."
 msgid "Dates reached"
 msgstr "Dates reached"
 
+#: src/screens/NetWorth/ValueHistory.tsx
+msgid "Day"
+msgstr "Day"
+
 #: src/screens/Watchlist/columns.tsx
 msgid "Day the last stored close belongs to."
 msgstr "Day the last stored close belongs to."
@@ -2979,6 +3108,10 @@ msgstr "Day the last stored close belongs to."
 #: src/lib/periods.ts
 msgid "days"
 msgstr "days"
+
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Days already answered"
+msgstr "Days already answered"
 
 #: src/screens/Risk/RiskMetrics.tsx
 msgid "Days between a peak and the return to it."
@@ -3011,6 +3144,14 @@ msgstr "Days from the trough back to the peak."
 #: src/components/domain/positionColumns/period.tsx
 msgid "Days the deepest fall lasted before the peak was regained."
 msgstr "Days the deepest fall lasted before the peak was regained."
+
+#: src/screens/NetWorth/Totals.tsx
+msgid "Debts"
+msgstr "Debts"
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "Debts, entered as what is still owed. Subtracted from net worth."
+msgstr "Debts, entered as what is still owed. Subtracted from net worth."
 
 #: src/screens/Onboarding.tsx
 #~ msgid "Debug"
@@ -3057,6 +3198,8 @@ msgstr "Deepest fall from a peak inside the period."
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs/BoardDialogs.tsx
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/NetWorth/AssetCard.tsx
+#: src/screens/NetWorth/ValueHistory.tsx
 #: src/screens/Plans/GoalCard.tsx
 #: src/screens/Plans/index.tsx
 #: src/screens/Securities/index.tsx
@@ -3082,6 +3225,11 @@ msgstr "Delete \"{0}\" and its {1} widgets? Accounts and transactions are untouc
 #: src/screens/Settings/ProfilesPanel.tsx
 msgid "Delete \"{0}\" with every account, transaction, quote and setting in it? This cannot be undone. The app then opens another profile."
 msgstr "Delete \"{0}\" with every account, transaction, quote and setting in it? This cannot be undone. The app then opens another profile."
+
+#. placeholder {0}: asset.name
+#: src/screens/NetWorth/index.tsx
+msgid "Delete \"{0}\"? Its valuations go with it; nothing else changes."
+msgstr "Delete \"{0}\"? Its valuations go with it; nothing else changes."
 
 #. placeholder {0}: pick.count
 #. placeholder {0}: selection.count
@@ -3229,6 +3377,10 @@ msgstr "Deposits, withdrawals, interest, fees. Everything lands on this one cash
 #: src/screens/Risk/DrawdownTable.tsx
 msgid "Depth"
 msgstr "Depth"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Describes the debt ahead; what is owed today stays the figure you wrote."
+msgstr "Describes the debt ahead; what is owed today stays the figure you wrote."
 
 #: src/screens/Import/ParseSettings.tsx
 msgid "Detected from the content; it can be replaced"
@@ -3474,6 +3626,7 @@ msgstr "edit"
 #: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Accounts/LimitCard.tsx
 #: src/screens/dashboard/Dashboard.tsx
+#: src/screens/NetWorth/AssetCard.tsx
 #: src/screens/Plans/GoalCard.tsx
 #: src/screens/Plans/index.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx
@@ -3525,6 +3678,14 @@ msgstr "Edit plan"
 #: src/components/domain/sources/CustomSourceDialog.tsx
 msgid "Edit source"
 msgstr "Edit source"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Edit the asset"
+msgstr "Edit the asset"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Edit the debt"
+msgstr "Edit the debt"
 
 #: src/screens/Plans/GoalForm.tsx
 msgid "Edit the goal"
@@ -3633,6 +3794,10 @@ msgstr "End of period minus start, deposits included — the figure a statement 
 #: src/components/domain/aiToolLabels.ts
 msgid "ends"
 msgstr "ends"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Ends on"
+msgstr "Ends on"
 
 #: src/components/domain/menuBar/model.ts
 msgid "Enter Full Screen"
@@ -3780,6 +3945,10 @@ msgstr "Everything bought and sold in the period against the capital at work."
 msgid "everything is mapped"
 msgstr "everything is mapped"
 
+#: src/screens/NetWorth/Totals.tsx
+msgid "everything owned, minus everything owed"
+msgstr "everything owned, minus everything owed"
+
 #: src/screens/Settings/DataPanel.tsx
 #~ msgid "Everything the reports are computed from"
 #~ msgstr "Everything the reports are computed from"
@@ -3799,6 +3968,10 @@ msgstr "Everything this holding has ever paid, over what the shares cost."
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Everything up to the version, with no endpoint after it — for example https://openrouter.ai/api/v1 or http://localhost:11434/v1"
 msgstr "Everything up to the version, with no endpoint after it — for example https://openrouter.ai/api/v1 or http://localhost:11434/v1"
+
+#: src/components/domain/aiToolLabels.ts
+msgid "everything you own and owe"
+msgstr "everything you own and owe"
 
 #: src/components/domain/ShortcutHelp.tsx
 msgid "Everywhere"
@@ -3868,6 +4041,7 @@ msgid "Explain the file's columns, its operation names and the account everythin
 msgstr "Explain the file's columns, its operation names and the account everything lands on."
 
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/NetWorth/index.tsx
 #: src/screens/Transactions/index.tsx
 msgid "Export"
 msgstr "Export"
@@ -3988,6 +4162,11 @@ msgstr "FIFO"
 msgid "FIFO — the oldest lot goes first"
 msgstr "FIFO — the oldest lot goes first"
 
+#. placeholder {0}: holding.days_old
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "figure is {0} days old"
+msgstr "figure is {0} days old"
+
 #: src/components/domain/AiChatPanel.tsx
 #~ msgid "Figures come from your own data."
 #~ msgstr "Figures come from your own data."
@@ -3995,6 +4174,10 @@ msgstr "FIFO — the oldest lot goes first"
 #: src/components/domain/AiChatPanel.tsx
 #~ msgid "Figures come from your own data. Not investment advice."
 #~ msgstr "Figures come from your own data. Not investment advice."
+
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Figures to write"
+msgstr "Figures to write"
 
 #: src/components/domain/menuBar/model.ts
 #: src/screens/Import/labels.ts
@@ -4154,6 +4337,10 @@ msgstr "from the file: {0}"
 msgid "from the peak"
 msgstr "from the peak"
 
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "From this day it is out of net worth, and its history stays."
+msgstr "From this day it is out of net worth, and its history stays."
+
 #: src/screens/dashboard/dialogs.tsx
 #~ msgid "Full"
 #~ msgstr "Full"
@@ -4179,6 +4366,10 @@ msgstr "FX gain"
 #: src/screens/Import/PreviewTables.tsx
 msgid "FX rate"
 msgstr "FX rate"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Gain not yet taxed"
+msgstr "Gain not yet taxed"
 
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Gemini generateContent"
@@ -4248,6 +4439,11 @@ msgstr "Goal"
 #: src/screens/Plans/Goals.tsx
 msgid "Goals"
 msgstr "Goals"
+
+#. placeholder {0}: formatDay(payoff.payoff_on)
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "gone by {0}"
+msgstr "gone by {0}"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "group"
@@ -4589,6 +4785,14 @@ msgstr "Import into \"{0}\""
 msgid "Import layouts"
 msgstr "Import layouts"
 
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Import valuations"
+msgstr "Import valuations"
+
+#: src/screens/NetWorth/index.tsx
+msgid "Import valuations…"
+msgstr "Import valuations…"
+
 #: src/components/domain/menuBar/model.ts
 msgid "Import…"
 msgstr "Import…"
@@ -4855,6 +5059,10 @@ msgstr "Interest on cash balances over the whole history."
 msgid "Interest paid"
 msgstr "Interest paid"
 
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Interest rate, % a year"
+msgstr "Interest rate, % a year"
+
 #: src/screens/dashboard/widgets/model.ts
 msgid "Interest, all time"
 msgstr "Interest, all time"
@@ -4879,6 +5087,16 @@ msgstr "Internal error: {0}"
 #: src/components/domain/aiToolLabels.ts
 msgid "interval"
 msgstr "interval"
+
+#: src/components/charts/NetWorthChart.tsx
+#: src/screens/NetWorth/Totals.tsx
+msgid "Invested"
+msgstr "Invested"
+
+#. placeholder {0}: formatMoney(series.points[i].investments_base, currency)
+#: src/components/charts/NetWorthChart.tsx
+msgid "invested {0}"
+msgstr "invested {0}"
 
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/dashboard/widgets/model.ts
@@ -5015,6 +5233,7 @@ msgstr "kind"
 #: src/screens/Import/AssetRow.tsx
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
+#: src/screens/NetWorth/AssetForm.tsx
 #: src/screens/Reports/Charges.tsx
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Settings/AttributesPanel.tsx
@@ -5286,6 +5505,10 @@ msgstr "Loading the layout…"
 msgid "Loading the model list…"
 msgstr "Loading the model list…"
 
+#: src/lib/kinds.ts
+msgid "Loan"
+msgstr "Loan"
+
 #: src/screens/Settings/ProfileSecurity.tsx
 msgid "Lock now"
 msgstr "Lock now"
@@ -5454,6 +5677,10 @@ msgstr "Money for this securities account's trades passes through it"
 #~ msgid "Money lands here: deposits, dividends, fees"
 #~ msgstr "Money lands here: deposits, dividends, fees"
 
+#: src/lib/kinds.ts
+msgid "Money lent out"
+msgstr "Money lent out"
+
 #: src/screens/Import/AccountTarget.tsx
 msgid "Money moves on"
 msgstr "Money moves on"
@@ -5494,6 +5721,10 @@ msgstr "Month and day, as MM-DD. Not every allowance year is the calendar one."
 msgid "Monthly"
 msgstr "Monthly"
 
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Monthly payment"
+msgstr "Monthly payment"
+
 #: src/screens/dashboard/widgets/catalog/charts.ts
 msgid "Monthly return by year: a bad season shows at a glance."
 msgstr "Monthly return by year: a bad season shows at a glance."
@@ -5521,6 +5752,15 @@ msgstr "More actions"
 #: src/screens/Import/labels.ts
 msgid "more is sold than was ever received"
 msgstr "more is sold than was ever received"
+
+#. placeholder {0}: preview.ambiguous.join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "More than one thing goes by {0} — rename one of them, or the file cannot say which it means."
+msgstr "More than one thing goes by {0} — rename one of them, or the file cannot say which it means."
+
+#: src/lib/kinds.ts
+msgid "Mortgage"
+msgstr "Mortgage"
 
 #: src/screens/Alerts/DevSimulator.tsx
 msgid "Move"
@@ -5591,6 +5831,7 @@ msgstr "name"
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs/BoardDialogs.tsx
 #: src/screens/Import/AssetRow.tsx
+#: src/screens/NetWorth/AssetForm.tsx
 #: src/screens/Plans/GoalForm.tsx
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Settings/ai/CustomPanel.tsx
@@ -5625,6 +5866,21 @@ msgstr "needs a decision"
 msgid "Needs a key"
 msgstr "Needs a key"
 
+#: src/components/charts/NetWorthChart.tsx
+#: src/components/Nav/model.ts
+#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
+msgid "Net worth"
+msgstr "Net worth"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Net worth after it"
+msgstr "Net worth after it"
+
+#: src/components/charts/NetWorthChart.tsx
+msgid "Net worth and invested value in {currency}"
+msgstr "Net worth and invested value in {currency}"
+
 #. placeholder {0}: detail.message
 #: src/components/ui/Async.tsx
 msgid "Network error: {0}"
@@ -5654,6 +5910,10 @@ msgstr "New alert"
 #: src/components/domain/aiToolLabels.ts
 msgid "new amount"
 msgstr "new amount"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "New asset"
+msgstr "New asset"
 
 #: src/screens/Settings/AttributesPanel.tsx
 msgid "New attribute"
@@ -5698,6 +5958,10 @@ msgstr "New dashboard"
 #: src/components/domain/aiToolLabels.ts
 msgid "new date"
 msgstr "new date"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "New debt"
+msgstr "New debt"
 
 #: src/screens/Plans/GoalForm.tsx
 #: src/screens/Plans/Goals.tsx
@@ -5886,6 +6150,7 @@ msgstr "no data"
 
 #: src/components/charts/BenchChart.tsx
 #: src/components/charts/Calendar.tsx
+#: src/components/charts/NetWorthChart.tsx
 #: src/components/charts/Underwater.tsx
 #: src/components/charts/ValueChart.tsx
 msgid "No data for this period."
@@ -5902,6 +6167,10 @@ msgstr "No data source has been chosen, so no prices or exchange rates are fetch
 #: src/screens/dashboard/widgets/progress.tsx
 msgid "no date and no pace stated"
 msgstr "no date and no pace stated"
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "No debts"
+msgstr "No debts"
 
 #: src/screens/dashboard/widgets/list.tsx
 msgid "No dividends expected."
@@ -5930,6 +6199,14 @@ msgstr "No exchange rate for the quote currency"
 #: src/screens/Plans/DuePanel.tsx
 msgid "No exchange rate for this date yet, so the contribution cannot be converted."
 msgstr "No exchange rate for this date yet, so the contribution cannot be converted."
+
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "no figure yet"
+msgstr "no figure yet"
+
+#: src/screens/NetWorth/ValueHistory.tsx
+msgid "No figure yet"
+msgstr "No figure yet"
 
 #: src/screens/Import/FileStep.tsx
 msgid "No file chosen yet"
@@ -6168,6 +6445,11 @@ msgstr "No targets on this level"
 msgid "No text attribute has been defined yet. Settings → Attributes is where one is created — a country, a sector, a strategy — and each instrument's form is where it is filled in."
 msgstr "No text attribute has been defined yet. Settings → Attributes is where one is created — a country, a sector, a strategy — and each instrument's form is where it is filled in."
 
+#. placeholder {0}: preview.unmatched.join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "No thing here goes by {0} — add it first, then import again."
+msgstr "No thing here goes by {0} — add it first, then import again."
+
 #: src/screens/Trades/index.tsx
 msgid "No transactions — there are no trades to show."
 msgstr "No transactions — there are no trades to show."
@@ -6363,6 +6645,7 @@ msgstr "note"
 #: src/lib/kinds.ts
 #: src/screens/Import/labels.ts
 #: src/screens/Import/PreviewTables.tsx
+#: src/screens/NetWorth/AssetForm.tsx
 #: src/screens/Securities/SecurityForm.tsx
 #: src/screens/Securities/Splits.tsx
 #: src/screens/Transactions/TransactionForm.tsx
@@ -6374,6 +6657,7 @@ msgid "Notes, dividends and splits, newest first."
 msgstr "Notes, dividends and splits, newest first."
 
 #: src/screens/dashboard/dialogs/config/PeriodFields.tsx
+#: src/screens/NetWorth/AssetForm.tsx
 msgid "Nothing"
 msgstr "Nothing"
 
@@ -6480,6 +6764,10 @@ msgstr "Nothing was closed in this period"
 #: src/screens/dashboard/widgets/periodLists.tsx
 msgid "Nothing was closed in this period."
 msgstr "Nothing was closed in this period."
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "Nothing yet"
+msgstr "Nothing yet"
 
 #: src/screens/Import/RowTable.tsx
 msgid "Notice"
@@ -6796,6 +7084,7 @@ msgid "Other"
 msgstr "Other"
 
 #: src/lib/kinds.ts
+#: src/screens/NetWorth/Totals.tsx
 msgid "Other assets"
 msgstr "Other assets"
 
@@ -6821,6 +7110,10 @@ msgstr "outside the portfolio"
 msgid "Over the selected period the value never fell below a previous peak."
 msgstr "Over the selected period the value never fell below a previous peak."
 
+#: src/screens/NetWorth/index.tsx
+msgid "Over time"
+msgstr "Over time"
+
 #: src/screens/dashboard/dialogs/config/PeriodFields.tsx
 msgid "Overrides the dashboard period for this widget alone."
 msgstr "Overrides the dashboard period for this widget alone."
@@ -6838,6 +7131,14 @@ msgstr "Overview and favourites, in order"
 msgid "Overwrite"
 msgstr "Overwrite"
 
+#: src/screens/NetWorth/Sides.tsx
+msgid "Owed"
+msgstr "Owed"
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "Owned"
+msgstr "Owned"
+
 #: src/lib/kinds.ts
 msgid "Paid in"
 msgstr "Paid in"
@@ -6853,6 +7154,10 @@ msgstr "Paid in monthly"
 #: src/screens/dashboard/widgets/model.ts
 msgid "Paid in over the period"
 msgstr "Paid in over the period"
+
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "paid off"
+msgstr "paid off"
 
 #: src/screens/Import/CommitStep.tsx
 msgid "parsed and matching nothing in the database"
@@ -7229,6 +7534,10 @@ msgstr "Prices of instruments"
 msgid "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
 msgstr "Prices, exchange rates and instrument details are fetched from services other people run. Until you turn one on the app asks nobody and prices are typed in by hand. Turning a source on means its own terms apply to those requests."
 
+#: src/lib/kinds.ts
+msgid "Private holding"
+msgstr "Private holding"
+
 #: src/screens/Reports/Disposals.tsx
 #: src/screens/Reports/GainsByInstrument.tsx
 #: src/screens/Reports/GainsByYear.tsx
@@ -7257,6 +7566,10 @@ msgstr "Profiles"
 #: src/screens/dashboard/widgets/catalog/numbers.ts
 msgid "Progress"
 msgstr "Progress"
+
+#: src/lib/kinds.ts
+msgid "Property"
+msgstr "Property"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "provider"
@@ -7712,6 +8025,10 @@ msgstr "Rename watchlist"
 msgid "Rename…"
 msgstr "Rename…"
 
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Repaid on"
+msgstr "Repaid on"
+
 #: src/components/domain/PasswordDialog.tsx
 msgid "Repeat the password"
 msgstr "Repeat the password"
@@ -7961,6 +8278,16 @@ msgstr "rows"
 msgid "Rows"
 msgstr "Rows"
 
+#. placeholder {0}: repeated.slice(0, 8).join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Rows {0} answer a day the file has already answered — of each such day, the last figure is the one kept."
+msgstr "Rows {0} answer a day the file has already answered — of each such day, the last figure is the one kept."
+
+#. placeholder {0}: skipped.slice(0, 8).join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Rows {0} could not be read and are left out."
+msgstr "Rows {0} could not be read and are left out."
+
 #: src/screens/Import/AccountTarget.tsx
 msgid "Rows land on"
 msgstr "Rows land on"
@@ -8138,6 +8465,14 @@ msgstr "Sections"
 #: src/screens/Allocation/model.ts
 #~ msgid "Sector"
 #~ msgstr "Sector"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Secured by"
+msgstr "Secured by"
+
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "secured by {securedByName}"
+msgstr "secured by {securedByName}"
 
 #: src/lib/kinds.ts
 #: src/screens/dashboard/widgets/metrics.tsx
@@ -8449,6 +8784,10 @@ msgstr "Shown only in a development build."
 msgid "Shown, in order"
 msgstr "Shown, in order"
 
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Shows the relationship — it moves no figure and records no payment."
+msgstr "Shows the relationship — it moves no figure and records no payment."
+
 #: src/screens/Rebalance/TargetForm.tsx
 msgid "Siblings in one category add up to more than a hundred percent — that cannot be saved."
 msgstr "Siblings in one category add up to more than a hundred percent — that cannot be saved."
@@ -8601,6 +8940,10 @@ msgstr "Start with the first one: outside OpenAI itself, \"OpenAI-compatible\" m
 msgid "starts"
 msgstr "starts"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "State a rate and this says what would be left if you sold the portfolio today. Nothing else in the app reads it."
+msgstr "State a rate and this says what would be left if you sold the portfolio today. Nothing else in the app reads it."
+
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
 msgid "Status"
@@ -8626,6 +8969,10 @@ msgstr "Step 2 of 2"
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "Still open"
 msgstr "Still open"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Still owed"
+msgstr "Still owed"
 
 #: src/lib/kinds.ts
 msgid "Stock"
@@ -8788,6 +9135,14 @@ msgstr "Tax against the capital at work, dividend withholding included."
 msgid "Tax currency"
 msgstr "Tax currency"
 
+#: src/lib/kinds.ts
+msgid "Tax due"
+msgstr "Tax due"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Tax if sold today"
+msgstr "Tax if sold today"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "Tax paid in the period against the capital at work, dividend withholding included."
 msgstr "Tax paid in the period against the capital at work, dividend withholding included."
@@ -8796,6 +9151,10 @@ msgstr "Tax paid in the period against the capital at work, dividend withholding
 #: src/screens/Performance/Metrics.tsx
 msgid "Tax rate"
 msgstr "Tax rate"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Tax rate on a gain, % "
+msgstr "Tax rate on a gain, % "
 
 #: src/lib/kinds.ts
 msgid "Tax refund"
@@ -8957,6 +9316,10 @@ msgstr "The answer was cut off at the model's output limit."
 msgid "The app restarts once it is in place."
 msgstr "The app restarts once it is in place."
 
+#: src/screens/NetWorth/index.tsx
+msgid "The asset side steps between valuations: between two of them nothing was measured."
+msgstr "The asset side steps between valuations: between two of them nothing was measured."
+
 #. placeholder {0}: name(request.tool)
 #: src/components/domain/AiTools.tsx
 msgid "The assistant wants to change: {0}"
@@ -9092,6 +9455,10 @@ msgstr "the date has arrived"
 #: src/screens/Import/labels.ts
 msgid "the dates span decades"
 msgstr "the dates span decades"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "The day this figure is from."
+msgstr "The day this figure is from."
 
 #: src/screens/Risk.tsx
 #~ msgid "The deepest fall from a peak inside the period. Computed from chained returns, so a deposit cannot paper over it."
@@ -9414,6 +9781,10 @@ msgstr "The portfolio starts here: a securities account cannot exist without one
 msgid "The portfolio's name, base currency and cost-basis method."
 msgstr "The portfolio's name, base currency and cost-basis method."
 
+#: src/screens/NetWorth/Totals.tsx
+msgid "The portfolio's own value — the figure every other screen measures."
+msgstr "The portfolio's own value — the figure every other screen measures."
+
 #: src/components/domain/MarketRefresh.tsx
 msgid "The previous refresh was stopped — the list was not walked to the end."
 msgstr "The previous refresh was stopped — the list was not walked to the end."
@@ -9510,6 +9881,10 @@ msgstr "The rows so far, chained — the last one is the whole period."
 #: src/screens/Import/AccountTarget.tsx
 msgid "the same account"
 msgstr "the same account"
+
+#: src/screens/NetWorth/ValueHistory.tsx
+msgid "The same day answered twice replaces that day's figure."
+msgstr "The same day answered twice replaces that day's figure."
 
 #: src/screens/Import/CommitStep.tsx
 msgid "the same operation, with different values: the stored row is replaced"
@@ -9753,6 +10128,14 @@ msgstr "they are written, but worth a look"
 msgid "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
 msgstr "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
 
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Things they belong to"
+msgstr "Things they belong to"
+
+#: src/screens/NetWorth/Sides.tsx
+msgid "Things with no market to price them. Each carries the figures you write yourself."
+msgstr "Things with no market to price them. Each carries the figures you write yourself."
+
 #: src/components/domain/AiControls.tsx
 #: src/screens/Settings/ai/UsagePanel.tsx
 msgid "Thinking"
@@ -9810,6 +10193,10 @@ msgstr "This is the newest published version."
 #: src/screens/Plans/GoalCard.tsx
 msgid "this pace does not arrive"
 msgstr "this pace does not arrive"
+
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "this payment never clears it"
+msgstr "this payment never clears it"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
@@ -10314,6 +10701,10 @@ msgstr "Unrealized"
 msgid "Unrealized P/L"
 msgstr "Unrealized P/L"
 
+#: src/screens/NetWorth/ValueHistory.tsx
+msgid "Until it has one, this thing is absent from net worth — which is not the same as being worth nothing."
+msgstr "Until it has one, this thing is absent from net worth — which is not the same as being worth nothing."
+
 #: src/screens/Trades/TradeMetrics.tsx
 msgid "up"
 msgstr "up"
@@ -10338,6 +10729,10 @@ msgstr "Update installed"
 msgid "Update now"
 msgstr "Update now"
 
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "Update value"
+msgstr "Update value"
+
 #: src/screens/Settings/model.ts
 #: src/screens/Settings/UpdatesPanel.tsx
 msgid "Updates"
@@ -10360,6 +10755,7 @@ msgstr "Use these sources"
 #: src/screens/Allocation/MembersPanel.tsx
 #: src/screens/dashboard/widgets/metrics.tsx
 #: src/screens/dashboard/widgets/model.ts
+#: src/screens/NetWorth/AssetForm.tsx
 #: src/screens/Trades/TradesTable.tsx
 msgid "Value"
 msgstr "Value"
@@ -10381,6 +10777,15 @@ msgstr "value and results"
 msgid "value changed by"
 msgstr "value changed by"
 
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "Value history"
+msgstr "Value history"
+
+#. placeholder {0}: asset.currency
+#: src/screens/NetWorth/ValueHistory.tsx
+msgid "Value in {0}"
+msgstr "Value in {0}"
+
 #: src/screens/Allocation/Header.tsx
 msgid "Value of the current selection at the valuation date."
 msgstr "Value of the current selection at the valuation date."
@@ -10393,6 +10798,15 @@ msgstr "Value today less what the shares cost under this method."
 msgid "Value, {currency}"
 msgstr "Value, {currency}"
 
+#. placeholder {0}: formatDay(holding.valued_on)
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "valued {0}"
+msgstr "valued {0}"
+
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "Valued on"
+msgstr "Valued on"
+
 #: src/screens/Securities/AttributeImportDialog.tsx
 msgid "Values"
 msgstr "Values"
@@ -10400,6 +10814,10 @@ msgstr "Values"
 #: src/components/domain/AsOfPicker.tsx
 msgid "Values, holdings and periods are read as of this day."
 msgstr "Values, holdings and periods are read as of this day."
+
+#: src/lib/kinds.ts
+msgid "Vehicle"
+msgstr "Vehicle"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "venue"
@@ -10772,6 +11190,10 @@ msgstr "When it differs from the ticker"
 msgid "When quotes and exchange rates are fetched."
 msgstr "When quotes and exchange rates are fetched."
 
+#: src/screens/NetWorth/AssetForm.tsx
+msgid "When the debt is meant to be gone. Optional."
+msgstr "When the debt is meant to be gone. Optional."
+
 #: src/screens/Income/CalendarPanel.tsx
 msgid "When the money arrives"
 msgstr "When the money arrives"
@@ -10926,6 +11348,7 @@ msgid "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 msgstr "will be skipped: fix it on the \"Parsing\" step, or row by row below"
 
 #: src/components/domain/menuBar/model.ts
+#: src/screens/NetWorth/index.tsx
 #: src/screens/Risk/index.tsx
 msgid "Window"
 msgstr "Window"
@@ -11026,7 +11449,12 @@ msgstr "Write again"
 msgid "Write again on its own"
 msgstr "Write again on its own"
 
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Write these figures"
+msgstr "Write these figures"
+
 #: src/screens/Import/CommitStep.tsx
+#: src/screens/NetWorth/ValuesFileDialog.tsx
 msgid "Writing…"
 msgstr "Writing…"
 
@@ -11143,6 +11571,10 @@ msgstr "Your own notes, plus the dividends and splits reported by the quote sour
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Your own provider"
 msgstr "Your own provider"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Your own rate over the portfolio's unrealized gain. It covers nothing that has no purchase price."
+msgstr "Your own rate over the portfolio's unrealized gain. It covers nothing that has no purchase price."
 
 #: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx

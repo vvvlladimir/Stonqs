@@ -19,6 +19,7 @@ export const SCREENS: ScreenId[] = [
   "securities",
   "watchlist",
   "plans",
+  "networth",
   "alerts",
   "performance",
   "trades",

@@ -147,6 +147,7 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
         "plugin_state",
         include_str!("../../migrations/0031_plugin_state.sql"),
     ),
+    (32, "assets", include_str!("../../migrations/0032_assets.sql")),
 ];
 
 /// `path` enables the pre-upgrade copy; an in-memory database passes `None`.

@@ -17,6 +17,7 @@ pub fn write(store: &Store, portfolio: &Portfolio, world: &World) -> Result<()> 
     classify(store, world, &cash_node)?;
     target(store, portfolio, &cash_node)?;
     goals(store, portfolio, world)?;
+    assets(store, portfolio, world)?;
     plans(store, portfolio, world)?;
     watchlist(store, world)?;
     alerts(store, world)?;
@@ -156,6 +157,50 @@ fn goals(store: &Store, portfolio: &Portfolio, world: &World) -> Result<()> {
         withdrawals_restore: true,
         ..ContributionLimit::new(&world.accounts.savings.id, "Savings allowance", dec!(4000), "EUR")
     })?;
+    Ok(())
+}
+
+/// A flat and the mortgage on it, each with a short history of valuations. Net worth gets
+/// something to add and something to subtract, and no figure of the portfolio moves (ADR-0092).
+fn assets(store: &Store, portfolio: &Portfolio, world: &World) -> Result<()> {
+    let flat = Asset {
+        note: Some("Two rooms, bought with the mortgage below".into()),
+        ..Asset::new("Flat", AssetKind::Property, "EUR")
+    };
+    store.save_asset(&portfolio.id, &flat)?;
+    let mortgage = Asset {
+        secured_by: Some(flat.id.clone()),
+        schedule: Some(Amortization {
+            rate: dec!(0.0345),
+            monthly_payment: dec!(1100),
+            ends_on: world.today.checked_add_months(Months::new(276)),
+        }),
+        ..Asset::new("Mortgage", AssetKind::Mortgage, "EUR")
+    };
+    store.save_asset(&portfolio.id, &mortgage)?;
+    let car = Asset::new("Car", AssetKind::Vehicle, "EUR");
+    store.save_asset(&portfolio.id, &car)?;
+
+    // Valued once a year, as somebody actually would: the line between them is a step, and the
+    // most recent figure is months old on purpose.
+    let opened = world.days[0];
+    let year_later = opened.checked_add_months(Months::new(12)).unwrap_or(opened);
+    let latest = world
+        .today
+        .checked_sub_months(Months::new(4))
+        .unwrap_or(world.today);
+    for value in [
+        AssetValue::new(&flat.id, opened, dec!(295000)),
+        AssetValue::new(&flat.id, year_later, dec!(310000)),
+        AssetValue::new(&flat.id, latest, dec!(324000)),
+        AssetValue::new(&mortgage.id, opened, dec!(228000)),
+        AssetValue::new(&mortgage.id, year_later, dec!(218400)),
+        AssetValue::new(&mortgage.id, latest, dec!(211200)),
+        AssetValue::new(&car.id, opened, dec!(18500)),
+        AssetValue::new(&car.id, latest, dec!(12900)),
+    ] {
+        store.save_asset_value(&value)?;
+    }
     Ok(())
 }
 

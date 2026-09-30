@@ -51,6 +51,7 @@ paths:
 
 ## Side CSVs
 - Attributes (`import::attributes`): row per instrument, column per attribute; pure `build_attribute_preview`, `commit_attributes`; matched via `taxonomy::match_security`. Existing column keeps its kind (bad cell = error on that cell only); new column's kind inferred. Blank = absent (merge). Idempotent.
+- Valuations (`import::asset_values`, ADR-0092): row per asset per day (name/date/value columns by header word); pure `build_values_preview`, `commit_asset_values`. Joined **by name only** (exact, case-insensitive) — these things have no ISIN or ticker; an unknown name goes to `unmatched`, never created, and a name two assets answer to goes to `ambiguous` and writes nothing (names are not unique). A `(asset, day)` a *previous row of the same file* already answered is `replaces` + a `DuplicateInFile` warning: the commit is last-one-wins. A negative figure is read as its absolute value (both sides are stored positive). One figure per `(asset, day)`, so re-import is a no-op; `asset_values_to_csv` is the file it reads back.
 - Taxonomy CSV: read by meaning — level columns by header, security row = has ticker/ISIN, first level (tree name) dropped, ISIN before ticker. `commit_taxonomy(into)` reuses nodes (case-insensitive); newer file overwrites a security's split.
 
 ## Tests

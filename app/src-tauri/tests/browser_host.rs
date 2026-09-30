@@ -1,5 +1,12 @@
 //! The browser host (`examples/browser_host`) answers the frontend in a plain browser with the real
 //! command functions. Two ways it could quietly stop doing that are checked here, without a browser.
+//!
+//! Not on Windows. This is the one test binary that links Tauri's app API, and there the linked
+//! exe dies at load with `STATUS_ENTRYPOINT_NOT_FOUND` before a single test runs — a DLL the
+//! loader resolves differently for a binary in `target\debug\deps`. The browser host is a
+//! development tool for the e2e suite, which runs on Linux and macOS, so the answer is to not
+//! build this binary there rather than to ship a workaround for a host nothing uses.
+#![cfg(not(windows))]
 
 #[path = "../examples/browser_host/routes.rs"]
 mod routes;
@@ -85,5 +92,47 @@ fn a_read_asked_twice_answers_the_same() {
         asked += 1;
     }
     assert!(asked > 30, "only {asked} reads answered with generic arguments");
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// The tax view is a second field of the same answer and only appears when a rate is asked for
+/// (ADR-0093). Checked through the routes, because the rate travels as an argument of the read
+/// the screen already makes.
+#[test]
+fn net_worth_answers_a_tax_view_only_when_a_rate_is_given() {
+    let dir = setup::data_dir("test-after-tax");
+    let app = setup::demo_app(&dir);
+    let state = app.state::<AppState>();
+    let today = chrono::Local::now().date_naive().to_string();
+
+    let plain = routes::answer(&state, "net_worth", &serde_json::json!({ "date": today }))
+        .expect("net_worth is routed")
+        .expect("net_worth answers");
+    assert!(plain["after_tax"].is_null(), "{}", plain["after_tax"]);
+
+    let taxed = routes::answer(
+        &state,
+        "net_worth",
+        &serde_json::json!({ "date": today, "taxRate": "25" }),
+    )
+    .expect("net_worth is routed")
+    .expect("net_worth answers with a rate");
+    // The reading is the same either way; the view is added beside it.
+    assert_eq!(taxed["reading"]["net_base"], plain["reading"]["net_base"]);
+    assert_eq!(taxed["after_tax"]["rate"], serde_json::json!("0.25"));
+    assert!(
+        taxed["after_tax"]["outside_base"].as_str().is_some(),
+        "the value it cannot speak about is named"
+    );
+
+    // A rate nobody could mean is an error, not a clamped figure.
+    let refused = routes::answer(
+        &state,
+        "net_worth",
+        &serde_json::json!({ "date": today, "taxRate": "250" }),
+    )
+    .expect("net_worth is routed");
+    assert!(refused.is_err(), "{refused:?}");
+
     let _ = std::fs::remove_dir_all(dir);
 }

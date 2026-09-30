@@ -1,6 +1,7 @@
 //! CSV import for transactions, quotes, and taxonomies.
 //! Detection stays overridable and preview remains deterministic until commit.
 
+mod asset_values;
 mod attributes;
 mod canonical;
 mod checks;
@@ -17,6 +18,10 @@ mod securities;
 mod service;
 mod taxonomy;
 
+pub use asset_values::{
+    ValueRow, ValuesCsvConfig, ValuesPreview, asset_values_to_csv, build_values_preview, commit_asset_values,
+    detect_values_config,
+};
 pub use attributes::{
     AttributeCsvConfig, AttributeImportResult, AttributePreview, AttributeRow, PreviewAttribute,
     attributes_to_csv, build_attribute_preview, commit_attributes, detect_attribute_config,

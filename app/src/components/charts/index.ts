@@ -2,6 +2,7 @@
 export { Area, Chart, Grid, Marker, type Frame, type LegendItem } from "./Chart";
 export { indexScale, valueAxis } from "../../lib/plot";
 export { ValueChart } from "./ValueChart";
+export { NetWorthChart } from "./NetWorthChart";
 export { BenchChart } from "./BenchChart";
 export { Underwater } from "./Underwater";
 export { RollingVol } from "./RollingVol";

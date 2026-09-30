@@ -150,12 +150,22 @@ export function ErrorText({
 export function PercentInput({
   value,
   onChange,
+  onCommit,
   label,
+  tip,
+  invalid,
   disabled,
 }: {
   value: string;
   onChange: (value: string) => void;
+  /** Called when the figure is finished — on blur and on Enter. A caller whose rate costs a
+   *  query or a saved setting acts here, not on every keystroke. */
+  onCommit?: (value: string) => void;
   label?: string;
+  /** One short sentence on the field itself — what it takes, or why this figure is refused. */
+  tip?: string;
+  /** Refused: the figure stays visible and readable, and nothing was applied. */
+  invalid?: boolean;
   disabled?: boolean;
 }) {
   return (
@@ -165,8 +175,14 @@ export function PercentInput({
       aria-label={label}
       placeholder="0"
       value={value}
+      data-tip={tip}
+      aria-invalid={invalid || undefined}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={(e) => onCommit?.(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onCommit?.(e.currentTarget.value);
+      }}
     />
   );
 }
