@@ -14,7 +14,7 @@ exclude = [
 # Dependency versions live in the workspace so core and cli always build
 # against the same crates.
 [workspace.package]
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 # Edition 2024 needs 1.85 and `is_multiple_of` needs 1.87, but `wasmtime` needs 1.96, so that is
 # the floor for everyone: one number the whole workspace is read against. The pin in

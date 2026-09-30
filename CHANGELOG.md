@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/vvvlladimir/Stonqs/compare/v0.4.0...v0.5.0) (2026-09-30)
+
+
+### ✨ New
+
+* **app:** add browser host and Playwright E2E test suite ([5074526](https://github.com/vvvlladimir/Stonqs/commit/5074526150aa43014b1118fe8c76bbf7bd23946f))
+* **app:** make market sources selection an onboarding step ([6fb234d](https://github.com/vvvlladimir/Stonqs/commit/6fb234de128a08fbe972688f5992d77cc73a41da))
+* **calc:** handle TWR without starting capital and handle split ([c1cd5e3](https://github.com/vvvlladimir/Stonqs/commit/c1cd5e3782a471058ff3f0b69fcd42e2f27cfc4e))
+* **ci:** add file size checks and clippy line limits ([2b7af20](https://github.com/vvvlladimir/Stonqs/commit/2b7af20dff669612cce5f351d269a2663e5f349b))
+* **holdings:** Add "Net Worth" screen with assets and liabilities  ([#30](https://github.com/vvvlladimir/Stonqs/issues/30)) ([ea590e0](https://github.com/vvvlladimir/Stonqs/commit/ea590e05778693c897a123d7d9c795970b90a6a3))
+* **storage:** refuse newer database version and add frontend tests ([12b1748](https://github.com/vvvlladimir/Stonqs/commit/12b1748564fe85df2159729ebef32636fb78f36f))
+* **WASM:** You can add your own plugins, manage them, and edit them ([#25](https://github.com/vvvlladimir/Stonqs/issues/25)) ([5b19a56](https://github.com/vvvlladimir/Stonqs/commit/5b19a562b4a9e0fc5428636ec15eaf74ba97ac32))
+
 ## [0.4.0](https://github.com/vvvlladimir/Stonqs/compare/v0.3.0...v0.4.0) (2026-09-25)
 
 
