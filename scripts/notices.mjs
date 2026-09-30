@@ -28,7 +28,9 @@ const COUNTS = join(ROOT, "app", "src", "generated", "counts.ts");
 const LICENCE_FILES = /^(licen[cs]e|copying|notice|unlicen[cs]e)([-_.].*)?$/i;
 
 function run(command, args, cwd) {
-  return execFileSync(command, args, { cwd, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
+  // pnpm on Windows is a .cmd shim, and Node refuses to spawn one without a shell.
+  const shell = process.platform === "win32";
+  return execFileSync(command, args, { cwd, encoding: "utf8", maxBuffer: 256 * 1024 * 1024, shell });
 }
 
 /** Every licence-ish file in a package directory, read whole. Subdirectories are not searched:

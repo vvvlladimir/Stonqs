@@ -103,6 +103,12 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
+      # THIRD-PARTY-NOTICES.md and the two generated files beside it are checked in, and a
+      # dependency bump leaves them stale until somebody runs the generator. Generating them here
+      # is what makes the copy a user gets describe the binary it came with, whoever forgot.
+      - name: Generate the third-party notices
+        run: node scripts/notices.mjs
+
       - uses: tauri-apps/tauri-action@v1
         id: tauri
         env:
