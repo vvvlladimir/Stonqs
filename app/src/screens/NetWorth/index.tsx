@@ -1,3 +1,4 @@
+import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -8,21 +9,14 @@ import { affects, useInvalidate, useNetWorth, useNetWorthSeries } from "../../li
 import { Command } from "../../lib/commands";
 import { Page } from "../../components/Page";
 import { NetWorthChart } from "../../components/charts";
-import {
-  ErrorText,
-  Metric,
-  Metrics,
-  Money,
-  Panel,
-  Pending,
-  Percent,
-  QueryError,
-  Seg,
-} from "../../components/ui";
+import { Banner, ErrorText, Panel, Pending, QueryError, Seg } from "../../components/ui";
 import type { Asset, AssetInput } from "../../lib/types";
 import { AssetForm } from "./AssetForm";
+import { ValuesFileDialog } from "./ValuesFileDialog";
+import { useValuesFile } from "./useValuesFile";
 import { ValueHistory } from "./ValueHistory";
 import { Side } from "./Sides";
+import { Totals } from "./Totals";
 import { assetToInput, blankAsset, windowFrom } from "./model";
 
 /** Years of line the chart draws back from the reading date. */
@@ -41,6 +35,7 @@ export function NetWorth() {
   const line = useNetWorthSeries(windowFrom(date, Number(years)), date);
   const [draft, setDraft] = useState<AssetInput | null>(null);
   const [history, setHistory] = useState<Asset | null>(null);
+  const csv = useValuesFile();
 
   const save = useMutation({
     mutationFn: api.assetSave,
@@ -59,8 +54,7 @@ export function NetWorth() {
 
   const { reading, assets } = data.data;
   const currency = reading.base_currency;
-  const add = (owed: boolean) =>
-    setDraft(blankAsset(owed ? "MORTGAGE" : "PROPERTY", currency, today()));
+  const add = (owed: boolean) => setDraft(blankAsset(owed ? "MORTGAGE" : "PROPERTY", currency, today()));
   const del = (asset: Asset) => {
     if (confirm(t`Delete "${asset.name}"? Its valuations go with it; nothing else changes.`)) {
       remove.mutate(asset.id);
@@ -77,6 +71,12 @@ export function NetWorth() {
           <button className="btn" onClick={() => add(false)}>
             <Trans>Add asset</Trans>
           </button>
+          <button className="btn btn--ghost" onClick={csv.pick}>
+            <Trans>Import valuations…</Trans>
+          </button>
+          <button className="btn btn--ghost" onClick={csv.exportAll}>
+            <Trans>Export</Trans>
+          </button>
           <Command id="new" label={t`Add asset`} run={() => add(false)} />
         </>
       }
@@ -91,39 +91,21 @@ export function NetWorth() {
           ]}
         />
       }
-      metrics={
-        <Metrics>
-          <Metric
-            label={t`Net worth`}
-            value={<Money value={reading.net_base} currency={currency} />}
-            hint={t`everything owned, minus everything owed`}
-            tip={t`A balance sheet, not a performance: nothing here has a return.`}
-          />
-          <Metric
-            label={t`Invested`}
-            value={<Money value={reading.investments_base} currency={currency} />}
-            hint={
-              reading.invested_share !== null ? (
-                <Trans>
-                  <Percent value={reading.invested_share} digits={0} /> of net worth
-                </Trans>
-              ) : undefined
-            }
-            tip={t`The portfolio's own value — the figure every other screen measures.`}
-          />
-          <Metric
-            label={t`Other assets`}
-            value={<Money value={reading.owned_base} currency={currency} />}
-          />
-          <Metric
-            label={t`Debts`}
-            value={<Money value={reading.owed_base} currency={currency} />}
-            tone={Number(reading.owed_base) > 0 ? "negative" : "neutral"}
-          />
-        </Metrics>
+      banner={
+        reading.stale_count > 0 ? (
+          // Not an error and not fixable by the app: only the owner knows whether the figure holds.
+          <Banner tone="info">
+            {plural(reading.stale_count, {
+              one: "# figure here has not been revisited for more than half a year",
+              other: "# figures here have not been revisited for more than half a year",
+            })}
+          </Banner>
+        ) : undefined
       }
+      metrics={<Totals reading={reading} />}
     >
       <ErrorText error={remove.error} />
+      {csv.error !== null && <Banner tone="warn">{csv.error}</Banner>}
 
       <Panel
         title={t`Over time`}
@@ -157,6 +139,14 @@ export function NetWorth() {
         />
       )}
       {history && <ValueHistory asset={history} onClose={() => setHistory(null)} />}
+      {csv.file && (
+        <ValuesFileDialog
+          preview={csv.file.preview}
+          onWrite={csv.write}
+          onClose={csv.close}
+          writing={csv.writing}
+        />
+      )}
     </Page>
   );
 }

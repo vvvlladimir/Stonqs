@@ -28,13 +28,7 @@ export function AssetForm({
   // Only things owned can secure a debt, and a debt never secures itself.
   const securable = assets.filter((a) => !OWED_ASSET_KINDS.includes(a.kind) && a.id !== draft.id);
 
-  const title = draft.id
-    ? owed
-      ? t`Edit the debt`
-      : t`Edit the asset`
-    : owed
-      ? t`New debt`
-      : t`New asset`;
+  const title = draft.id ? (owed ? t`Edit the debt` : t`Edit the asset`) : owed ? t`New debt` : t`New asset`;
 
   return (
     <FormDialog

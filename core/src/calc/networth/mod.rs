@@ -5,6 +5,10 @@
 //! The value of an asset on a day is the last valuation dated on or before it — a step, never an
 //! interpolation — and a thing is absent before its first valuation and from its closing day on.
 
+mod payoff;
+
+pub use payoff::DebtPayoff;
+
 use super::ValueSeries;
 use crate::error::Result;
 use crate::fx::RateLookup;
@@ -14,6 +18,11 @@ use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
+
+/// When a figure is old enough to say so. Half a year: property and cars are re-valued about
+/// once a year, so a shorter fuse would mark almost everything and mean nothing, while a longer
+/// one lets a figure go a whole cycle without anybody noticing.
+pub const STALE_AFTER_DAYS: i64 = 180;
 
 /// One thing owned or owed, as of a reading date, with the day its figure was written.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,9 +39,30 @@ pub struct AssetHolding {
     pub amount_base: Decimal,
     /// The day the figure is from — not the reading date. An old day means an old opinion.
     pub valued_on: NaiveDate,
+    /// Days from `valued_on` to the reading date.
+    pub days_old: i64,
+    /// Whether that age is worth pointing at; see [`STALE_AFTER_DAYS`]. An old figure is not
+    /// wrong, and only the owner can say whether it still holds.
+    pub stale: bool,
+    /// What the last revaluation changed, both figures converted at the reading date's rate so
+    /// the difference is the revaluation alone and not the currency's move. `None` for a thing
+    /// with only one figure: there is nothing to compare it with.
+    #[serde(default, with = "rust_decimal::serde::str_option")]
+    pub change_base: Option<Decimal>,
+    /// The day the figure `change_base` measures from.
+    pub changed_since: Option<NaiveDate>,
     /// The asset this debt is secured by, or the debt secured on this asset. Names a
     /// relationship; no figure here depends on it.
     pub secured_by: Option<String>,
+    /// For a thing owned: what is owed against it, summed over the debts that name it.
+    #[serde(default, with = "rust_decimal::serde::str_option")]
+    pub secured_debt_base: Option<Decimal>,
+    /// For a thing owned with a debt against it: what is left after that debt. A rendering of
+    /// two figures already here (ADR-0059), kept in one place so both sides read it the same.
+    #[serde(default, with = "rust_decimal::serde::str_option")]
+    pub equity_base: Option<Decimal>,
+    /// For a debt with a schedule: when it ends and what it still costs.
+    pub payoff: Option<DebtPayoff>,
 }
 
 /// Net worth on one day, and what it is made of.
@@ -54,8 +84,15 @@ pub struct NetWorth {
     /// nothing is not a share, and a share of a negative reads backwards.
     #[serde(with = "rust_decimal::serde::str_option")]
     pub invested_share: Option<Decimal>,
+    /// Everything owed over everything owned, investments included. `None` when there is nothing
+    /// owned: a debt against no assets is not a ratio, it is just a debt.
+    #[serde(default, with = "rust_decimal::serde::str_option")]
+    pub debt_to_assets: Option<Decimal>,
     /// Owned things first, each side by size.
     pub holdings: Vec<AssetHolding>,
+    /// How many holdings carry a figure older than [`STALE_AFTER_DAYS`].
+    #[serde(default)]
+    pub stale_count: usize,
     /// Assets left out because no valuation of them is dated on or before `date`.
     pub not_valued_yet: Vec<String>,
 }
@@ -104,6 +141,22 @@ fn value_as_of<'a>(history: &History<'a>, asset_id: &str, date: NaiveDate) -> Op
         .copied()
 }
 
+/// The figure written before the one in force, which is what a change is measured against.
+fn value_before<'a>(history: &History<'a>, asset_id: &str, date: NaiveDate) -> Option<&'a AssetValue> {
+    history
+        .get(asset_id)?
+        .iter()
+        .filter(|value| value.date <= date)
+        .nth(1)
+        .copied()
+}
+
+/// The oldest figure of all, which is where progress on a debt is measured from. Not narrowed by
+/// the reading date: the first figure is the first figure whatever day is being read.
+fn first_value<'a>(history: &History<'a>, asset_id: &str) -> Option<&'a AssetValue> {
+    history.get(asset_id)?.last().copied()
+}
+
 /// Whether the asset exists on `date` at all. Closing day included: a house sold on the 14th is
 /// somebody else's from the 14th, and its money is in an account by then.
 fn present(asset: &Asset, date: NaiveDate) -> bool {
@@ -142,6 +195,13 @@ pub fn net_worth(
             AssetSide::Owned => owned_base += amount_base,
             AssetSide::Owed => owed_base += amount_base,
         }
+        // Both figures at one rate, so the difference is the revaluation and nothing else.
+        let previous = value_before(&history, &asset.id, date);
+        let previous_base = previous
+            .map(|before| rates.convert(before.amount, &asset.currency, &base, date))
+            .transpose()?;
+        let days_old = (date - value.date).num_days();
+
         holdings.push(AssetHolding {
             asset_id: asset.id.clone(),
             name: asset.name.clone(),
@@ -151,9 +211,25 @@ pub fn net_worth(
             amount: value.amount,
             amount_base,
             valued_on: value.date,
+            days_old,
+            stale: days_old > STALE_AFTER_DAYS,
+            change_base: previous_base.map(|before| amount_base - before),
+            changed_since: previous.map(|before| before.date),
             secured_by: asset.secured_by.clone(),
+            secured_debt_base: None,
+            equity_base: None,
+            payoff: asset.schedule.as_ref().map(|schedule| {
+                payoff::payoff(
+                    value.amount,
+                    first_value(&history, &asset.id).map(|first| first.amount),
+                    schedule,
+                    date,
+                )
+            }),
         });
     }
+
+    attach_equity(&mut holdings);
 
     holdings.sort_by(|a, b| {
         (a.side == AssetSide::Owed)
@@ -163,6 +239,7 @@ pub fn net_worth(
     });
 
     let net_base = investments_base + owned_base - owed_base;
+    let assets_base = investments_base + owned_base;
     Ok(NetWorth {
         date,
         base_currency: base,
@@ -171,9 +248,35 @@ pub fn net_worth(
         owed_base,
         net_base,
         invested_share: (net_base > Decimal::ZERO).then(|| investments_base / net_base),
+        debt_to_assets: (assets_base > Decimal::ZERO).then(|| owed_base / assets_base),
+        stale_count: holdings.iter().filter(|holding| holding.stale).count(),
         holdings,
         not_valued_yet,
     })
+}
+
+/// What a debt leaves of the thing it is secured on. Several debts may name one asset — a
+/// mortgage and a renovation loan on the same flat — so they are summed rather than matched one
+/// to one, and an asset nothing is secured on keeps no equity figure at all: repeating its own
+/// value under a second name would only invite the reader to add them up.
+fn attach_equity(holdings: &mut [AssetHolding]) {
+    let debts: Vec<(String, Decimal)> = holdings
+        .iter()
+        .filter(|holding| holding.side == AssetSide::Owed)
+        .filter_map(|holding| holding.secured_by.clone().map(|on| (on, holding.amount_base)))
+        .collect();
+
+    for holding in holdings.iter_mut().filter(|h| h.side == AssetSide::Owned) {
+        let owed: Decimal = debts
+            .iter()
+            .filter(|(on, _)| *on == holding.asset_id)
+            .map(|(_, amount)| *amount)
+            .sum();
+        if owed > Decimal::ZERO {
+            holding.secured_debt_base = Some(owed);
+            holding.equity_base = Some(holding.amount_base - owed);
+        }
+    }
 }
 
 /// The net-worth line between two dates.

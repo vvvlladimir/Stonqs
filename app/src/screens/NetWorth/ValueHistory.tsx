@@ -46,9 +46,7 @@ export function ValueHistory({ asset, onClose }: { asset: Asset; onClose: () => 
           type="button"
           className="btn"
           disabled={amount.trim() === "" || save.isPending}
-          onClick={() =>
-            save.mutate({ asset_id: asset.id, date, amount, note: null })
-          }
+          onClick={() => save.mutate({ asset_id: asset.id, date, amount, note: null })}
         >
           <PlusIcon /> <Trans>Add a valuation</Trans>
         </button>
@@ -59,8 +57,8 @@ export function ValueHistory({ asset, onClose }: { asset: Asset; onClose: () => 
           empty={
             <Empty title={t`No figure yet`}>
               <Trans>
-                Until it has one, this thing is absent from net worth — which is not the same as being
-                worth nothing.
+                Until it has one, this thing is absent from net worth — which is not the same as being worth
+                nothing.
               </Trans>
             </Empty>
           }

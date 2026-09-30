@@ -173,6 +173,8 @@ routes! {
         networth::net_worth { date };
         networth::net_worth_series { from, to };
         networth::asset_values { asset_id };
+        networth::asset_values_export_csv {};
+        networth::asset_values_import_preview { content };
         watchlists::watchlists_list {};
         watchlists::watchlist_rows { id, from, to };
         settings::settings_get {};
@@ -266,6 +268,10 @@ pub const DESKTOP_ONLY: &[(&str, &str)] = &[
     ("asset_delete", "handle"),
     ("asset_value_save", "handle"),
     ("asset_value_delete", "handle"),
+    ("asset_values_import_commit", "handle"),
+    ("asset_values_import_commit_path", "handle"),
+    ("asset_values_import_preview_path", "path"),
+    ("asset_values_export_save", "path"),
     ("watchlist_save", "handle"),
     ("watchlist_delete", "handle"),
     ("securities_adopt_source", "handle"),

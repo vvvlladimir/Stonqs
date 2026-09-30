@@ -168,3 +168,173 @@ fn a_missing_rate_fails_rather_than_counting_zero() {
     let error = net_worth(Decimal::ZERO, &[gold], &values, "EUR", d(2026, 6, 30), &Rates);
     assert!(error.is_err());
 }
+
+/// 400 000 owned with 250 000 owed on it leaves 150 000 of equity, and the flat alone carries
+/// that figure — the debt does not repeat it.
+#[test]
+fn a_debt_leaves_equity_on_the_thing_it_is_secured_on() {
+    let assets = vec![house(), mortgage()];
+    let values = vec![
+        AssetValue::new("house", d(2026, 1, 1), dec!(400000)),
+        AssetValue::new("debt", d(2026, 1, 1), dec!(250000)),
+    ];
+
+    let reading = net_worth(Decimal::ZERO, &assets, &values, "EUR", d(2026, 6, 30), &Rates).unwrap();
+
+    let flat = reading.holdings.iter().find(|h| h.asset_id == "house").unwrap();
+    assert_eq!(flat.secured_debt_base, Some(dec!(250000)));
+    assert_eq!(flat.equity_base, Some(dec!(150000)));
+    let debt = reading.holdings.iter().find(|h| h.asset_id == "debt").unwrap();
+    assert_eq!(debt.equity_base, None);
+}
+
+/// Two debts on one flat are summed: 400 000 − 250 000 − 30 000 = 120 000 left.
+#[test]
+fn two_debts_on_one_asset_are_summed() {
+    let mut renovation = Asset::new("Renovation loan", AssetKind::Loan, "EUR");
+    renovation.id = "loan".into();
+    renovation.secured_by = Some("house".into());
+    let assets = vec![house(), mortgage(), renovation];
+    let values = vec![
+        AssetValue::new("house", d(2026, 1, 1), dec!(400000)),
+        AssetValue::new("debt", d(2026, 1, 1), dec!(250000)),
+        AssetValue::new("loan", d(2026, 1, 1), dec!(30000)),
+    ];
+
+    let reading = net_worth(Decimal::ZERO, &assets, &values, "EUR", d(2026, 6, 30), &Rates).unwrap();
+
+    let flat = reading.holdings.iter().find(|h| h.asset_id == "house").unwrap();
+    assert_eq!(flat.equity_base, Some(dec!(120000)));
+}
+
+/// Nothing owed on it means no equity figure: repeating the value under a second name would
+/// invite adding the two together.
+#[test]
+fn an_asset_with_no_debt_on_it_carries_no_equity_figure() {
+    let values = vec![AssetValue::new("house", d(2026, 1, 1), dec!(400000))];
+    let reading = net_worth(Decimal::ZERO, &[house()], &values, "EUR", d(2026, 6, 30), &Rates).unwrap();
+
+    assert_eq!(reading.holdings[0].secured_debt_base, None);
+    assert_eq!(reading.holdings[0].equity_base, None);
+}
+
+/// The change is against the figure written before the one in force, not against the reading
+/// date, and it names the day it measures from.
+#[test]
+fn a_change_is_measured_between_two_valuations() {
+    let values = vec![
+        AssetValue::new("house", d(2026, 1, 1), dec!(400000)),
+        AssetValue::new("house", d(2026, 4, 1), dec!(415000)),
+    ];
+    let reading = net_worth(Decimal::ZERO, &[house()], &values, "EUR", d(2026, 6, 30), &Rates).unwrap();
+
+    assert_eq!(reading.holdings[0].change_base, Some(dec!(15000)));
+    assert_eq!(reading.holdings[0].changed_since, Some(d(2026, 1, 1)));
+
+    // One figure has nothing to be compared with, and zero would be a claim.
+    let single = net_worth(
+        Decimal::ZERO,
+        &[house()],
+        &values[..1],
+        "EUR",
+        d(2026, 6, 30),
+        &Rates,
+    )
+    .unwrap();
+    assert_eq!(single.holdings[0].change_base, None);
+}
+
+/// A foreign asset's change is the revaluation alone: both figures are converted at the reading
+/// date's rate, so a currency that moved in between does not show up as a gain here.
+#[test]
+fn a_change_in_a_foreign_currency_is_not_a_currency_move() {
+    let mut chalet = Asset::new("Chalet", AssetKind::Property, "CHF");
+    chalet.id = "chf".into();
+    let values = vec![
+        AssetValue::new("chf", d(2026, 1, 1), dec!(200000)),
+        AssetValue::new("chf", d(2026, 4, 1), dec!(210000)),
+    ];
+
+    let reading = net_worth(Decimal::ZERO, &[chalet], &values, "EUR", d(2026, 6, 30), &Rates).unwrap();
+
+    // 10 000 CHF more, at 1.05: 10 500 EUR, and not a cent of rate difference.
+    assert_eq!(reading.holdings[0].change_base, Some(dec!(10500)));
+}
+
+/// Age is counted to the reading date, and past the fuse it is worth saying out loud.
+#[test]
+fn an_old_figure_is_counted_and_named() {
+    let values = vec![AssetValue::new("house", d(2026, 1, 1), dec!(400000))];
+
+    let fresh = net_worth(Decimal::ZERO, &[house()], &values, "EUR", d(2026, 3, 1), &Rates).unwrap();
+    assert_eq!(fresh.holdings[0].days_old, 59);
+    assert!(!fresh.holdings[0].stale);
+    assert_eq!(fresh.stale_count, 0);
+
+    let old = net_worth(Decimal::ZERO, &[house()], &values, "EUR", d(2026, 12, 31), &Rates).unwrap();
+    assert_eq!(old.holdings[0].days_old, 364);
+    assert!(old.holdings[0].stale);
+    assert_eq!(old.stale_count, 1);
+}
+
+/// 250 000 owed against 60 000 invested plus 400 000 owned: 250 000 / 460 000 of the assets.
+#[test]
+fn debt_is_measured_against_everything_owned_investments_included() {
+    let assets = vec![house(), mortgage()];
+    let values = vec![
+        AssetValue::new("house", d(2026, 1, 1), dec!(400000)),
+        AssetValue::new("debt", d(2026, 1, 1), dec!(250000)),
+    ];
+
+    let reading = net_worth(dec!(60000), &assets, &values, "EUR", d(2026, 6, 30), &Rates).unwrap();
+
+    assert_eq!(
+        reading.debt_to_assets.map(|r| r.round_dp(6)),
+        Some((dec!(250000) / dec!(460000)).round_dp(6))
+    );
+
+    // A debt and nothing owned is not a ratio.
+    let only_debt = net_worth(
+        Decimal::ZERO,
+        &[mortgage()],
+        &values[1..],
+        "EUR",
+        d(2026, 6, 30),
+        &Rates,
+    )
+    .unwrap();
+    assert_eq!(only_debt.debt_to_assets, None);
+}
+
+/// A schedule on a debt answers when it ends; a thing owned never carries one.
+#[test]
+fn only_a_debt_with_a_schedule_gets_a_payoff() {
+    let mut debt = mortgage();
+    debt.schedule = Some(crate::model::Amortization {
+        rate: dec!(0.12),
+        monthly_payment: dec!(400),
+        ends_on: None,
+    });
+    let values = vec![
+        AssetValue::new("house", d(2026, 1, 1), dec!(400000)),
+        AssetValue::new("debt", d(2026, 1, 1), dec!(1000)),
+    ];
+
+    let reading = net_worth(
+        Decimal::ZERO,
+        &[house(), debt],
+        &values,
+        "EUR",
+        d(2026, 6, 30),
+        &Rates,
+    )
+    .unwrap();
+
+    let flat = reading.holdings.iter().find(|h| h.asset_id == "house").unwrap();
+    assert!(flat.payoff.is_none());
+    let owed = reading.holdings.iter().find(|h| h.asset_id == "debt").unwrap();
+    let payoff = owed.payoff.as_ref().unwrap();
+    // The same three months `payoff::tests` works out longhand, from the reading date.
+    assert_eq!(payoff.months_left, Some(3));
+    assert_eq!(payoff.payoff_on, Some(d(2026, 9, 30)));
+}

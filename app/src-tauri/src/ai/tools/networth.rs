@@ -42,11 +42,26 @@ fn net_worth(context: &ToolContext, _args: &Value) -> AiResult<Value> {
                 // The day the user last said so. An old day means an old opinion, and the model
                 // should say so rather than treat the figure as today's.
                 "valued_on": holding.valued_on.to_string(),
+                "days_old": holding.days_old,
+                "figure_is_old": holding.stale,
+                "change_since_previous": holding.change_base.map(money),
+                "previous_figure_from": holding.changed_since.map(|d| d.to_string()),
                 "secured_by": holding
                     .secured_by
                     .as_deref()
                     .and_then(|id| assets.iter().find(|a| a.id == id))
                     .map(|a| a.name.as_str()),
+                "debt_against_it": holding.secured_debt_base.map(money),
+                "equity": holding.equity_base.map(money),
+                "payoff": holding.payoff.as_ref().map(|payoff| json!({
+                    // Absent means the payment does not cover the interest, so there is no end —
+                    // which is not the same as ending today.
+                    "months_left": payoff.months_left,
+                    "payoff_on": payoff.payoff_on.map(|d| d.to_string()),
+                    "interest_still_to_pay": payoff.interest_ahead.map(money),
+                    "contract_ends_on": payoff.ends_on.map(|d| d.to_string()),
+                    "paid_off_percent": payoff.paid_share.map(percent),
+                })),
             })
         })
         .collect();
@@ -68,6 +83,8 @@ fn net_worth(context: &ToolContext, _args: &Value) -> AiResult<Value> {
         "liabilities": money(reading.owed_base),
         "net_worth": money(reading.net_base),
         "invested_percent": reading.invested_share.map(percent),
+        "debt_to_assets_percent": reading.debt_to_assets.map(percent),
+        "figures_older_than_half_a_year": reading.stale_count,
         "items": holdings,
         "not_valued_yet": waiting,
     }))

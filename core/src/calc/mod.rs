@@ -89,7 +89,10 @@ pub use journal::{
     transactions_net_by_month, transactions_net_by_year,
 };
 pub use limits::{LimitUsage, contributions_between, limit_usage};
-pub use networth::{AssetHolding, NetWorth, NetWorthPoint, NetWorthSeries, net_worth, net_worth_series};
+pub use networth::{
+    AssetHolding, DebtPayoff, NetWorth, NetWorthPoint, NetWorthSeries, STALE_AFTER_DAYS, net_worth,
+    net_worth_series,
+};
 pub use payments::{
     PaymentBucket, PaymentGrid, PaymentLine, PaymentPeriod, PaymentRow, SecurityPaymentRow, payment_grid,
 };

@@ -267,3 +267,68 @@ fn the_net_worth_line_steps_between_valuations() {
     assert!(dates.contains(&d(2026, 1, 15)));
     assert!(dates.contains(&d(2026, 4, 1)));
 }
+
+/// The figures the screen shows beside each row: what the flat is worth after its mortgage, how
+/// the debt is going, and how old each opinion is.
+#[test]
+fn a_reading_carries_equity_age_and_where_the_debt_is_going() {
+    let world = seeded();
+    // A second, older figure for the mortgage, so there is progress to measure from.
+    world
+        .store
+        .save_asset_value(&AssetValue::new(&world.mortgage.id, d(2026, 1, 1), dec!(256000)))
+        .unwrap();
+    let analytics = PortfolioAnalytics::new(&world.store, &world.portfolio).unwrap();
+
+    let reading = analytics.net_worth(d(2026, 6, 30)).unwrap();
+    let flat = reading
+        .holdings
+        .iter()
+        .find(|h| h.asset_id == world.house.id)
+        .unwrap();
+    let debt = reading
+        .holdings
+        .iter()
+        .find(|h| h.asset_id == world.mortgage.id)
+        .unwrap();
+
+    // 400 000 owned with 250 000 owed on it: 150 000 left.
+    assert_eq!(flat.secured_debt_base, Some(dec!(250000)));
+    assert_eq!(flat.equity_base, Some(dec!(150000)));
+    // 250 000 of debt over 30 000 invested plus 400 000 owned.
+    assert_eq!(
+        reading.debt_to_assets.map(|r| r.round_dp(6)),
+        Some((dec!(250000) / dec!(430000)).round_dp(6))
+    );
+
+    // 15 January to 30 June: 166 days, which is inside the fuse.
+    assert_eq!(debt.days_old, 166);
+    assert!(!debt.stale);
+    assert_eq!(reading.stale_count, 0);
+    // Written down from 256 000 to 250 000 between the two figures.
+    assert_eq!(debt.change_base, Some(dec!(-6000)));
+    assert_eq!(debt.changed_since, Some(d(2026, 1, 1)));
+
+    // 1 100 a month against 250 000 at 3.45%: the debt ends, and later than the contract says.
+    let payoff = debt.payoff.as_ref().unwrap();
+    assert!(payoff.months_left.is_some_and(|m| m > 276), "{payoff:?}");
+    assert_eq!(payoff.ends_on, Some(d(2049, 5, 1)));
+    assert!(payoff.interest_ahead.is_some_and(|i| i > Decimal::ZERO));
+    // Progress runs from the first figure ever written: 256 000 down to 250 000.
+    assert_eq!(
+        payoff.paid_share.map(|s| s.round_dp(6)),
+        Some((dec!(6000) / dec!(256000)).round_dp(6))
+    );
+}
+
+/// A figure nobody has revisited for half a year says so, and the reading counts how many.
+#[test]
+fn a_figure_older_than_the_fuse_is_reported_as_stale() {
+    let world = seeded();
+    let analytics = PortfolioAnalytics::new(&world.store, &world.portfolio).unwrap();
+
+    // 15 January to 31 December is 350 days, past the 180-day fuse.
+    let reading = analytics.net_worth(d(2026, 12, 31)).unwrap();
+    assert_eq!(reading.stale_count, 2);
+    assert!(reading.holdings.iter().all(|h| h.stale), "{reading:?}");
+}

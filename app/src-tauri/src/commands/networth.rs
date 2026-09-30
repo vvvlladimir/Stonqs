@@ -13,6 +13,7 @@ use crate::events::emit_changed;
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
 use sq_core::calc::{NetWorth, NetWorthSeries};
+use sq_core::import::ValuesPreview;
 use sq_core::prelude::*;
 use tauri::{AppHandle, State};
 
@@ -222,4 +223,78 @@ mod tests {
         };
         assert!(schedule_of(&plain).unwrap().is_none());
     }
+}
+
+/// What the file would write, against the things the portfolio holds. Writes nothing.
+#[tauri::command]
+pub fn asset_values_import_preview(state: State<AppState>, content: Vec<u8>) -> UiResult<ValuesPreview> {
+    let store = state.store()?;
+    let portfolio = state.portfolio()?.clone();
+    let parsed = sq_core::import::parse_csv(&content, &sq_core::import::ParseConfig::default())?;
+    Ok(sq_core::import::build_values_preview(
+        &parsed,
+        &store.list_assets(&portfolio.id)?,
+        &store.list_asset_values(&portfolio.id)?,
+    ))
+}
+
+/// Writes the same plan the preview showed, rebuilt here: what is written is decided by the file
+/// and the database, never by the screen.
+#[tauri::command]
+pub fn asset_values_import_commit(
+    app: AppHandle,
+    state: State<AppState>,
+    content: Vec<u8>,
+) -> UiResult<usize> {
+    let written = {
+        let store = state.store()?;
+        let portfolio = state.portfolio()?.clone();
+        let parsed = sq_core::import::parse_csv(&content, &sq_core::import::ParseConfig::default())?;
+        let preview = sq_core::import::build_values_preview(
+            &parsed,
+            &store.list_assets(&portfolio.id)?,
+            &store.list_asset_values(&portfolio.id)?,
+        );
+        sq_core::import::commit_asset_values(&store, &preview)?
+    };
+
+    emit_changed(&app, "assets")?;
+    Ok(written)
+}
+
+/// Every valuation as one CSV — the file this same import reads back.
+#[tauri::command]
+pub fn asset_values_export_csv(state: State<AppState>) -> UiResult<String> {
+    let store = state.store()?;
+    let portfolio = state.portfolio()?.clone();
+    Ok(sq_core::import::asset_values_to_csv(
+        &store.list_assets(&portfolio.id)?,
+        &store.list_asset_values(&portfolio.id)?,
+    ))
+}
+
+#[tauri::command]
+pub fn asset_values_import_preview_path(state: State<AppState>, path: String) -> UiResult<ValuesPreview> {
+    let content = std::fs::read(&path).map_err(|e| UiError::invalid(format!("cannot read {path}: {e}")))?;
+    asset_values_import_preview(state, content)
+}
+
+#[tauri::command]
+pub fn asset_values_import_commit_path(
+    app: AppHandle,
+    state: State<AppState>,
+    path: String,
+) -> UiResult<usize> {
+    let content = std::fs::read(&path).map_err(|e| UiError::invalid(format!("cannot read {path}: {e}")))?;
+    asset_values_import_commit(app, state, content)
+}
+
+/// Writes the export where the user points.
+#[tauri::command]
+pub fn asset_values_export_save(state: State<AppState>, path: String) -> UiResult<()> {
+    let csv = asset_values_export_csv(state)?;
+    // Excel reads a comma-separated file as UTF-8 only when it opens with a BOM.
+    let mut bytes = vec![0xEF, 0xBB, 0xBF];
+    bytes.extend_from_slice(csv.as_bytes());
+    std::fs::write(&path, bytes).map_err(|e| UiError::invalid(format!("cannot write {path}: {e}")))
 }

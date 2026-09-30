@@ -48,8 +48,8 @@ export function Side({
         <Empty title={owed ? t`No debts` : t`Nothing yet`}>
           {owed ? (
             <Trans>
-              A mortgage, a loan, a credit card. Its rate and payment describe what is ahead; what is
-              owed today is the figure you write.
+              A mortgage, a loan, a credit card. Its rate and payment describe what is ahead; what is owed
+              today is the figure you write.
             </Trans>
           ) : (
             <Trans>
@@ -65,6 +65,7 @@ export function Side({
               key={asset.id}
               asset={asset}
               holding={reading.holdings.find((h) => h.asset_id === asset.id)}
+              base={reading.base_currency}
               securedByName={assets.find((a) => a.id === asset.secured_by)?.name}
               onValues={() => onValues(asset)}
               onEdit={() => onEdit(asset)}

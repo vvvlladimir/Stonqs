@@ -8,6 +8,7 @@ import type {
   DateString,
   NetWorthData,
   NetWorthSeries,
+  ValuesPreview,
 } from "../types";
 import { call } from "./core";
 
@@ -25,4 +26,11 @@ export const netWorthApi = {
   assetValueSave: (input: AssetValueInput) => call<void>("asset_value_save", { input }),
   assetValueDelete: (asset_id: string, date: DateString) =>
     call<void>("asset_value_delete", { assetId: asset_id, date }),
+
+  /** The valuations CSV round trip. The commit reads the file again, so what was shown and what
+   *  is written come from the same bytes. */
+  assetValuesImportPreviewPath: (path: string) =>
+    call<ValuesPreview>("asset_values_import_preview_path", { path }),
+  assetValuesImportCommitPath: (path: string) => call<number>("asset_values_import_commit_path", { path }),
+  assetValuesExportSave: (path: string) => call<void>("asset_values_export_save", { path }),
 };

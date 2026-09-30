@@ -199,6 +199,16 @@ msgstr "{0, plural, one {# выбытие} few {# выбытия} many {# выб
 msgid "{0, plural, one {# due} other {# due}}"
 msgstr "{0, plural, one {# взнос} few {# взноса} many {# взносов} other {# взносов}}"
 
+#. placeholder {0}: reading.stale_count
+#: src/screens/NetWorth/index.tsx
+msgid "{0, plural, one {# figure here has not been revisited for more than half a year} other {# figures here have not been revisited for more than half a year}}"
+msgstr "{0, plural, one {# цифру здесь не пересматривали больше полугода} few {# цифры здесь не пересматривали больше полугода} many {# цифр здесь не пересматривали больше полугода} other {# цифр здесь не пересматривали больше полугода}}"
+
+#. placeholder {0}: writes.length
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "{0, plural, one {# figure} other {# figures}}"
+msgstr "{0, plural, one {# цифра} few {# цифры} many {# цифр} other {# цифр}}"
+
 #. placeholder {0}: groups.data?.length ?? 0
 #: src/screens/Accounts/index.tsx
 msgid "{0, plural, one {# group} other {# groups}}"
@@ -236,8 +246,10 @@ msgstr "{0, plural, one {# вид} few {# вида} many {# видов} other {#
 msgid "{0, plural, one {# list} other {# lists}}"
 msgstr "{0, plural, one {# список} few {# списка} many {# списков} other {# списков}}"
 
+#. placeholder {0}: payoff.months_left
 #. placeholder {0}: progress.months_left
 #: src/screens/dashboard/widgets/progress.tsx
+#: src/screens/NetWorth/AssetFoot.tsx
 #: src/screens/Plans/GoalCard.tsx
 msgid "{0, plural, one {# month left} other {# months left}}"
 msgstr "{0, plural, one {остался # месяц} few {осталось # месяца} many {осталось # месяцев} other {осталось # месяца}}"
@@ -661,10 +673,15 @@ msgid "{0}: no data"
 msgstr "{0}: нет данных"
 
 #. placeholder {0}: String(Number(schedule.rate) * 100)
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "{0}% a year · <0/> a month"
+msgstr "{0}% в год · <0/> в месяц"
+
+#. placeholder {0}: String(Number(schedule.rate) * 100)
 #. placeholder {1}: schedule.ends_on ? <> · ends {formatDay(schedule.ends_on)}</> : null
 #: src/screens/NetWorth/AssetCard.tsx
-msgid "{0}% a year · <0/> a month{1}"
-msgstr "{0}% в год · <0/> в месяц{1}"
+#~ msgid "{0}% a year · <0/> a month{1}"
+#~ msgstr "{0}% в год · <0/> в месяц{1}"
 
 #. placeholder {0}: Math.round(progress * 100)
 #: src/components/domain/UpdateDialog.tsx
@@ -771,6 +788,10 @@ msgstr "{positiveDays} из {0}"
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{readers, plural, one {# file reader} other {# file readers}}"
 msgstr "{readers, plural, one {# читатель файлов} few {# читателя файлов} many {# читателей файлов} other {# читателя файлов}}"
+
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "{replacing, plural, one {# figure replaced} other {# figures replaced}}"
+msgstr "{replacing, plural, one {# цифра будет заменена} few {# цифры будут заменены} many {# цифр будут заменены} other {# цифр будут заменены}}"
 
 #: src/screens/Settings/PluginsPanel.tsx
 msgid "{screens, plural, one {# screen} other {# screens}}"
@@ -917,7 +938,16 @@ msgstr "<0/> осталось"
 msgid "<0/> of <1/> stays as cash — it does not reach a whole unit"
 msgstr "<0/> из <1/> остаётся деньгами — не хватает на целую единицу"
 
-#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
+msgid "<0/> of everything owned"
+msgstr "<0/> от всего, что есть"
+
+#. placeholder {0}: payoff.ends_on !== null ? formatDay(payoff.ends_on) : formatDay(payoff.payoff_on!)
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "<0/> of interest still to pay, and the contract ends {0}"
+msgstr "<0/> процентов ещё предстоит заплатить, а по договору срок — {0}"
+
+#: src/screens/NetWorth/Totals.tsx
 msgid "<0/> of net worth"
 msgstr "<0/> капитала"
 
@@ -932,6 +962,10 @@ msgstr "<0/> получено"
 #: src/components/domain/securityCard/CardHeader.tsx
 msgid "<0/> today"
 msgstr "<0/> за день"
+
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "<0/> yours, after <1/> owed on it"
+msgstr "<0/> ваши, после <1/> долга на нём"
 
 #. placeholder {0}: action.ratio_from
 #. placeholder {1}: action.ratio_to
@@ -1014,7 +1048,7 @@ msgstr "90 дней"
 msgid "A 2:1 split is 1 → 2; a 1:10 reverse split is 10 → 1. The position keeps its value: only the quantity and the per-share cost move."
 msgstr "Сплит 2:1 — это 1 → 2, обратный 1:10 — это 10 → 1. Стоимость позиции не меняется: двигаются только количество и цена за бумагу."
 
-#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
 msgid "A balance sheet, not a performance: nothing here has a return."
 msgstr "Это баланс, а не доходность: ни у чего здесь нет своей доходности."
 
@@ -2341,6 +2375,7 @@ msgstr "Календарь по годам и месяцам"
 #: src/components/ui/formLabels.ts
 #: src/screens/Allocation/TaxonomyDialog.tsx
 #: src/screens/dashboard/dialogs/BoardDialogs.tsx
+#: src/screens/NetWorth/ValuesFileDialog.tsx
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -3062,6 +3097,10 @@ msgstr "День, к которому относится последняя со
 msgid "days"
 msgstr "дней"
 
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Days already answered"
+msgstr "Дни с уже готовым ответом"
+
 #: src/screens/Risk/RiskMetrics.tsx
 msgid "Days between a peak and the return to it."
 msgstr "Дней от пика до возврата к нему."
@@ -3094,7 +3133,7 @@ msgstr "Дней от дна обратно к пику."
 msgid "Days the deepest fall lasted before the peak was regained."
 msgstr "Сколько дней длилось самое глубокое падение до возврата к пику."
 
-#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
 msgid "Debts"
 msgstr "Долги"
 
@@ -3894,7 +3933,7 @@ msgstr "Всё купленное и проданное за период к р�
 msgid "everything is mapped"
 msgstr "всё сопоставлено"
 
-#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
 msgid "everything owned, minus everything owed"
 msgstr "всё, что есть, минус всё, что должны"
 
@@ -3990,6 +4029,7 @@ msgid "Explain the file's columns, its operation names and the account everythin
 msgstr "Объясните приложению колонки файла, названия операций и счёт, на который всё ложится."
 
 #: src/screens/dashboard/EditBar.tsx
+#: src/screens/NetWorth/index.tsx
 #: src/screens/Transactions/index.tsx
 msgid "Export"
 msgstr "Выгрузить"
@@ -4110,6 +4150,11 @@ msgstr "FIFO"
 msgid "FIFO — the oldest lot goes first"
 msgstr "FIFO — первым списывается старый лот"
 
+#. placeholder {0}: holding.days_old
+#: src/screens/NetWorth/AssetCard.tsx
+msgid "figure is {0} days old"
+msgstr "цифре {0} дней"
+
 #: src/components/domain/AiChatPanel.tsx
 #~ msgid "Figures come from your own data."
 #~ msgstr "Цифры взяты из ваших данных."
@@ -4117,6 +4162,10 @@ msgstr "FIFO — первым списывается старый лот"
 #: src/components/domain/AiChatPanel.tsx
 #~ msgid "Figures come from your own data. Not investment advice."
 #~ msgstr "Цифры взяты из ваших данных. Не является инвестиционной рекомендацией."
+
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Figures to write"
+msgstr "Цифр к записи"
 
 #: src/components/domain/menuBar/model.ts
 #: src/screens/Import/labels.ts
@@ -4374,6 +4423,11 @@ msgstr "Цель"
 #: src/screens/Plans/Goals.tsx
 msgid "Goals"
 msgstr "Цели"
+
+#. placeholder {0}: formatDay(payoff.payoff_on)
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "gone by {0}"
+msgstr "закроется к {0}"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "group"
@@ -4715,6 +4769,14 @@ msgstr "Импорт в «{0}»"
 msgid "Import layouts"
 msgstr "Раскладки импорта"
 
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Import valuations"
+msgstr "Импорт оценок"
+
+#: src/screens/NetWorth/index.tsx
+msgid "Import valuations…"
+msgstr "Импорт оценок…"
+
 #: src/components/domain/menuBar/model.ts
 msgid "Import…"
 msgstr "Импорт…"
@@ -5011,7 +5073,7 @@ msgid "interval"
 msgstr "интервал"
 
 #: src/components/charts/NetWorthChart.tsx
-#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
 msgid "Invested"
 msgstr "Вложено"
 
@@ -5781,6 +5843,7 @@ msgstr "Нужен ключ"
 #: src/components/charts/NetWorthChart.tsx
 #: src/components/Nav/model.ts
 #: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
 msgid "Net worth"
 msgstr "Капитал"
 
@@ -6351,6 +6414,11 @@ msgstr "На этом уровне целей нет"
 #: src/screens/Allocation/GroupDialog.tsx
 msgid "No text attribute has been defined yet. Settings → Attributes is where one is created — a country, a sector, a strategy — and each instrument's form is where it is filled in."
 msgstr "Текстовых атрибутов пока нет. Завести — в Настройках → Атрибуты: страна, сектор, стратегия; заполнить — в форме каждого инструмента."
+
+#. placeholder {0}: preview.unmatched.join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "No thing here goes by {0} — add it first, then import again."
+msgstr "Здесь ничего не называется {0} — сначала добавьте, потом импортируйте снова."
 
 #: src/screens/Trades/index.tsx
 msgid "No transactions — there are no trades to show."
@@ -6986,7 +7054,7 @@ msgid "Other"
 msgstr "Прочее"
 
 #: src/lib/kinds.ts
-#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
 msgid "Other assets"
 msgstr "Прочее"
 
@@ -7056,6 +7124,10 @@ msgstr "Пополнение в месяц"
 #: src/screens/dashboard/widgets/model.ts
 msgid "Paid in over the period"
 msgstr "Внесено за период"
+
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "paid off"
+msgstr "выплачено"
 
 #: src/screens/Import/CommitStep.tsx
 msgid "parsed and matching nothing in the database"
@@ -8175,6 +8247,11 @@ msgstr "строк"
 #: src/screens/dashboard/dialogs/config/Config.tsx
 msgid "Rows"
 msgstr "Строк"
+
+#. placeholder {0}: skipped.slice(0, 8).join(", ")
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Rows {0} could not be read and are left out."
+msgstr "Строки {0} не прочитались и пропущены."
 
 #: src/screens/Import/AccountTarget.tsx
 msgid "Rows land on"
@@ -9657,7 +9734,7 @@ msgstr "С них начинается портфель: депо без ден�
 msgid "The portfolio's name, base currency and cost-basis method."
 msgstr "Название портфеля, базовая валюта и метод себестоимости."
 
-#: src/screens/NetWorth/index.tsx
+#: src/screens/NetWorth/Totals.tsx
 msgid "The portfolio's own value — the figure every other screen measures."
 msgstr "Стоимость самого портфеля — та цифра, которую измеряют остальные экраны."
 
@@ -10004,6 +10081,10 @@ msgstr "записываются, но стоит просмотреть"
 msgid "They were added while no source was on, so nothing fetches their prices. An instrument you gave a source of its own keeps it."
 msgstr "Они добавлены, когда ни один источник не был включён, поэтому их цены никто не загружает. Инструмент, которому вы задали источник сами, сохранит его."
 
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Things they belong to"
+msgstr "К чему относятся"
+
 #: src/screens/NetWorth/Sides.tsx
 msgid "Things with no market to price them. Each carries the figures you write yourself."
 msgstr "То, что рынок не оценивает. У каждого — цифры, которые пишете вы."
@@ -10065,6 +10146,10 @@ msgstr "Это самая новая опубликованная версия."
 #: src/screens/Plans/GoalCard.tsx
 msgid "this pace does not arrive"
 msgstr "такой темп не приведёт к цели"
+
+#: src/screens/NetWorth/AssetFoot.tsx
+msgid "this payment never clears it"
+msgstr "при таком платеже долг не закроется"
 
 #: src/components/domain/aiToolLabels.ts
 msgid "this period against the one before"
@@ -11317,7 +11402,12 @@ msgstr "Написать заново"
 msgid "Write again on its own"
 msgstr "Обновлять самостоятельно"
 
+#: src/screens/NetWorth/ValuesFileDialog.tsx
+msgid "Write these figures"
+msgstr "Записать эти цифры"
+
 #: src/screens/Import/CommitStep.tsx
+#: src/screens/NetWorth/ValuesFileDialog.tsx
 msgid "Writing…"
 msgstr "Записываем…"
 

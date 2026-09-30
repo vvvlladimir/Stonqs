@@ -1,5 +1,6 @@
 /** Things owned and owed beside the portfolio, and the net-worth reading they make (ADR-0092). */
 
+import type { ImportProblem } from "./imports";
 import type { DateString } from "./primitives";
 
 /** Which way an amount points. Both sides are stored positive; the kind decides the direction. */
@@ -47,6 +48,19 @@ export interface AssetValue {
   note: string | null;
 }
 
+/** Where a debt is going on the owner's own assumptions; it never restates the balance. */
+export interface DebtPayoff {
+  /** `null` when the payment does not cover the interest: there is no end, which is not "now". */
+  months_left: number | null;
+  payoff_on: DateString | null;
+  interest_ahead: string | null;
+  last_payment: string | null;
+  /** The end the contract names, for comparison with `payoff_on`. */
+  ends_on: DateString | null;
+  /** From the first figure ever written to today's; negative when the debt grew. */
+  paid_share: string | null;
+}
+
 export interface AssetHolding {
   asset_id: string;
   name: string;
@@ -57,7 +71,17 @@ export interface AssetHolding {
   amount_base: string;
   /** The day the figure is from, which is not the reading date. */
   valued_on: DateString;
+  days_old: number;
+  /** Past the app's fuse (half a year), so the row says the figure is old. */
+  stale: boolean;
+  /** What the last revaluation changed, both figures at the reading date's rate. */
+  change_base: string | null;
+  changed_since: DateString | null;
   secured_by: string | null;
+  /** For a thing owned: what is owed against it, and what is left after that. */
+  secured_debt_base: string | null;
+  equity_base: string | null;
+  payoff: DebtPayoff | null;
 }
 
 export interface NetWorth {
@@ -69,6 +93,10 @@ export interface NetWorth {
   net_base: string;
   /** `null` when net worth is zero or below: there is no share to state. */
   invested_share: string | null;
+  /** Everything owed over everything owned, investments included. */
+  debt_to_assets: string | null;
+  /** How many figures are older than half a year. */
+  stale_count: number;
   holdings: AssetHolding[];
   /** Ids of assets with no valuation on or before the date — absent, not zero. */
   not_valued_yet: string[];
@@ -115,4 +143,30 @@ export interface AssetValueInput {
   date: DateString;
   amount: string;
   note: string | null;
+}
+
+/** One row of a valuations CSV, matched to a thing by name or not matched at all. */
+export interface ValueRow {
+  row: number;
+  label: string;
+  asset_id: string | null;
+  date: DateString;
+  amount: string;
+  /** A figure for this thing on this day is already stored; the row replaces it. */
+  replaces: boolean;
+}
+
+export interface ValuesCsvConfig {
+  name: string | null;
+  date: string | null;
+  amount: string | null;
+}
+
+/** What a valuations file would write. Nothing is written until the commit. */
+export interface ValuesPreview {
+  config: ValuesCsvConfig;
+  rows: ValueRow[];
+  /** Names the portfolio has no thing for; nothing is created from a file. */
+  unmatched: string[];
+  problems: ImportProblem[];
 }
