@@ -3,6 +3,10 @@
 # Why this change, and what it costs. Wrap at 72. Leave it out only when the
 # subject already says everything.
 #
+# A feat or fix subject is printed in the changelog and read by somebody who
+# has never seen this repository: write what they can now do. Every other type
+# is invisible to them and to it.
+#
 # Refs: ADR-00NN                      <- when the change follows or adds a decision
 #
 # type:   feat     a capability the user can see
