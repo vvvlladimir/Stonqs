@@ -12,7 +12,7 @@ use crate::error::{UiError, UiResult};
 use crate::events::emit_changed;
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use sq_core::calc::{NetWorth, NetWorthSeries};
+use sq_core::calc::{AfterTax, NetWorth, NetWorthSeries};
 use sq_core::import::ValuesPreview;
 use sq_core::prelude::*;
 use tauri::{AppHandle, State};
@@ -24,6 +24,9 @@ use tauri::{AppHandle, State};
 pub struct NetWorthData {
     pub reading: NetWorth,
     pub assets: Vec<Asset>,
+    /// Only when the screen states a rate: what selling the portfolio today would cost in tax,
+    /// beside net worth and never instead of it (ADR-0093).
+    pub after_tax: Option<AfterTax>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,15 +57,26 @@ pub struct AssetValueInput {
     pub note: Option<String>,
 }
 
+/// `tax_rate` is a percent as the owner typed it: `26` is 26%. Absent asks for no tax view.
 #[tauri::command]
-pub fn net_worth(state: State<AppState>, date: String) -> UiResult<NetWorthData> {
+pub fn net_worth(state: State<AppState>, date: String, tax_rate: Option<String>) -> UiResult<NetWorthData> {
     let as_of = parse_date(&date)?;
     let store = state.store()?;
     let portfolio = state.portfolio()?.clone();
     let analytics = PortfolioAnalytics::new(&store, &portfolio)?;
 
+    let rate = match decimal(tax_rate.as_deref(), "tax rate")? {
+        Some(percent) => Some(
+            sq_core::calc::percent_to_rate(percent)
+                .ok_or_else(|| UiError::invalid("the tax rate is not a number"))?,
+        ),
+        None => None,
+    };
+    let (reading, after_tax) = analytics.net_worth_with_tax(as_of, rate)?;
+
     Ok(NetWorthData {
-        reading: analytics.net_worth(as_of)?,
+        reading,
+        after_tax,
         assets: store.list_assets(&portfolio.id)?,
     })
 }

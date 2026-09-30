@@ -224,3 +224,41 @@ fn the_age_of_a_figure_crosses_as_a_number_of_days() {
     assert_eq!(json["holdings"][0]["stale"], Value::Bool(false));
     assert_eq!(json["stale_count"], Value::from(0));
 }
+
+/// The tax view crosses beside net worth, never in place of it, and names the value it could not
+/// speak about (ADR-0093).
+#[test]
+fn the_after_tax_view_crosses_beside_the_total_it_does_not_replace() {
+    let view = sq_core::calc::AfterTax {
+        rate: dec!(0.26),
+        taxable_gain_base: dec!(12000),
+        tax_base: dec!(3120),
+        net_after_tax_base: dec!(176880),
+        outside_base: dec!(400000),
+    };
+    let json = serde_json::to_value(&view).unwrap();
+
+    assert_eq!(
+        keys(&json),
+        vec![
+            "net_after_tax_base",
+            "outside_base",
+            "rate",
+            "tax_base",
+            "taxable_gain_base",
+        ]
+    );
+    assert_eq!(json["rate"], Value::String("0.26".into()));
+    assert_eq!(json["tax_base"], Value::String("3120".into()));
+    assert_eq!(json["net_after_tax_base"], Value::String("176880".into()));
+    // The reading it belongs to is untouched: the two are separate fields of the answer.
+    let data = serde_json::json!({ "reading": serde_json::to_value(sample()).unwrap(), "after_tax": json });
+    assert_eq!(data["reading"]["net_base"], Value::String("180000".into()));
+}
+
+/// No rate stated, no view: `null` rather than a zero tax nobody asked for.
+#[test]
+fn no_rate_means_no_view_at_all() {
+    let json = serde_json::to_value(Option::<sq_core::calc::AfterTax>::None).unwrap();
+    assert_eq!(json, Value::Null);
+}

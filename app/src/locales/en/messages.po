@@ -951,6 +951,10 @@ msgstr "<0/> of interest still to pay, and the contract ends {0}"
 msgid "<0/> of net worth"
 msgstr "<0/> of net worth"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "<0/> of things owned is outside this: they have no purchase price, so there is no gain here to tax."
+msgstr "<0/> of things owned is outside this: they have no purchase price, so there is no gain here to tax."
+
 #: src/components/domain/SecurityAlerts.tsx
 msgid "<0/> per share"
 msgstr "<0/> per share"
@@ -1387,6 +1391,10 @@ msgstr "a target allocation"
 msgid "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 msgstr "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "A tax rate is between 0 and 100%."
+msgstr "A tax rate is between 0 and 100%."
+
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 msgstr "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
@@ -1665,6 +1673,10 @@ msgstr "Adds it to the instrument's splits, which restates the lots"
 #: src/screens/Rebalance/RebalanceMetrics.tsx
 msgid "after rounding to the step"
 msgstr "after rounding to the step"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "After tax"
+msgstr "After tax"
 
 #. placeholder {0}: formatMoney(data.gains_total.cost_base, currency, { compact: true })
 #: src/screens/Reports/index.tsx
@@ -4355,6 +4367,10 @@ msgstr "FX gain"
 msgid "FX rate"
 msgstr "FX rate"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Gain not yet taxed"
+msgstr "Gain not yet taxed"
+
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Gemini generateContent"
 msgstr "Gemini generateContent"
@@ -5851,6 +5867,10 @@ msgstr "Needs a key"
 #: src/screens/NetWorth/Totals.tsx
 msgid "Net worth"
 msgstr "Net worth"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Net worth after it"
+msgstr "Net worth after it"
 
 #: src/components/charts/NetWorthChart.tsx
 msgid "Net worth and invested value in {currency}"
@@ -8910,6 +8930,10 @@ msgstr "Start with the first one: outside OpenAI itself, \"OpenAI-compatible\" m
 msgid "starts"
 msgstr "starts"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "State a rate and this says what would be left if you sold the portfolio today. Nothing else in the app reads it."
+msgstr "State a rate and this says what would be left if you sold the portfolio today. Nothing else in the app reads it."
+
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
 msgid "Status"
@@ -9105,6 +9129,10 @@ msgstr "Tax currency"
 msgid "Tax due"
 msgstr "Tax due"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Tax if sold today"
+msgstr "Tax if sold today"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "Tax paid in the period against the capital at work, dividend withholding included."
 msgstr "Tax paid in the period against the capital at work, dividend withholding included."
@@ -9113,6 +9141,10 @@ msgstr "Tax paid in the period against the capital at work, dividend withholding
 #: src/screens/Performance/Metrics.tsx
 msgid "Tax rate"
 msgstr "Tax rate"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Tax rate on a gain, % "
+msgstr "Tax rate on a gain, % "
 
 #: src/lib/kinds.ts
 msgid "Tax refund"
@@ -11529,6 +11561,10 @@ msgstr "Your own notes, plus the dividends and splits reported by the quote sour
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Your own provider"
 msgstr "Your own provider"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Your own rate over the portfolio's unrealized gain. It covers nothing that has no purchase price."
+msgstr "Your own rate over the portfolio's unrealized gain. It covers nothing that has no purchase price."
 
 #: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx

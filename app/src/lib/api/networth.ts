@@ -14,7 +14,8 @@ import { call } from "./core";
 
 export const netWorthApi = {
   /** The reading at `date`, with every asset. Not scoped: an asset is not an account. */
-  netWorth: (date: DateString) => call<NetWorthData>("net_worth", { date }),
+  netWorth: (date: DateString, tax_rate?: string) =>
+    call<NetWorthData>("net_worth", { date, taxRate: tax_rate ?? null }),
   /** The line between two days; its portfolio side is the performance screen's own series. */
   netWorthSeries: (from: DateString, to: DateString) =>
     call<NetWorthSeries>("net_worth_series", { from, to }),

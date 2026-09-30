@@ -951,6 +951,10 @@ msgstr "<0/> процентов ещё предстоит заплатить, а
 msgid "<0/> of net worth"
 msgstr "<0/> капитала"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "<0/> of things owned is outside this: they have no purchase price, so there is no gain here to tax."
+msgstr "<0/> из того, что есть, сюда не входит: у этих вещей нет цены покупки, а значит, и прибыли, с которой брать налог."
+
 #: src/components/domain/SecurityAlerts.tsx
 msgid "<0/> per share"
 msgstr "<0/> на акцию"
@@ -1387,6 +1391,10 @@ msgstr "целевое распределение"
 msgid "A target is a set of weights over taxonomy nodes. Without one there is nothing to compare against: \"5,000 short of target\" and \"5,000 sitting in cash\" are different news."
 msgstr "Цель — это набор весов по узлам таксономии. Без неё сравнивать не с чем: «до цели не хватает 5 000» и «5 000 лежат деньгами» — разные новости."
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "A tax rate is between 0 and 100%."
+msgstr "Ставка налога — от 0 до 100%."
+
 #: src/screens/Settings/AppearancePanel.tsx
 msgid "A theme from a plugin. It varies one of the two schemes above rather than replacing it."
 msgstr "Тема из плагина. Она изменяет одну из двух схем выше, а не заменяет её."
@@ -1665,6 +1673,10 @@ msgstr "Добавляет сплит к инструменту — лоты б�
 #: src/screens/Rebalance/RebalanceMetrics.tsx
 msgid "after rounding to the step"
 msgstr "после округления до шага"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "After tax"
+msgstr "После налога"
 
 #. placeholder {0}: formatMoney(data.gains_total.cost_base, currency, { compact: true })
 #: src/screens/Reports/index.tsx
@@ -4355,6 +4367,10 @@ msgstr "Валютн. рез."
 msgid "FX rate"
 msgstr "Курс"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Gain not yet taxed"
+msgstr "Прибыль без налога"
+
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Gemini generateContent"
 msgstr "Gemini generateContent"
@@ -5846,6 +5862,10 @@ msgstr "Нужен ключ"
 #: src/screens/NetWorth/Totals.tsx
 msgid "Net worth"
 msgstr "Капитал"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Net worth after it"
+msgstr "Капитал после него"
 
 #: src/components/charts/NetWorthChart.tsx
 msgid "Net worth and invested value in {currency}"
@@ -8905,6 +8925,10 @@ msgstr "Начните с первого: за пределами самой Ope
 msgid "starts"
 msgstr "начинается"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "State a rate and this says what would be left if you sold the portfolio today. Nothing else in the app reads it."
+msgstr "Укажите ставку — и здесь будет то, что останется, если продать портфель сегодня. Больше это число нигде не читается."
+
 #: src/screens/Import/PreviewTables.tsx
 #: src/screens/Import/RowTable.tsx
 msgid "Status"
@@ -9100,6 +9124,10 @@ msgstr "Валюта налога"
 msgid "Tax due"
 msgstr "Налог к уплате"
 
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Tax if sold today"
+msgstr "Налог при продаже сегодня"
+
 #: src/screens/dashboard/widgets/metrics.tsx
 msgid "Tax paid in the period against the capital at work, dividend withholding included."
 msgstr "Налоги за период по отношению к работающему капиталу, включая удержанные с дивидендов."
@@ -9108,6 +9136,10 @@ msgstr "Налоги за период по отношению к работаю
 #: src/screens/Performance/Metrics.tsx
 msgid "Tax rate"
 msgstr "Доля налогов"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Tax rate on a gain, % "
+msgstr "Ставка налога на прибыль, % "
 
 #: src/lib/kinds.ts
 msgid "Tax refund"
@@ -11524,6 +11556,10 @@ msgstr "Ваши заметки, а также дивиденды и сплит�
 #: src/screens/Settings/ai/CustomPanel.tsx
 msgid "Your own provider"
 msgstr "Свой провайдер"
+
+#: src/screens/NetWorth/AfterTaxPanel.tsx
+msgid "Your own rate over the portfolio's unrealized gain. It covers nothing that has no purchase price."
+msgstr "Ваша ставка на нереализованную прибыль портфеля. Того, у чего нет цены покупки, это не касается."
 
 #: src/components/domain/sources/OwnSources.tsx
 #: src/screens/Settings/market/SourcesPanel.tsx

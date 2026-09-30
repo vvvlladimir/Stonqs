@@ -332,3 +332,37 @@ fn a_figure_older_than_the_fuse_is_reported_as_stale() {
     assert_eq!(reading.stale_count, 2);
     assert!(reading.holdings.iter().all(|h| h.stale), "{reading:?}");
 }
+
+/// The tax view rides on the same valuation pass as the reading, and covers only the portfolio:
+/// the flat's value is reported as standing outside it (ADR-0093).
+#[test]
+fn net_worth_after_tax_covers_the_portfolio_and_names_what_it_left_out() {
+    let world = seeded();
+    let analytics = PortfolioAnalytics::new(&world.store, &world.portfolio).unwrap();
+
+    let (reading, view) = analytics
+        .net_worth_with_tax(d(2026, 6, 30), Some(dec!(0.25)))
+        .unwrap();
+    let view = view.unwrap();
+
+    // 100 shares bought at 100 and worth 200: 10 000 of unrealized gain, a quarter of it in tax.
+    let valuation = analytics.valuation_at(d(2026, 6, 30)).unwrap();
+    assert_eq!(valuation.unrealized_pnl_base, dec!(10000));
+    assert_eq!(view.taxable_gain_base, dec!(10000));
+    assert_eq!(view.tax_base, dec!(2500));
+    assert_eq!(view.net_after_tax_base, reading.net_base - dec!(2500));
+    // The flat is outside the reading and says so rather than being quietly counted.
+    assert_eq!(view.outside_base, dec!(400000));
+
+    // No rate, no view — and the reading itself is the same either way.
+    let (plain, none) = analytics.net_worth_with_tax(d(2026, 6, 30), None).unwrap();
+    assert!(none.is_none());
+    assert_eq!(plain, reading);
+
+    // A rate nobody could mean is refused, not clamped.
+    assert!(
+        analytics
+            .net_worth_with_tax(d(2026, 6, 30), Some(dec!(1.5)))
+            .is_err()
+    );
+}

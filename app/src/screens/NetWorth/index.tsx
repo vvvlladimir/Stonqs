@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { api, today } from "../../lib/api";
 import { useAsOf } from "../../lib/asOf";
+import { useUiState } from "../../lib/uiState";
 import { formatMoney } from "../../lib/format";
 import { affects, useInvalidate, useNetWorth, useNetWorthSeries } from "../../lib/queries";
 import { Command } from "../../lib/commands";
@@ -11,13 +12,14 @@ import { Page } from "../../components/Page";
 import { NetWorthChart } from "../../components/charts";
 import { Banner, ErrorText, Panel, Pending, QueryError, Seg } from "../../components/ui";
 import type { Asset, AssetInput } from "../../lib/types";
+import { AfterTaxPanel } from "./AfterTaxPanel";
 import { AssetForm } from "./AssetForm";
 import { ValuesFileDialog } from "./ValuesFileDialog";
 import { useValuesFile } from "./useValuesFile";
 import { ValueHistory } from "./ValueHistory";
 import { Side } from "./Sides";
 import { Totals } from "./Totals";
-import { assetToInput, blankAsset, windowFrom } from "./model";
+import { assetToInput, blankAsset, taxRateOf, windowFrom } from "./model";
 
 /** Years of line the chart draws back from the reading date. */
 type Window = "1" | "5";
@@ -30,7 +32,10 @@ export function NetWorth() {
   const { t } = useLingui();
   const date = useAsOf().date;
   const invalidate = useInvalidate();
-  const data = useNetWorth(date);
+  const { ui, save: saveUi } = useUiState();
+  // A rate saved by an older build, or edited by hand, is filtered here rather than sent to a
+  // reading that would answer with an error and take the whole screen with it.
+  const data = useNetWorth(date, taxRateOf(ui.net_worth_tax_rate).rate);
   const [years, setYears] = useState<Window>("1");
   const line = useNetWorthSeries(windowFrom(date, Number(years)), date);
   const [draft, setDraft] = useState<AssetInput | null>(null);
@@ -113,6 +118,13 @@ export function NetWorth() {
       >
         {line.data ? <NetWorthChart series={line.data} currency={currency} /> : <Pending />}
       </Panel>
+
+      <AfterTaxPanel
+        rate={ui.net_worth_tax_rate}
+        onRate={(net_worth_tax_rate) => saveUi((ui) => ({ ...ui, net_worth_tax_rate }))}
+        view={data.data.after_tax}
+        currency={currency}
+      />
 
       {(["owned", "owed"] as const).map((side) => (
         <Side

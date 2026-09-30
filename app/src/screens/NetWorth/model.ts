@@ -47,3 +47,14 @@ export function windowFrom(date: DateString, years: number): DateString {
 export function isOwed(input: AssetInput): boolean {
   return isOwedKind(input.kind);
 }
+
+/** A tax rate the reading will accept: a percent between 0 and 100, or nothing at all. An empty
+ *  field asks for no tax view; anything else is refused here so the reading is never sent a
+ *  figure it would answer with an error. */
+export function taxRateOf(typed: string): { rate?: string; invalid: boolean } {
+  const text = typed.trim().replace(",", ".");
+  if (text === "") return { invalid: false };
+  const value = Number(text);
+  if (!Number.isFinite(value) || value < 0 || value > 100) return { invalid: true };
+  return { rate: text, invalid: false };
+}

@@ -90,8 +90,8 @@ pub use journal::{
 };
 pub use limits::{LimitUsage, contributions_between, limit_usage};
 pub use networth::{
-    AssetHolding, DebtPayoff, NetWorth, NetWorthPoint, NetWorthSeries, STALE_AFTER_DAYS, net_worth,
-    net_worth_series,
+    AfterTax, AssetHolding, DebtPayoff, NetWorth, NetWorthPoint, NetWorthSeries, STALE_AFTER_DAYS, after_tax,
+    net_worth, net_worth_series,
 };
 pub use payments::{
     PaymentBucket, PaymentGrid, PaymentLine, PaymentPeriod, PaymentRow, SecurityPaymentRow, payment_grid,

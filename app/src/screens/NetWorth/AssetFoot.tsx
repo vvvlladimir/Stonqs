@@ -27,6 +27,9 @@ export function PayoffTrack({ asset, holding }: { asset: Asset; holding: AssetHo
   const payoff = holding.payoff;
   if (!payoff) return null;
   const rate = asset.schedule ? Number(asset.schedule.rate) * 100 : null;
+  // Progress is measured between two figures. With one, there is no track to draw — an empty bar
+  // reads as "nothing repaid", which is a claim nobody made.
+  const measured = payoff.paid_share !== null;
 
   const end =
     payoff.payoff_on !== null ? (
@@ -34,6 +37,17 @@ export function PayoffTrack({ asset, holding }: { asset: Asset; holding: AssetHo
     ) : (
       // The payment does not cover the month's interest, so no date would be honest.
       <Trans>this payment never clears it</Trans>
+    );
+
+  if (!measured)
+    return (
+      <span className="dim">
+        {rate !== null && <>{String(rate)}% · </>}
+        {payoff.months_left !== null && (
+          <>{plural(payoff.months_left, { one: "# month left", other: "# months left" })} · </>
+        )}
+        {end}
+      </span>
     );
 
   return (

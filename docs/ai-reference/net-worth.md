@@ -53,12 +53,28 @@ payment is already a withdrawal or a charge on an account. An asset with nothing
 equity figure: it would be the same number twice.
 
 A debt with a rate and a monthly payment carries a forward reading: months until it is clear, the
-day that lands on, the interest still to pay, and how much is gone since its first figure. The
+day that lands on, the interest still to pay, and — only where two figures exist — how much is gone since the first
+one. A debt valued once reports no progress rather than zero. The
 arithmetic starts from the balance the owner last wrote and never replaces it. When the payment
 does not cover the month's interest there is no end date — the debt grows — and every figure of
 that reading is absent rather than zero. The contract's own end is carried separately, so "the
 schedule says 2049 but this payment gets there in 2047" is answerable. Leverage is everything owed
 over everything owned, investments included; measured, never enforced, with no shipped threshold.
+
+## Net worth after tax
+
+A third reading exists beside the two totals: net worth minus the tax that selling the portfolio
+today would cost, at one rate the owner states. It is never the total and nothing else reads it —
+not a return, not a goal, not FIRE.
+
+Its scope is exactly what the app has a cost basis for: the portfolio's unrealized gain. Assets
+outside the portfolio have no purchase price by design, so their gain is not in it, and the
+reading carries the value it could not speak about so the figure is not mistaken for "after every
+tax I would ever pay". One flat rate over the whole gain: no holding periods, no brackets, no
+allowances, no loss carry-forward. A negative gain yields zero tax, not a refund. Zero is a
+legitimate rate and yields zero tax; a rate outside 0–100% is refused rather than clamped. No
+jurisdiction's rules ship with the app, and the assistant is not given the rate — a figure resting
+on an assumption it cannot see would be repeated as fact.
 
 ## What it cannot answer
 

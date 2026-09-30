@@ -170,7 +170,7 @@ routes! {
         plans::fire_projection { annual_spending, withdrawal_rate, expected_return, contribution };
         goals::goals_list { date };
         goals::limits_list { date };
-        networth::net_worth { date };
+        networth::net_worth { date, tax_rate };
         networth::net_worth_series { from, to };
         networth::asset_values { asset_id };
         networth::asset_values_export_csv {};

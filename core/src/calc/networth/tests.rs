@@ -338,3 +338,42 @@ fn only_a_debt_with_a_schedule_gets_a_payoff() {
     assert_eq!(payoff.months_left, Some(3));
     assert_eq!(payoff.payoff_on, Some(d(2026, 9, 30)));
 }
+
+/// One figure is not progress: a debt valued once reports no share paid, rather than a 0% that
+/// stands still until a second figure exists.
+#[test]
+fn a_debt_valued_once_reports_no_progress() {
+    let mut debt = mortgage();
+    debt.schedule = Some(crate::model::Amortization {
+        rate: dec!(0.12),
+        monthly_payment: dec!(400),
+        ends_on: None,
+    });
+    let once = vec![AssetValue::new("debt", d(2026, 1, 1), dec!(1000))];
+
+    let reading = net_worth(
+        Decimal::ZERO,
+        &[debt.clone()],
+        &once,
+        "EUR",
+        d(2026, 6, 30),
+        &Rates,
+    )
+    .unwrap();
+    let payoff = reading.holdings[0].payoff.as_ref().unwrap();
+    assert_eq!(payoff.paid_share, None);
+    // The rest of the forward reading is still there: it needs today's figure, not a history.
+    assert_eq!(payoff.months_left, Some(3));
+
+    // A second figure makes it measurable: 1 200 down to 1 000 is a sixth of it gone.
+    let twice = vec![
+        AssetValue::new("debt", d(2026, 1, 1), dec!(1200)),
+        AssetValue::new("debt", d(2026, 4, 1), dec!(1000)),
+    ];
+    let reading = net_worth(Decimal::ZERO, &[debt], &twice, "EUR", d(2026, 6, 30), &Rates).unwrap();
+    let payoff = reading.holdings[0].payoff.as_ref().unwrap();
+    assert_eq!(
+        payoff.paid_share.map(|s| s.round_dp(6)),
+        Some((dec!(200) / dec!(1200)).round_dp(6))
+    );
+}

@@ -54,6 +54,18 @@ on one thing are summed; something with nothing owed on it shows no equity line.
 **Debts** also reports what is owed against everything owned, investments included: a leverage
 reading, with no threshold built in.
 
+## After tax
+
+**After tax** answers what would be left if you sold the portfolio today. Type a rate — anything from 0 to 100, applied when you leave the field or press Enter — and it
+applies it to the portfolio's unrealized gain: the gain, the tax on it, and net worth minus that
+tax. Leave the rate empty and there is no such reading at all.
+
+It is a view beside net worth, never the total — nothing else in the app reads it — and it is
+exact only where the app knows a purchase price. A flat has none by design, so its gain is
+outside this reading, and the panel names how much value that is. One flat rate, no holding
+periods, no allowances, no loss carried forward; a loss produces no tax rather than a refund. The
+rate is yours: no country's rules ship with the app.
+
 ## Account, asset or instrument
 
 Which one something is depends on how you keep it, not on what it is.

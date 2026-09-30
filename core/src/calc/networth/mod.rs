@@ -5,8 +5,10 @@
 //! The value of an asset on a day is the last valuation dated on or before it — a step, never an
 //! interpolation — and a thing is absent before its first valuation and from its closing day on.
 
+mod after_tax;
 mod payoff;
 
+pub use after_tax::{AfterTax, after_tax};
 pub use payoff::DebtPayoff;
 
 use super::ValueSeries;
@@ -219,12 +221,13 @@ pub fn net_worth(
             secured_debt_base: None,
             equity_base: None,
             payoff: asset.schedule.as_ref().map(|schedule| {
-                payoff::payoff(
-                    value.amount,
-                    first_value(&history, &asset.id).map(|first| first.amount),
-                    schedule,
-                    date,
-                )
+                // Progress needs two figures to be progress at all. With only one, the first
+                // figure *is* today's, and reporting nothing beats reporting a 0% that can never
+                // move until a second valuation is written.
+                let first = first_value(&history, &asset.id)
+                    .filter(|first| first.date != value.date)
+                    .map(|first| first.amount);
+                payoff::payoff(value.amount, first, schedule, date)
             }),
         });
     }

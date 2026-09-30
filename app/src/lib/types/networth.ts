@@ -102,8 +102,22 @@ export interface NetWorth {
   not_valued_yet: string[];
 }
 
+/** What selling the portfolio today would cost in tax, on a rate the owner states (ADR-0093). */
+export interface AfterTax {
+  /** The rate as a fraction, echoed back so the screen can say what it assumed. */
+  rate: string;
+  /** The portfolio's unrealized gain, never below zero: a loss is not a refund. */
+  taxable_gain_base: string;
+  tax_base: string;
+  net_after_tax_base: string;
+  /** What this reading says nothing about: everything owned with no purchase price. */
+  outside_base: string;
+}
+
 export interface NetWorthData {
   reading: NetWorth;
+  /** Absent until a rate is stated; never a zero tax nobody asked for. */
+  after_tax: AfterTax | null;
   /** Every asset, valued or not, so the ones waiting for a first figure still get a row. */
   assets: Asset[];
 }
