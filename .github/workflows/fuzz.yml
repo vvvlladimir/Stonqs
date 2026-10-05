@@ -60,7 +60,7 @@ jobs:
       # it: it goes into `core/tests/fixtures/crashes/` and into `robustness.rs` with the fix.
       - name: Keep what crashed
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: fuzz-${{ matrix.target }}-artifacts
           path: fuzz/artifacts/
