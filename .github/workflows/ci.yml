@@ -138,6 +138,16 @@ jobs:
       - name: File size
         run: scripts/check-rs-size.sh
 
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hakari
+
+      # Every crate builds a dependency at the one feature set workspace-hack holds (ADR-0095).
+      - name: Workspace hack
+        run: |
+          cargo hakari generate --diff
+          cargo hakari manage-deps --dry-run
+
       # `too_many_lines` is on in `[workspace.lints]`; `-D warnings` is what makes it fail here.
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings

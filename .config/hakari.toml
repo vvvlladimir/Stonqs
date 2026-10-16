@@ -1,0 +1,49 @@
+# Which features each dependency is built with, the same under every `-p`: ADR-0095.
+hakari-package = "workspace-hack"
+dep-format-version = "4"
+resolver = "2"
+platforms = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+
+# Only what sq-core and sq-cli already reach stays in: the rest is the host's (Tauri, tokio, the
+# platform UI, wasmtime), and the hack must not pull it under the core. A new name failing
+# `cargo hakari generate --diff` goes here unless `cargo tree -p sq-core` already shows it.
+[final-excludes]
+third-party = [
+    { name = "bit-vec" },
+    { name = "cranelift-bitset" },
+    { name = "crypto-common" },
+    { name = "deranged" },
+    { name = "digest" },
+    { name = "fastrand" },
+    { name = "futures-channel" },
+    { name = "futures-sink" },
+    { name = "indexmap" },
+    { name = "linux-raw-sys" },
+    { name = "objc2-app-kit" },
+    { name = "objc2-core-foundation" },
+    { name = "objc2-foundation" },
+    { name = "phf_shared" },
+    { name = "ppv-lite86" },
+    { name = "pulley-interpreter" },
+    { name = "rand" },
+    { name = "rand_chacha" },
+    { name = "rustc-hash" },
+    { name = "rustix" },
+    { name = "schemars" },
+    { name = "sha2" },
+    { name = "stable_deref_trait" },
+    { name = "tauri" },
+    { name = "tauri-build" },
+    { name = "tauri-utils" },
+    { name = "time" },
+    { name = "tokio" },
+    { name = "toml_datetime" },
+    { name = "toml_parser" },
+    { name = "tracing" },
+    { name = "tracing-core" },
+    { name = "wasm-encoder" },
+    { name = "wasmparser" },
+    { name = "wasmtime-internal-core" },
+    { name = "windows" },
+    { name = "winnow" },
+]

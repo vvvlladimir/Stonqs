@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["core", "cli", "app/src-tauri"]
+members = ["core", "cli", "app/src-tauri", "workspace-hack"]
 # The example plugins' guests build for wasm32-wasip2, and a workspace resolves one set of
 # features for one target. Each is built by its own `build.sh`, not by `cargo build`.
 # `fuzz` is excluded for its own reason: cargo-fuzz builds with `-Z` flags that need nightly.

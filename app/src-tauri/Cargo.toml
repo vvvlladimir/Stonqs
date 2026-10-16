@@ -38,6 +38,7 @@ rust_decimal_macros.workspace = true
 wasmtime.workspace = true
 wasmtime-wasi.workspace = true
 rand.workspace = true
+workspace-hack = { version = "0.1", path = "../../workspace-hack" }
 
 # The updater replaces an installed bundle, which is a thing only a desktop OS lets an app do.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

@@ -124,6 +124,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [88](0088-the-host-builds-what-a-plugin-reads.md) | The host builds what a plugin reads, for a page and a tool alike | Accepted |
 | [91](0091-the-sources-question-is-a-step-of-onboarding.md) | The sources question is a step of onboarding | Accepted |
 | [94](0094-ci-checks-a-tree-once-and-the-other-platforms-nightly.md) | CI checks a tree once, and the other platforms nightly | Accepted |
+| [95](0095-a-dependency-is-built-once-at-one-feature-set.md) | A dependency is built once, at one feature set | Accepted |
 
 ## Profiles, keys and encryption
 

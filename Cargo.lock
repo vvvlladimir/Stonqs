@@ -4673,6 +4673,7 @@ dependencies = [
  "uuid",
  "wasmtime",
  "wasmtime-wasi",
+ "workspace-hack",
  "zeroize",
 ]
 
@@ -4684,6 +4685,7 @@ dependencies = [
  "rust_decimal",
  "rust_decimal_macros",
  "sq-core",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -4705,6 +4707,7 @@ dependencies = [
  "thiserror 2.0.21",
  "ureq",
  "uuid",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -6950,6 +6953,40 @@ dependencies = [
  "serde_json",
  "unicode-ident",
  "wasmparser",
+]
+
+[[package]]
+name = "workspace-hack"
+version = "0.1.0"
+dependencies = [
+ "bitflags 2.13.1",
+ "core-foundation-sys",
+ "crc32fast",
+ "foldhash 0.2.0",
+ "futures-core",
+ "futures-util",
+ "getrandom 0.4.3",
+ "hashbrown 0.17.1",
+ "http",
+ "httparse",
+ "libc",
+ "num-traits",
+ "once_cell",
+ "percent-encoding",
+ "proc-macro2",
+ "serde",
+ "serde_core",
+ "serde_json",
+ "simd-adler32",
+ "slab",
+ "smallvec",
+ "syn 2.0.119",
+ "syn 3.0.5",
+ "uuid",
+ "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
+ "zeroize",
 ]
 
 [[package]]

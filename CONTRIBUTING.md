@@ -32,6 +32,7 @@ are `#[ignore]`d.
 
 ```bash
 cargo fmt --check
+cargo hakari generate --diff                 # after a dependency change; cargo install cargo-hakari
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 

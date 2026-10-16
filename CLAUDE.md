@@ -38,6 +38,7 @@ pnpm record:tour | pnpm notices | bash scripts/make-icons.sh | bash scripts/dev-
 ```
 
 Dependency versions live in `[workspace.dependencies]`; members use `.workspace = true`.
+After a change to `Cargo.lock` or a manifest's dependencies: `cargo hakari generate && cargo hakari manage-deps` (`workspace-hack/` is generated, never edited; ADR-0095).
 
 ## Architecture (`core/src`)
 
