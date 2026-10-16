@@ -100,7 +100,9 @@ what move the major version.
 Nobody tags by hand. A bot keeps one open pull request holding the next version number and the
 changelog entries earned since the last release; merging it writes `CHANGELOG.md`, bumps the
 version everywhere it is written down, tags, and opens a draft release. The installers are built
-from that tag and attached to the same draft, which a maintainer publishes after looking at it.
+from that tag and attached to the same draft. A maintainer rewrites the draft's notes for users
+(`/release-notes` in Claude Code drafts them), then publishes it; the update dialog shows those
+notes.
 
 Publishing is also what makes the update feed visible, so a build nobody has checked cannot be
 offered to anybody. See [ADR-0063](docs/decisions/0063-an-update-is-offered-never-applied.md).
