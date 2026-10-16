@@ -46,9 +46,11 @@ jobs:
         with:
           shared-key: fuzz
           workspaces: fuzz
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --locked
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
 
       - name: Fuzz ${{ matrix.target }}
         working-directory: fuzz

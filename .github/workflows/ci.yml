@@ -1,49 +1,113 @@
 name: CI
 
 # Everything that must hold before a change reaches main. The release workflow trusts this one and
-# does not repeat it: a tag is only ever put on a commit that already passed here.
+# does not repeat it: a tag is only ever put on a commit that already passed here. Linux and the
+# frontend run on a pull request and on main, skipped for a tree that already passed; macOS and
+# Windows run nightly when main moved, or on demand before a merge. See ADR-0094.
 
 on:
+  # What nothing here builds or reads; the nightly gate below filters the same list.
+  # `docs/ai-reference/` is not on it: the assistant's guide compiles it into `sq-app`.
   push:
     branches: [main]
+    paths-ignore: &unbuilt
+      - "*.md"
+      - "docs/decisions/**"
+      - "docs/user-guide/**"
+      - "docs/images/**"
+      - ".claude/**"
+      - ".github/*.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/FUNDING.yml"
   # `ready_for_review` is on top of the default three: a draft runs nothing, so the run happens
   # when the pull request is declared finished rather than on every commit leading up to it.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore: *unbuilt
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-# A second push to the same branch makes the first run's answer worthless.
+# A second push to the same branch makes the first run's answer worthless; the nightly run on main
+# is in its own group so that a push does not cancel it.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
+# No debug info: nothing here runs a debugger, and it is most of what a cached target directory
+# weighs.
 env:
   CARGO_TERM_COLOR: always
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_PROFILE_TEST_DEBUG: "0"
 
 jobs:
-  rust:
-    name: rust (${{ matrix.os }})
-    # A draft is work in progress and answers no question worth three runners. `draft` is absent
-    # on a push to main, and absent is not `true`, so that half of the trigger is unaffected.
-    if: github.event.pull_request.draft != true
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+  # A squash merge of an up-to-date pull request lands the tree its run already passed, and a night
+  # with no push to main has nothing new to check. See ADR-0094.
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      skip: ${{ steps.tree.outputs.skip == 'true' || steps.nightly.outputs.skip == 'true' }}
+    steps:
+      # A run passing is not enough: a draft's run passes with every job skipped. All three jobs a
+      # pull request runs must have passed on the tree.
+      - id: tree
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tree_of() { gh api "repos/$GITHUB_REPOSITORY/commits/$1" --jq .commit.tree.sha; }
+          tree=$(tree_of "$GITHUB_SHA")
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --status success --limit 30 \
+            --json databaseId,headSha --jq '.[] | "\(.databaseId) \(.headSha)"' |
+          while read -r id sha; do
+            [ "$(tree_of "$sha")" = "$tree" ] || continue
+            passed=$(gh run view "$id" --repo "$GITHUB_REPOSITORY" --json jobs --jq '[.jobs[]
+              | select(.name == "rust (ubuntu)" or .name == "frontend" or .name == "import (release timings)")
+              | select(.conclusion == "success")] | length')
+            [ "$passed" = 3 ] || continue
+            echo "run $id passed this tree"
+            echo skip=true >> "$GITHUB_OUTPUT"
+            break
+          done
+
+      - id: nightly
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # The compare API lists at most 300 files, so a list that long counts as a change.
+        run: |
+          last=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --event schedule \
+            --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
+          [ -n "$last" ] || exit 0
+          files=$(gh api "repos/$GITHUB_REPOSITORY/compare/$last...$GITHUB_SHA" --jq '.files[].filename')
+          [ "$(printf '%s\n' "$files" | grep -c .)" -lt 300 ] || exit 0
+          built=$(printf '%s\n' "$files" |
+            grep -vE '^[^/]+\.md$|^docs/(decisions|user-guide|images)/|^\.claude/|^\.github/([^/]+\.md|ISSUE_TEMPLATE/|FUNDING\.yml$)' || true)
+          if [ -z "$built" ]; then echo skip=true >> "$GITHUB_OUTPUT"; fi
+
+  linux:
+    name: rust (ubuntu)
+    needs: gate
+    # A draft is work in progress and answers no question worth a runner. `draft` is absent on a
+    # push or a schedule, and absent is not `true`, so those triggers are unaffected.
+    if: needs.gate.outputs.skip != 'true' && github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
       # Tauri's build script refuses to run when `frontendDist` does not exist, and the Rust job
       # deliberately does not build the frontend — an empty directory is enough for `cargo test`.
       - name: Placeholder frontend output
-        shell: bash
         run: mkdir -p app/dist
 
       - name: Linux system libraries
-        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -60,20 +124,18 @@ jobs:
       - name: Install the pinned toolchain
         run: rustup show
 
+      # SQLCipher vendors OpenSSL, so a cold build is minutes. Only main saves: a pull request's
+      # cache is visible to that pull request alone and only pushes main's out of the 10 GB.
       - uses: Swatinem/rust-cache@v2
         with:
-          # SQLCipher vendors OpenSSL, so a cold build is minutes on every runner.
-          shared-key: ci
+          shared-key: linux
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Format
-        if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --all --check
 
-      # Warns on the pull request about a source file over 500 code lines, fails over 800. Needs
-      # no toolchain, so one runner is enough.
+      # Warns on the pull request about a source file over 500 code lines, fails over 800.
       - name: File size
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
         run: scripts/check-rs-size.sh
 
       # `too_many_lines` is on in `[workspace.lints]`; `-D warnings` is what makes it fail here.
@@ -85,13 +147,15 @@ jobs:
       - name: Test
         run: cargo test --workspace --locked
 
-  import:
-    # The import is the step a new user either gets through or leaves at, and the part of it that
-    # cannot be checked in a debug build is how long it takes. One runner, release, and only the
-    # tests that are `#[ignore]`d for exactly this reason.
-    name: import (release timings)
-    if: github.event.pull_request.draft != true
-    runs-on: ubuntu-latest
+  platforms:
+    name: rust (${{ matrix.os }})
+    needs: gate
+    if: needs.gate.outputs.skip != 'true' && contains(fromJSON('["schedule", "workflow_dispatch"]'), github.event_name)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7
 
@@ -104,14 +168,43 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --locked
+
+  import:
+    # The import is the step a new user either gets through or leaves at, and the part of it that
+    # cannot be checked in a debug build is how long it takes. One runner, release, and only the
+    # tests that are `#[ignore]`d for exactly this reason.
+    name: import (release timings)
+    needs: gate
+    if: needs.gate.outputs.skip != 'true' && github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Placeholder frontend output
+        run: mkdir -p app/dist
+
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - uses: Swatinem/rust-cache@v2
+        with:
           shared-key: ci-release
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Import timings
         run: cargo test --release -p sq-core --locked --test phase3_import -- --ignored --nocapture
 
   frontend:
     name: frontend
-    if: github.event.pull_request.draft != true
+    needs: gate
+    if: needs.gate.outputs.skip != 'true' && github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     defaults:
       run:

@@ -99,9 +99,9 @@ jobs:
         run: |
           rustup show
           if [ -n "${{ matrix.target }}" ]; then rustup target add ${{ matrix.target }}; fi
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
+
+      # No rust-cache: a release target directory is gone by the next release, evicted after seven
+      # days, and only crowds CI's caches out of the 10 GB until then. See ADR-0094.
 
       # THIRD-PARTY-NOTICES.md and the two generated files beside it are checked in, and a
       # dependency bump leaves them stale until somebody runs the generator. Generating them here
@@ -158,3 +158,22 @@ jobs:
           done < <(jq -r '.[]' <<<"$PATHS")
           ls stable
           gh release upload "$TAG" stable/* --clobber --repo "$GITHUB_REPOSITORY"
+
+  # tauri-action fills `latest.json` with the notes it was given, and it is given none on purpose:
+  # naming a body above would overwrite release-please's changelog with a commit subject. So the
+  # feed ships `"notes": ""` and the update dialog has nothing to show. Copy the changelog the
+  # draft already carries into the field the updater reads, once every matrix leg has uploaded.
+  notes:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy the release body into latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release download "$TAG" --pattern latest.json --dir . --repo "$GITHUB_REPOSITORY"
+          gh release view "$TAG" --json body --jq .body --repo "$GITHUB_REPOSITORY" > body.md
+          jq --rawfile notes body.md '.notes = $notes' latest.json > patched.json
+          mv patched.json latest.json
+          gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"

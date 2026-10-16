@@ -123,6 +123,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [85](0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md) | A plugin's assistant tool is a component that answers from its declared reads | Accepted; the two copies of the projection superseded by [88](0088-the-host-builds-what-a-plugin-reads.md) |
 | [88](0088-the-host-builds-what-a-plugin-reads.md) | The host builds what a plugin reads, for a page and a tool alike | Accepted |
 | [91](0091-the-sources-question-is-a-step-of-onboarding.md) | The sources question is a step of onboarding | Accepted |
+| [94](0094-ci-checks-a-tree-once-and-the-other-platforms-nightly.md) | CI checks a tree once, and the other platforms nightly | Accepted |
 
 ## Profiles, keys and encryption
 
