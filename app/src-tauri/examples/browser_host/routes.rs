@@ -327,4 +327,7 @@ pub const DESKTOP_ONLY: &[(&str, &str)] = &[
     ("plugin_remove", "plugins"),
     // The network.
     ("ai_models_list", "network"),
+    // The Microsoft Store, which only a packaged Windows copy can ask.
+    ("update_store_check", "store"),
+    ("update_store_open", "store"),
 ];

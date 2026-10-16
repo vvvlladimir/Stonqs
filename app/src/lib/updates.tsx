@@ -1,6 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { appVersion, checkForUpdate, installUpdate, restart, today, type AvailableUpdate } from "./api";
+import {
+  appVersion,
+  checkForUpdate,
+  installUpdate,
+  openStore,
+  restart,
+  today,
+  type AvailableUpdate,
+} from "./api";
 import { useUiState } from "./uiState";
 
 /** In-app updates: checked at most daily, never while an answer is on screen; a skipped version is not offered again. */
@@ -21,6 +29,8 @@ interface Updates {
   asked: boolean;
   check: () => void;
   install: () => void;
+  /** A Store copy's offer: opens the Microsoft Store, which installs it. */
+  openStore: () => void;
   relaunch: () => void;
   /** Not now: the same version is offered again at the next check. */
   later: () => void;
@@ -115,6 +125,17 @@ export function UpdatesProvider({ children }: { children: ReactNode }) {
     asked,
     check: () => void run(true),
     install: () => void install(),
+    openStore: () =>
+      void openStore().then(
+        () => {
+          setUpdate(null);
+          setStage("idle");
+        },
+        (e: unknown) => {
+          setError(e instanceof Error ? e.message : String(e));
+          setStage("failed");
+        },
+      ),
     relaunch: () => void restart(),
     later: () => {
       setUpdate(null);

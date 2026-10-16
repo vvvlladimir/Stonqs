@@ -35,6 +35,8 @@ export function connectBrowserHost() {
     async (command, payload) => {
       // eslint-disable-next-line lingui/no-unlocalized-strings -- Tauri's plugin prefix, not text
       if (command.startsWith("plugin:")) return plugin(command);
+      // Not a Store copy: the host would refuse the Store, and the feed is the plugin's above.
+      if (command === "update_store_check") return null;
       const response = await fetch(`/__host/${command}`, {
         method: "POST",
         body: JSON.stringify(payload ?? {}),

@@ -24,7 +24,7 @@ Layers point one way: `screens/ → components/domain/ → components/ui/ → st
 - Dock controls via `lib/dock.tsx` (`DockSlot`, `useDockSlot`), never by id lookup.
 - Tour `lib/tour/` (ADR-0077): `steps.ts` = content (screen, optional `data-tour` anchor, title, body), names no figure/instrument; missing anchor skipped; writes only `UiState::tour`; once per profile. The sources question is the onboarding gate's second step (ADR-0091), not the tour's.
 - External links: `lib/links.ts` (`useExternalLinks`, once in `App`) sends `http(s)` clicks to `api.openUrl`. Components write plain `<a href>`.
-- Updater (ADR-0063): `lib/updates.tsx` checks once a day (`UiState::updates`); `UpdateDialog` offers; `lib/api/updates.ts` holds the handle. Auto-check fails silently. Desktop only.
+- Updater (ADR-0063): `lib/updates.tsx` checks once a day (`UiState::updates`); `UpdateDialog` offers; `lib/api/updates.ts` holds the handle. Auto-check fails silently. Desktop only. A Microsoft Store copy asks the Store (`update_store_check`) and its offer opens the Store, never installs (ADR-0097).
 - Nav `components/Nav`: Favorites (Overview first, fixed), one section open, Settings + lenses at the foot; rail ≥1000px, sheet below (tab bar = Overview + first three favourites). `UiState::nav` = bare ids; `Nav/model.ts` owns `SECTIONS` (unknown dropped, missing appended). Drag via `Nav/useReorder` (touch hold), within section only.
 - Settings = category strip (`screens/Settings/model.ts`, one panel file each) via `Tabs`.
 - Enum labels only in `lib/kinds.ts`; counts via `<Plural>`/`plural()`.

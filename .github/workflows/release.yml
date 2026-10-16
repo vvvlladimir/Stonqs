@@ -1,12 +1,13 @@
 name: Release
 
-# Builds the installers for a tag and leaves them in a draft release. Nothing reaches a user until
-# that draft is published by hand: publishing is also what makes `latest.json` visible, so the
-# updater offers a version only after somebody has looked at it.
+# Builds the installers for a tag and leaves them in a draft release, with a `.msixupload` for the
+# Microsoft Store. Nothing reaches a user until that draft is published by hand: publishing is also
+# what makes `latest.json` visible, so the updater offers a version only after somebody has looked
+# at it, and what sends the Store package to the Store (`store.yml`, ADR-0096).
 
 # Called by `release-please.yml` once it has tagged the release, never by the tag itself: a tag
 # pushed with GITHUB_TOKEN raises no event, so `on: push: tags` would simply never fire. The
-# manual trigger is for rebuilding a tag whose run failed.
+# manual trigger rebuilds a tag whose run failed, or only the parts ticked.
 on:
   workflow_call:
     inputs:
@@ -14,12 +15,32 @@ on:
         description: The tag to build, for example v0.2.0.
         required: true
         type: string
+      macos: { type: boolean, default: true }
+      linux: { type: boolean, default: true }
+      windows: { type: boolean, default: true }
+      store: { type: boolean, default: true }
   workflow_dispatch:
     inputs:
       tag:
         description: The tag to build, for example v0.2.0.
         required: true
         type: string
+      macos:
+        description: macOS, both architectures (.dmg and the update archives)
+        type: boolean
+        default: true
+      linux:
+        description: Linux (.AppImage, .deb, .rpm and the update archive)
+        type: boolean
+        default: true
+      windows:
+        description: Windows (-setup.exe and the update archive)
+        type: boolean
+        default: true
+      store:
+        description: Microsoft Store package (.msixupload), packaged by this branch's app/src-tauri/msix
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -29,6 +50,8 @@ jobs:
   # the running version with the one in the feed, and installing it would not change the answer.
   version:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.legs.outputs.matrix }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,25 +66,38 @@ jobs:
             exit 1
           }
 
+      # The build legs the ticked boxes ask for. The Windows leg also runs for the Store alone,
+      # which needs its binary but not its installer.
+      #
+      # Linux is built on the oldest supported runner, because a Linux binary cannot run against a
+      # glibc older than the one it was built on. Deprecated by GitHub on 2026-09-17 and unsupported
+      # from 2027-04-17, with brownouts failing the job at random in between; it is kept anyway,
+      # because moving to ubuntu-24.04 raises the floor from glibc 2.35 to 2.39 and drops Ubuntu
+      # 22.04 and Debian 12 users. Move before the April date, not after a red release.
+      - id: legs
+        env:
+          ON: ${{ toJSON(inputs) }}
+        run: |
+          matrix=$(jq -c --argjson on "$ON" '{include: [.[]
+              | .installers = $on[.platform]
+              | .store = (.platform == "windows" and $on.store)
+              | select(.installers or .store)]}' <<'EOF'
+          [
+            {"platform": "macos", "os": "macos-latest", "target": "aarch64-apple-darwin"},
+            {"platform": "macos", "os": "macos-latest", "target": "x86_64-apple-darwin"},
+            {"platform": "linux", "os": "ubuntu-22.04", "target": ""},
+            {"platform": "windows", "os": "windows-latest", "target": ""}
+          ]
+          EOF
+          )
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   build:
     needs: version
+    if: needs.version.outputs.matrix != '{"include":[]}'
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            target: aarch64-apple-darwin
-          - os: macos-latest
-            target: x86_64-apple-darwin
-          # The oldest supported runner, because a Linux binary cannot run against a glibc older
-          # than the one it was built on. Deprecated by GitHub on 2026-09-17 and unsupported from
-          # 2027-04-17, with brownouts failing the job at random in between; it is kept anyway,
-          # because moving to ubuntu-24.04 raises the floor from glibc 2.35 to 2.39 and drops
-          # Ubuntu 22.04 and Debian 12 users. Move before the April date, not after a red release.
-          - os: ubuntu-22.04
-            target: ""
-          - os: windows-latest
-            target: ""
+      matrix: ${{ fromJSON(needs.version.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -110,6 +146,7 @@ jobs:
         run: node scripts/notices.mjs
 
       - uses: tauri-apps/tauri-action@v1
+        if: matrix.installers
         id: tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -129,9 +166,16 @@ jobs:
           includeUpdaterJson: true
           args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
 
+      # The Store alone needs the binary, not the installers or the feed the release already has.
+      - name: Build the binary for the Store
+        if: ${{ !matrix.installers }}
+        working-directory: app
+        run: pnpm tauri build --no-bundle
+
       # The site links `releases/latest/download/<name>`, which needs a name that does not carry the
       # version. Copies, not renames: the updater feed names the versioned files.
       - name: Upload stable-named installers
+        if: matrix.installers
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -158,6 +202,47 @@ jobs:
           done < <(jq -r '.[]' <<<"$PATHS")
           ls stable
           gh release upload "$TAG" stable/* --clobber --repo "$GITHUB_REPOSITORY"
+
+      # The manifest and logos come from the revision this workflow runs from, not the tag, so an
+      # older tag can still be packaged for the Store.
+      - name: Check out the Store packaging
+        if: matrix.store
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: workflow
+          sparse-checkout: app/src-tauri/msix
+
+      # The Store's package of the same binary tauri-action just built. The Store signs it, so
+      # `store.yml` sends it there and nobody installs it from the release page. A failure here
+      # costs only this file (ADR-0096).
+      - name: Package for the Store
+        if: matrix.store
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $sdk = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\makeappx.exe" |
+            Sort-Object { [version]$_.Directory.Parent.Name } | Select-Object -Last 1).DirectoryName
+          Copy-Item -Recurse workflow/app/src-tauri/msix msix
+          (Get-Content workflow/app/src-tauri/msix/AppxManifest.xml -Raw).Replace('@VERSION@', "$($env:TAG.TrimStart('v')).0") |
+            Set-Content msix/AppxManifest.xml -NoNewline
+          # Cargo names the binary after the crate; the installers rename it to the product.
+          $exe = @('target/release/Stonqs.exe', 'target/release/sq-app.exe') | Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+          Copy-Item $exe msix/Stonqs.exe
+          Copy-Item LICENSE, THIRD-PARTY-NOTICES.md msix
+          & "$sdk\makepri.exe" createconfig /cf priconfig.xml /dq en-US /pv 10.0.0 /o
+          & "$sdk\makepri.exe" new /pr msix /cf priconfig.xml /mn msix/AppxManifest.xml /of msix/resources.pri /o
+          & "$sdk\makeappx.exe" pack /d msix /p Stonqs.msix /o
+          Compress-Archive Stonqs.msix Stonqs.zip
+          $upload = 'Stonqs-windows-x86_64-store.msixupload'
+          Move-Item Stonqs.zip $upload
+          gh release upload $env:TAG $upload --clobber --repo $env:GITHUB_REPOSITORY
 
   # tauri-action fills `latest.json` with the notes it was given, and it is given none on purpose:
   # naming a body above would overwrite release-please's changelog with a commit subject. So the

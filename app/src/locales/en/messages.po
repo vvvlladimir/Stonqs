@@ -9684,6 +9684,10 @@ msgstr "The list is empty."
 msgid "The local database could not be read. Restart the app and try again."
 msgstr "The local database could not be read. Restart the app and try again."
 
+#: src/components/domain/UpdateDialog.tsx
+msgid "The Microsoft Store installs this copy's updates; its page lists what changed."
+msgstr "The Microsoft Store installs this copy's updates; its page lists what changed."
+
 #: src/components/ui/Async.tsx
 msgid "The model declined to answer this request."
 msgstr "The model declined to answer this request."
@@ -10720,6 +10724,10 @@ msgstr "Update available"
 #: src/components/domain/UpdateDialog.tsx
 msgid "Update failed"
 msgstr "Update failed"
+
+#: src/components/domain/UpdateDialog.tsx
+msgid "Update in the Microsoft Store"
+msgstr "Update in the Microsoft Store"
 
 #: src/components/domain/UpdateDialog.tsx
 msgid "Update installed"

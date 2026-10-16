@@ -45,6 +45,9 @@ workspace-hack = { version = "0.1", path = "../../workspace-hack" }
 tauri-plugin-updater.workspace = true
 tauri-plugin-process.workspace = true
 
+[target.'cfg(windows)'.dependencies]
+windows.workspace = true
+
 # `tauri::test` gives the browser host (`examples/browser_host`) a `State` without a window.
 [dev-dependencies]
 tauri = { workspace = true, features = ["test"] }

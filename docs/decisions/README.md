@@ -106,7 +106,7 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [30](0030-a-dashboard-widget-may-name-its-own-data-source.md) | A dashboard widget may name its own data source | Accepted |
 | [45](0045-a-dashboard-tile-is-resized-from-the-edge-being-dragged.md) | A dashboard tile is resized from the edge being dragged | Accepted |
 | [59](0059-a-tile-may-hold-assumptions-and-a-ratio-is-a-rendering.md) | A tile may hold assumptions, and a ratio of two shown figures is a rendering | Accepted |
-| [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted |
+| [63](0063-an-update-is-offered-never-applied.md) | An update is offered, never applied | Accepted; a Store copy's update narrowed by [97](0097-the-store-copy-asks-the-store-for-its-update.md) |
 | [70](0070-a-plugin-brings-data-and-shows-it-it-never-changes-what-a-number-means.md) | A plugin brings data and shows it; it never changes what a number means | Accepted; data plugins, the file reader ([86](0086-a-file-reader-is-a-wasm-component-that-produces-the-canonical-file.md)) the file writer ([80](0080-a-file-writer-is-the-reader-turned-round.md)) dashboard widgets ([83](0083-a-plugin-widget-is-a-page-with-no-origin-fed-by-the-host.md)) screens ([84](0084-a-plugin-screen-and-the-one-document-a-plugin-keeps.md)) and assistant tools ([85](0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md)) implemented; "what a number means" narrowed by [82](0082-a-plugin-may-show-a-number-of-its-own-under-its-own-name.md) |
 | [72](0072-one-keyboard-layer-for-shortcuts-and-dialogs.md) | One keyboard layer for shortcuts and dialogs | Accepted |
 | [73](0073-a-block-is-laid-out-by-its-own-width.md) | A block is laid out by its own width, not by the window's | Accepted; the phone rule narrowed by [74](0074-a-tile-s-smallest-width-is-the-board-owner-s.md) |
@@ -123,8 +123,11 @@ New record: next free number, `NNNN-kebab-case-title.md`, the structure describe
 | [85](0085-a-plugin-assistant-tool-is-a-component-that-answers-from-declared-reads.md) | A plugin's assistant tool is a component that answers from its declared reads | Accepted; the two copies of the projection superseded by [88](0088-the-host-builds-what-a-plugin-reads.md) |
 | [88](0088-the-host-builds-what-a-plugin-reads.md) | The host builds what a plugin reads, for a page and a tool alike | Accepted |
 | [91](0091-the-sources-question-is-a-step-of-onboarding.md) | The sources question is a step of onboarding | Accepted |
+| [98](0098-every-desktop-icon-is-the-rounded-tile.md) | Every desktop icon is the rounded tile | Accepted |
 | [94](0094-ci-checks-a-tree-once-and-the-other-platforms-nightly.md) | CI checks a tree once, and the other platforms nightly | Accepted |
 | [95](0095-a-dependency-is-built-once-at-one-feature-set.md) | A dependency is built once, at one feature set | Accepted |
+| [96](0096-the-windows-build-also-ships-through-the-microsoft-store.md) | The Windows build also ships through the Microsoft Store | Accepted |
+| [97](0097-the-store-copy-asks-the-store-for-its-update.md) | The Store copy asks the Store for its update and sends the user there | Accepted |
 
 ## Profiles, keys and encryption
 

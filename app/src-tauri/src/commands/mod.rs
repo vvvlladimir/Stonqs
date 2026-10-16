@@ -27,6 +27,7 @@ pub mod profiles;
 pub mod reports;
 pub mod securities;
 pub mod sources;
+pub mod store;
 pub mod trades;
 pub mod transactions;
 pub mod watchlists;

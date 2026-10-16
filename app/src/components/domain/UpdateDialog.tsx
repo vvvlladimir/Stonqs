@@ -3,6 +3,7 @@ import {
   ArrowsClockwiseIcon,
   CheckCircleIcon,
   DownloadSimpleIcon,
+  StorefrontIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -134,10 +135,17 @@ export function UpdateDialog() {
           <button className="btn btn--ghost" onClick={updates.later}>
             <Trans>Later</Trans>
           </button>
-          <button className="btn" onClick={updates.install}>
-            <DownloadSimpleIcon weight="bold" />
-            <Trans>Update now</Trans>
-          </button>
+          {update.store ? (
+            <button className="btn" onClick={updates.openStore}>
+              <StorefrontIcon weight="bold" />
+              <Trans>Update in the Microsoft Store</Trans>
+            </button>
+          ) : (
+            <button className="btn" onClick={updates.install}>
+              <DownloadSimpleIcon weight="bold" />
+              <Trans>Update now</Trans>
+            </button>
+          )}
         </>
       }
     >
@@ -154,7 +162,11 @@ export function UpdateDialog() {
         </section>
       ) : (
         <p className="muted">
-          <Trans>This release ships no notes of its own.</Trans>
+          {update.store ? (
+            <Trans>The Microsoft Store installs this copy's updates; its page lists what changed.</Trans>
+          ) : (
+            <Trans>This release ships no notes of its own.</Trans>
+          )}
         </p>
       )}
     </Modal>

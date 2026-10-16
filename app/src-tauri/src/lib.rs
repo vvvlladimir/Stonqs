@@ -193,6 +193,8 @@ fn command_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'sta
         commands::reports::report_export,
         commands::reports::report_save,
         commands::about::notices_save,
+        commands::store::update_store_check,
+        commands::store::update_store_open,
         commands::import::import_load,
         commands::import::import_load_path,
         commands::import::import_prices_load_path,

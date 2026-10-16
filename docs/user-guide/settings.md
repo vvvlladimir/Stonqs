@@ -154,6 +154,11 @@ the app only ever asks a release feed whether a version exists — it sends noth
 portfolio. A version that fails its signature check is refused, so an update can only come from
 whoever holds the project's signing key.
 
+A copy installed from the Microsoft Store is updated by the Store, never by the app itself. Its
+check asks the Store instead of the release feed, so a version shows up only once the Store can
+install it, and it comes without release notes. Its button is `Update in the Microsoft Store`,
+which opens the app's page in the Store, where the Store's own Update button installs it.
+
 **Data and storage** — what is stored (accounts, instruments, quotes, the first transaction),
 saved import layouts (including restoring the shipped ones that were removed), and the database
 itself. The whole portfolio is one SQLite file, one per profile: copying that file is the backup, and there is no
