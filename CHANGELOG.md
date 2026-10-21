@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/vvvlladimir/Stonqs/compare/v0.5.0...v0.6.0) (2026-10-21)
+
+
+### ✨ New
+
+* **app:** ship Windows build through Microsoft Store ([91d0713](https://github.com/vvvlladimir/Stonqs/commit/91d071362995391d4b08fc04dfa709478ae845e8))
+
 ## [0.5.0](https://github.com/vvvlladimir/Stonqs/compare/v0.4.0...v0.5.0) (2026-09-30)
 
 

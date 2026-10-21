@@ -4648,7 +4648,7 @@ dependencies = [
 
 [[package]]
 name = "sq-app"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "argon2",
  "base64 0.22.1",
@@ -4680,7 +4680,7 @@ dependencies = [
 
 [[package]]
 name = "sq-cli"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "rust_decimal",
@@ -4691,7 +4691,7 @@ dependencies = [
 
 [[package]]
 name = "sq-core"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "chardetng",
  "chrono",
